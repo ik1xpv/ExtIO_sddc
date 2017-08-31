@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExtIO_sddc", "ExtIO_sddc\ExtIO_sddc.vcxproj", "{FA808BC2-46FB-4B99-9DF1-E335432930B9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B51E28C7-0931-486D-AC52-D7724B8E35DB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FA808BC2-46FB-4B99-9DF1-E335432930B9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FA808BC2-46FB-4B99-9DF1-E335432930B9}.Debug|Win32.Build.0 = Debug|Win32
+		{FA808BC2-46FB-4B99-9DF1-E335432930B9}.Release|Win32.ActiveCfg = Release|Win32
+		{FA808BC2-46FB-4B99-9DF1-E335432930B9}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
