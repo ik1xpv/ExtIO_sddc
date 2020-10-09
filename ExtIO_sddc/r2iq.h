@@ -2,7 +2,8 @@
 #define R2IQ_H
 #include "license.txt" // Oscar Steila ik1xpv
 #define N_R2IQ_THREAD 2
-#define GAINFACTOR (0.00000007079)
+#define GAINFACTOR        (0.000000091) // to be adjust with lab measure
+#define GAINFACTOR_R820T2 (0.000000100) // to be adjust with lab measure
 #define NDECIDX 5
 #include "LC_ExtIO_Types.h"
 

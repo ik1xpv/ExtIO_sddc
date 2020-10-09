@@ -34,10 +34,11 @@ extern "C" long EXTIO_API GetHWSR(void);
 // extern "C" char EXTIO_API GetMode(void);
 // extern "C" void EXTIO_API ModeChanged(char mode);
 // extern "C" void EXTIO_API IFLimitsChanged(long low, long high);
-// extern "C" void EXTIO_API TuneChanged(long freq);
 
-// extern "C" void    EXTIO_API TuneChanged64(int64_t freq);
-// extern "C" int64_t EXTIO_API GetTune64(void);
+extern "C" void EXTIO_API TuneChanged(long freq);
+extern "C" void EXTIO_API TuneChanged64(int64_t freq);
+
+extern "C" int64_t EXTIO_API GetTune64(void);
 // extern "C" void    EXTIO_API IFLimitsChanged64(int64_t low, int64_t high);
 
 // extern "C" void EXTIO_API RawDataReady(long samprate, int *Ldata, int *Rdata, int numsamples);
@@ -53,14 +54,14 @@ extern "C" int EXTIO_API GetAttenuators(int idx, float * attenuation);  // fill 
 extern "C" int EXTIO_API GetActualAttIdx(void);                          // returns -1 on error
 extern "C" int EXTIO_API SetAttenuator(int idx);                       // returns != 0 on error
 
-extern "C" int EXTIO_API ExtIoGetAGCs(int agc_idx, char * text);
-extern "C" int EXTIO_API ExtIoGetActualAGCidx(void);
-extern "C" int EXTIO_API ExtIoSetAGC(int agc_idx);
-extern "C" int EXTIO_API ExtIoShowMGC(int agc_idx);
+//extern "C" int EXTIO_API ExtIoGetAGCs(int agc_idx, char * text);
+//extern "C" int EXTIO_API ExtIoGetActualAGCidx(void);
+//extern "C" int EXTIO_API ExtIoSetAGC(int agc_idx);
+//extern "C" int EXTIO_API ExtIoShowMGC(int agc_idx);
 
-extern "C" int EXTIO_API ExtIoGetMGCs(int mgc_idx, float * gain);
-extern "C" int EXTIO_API ExtIoGetActualMgcIdx(void);
-extern "C" int EXTIO_API ExtIoSetMGC(int mgc_idx);
+//extern "C" int EXTIO_API ExtIoGetMGCs(int mgc_idx, float * gain);
+//extern "C" int EXTIO_API ExtIoGetActualMgcIdx(void);
+//extern "C" int EXTIO_API ExtIoSetMGC(int mgc_idx);
 
 extern "C" int  EXTIO_API ExtIoGetSrates(int idx, double * samplerate);  // fill in possible samplerates
 extern "C" int  EXTIO_API ExtIoGetActualSrateIdx(void);               // returns -1 on error

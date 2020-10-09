@@ -2,7 +2,7 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="ExtIO_sddc" />
+		<Option title="ExtIO_sddc97beta" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
@@ -19,6 +19,7 @@
 					<Add option="-Wall" />
 					<Add option="-g" />
 					<Add option="-DBUILD_DLL" />
+					<Add option="-DNEXTIOTRACE" />
 				</Compiler>
 				<Linker>
 					<Add library="user32" />
@@ -29,7 +30,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option host_application="D:/CBDEV/ExtIO_sddc/bin/Release/HDSDR.exe" />
+				<Option host_application="../bin/Release/HDSDR.exe" />
 				<Option run_host_application_in_terminal="0" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
@@ -38,6 +39,7 @@
 					<Add option="-Wall" />
 					<Add option="-DBUILD_DLL" />
 					<Add option="-DNDEBUG" />
+					<Add option="-DNEXTIOTRACE" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -46,18 +48,20 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-pthread" />
 			<Add directory="../Lib/pthreads/include" />
 			<Add directory="../Lib/CyAPI_gcc/inc" />
 			<Add directory="../Lib/fftw" />
 		</Compiler>
 		<Linker>
+			<Add option="-pthread" />
 			<Add option="-Wl,--add-stdcall-alias" />
-			<Add library="..\Lib\CyAPI_gcc\libcyapi_gcc.a" />
+			<Add library="../Lib/CyAPI_gcc/libcyapi_gcc.a" />
 			<Add library="libsetupapi" />
-			<Add library="..\Lib\pthreads\lib\x86\libpthreadGC2.a" />
 			<Add library="libkernel32.a" />
 			<Add library="libgdi32.a" />
-			<Add library="..\Lib\fftw\libfftw3f-3.dll" />
+			<Add library="../Lib/fftw/libfftw3f-3.dll" />
+			<Add library="../Lib/pthreads/dll/x86/pthreadGC2.dll" />
 		</Linker>
 		<Unit filename="BBRF103.cpp" />
 		<Unit filename="BBRF103.h" />

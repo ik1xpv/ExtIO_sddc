@@ -22,6 +22,7 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "", IDT_TAB_CTRL_MAIN, WC_TABCONTROL, WS_TABSTOP, 0, 0, 150, 14,
                                    WS_EX_LEFT | WS_VISIBLE  | WS_BORDER
 //   page 0 Info
+
 //    PUSHBUTTON      "Page1 Button", IDB_BTN_PAGE1, 27, 37, 48, 14, 0, WS_EX_LEFT
 //	LTEXT            "name :",      IDC_STATIC01, 10, 20, 50, 12, SS_LEFT
 	LTEXT            SWNAME,        IDC_STATIC02, 10, 20, 50, 12, SS_LEFT
@@ -43,14 +44,29 @@ FONT 8, "Ms Shell Dlg"
     LTEXT            "I&&Q rate:", IDC_STATIC15, 10, 50, 80, 12, SS_LEFT
     LTEXT            "off line  ", IDC_STATIC16, 50, 50, 80, 12, SS_LEFT
 
-//  page 1 Setup
+    LTEXT            "+VANT ctrl",   IDC_STATIC09, 10, 70, 80, 12, SS_LEFT
+    LTEXT            ANTPWRLABEL,   IDC_STATIC10, 50, 70, 80, 12, SS_LEFT
+    LTEXT            "",   IDC_STATIC11, 10, 80, 120, 12, SS_LEFT
 
-    CONTROL         "Trace", IDC_TRACE_PAGE1,"Button",BS_OWNERDRAW, 45, 20, 38, 13
-    CONTROL         "DITH", IDC_RADIO21,"Button",BS_OWNERDRAW , 5, 80, 38,13
-    CONTROL         "RAND", IDC_RADIO22,"Button",BS_OWNERDRAW , 5, 95, 38,13
-    CONTROL         "LW-MW",  IDC_RADIO23,"Button",BS_OWNERDRAW , 5, 20, 38,13
-    CONTROL         "HF",   IDC_RADIO24,"Button",BS_OWNERDRAW , 5, 35, 38,13
-    CONTROL         "VHF-UHF",  IDC_RADIO25,"Button",BS_OWNERDRAW , 5, 50, 38,13
+//  page 1 BBRF103
+
+    LTEXT           "ADC", IDC_STATIC22, 15, 68, 38, 13, SS_CENTER
+    LTEXT           "ref.corr.", IDC_STATIC24, 15, 110, 38, 13, SS_CENTER
+    EDITTEXT         IDC_EDIT1, 55, 108, 60, 14, ES_LEFT | WS_BORDER | WS_TABSTOP
+    CONTROL         "Set", IDC_MBUTTON23,"Button",BS_OWNERDRAW , 118, 109, 18,12
+    LTEXT           "DEBUG", IDC_STATIC23, 15, 127, 38, 13, SS_CENTER
+    CONTROL         "Trace", IDC_TRACE_PAGE1,"Button",BS_OWNERDRAW, 55,125, 38, 12
+    CONTROL         "DITH", IDC_MBUTTON21,"Button",BS_OWNERDRAW , 55, 65, 38,12
+    CONTROL         "RAND", IDC_MBUTTON22,"Button",BS_OWNERDRAW , 97, 65, 38,12
+    CONTROL         "LEV ADJ",  IDC_MBUTTON28,"Button",BS_OWNERDRAW , 97, 35, 38,12
+    CONTROL         "+V ANT",  IDC_MBUTTON29,"Button",BS_OWNERDRAW , 55, 35, 38,12
+
+
+    CONTROL         "HF",   IDC_MBUTTON24,"Button",BS_OWNERDRAW , 15, 35, 38,12
+    CONTROL         "VHF-UHF",  IDC_MBUTTON25,"Button",BS_OWNERDRAW , 15, 50, 38,12
+
+    CONTROL         "LEV ADJ",  IDC_MBUTTON26,"Button",BS_OWNERDRAW , 97, 50, 38,12
+    CONTROL         "+V ANT",  IDC_MBUTTON27,"Button",BS_OWNERDRAW , 55, 50, 38,12
 
 //  page 2 Test
     LTEXT            "samples source:", IDC_STATIC31, 10, 22, 80, 12, SS_LEFT
@@ -64,9 +80,9 @@ FONT 8, "Ms Shell Dlg"
     CONTROL          URL1A, IDC_SYSLINK41,"syslink", WS_TABSTOP,10,115,140,14
     CONTROL          URL_HDSDRA, IDC_SYSLINK42,"syslink", WS_TABSTOP,10,130,140,14
 
-  //  LTEXT            AUTHOR,   IDC_STATIC41, 10, 170, 100, 12, SS_LEFT
+//  LTEXT            AUTHOR,   IDC_STATIC41, 10, 170, 100, 12, SS_LEFT
 // all pages
- //   EDITTEXT         IDE_EDIT_MAIN, 0, 200-14, 150, 14, ES_AUTOHSCROLL, WS_EX_LEFT
+//   EDITTEXT         IDE_EDIT_MAIN, 0, 200-14, 150, 14, ES_AUTOHSCROLL, WS_EX_LEFT
 }
 
 

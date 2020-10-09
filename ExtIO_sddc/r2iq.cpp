@@ -32,6 +32,8 @@ The decimation factor is selectable from HDSDR GUI sampling rate selector
 extern PUCHAR	*buffers;       // ExtIO_sddc defined
 extern float**   obuffers;
 extern HWND h_dialog;           // GUI dialog
+extern int	giAttIdxHF ;
+
 
 class r2iqControlClass r2iqCntrl;
 
@@ -81,7 +83,8 @@ r2iqControlClass::r2iqControlClass()
 
 int r2iqControlClass::Setdecimate(int dec)
 {
-     mdecimation = dec;
+
+     mdecimation = 4 - dec;  // 0 , 2 , 4, 8, 16 => 32,16,8,4,2 MHz
      return 0;
 }
 
@@ -90,24 +93,34 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq)
     int64_t loprecision;
     if ( LOfreq < (ADC_FREQ/2) )
     {
+        rf_mode rfm = BBRF103.GetmodeRF();
+
         if (mdecimation == 0) // no decimation
-            LOfreq = (ADC_FREQ/4);
+        {
+            if (rfm == VLFMODE)
+                LOfreq = (ADC_FREQ/4) - 1000000;
+            else
+                LOfreq = (ADC_FREQ/4);
+        }
         else
         {
             if (LOfreq < (ADC_FREQ/4)/mratio[mdecimation])
                 LOfreq = (ADC_FREQ/4)/mratio[mdecimation];
             if (LOfreq > (ADC_FREQ/2) - (ADC_FREQ/4)/mratio[mdecimation])
                 LOfreq = (ADC_FREQ/2) - (ADC_FREQ/4)/mratio[mdecimation];
-            if (BBRF103.GetmodeRF() == VLFMODE)
-                LOfreq = 0;
+            if (rfm == VLFMODE)
+            {
+                   LOfreq = (ADC_FREQ/4)/mratio[mdecimation] - 500000;
+            }
         }
+
         loprecision = (ADC_FREQ/2) / 256;   // ie 32000000 / 256 = 125 kHz  bin even span
         LOfreq = LOfreq + loprecision/2 ;
         LOfreq /= loprecision;
         LOfreq *= loprecision;
         mtunebin = (int)((LOfreq*halfFft) / (ADC_FREQ/2));
     }else{
-        mtunebin = (int)((( int64_t)IFR820T*halfFft) / (ADC_FREQ/2));
+        mtunebin = (int)((( int64_t)R820T2_IF_CARRIER*halfFft) / (ADC_FREQ/2));
         loprecision = 1; // 1 Hz
     }
 	// calculate nearest possible frequency
@@ -317,7 +330,7 @@ void *r2iqThreadf(void *arg) {
     int decimate = r2iqCntrl->getDecidx();
     int mfft = r2iqCntrl->getFftN();
     int mratio = r2iqCntrl->getRatio();
-
+    float scale;
 //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_self is %u\n",(int)th->t, pthread_self());
 //    DbgPrintf((char *) "decimate idx %d  %d  %d \n",r2iqCntrl->getDecidx(),r2iqCntrl->getFftN(),r2iqCntrl->getRatio());
 
@@ -350,6 +363,31 @@ void *r2iqThreadf(void *arg) {
         float *endloop;           // pointer to end data to be copied to beginning
         int midx = r2iqCntrl->bufIdx;
         rf_mode  moderf = BBRF103.GetmodeRF();
+        if (moderf != VHFMODE)
+            scale = GAINFACTOR;
+        else
+            scale = GAINFACTOR_R820T2;
+        if ((BBRF103.GetGainadjust() == true) && (moderf == VHFMODE))
+        {
+            float x = R820T2.get_allgain();
+            scale = scale * x;
+        }
+        if ((BBRF103.GetGainadjustHF() == true) && (moderf != VHFMODE))
+        {
+            float x = 1.0;
+            switch( giAttIdxHF )
+            {
+            case 0:
+                x = 10.0;    // 20 dB ratio
+                break;
+            case 1:
+                x = 3.1622;  // 10 dB ratio
+                break;
+            default:
+                break;       // 0 dB
+            }
+            scale = scale * x;
+        }
         inloop = ADCinTime[thisThread][0];
         endloop = ADCinTime[lastThread][fftPerBuf-1] + halfFft;
         // first frame
@@ -399,20 +437,33 @@ void *r2iqThreadf(void *arg) {
 
                 if (moderf == VLFMODE)
                 {
-                    inFreqTmp[thisThread][0][0] =  inFreqTmp[thisThread][0][1] = 0;  // bin[0] = 0;
+                  int mtunebin = halfFft/2 - halfFft/32;
+                  int mm;
+                  for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
+                    {
+                        inFreqTmp[thisThread][m][0] =  ( ADCinFreq[thisThread][ mtunebin+m][0] * filterHw[decimate][m][0]  +
+                                                         ADCinFreq[thisThread][ mtunebin+m][1] * filterHw[decimate][m][1]);
+                        inFreqTmp[thisThread][m][1] =  ( ADCinFreq[thisThread][ mtunebin+m][1] * filterHw[decimate][m][0]  -
+                                                         ADCinFreq[thisThread][ mtunebin+m][0] * filterHw[decimate][m][1]);
+                    }
 
-                for(int m = 1 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
+                  for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
                     {
-                        inFreqTmp[thisThread][m][0] = ADCinFreq[thisThread][ m][0] * filterHw[0][m][0]  +
-                                                      ADCinFreq[thisThread][ m][1] * filterHw[0][m][1];                                                                      ;
-                        inFreqTmp[thisThread][m][1] = ADCinFreq[thisThread][ m][1] * filterHw[0][m][0]  -
-                                                      ADCinFreq[thisThread][ m][0] * filterHw[0][m][1];
+                        mm = mtunebin - halfFft/2 + m;
+                        if ( mm >0)
+                        {
+
+                        inFreqTmp[thisThread][halfFft/2+m][0] = ( ADCinFreq[thisThread][mm][0] * filterHw[decimate][halfFft - halfFft/2 + m][0]  +
+                                                                  ADCinFreq[thisThread][mm][1] * filterHw[decimate][halfFft - halfFft/2 + m][1]);
+
+                        inFreqTmp[thisThread][halfFft/2+m][1] = ( ADCinFreq[thisThread][mm][1] * filterHw[decimate][halfFft - halfFft/2 + m][0]  -
+                                                                  ADCinFreq[thisThread][mm][0] * filterHw[decimate][halfFft - halfFft/2 + m][1]);
+                        }else
+                        {
+                            inFreqTmp[thisThread][halfFft/2+m][0]= inFreqTmp[thisThread][halfFft/2+m][1] = 0;
+                        }
                     }
-                for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
-                    {
-                        inFreqTmp[thisThread][halfFft/2+m][0] = 0;
-                        inFreqTmp[thisThread][halfFft/2+m][1] = 0;
-                    }
+
                 }
                 else
                 {
@@ -434,7 +485,7 @@ void *r2iqThreadf(void *arg) {
                     }
                 }
                 fftwf_execute(plan_f2t_c2c[thisThread][decimate]);                  //  c2c + decimation
-                float scale = GAINFACTOR;
+         //       float scale = GAINFACTOR;
                 float * pTimeTmp;
                 if (k == 0)
                 { // first frame is 512 sample long
@@ -464,29 +515,39 @@ void *r2iqThreadf(void *arg) {
             int offset =((global.transferSize/2)/mratio) *moff;
             pout = (float *)(r2iqCntrl->obuffers[modx]+ offset );
             int mtunebin = r2iqCntrl->getTunebin();
-
             for(int k = 0;k < fftPerBuf;k++)
             {
               fftwf_execute(plan_t2f_r2c[thisThread][k]);                 // FFT first stage time to frequency, real to complex
-
                 if (moderf == VLFMODE)
                 {
-                  inFreqTmp[thisThread][0][0] =  inFreqTmp[thisThread][0][1] = 0;  // bin[0] = 0;
-                  for(int m = 1 ; m < mfft/2; m++) // circular shift tune fs/2 half array
+                  int mm;
+                  for(int m = 0 ; m < mfft/2; m++) // circular shift tune fs/2 half array
                     {
-                        inFreqTmp[thisThread][m][0] =  ( ADCinFreq[thisThread][m][0] * filterHw[decimate][m][0]  +
-                                                         ADCinFreq[thisThread][m][1] * filterHw[decimate][m][1]);
-                        inFreqTmp[thisThread][m][1] =  ( ADCinFreq[thisThread][m][1] * filterHw[decimate][m][0]  -
-                                                         ADCinFreq[thisThread][m][0] * filterHw[decimate][m][1]);
+                        inFreqTmp[thisThread][m][0] =  ( ADCinFreq[thisThread][ mtunebin+m][0] * filterHw[decimate][m][0]  +
+                                                         ADCinFreq[thisThread][ mtunebin+m][1] * filterHw[decimate][m][1]);
+                        inFreqTmp[thisThread][m][1] =  ( ADCinFreq[thisThread][ mtunebin+m][1] * filterHw[decimate][m][0]  -
+                                                         ADCinFreq[thisThread][ mtunebin+m][0] * filterHw[decimate][m][1]);
                     }
                   for(int m = 0 ; m < mfft/2; m++) // circular shift tune fs/2 half array
                     {
-                        inFreqTmp[thisThread][mfft/2+m][0] = 0;
-                        inFreqTmp[thisThread][mfft/2+m][1] = 0;
+                        mm = mtunebin - mfft/2 + m;
+                        if ( mm > 0)
+                        {
+
+                        inFreqTmp[thisThread][mfft/2+m][0] = ( ADCinFreq[thisThread][mm][0] * filterHw[decimate][halfFft - mfft/2 + m][0]  +
+                                                                  ADCinFreq[thisThread][mm][1] * filterHw[decimate][halfFft - mfft/2 + m][1]);
+
+                        inFreqTmp[thisThread][mfft/2+m][1] = ( ADCinFreq[thisThread][mm][1] * filterHw[decimate][halfFft - mfft/2 + m][0]  -
+                                                                  ADCinFreq[thisThread][mm][0] * filterHw[decimate][halfFft - mfft/2 + m][1]);
+                        }else
+                        {
+                            inFreqTmp[thisThread][mfft/2+m][0]= inFreqTmp[thisThread][mfft/2+m][1] = 0;
+                        }
                     }
                 }
                 else
                 {
+                  if (mtunebin <= mfft/2) mtunebin=mfft/2;  //guard
                   for(int m = 0 ; m < mfft/2; m++) // circular shift tune fs/2 half array
                     {
                         inFreqTmp[thisThread][m][0] =  ( ADCinFreq[thisThread][ mtunebin+m][0] * filterHw[decimate][m][0]  +
@@ -504,10 +565,8 @@ void *r2iqThreadf(void *arg) {
                                                                ADCinFreq[thisThread][mtunebin - mfft/2 + m][0]  *       filterHw[decimate][halfFft - mfft/2 + m][1]);
                     }
                 }
-
-
               fftwf_execute(plan_f2t_c2c[thisThread][decimate]);     //  c2c decimation
-              float scale =  GAINFACTOR;
+//              float scale =  GAINFACTOR;
               float * pTimeTmp;
               if (moderf == VHFMODE) // invert spectrum
               {
@@ -599,7 +658,7 @@ void *r2iqThreadf(void *arg) {
         }
         {
             FILE * hfiletrace;
-             float scale =  GAINFACTOR;
+//             float scale =  GAINFACTOR;
             for(int k=0; k <1024; k++)
             {
                 outTimeTmp[thisThread][k][0] *= scale;

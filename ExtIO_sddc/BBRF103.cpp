@@ -11,14 +11,14 @@
 #include "r2iq.h"
 extern pfnExtIOCallback	pfnCallback;
 
-UINT8 aa;
 bbRF103 BBRF103;
-
+extern int	giAttIdxVHF;
 
 bbRF103::bbRF103():
     IsOn (false),
-    dither(false),
-    randout(false),
+    dither(true),
+    randout(true),
+    gainadjust(false),
     matt(-1),
     Bgpio (0X17),
     modeRF(NOMODE),
@@ -54,7 +54,8 @@ bool bbRF103::Init()
         }
         UpdatemodeRF(modeRF); // blu led Update
         UptLedRed(false);     // red off
-        UptDither(false);
+        UptDither(dither);
+        UptRand(randout);
         Si5351init();
 
     }
@@ -76,6 +77,18 @@ bool bbRF103::Close()
     return IsOn;
 }
 
+bool bbRF103::ClockInit()
+{
+    if (IsOn)
+        {
+        Si5351init();
+        if (pfnCallback )
+        {
+            pfnCallback( -1, extHw_Changed_LO, 0.0F, 0 );
+        }
+        }
+    return IsOn;
+}
 // attenuator RF used in HF
 int bbRF103::UpdateattRF(int att)
 {
@@ -93,31 +106,31 @@ int bbRF103::UpdateattRF(int att)
                 default: dbatt=0; break;
             }
             attRF = dbatt;
-            UINT8 tmp = Bgpio &(0xFF ^ (SEL0 ||SEL1));
+            UINT16 tmp = Bgpio &(0xFFFF ^ (SEL0 ||SEL1));
             switch(attRF)
                 {
                 case -10: //11
                     Bgpio = tmp | SEL0 | SEL1;
                     break;
                 case -20: //01
-                    Bgpio = (tmp | SEL0) & (0xFF ^ SEL1);
+                    Bgpio = (tmp | SEL0) & (0xFFFF ^ SEL1);
                     break;
                 case 0:   //10
                 default:
-                    Bgpio = (tmp | SEL1) & (0xFF ^ SEL0);
+                    Bgpio = (tmp | SEL1) & (0xFFFF ^ SEL0);
                     break;
                 }
         }
         else  //VHF mode
         {
-            Bgpio = Bgpio & (0xFF ^ (SEL1 |SEL0));
+            Bgpio = Bgpio & (0xFFFF ^ (SEL1 |SEL0));
         }
         if(IsOn)
            {
-               DbgPrintf("UpdateattRF  %02X \n", Bgpio & (SEL0 | SEL1) );
-           if (!fx3Control(GPIOFX3, &Bgpio))
+               DbgPrintf("UpdateattRF  %04X \n", Bgpio & (SEL0 | SEL1) );
+           if (!fx3Control(GPIOFX3, (PUINT8) &Bgpio))
                 HouseKeeping();
-                BBRF103.UptLedYellow(!BBRF103.ledY);  //blink  gadget Yellow
+     //           BBRF103.UptLedYellow(!BBRF103.ledY);  //blink  gadget Yellow
            }
     }
     return attRF;
@@ -128,29 +141,29 @@ int bbRF103::UpdateattRFdB()
 {
     if ((modeRF == HFMODE) || (modeRF == VLFMODE) || (R820T2isalive == false))
     {
-        UINT8 tmp = Bgpio &(0xFF ^ (SEL0 ||SEL1));
+        UINT16 tmp = Bgpio &(0xFFFF ^ (SEL0 ||SEL1));
         switch(attRF)
             {
             case -10: //11
                 Bgpio = tmp | SEL0 | SEL1;
                 break;
             case -20: //01
-                Bgpio = (tmp | SEL0) & (0xFF ^ SEL1);
+                Bgpio = (tmp | SEL0) & (0xFFFF ^ SEL1);
                 break;
             case 0:   //10
             default:
-                Bgpio = (tmp | SEL1) & (0xFF ^ SEL0);
+                Bgpio = (tmp | SEL1) & (0xFFFF ^ SEL0);
                 break;
             }
     }
     else  //VHF mode
     {
-        Bgpio = Bgpio & (0xFF ^ (SEL1 |SEL0));
+        Bgpio = Bgpio & (0xFFFF ^ (SEL1 |SEL0));
     }
     if(IsOn)
        {
-           DbgPrintf("bbRF103::UpdateattRFdB fx3 %02X  %02X \n",GPIOFX3, Bgpio & (SEL0 | SEL1) );
-       if (!fx3Control(GPIOFX3, &Bgpio)) HouseKeeping();
+           DbgPrintf("bbRF103::UpdateattRFdB fx3 %02X  %04X \n",GPIOFX3, Bgpio & (SEL0 | SEL1) );
+       if (!fx3Control(GPIOFX3, (PUINT8) &Bgpio)) HouseKeeping();
        }
     return attRF;
 }
@@ -178,6 +191,7 @@ void bbRF103::SetLO( int64_t lo, rf_mode mode)
 bool bbRF103::UpdatemodeRF(rf_mode mode)
 {
     bool r = true;
+
     if ((mode == VHFMODE) && (!R820T2isalive))
     {
         mode = HFMODE;
@@ -188,23 +202,27 @@ bool bbRF103::UpdatemodeRF(rf_mode mode)
          if((modeRF == HFMODE) || (modeRF == VLFMODE))
          {
              if(IsOn){
+                R820T2.stdby();
                 si5351aSetFrequency(ADC_FREQ, R820T_ZERO);
                 UpdateattRFdB();
                 UptLedBlue(false);
+                UptLedYellow(true);
              }
          }
          else
          {
             r = false;
              if(IsOn){
-                si5351aSetFrequency(ADC_FREQ, R820T_FREQ);
+                si5351aSetFrequency(ADC_FREQ, R820T2_FREQ);
                 r = R820T2.init();
-                UpdateattRFdB();
+                UpdateattRFdB();                        // Update RF gain
+                R820T2.set_all_gains(giAttIdxVHF);
                 UptLedBlue(r);
+                UptLedYellow(false);
             }
          }
 // Update RF_IF
-        Sleep(300);
+     //   Sleep(300);
         if (pfnCallback )
         {
             pfnCallback( -1, extHw_Changed_RF_IF , 0.0F, 0 );
@@ -213,79 +231,99 @@ bool bbRF103::UpdatemodeRF(rf_mode mode)
             pfnCallback( -1, extHw_Changed_LO, 0.0F, 0 );
         }
     }
+//      DbgExtio("*rfmode > %d\n",(int)modeRF);
+//      if (modeRF == VLFMODE)   DbgExtio("*rfmode > VLFMODE");
+
     return r;
 }
 
+
 bool bbRF103::UptDither(bool b)
 {
-    if (IsOn)
-    {
+
     dither = b;
     if (dither == true)
         Bgpio = Bgpio | DITH;
     else
-        Bgpio = Bgpio & (0xff ^ DITH);
-    if (!fx3Control(GPIOFX3, &Bgpio)) HouseKeeping();
-    }
+        Bgpio = Bgpio & (0xffff ^ DITH);
+    ControlHouseKeeping();
     return dither;
 }
 
 bool bbRF103::UptRand (bool b)
 {
-    if (IsOn)
-    {
         randout = b;
         if (randout == true)
             Bgpio = Bgpio | RANDO;
         else
-            Bgpio = Bgpio & (0xff ^ RANDO);
-    if (!fx3Control(GPIOFX3, &Bgpio)) HouseKeeping();
-    }
+            Bgpio = Bgpio & (0xffff ^ RANDO);
+    ControlHouseKeeping();
     r2iqCntrl.randADC =  randout;
     return randout;
 }
 
+bool bbRF103::UptVAntHF( bool gflg)
+{
+    gpwrHF = gflg;
+        if (gpwrHF == ANTPOLARITY )
+            Bgpio = Bgpio | PWRANTHF;
+        else
+            Bgpio = Bgpio & (0xffff ^ PWRANTHF);
+     ControlHouseKeeping();
+    return gpwrHF;
+}
+
+bool bbRF103::UptVAntVHF( bool gflg)
+{
+    gpwrVHF = gflg;
+    if (gpwrVHF == ANTPOLARITY )
+            Bgpio = Bgpio | PWRANTVHF;
+        else
+            Bgpio = Bgpio & (0xffff ^ PWRANTVHF);
+    ControlHouseKeeping();
+    return gpwrVHF;
+}
+
 bool bbRF103::UptLedBlue (bool b)
 {
-    if (IsOn)
-    {
     ledB = b;
     if (ledB == true)
         Bgpio = Bgpio | LED_BLUE;
     else
-        Bgpio = Bgpio & (0xff ^ LED_BLUE);
-    if (!fx3Control(GPIOFX3, &Bgpio)) HouseKeeping();
-    }
+        Bgpio = Bgpio & (0xffff ^ LED_BLUE);
+    ControlHouseKeeping();
     return ledB;
 }
 
 bool bbRF103::UptLedYellow (bool b)
 {
-    if (IsOn)
-    {
     ledY = b;
     if (ledY == true)
         Bgpio = Bgpio | LED_YELLOW;
     else
-        Bgpio = Bgpio & (0xff ^ LED_YELLOW);
-    if (!fx3Control(GPIOFX3, &Bgpio)) HouseKeeping();
-    }
+        Bgpio = Bgpio & (0xffff ^ LED_YELLOW);
+    ControlHouseKeeping();
     return ledY;
 }
 bool bbRF103::UptLedRed (bool b)
 {
-    if (IsOn)
-    {
     ledR = b;
     if (ledR == true)
         Bgpio = Bgpio | LED_RED;
     else
-        Bgpio = Bgpio & (0xff ^ LED_RED);
-    if (!fx3Control(GPIOFX3, &Bgpio)) HouseKeeping();
-    }
+        Bgpio = Bgpio & (0xffff ^ LED_RED);
+
+    ControlHouseKeeping();
     return ledR;
 }
 
+void bbRF103::ControlHouseKeeping(void)
+{
+    if (IsOn)
+    {
+    if (!fx3Control(GPIOFX3,(PUINT8) &Bgpio)) HouseKeeping();
+    }
+}
 
 bool bbRF103::SendI2cbyte(UINT8 i2caddr, UINT8 regaddr, UINT8 data)
 {

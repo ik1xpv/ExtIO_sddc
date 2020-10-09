@@ -42,31 +42,32 @@ static int  SDR_ver_minor = -1;
 static int		gHwType = exthwUSBfloat32;
 
 static int		giExtSrateIdx = 0;
-static unsigned gExtSampleRate = 32000000;
-
+static int      giExtSrateIdxHF = 0;
+static unsigned gExtSampleRate = 2000000;
 
 volatile double	gaCarrierAmp[NUM_CARRIER];
 volatile double	gaCarrierPhaseInc[NUM_CARRIER];
 
 volatile int64_t	glLOfreq = 0L;
-bool	gbInitHW = false;
+volatile int64_t	glTunefreq = 16000000L;
+volatile int64_t	glTunefreqold = 0L;
 
-int		giAttIdxHF = 0;
-int		giAttIdxVHF = 5;
+bool	gbInitHW = false;
+unsigned int gADCRate = ADC_FREQ;
+
 int		giDefaultAttIdxHF = 2;	// 0 dB
-int		giDefaultAttIdxVHF = 5;	// 0 dB
-int		giMgcIdx = 0;
-int		giDefaultMgcIdx = 0;	// 0 dB
+int		giAttIdxHF = giDefaultAttIdxHF;
+int		giDefaultAttIdxVHF = 10;	// 0 dB
+int		giAttIdxVHF = giDefaultAttIdxVHF;
+int		giDefaultMgcIdx = 0;	    // 0 dB
 int		giAgcIdx = 0;
-int		giDefaultAgcIdx = 1;	// Auto
-int		giMixGainIdx = 0;
-int		giVGAGainIdx = 0;
-int		giDefaultMixGainIdx = 0;	// Default IF gain 0
+int		giDefaultAgcIdx = 1;	    // Auto
+int		giDefaultMixGainIdx = 5;
 int		giDefaultVGAGainIdx = 0;    // Default VGA gain 0
 int		giThrIdx = 0;
-int		giDefaultThrIdx = 2;	// Threshold: 20 dB
+int		giDefaultThrIdx = 2;	    // Threshold: 20 dB
 int		giWhatIdx = 0;
-int     gdownsampleratio = 1;
+
 pfnExtIOCallback	pfnCallback = 0;
 
 HWND Hconsole;
@@ -205,15 +206,7 @@ int start_AdcSamplesProc(void ) { // pass in the main_loopf thread function
     global.run = true;
     int t = 0;
     pthread_create(&show_stats_thread, NULL, tShowStats, (void *)t);
-    switch (gExtSampleRate)
-    {
-    case 32000000: gdownsampleratio = 0; break;
-    case 16000000: gdownsampleratio = 1; break;
-    case  8000000: gdownsampleratio = 2; break;
-    case  4000000: gdownsampleratio = 3; break;
-    case  2000000: gdownsampleratio = 4; break;
-    }
-    initR2iq(gdownsampleratio); // XPV
+    initR2iq(giExtSrateIdx);
     global.start = true;
     if ((BBRF103.IsReady())&&((inject_tone ==  ADCstream)||
                               (inject_tone ==  ToneRF)||
@@ -221,7 +214,6 @@ int start_AdcSamplesProc(void ) { // pass in the main_loopf thread function
      pthread_create(&adc_samples_thread, NULL, AdcSamplesProc, (void *)t);
     else
     {
-     //   if (warnflag) inject_tone = ToneIF;
         if ((inject_tone ==  ADCstream)||(inject_tone ==  ToneRF)||(inject_tone ==  SweepRF))
             inject_tone = ToneIF;
         pthread_create(&adc_samples_thread, NULL, fake_AdcSamplesProc, (void *)t);
@@ -320,7 +312,7 @@ void *AdcSamplesProc(void*)
               }
 			}
 
-        r2iqDataReady();         //  XPV play the r2iq
+        r2iqDataReady();         //   play the r2iq
 
         // Re-submit this queue element to keep the queue full
         contexts[idx] = EndPt->BeginDataXfer(buffers[idx], global.transferSize, &inOvLap[idx]);
@@ -340,8 +332,6 @@ void *AdcSamplesProc(void*)
         idx = idx%QUEUE_SIZE;
     }  // End of the infinite loop
 
- //   DbgPrintf("FX3Reset.\n");
- //   fx3FWControl(FX3Reset); // reset the firmware
     fx3Control(STOPFX3);
     Sleep(400);
     pthread_mutex_unlock(&mutexShowStats); //  allows exit of
@@ -502,18 +492,14 @@ void * tShowStats(void *args)
              DbgPrintf("I&Q %6.3f Msps, virtual IF sweep\n", mSpsIF);
              break;
         case ADCstream:
-             DbgPrintf("ADC rate %6.3f Msps \n", mBps/2.0);
+             DbgPrintf("ADC rate %6.3f Msps \r", mBps/2.0);
              break;
         default:
              break;
         }
         BytesXferred = 0;
         SamplesXIF = 0;
-        if (BBRF103.ledY)
-        {
-            BBRF103.ledY= false;
-            BBRF103.UptLedYellow(BBRF103.ledY);  //blink if thread runs gadgets BBRF103
-        }
+
         sprintf(lbuffer,"%6.3f Msps real",mBps/2.0);
         SetWindowText(GetDlgItem(h_dialog, IDC_STATIC14),lbuffer);
         sprintf(lbuffer,"%6.3f Msps complex",mSpsIF);
@@ -555,6 +541,22 @@ static void startThread()
 }
 
 HMODULE hInst;
+
+
+void EXTIO_API UpdateAttenuator( void )
+{
+    rf_mode rfmode = BBRF103.GetmodeRF();
+    if (rfmode == VHFMODE)
+    {
+        R820T2.set_all_gains(giAttIdxVHF);
+    }
+    else
+    {
+        BBRF103.UpdateattRF(giAttIdxHF );
+    }
+    return ;
+}
+
 //---------------------------------------------------------------------------
 
 extern "C"
@@ -589,7 +591,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 	{
 		// do initialization
         warnflag = true;
-		glLOfreq = 16000000L;	// just a default value
+		glLOfreq = 8000000L;	// just a default value
 		// .......... init here the hardware controlled by the DLL
 		// ......... init here the DLL graphical interface, if any
         h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_MAIN), NULL, (DLGPROC)&DlgMainFn);
@@ -606,9 +608,10 @@ SetWindowLong(h_dialog, GWL_STYLE, lStyle);
         splashW.createSplashWindow(hInst,IDB_BITMAP2,15,15,15);
 
       // SetWindowPos(h_dialog, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-		giAttIdxHF = giDefaultAttIdxHF;
-        giAttIdxVHF = giDefaultAttIdxVHF;
-		giMgcIdx = giDefaultMgcIdx;
+//        giAttIdxHF = giDefaultAttIdxHF;
+//        giAttIdxVHF = giDefaultAttIdxVHF;
+//        giMixGainIdx = giDefaultMixGainIdx;
+
 		giAgcIdx = giDefaultAgcIdx;
 		giThrIdx = giDefaultThrIdx;
 
@@ -616,7 +619,7 @@ SetWindowLong(h_dialog, GWL_STYLE, lStyle);
         if (AllocConsole())
 		{
 			freopen( "CONOUT$", "wt", stdout);
-			SetConsoleTitle(TEXT("Debug Black Box Console ExtIO_sspeed " HWNAME));
+			SetConsoleTitle(TEXT("Debug Black Box Console ExtIO_sddc " HWNAME));
 			Hconsole = GetConsoleWindow();
             RECT rect;
             GetWindowRect(GetDesktopWindow(), &rect);
@@ -634,9 +637,20 @@ SetWindowLong(h_dialog, GWL_STYLE, lStyle);
         gsel1 = 1;
 		gshdwn = 0;
 		gdith = 0;
-
 		gbInitHW = true; // in case it runs offline
- //       init_AdcSamplesProc();  // allocate buffers etc ??
+
+        DbgPrintf((char *) "Init values \n");
+        DbgPrintf("SDR_settings_valid = %d \n" , SDR_settings_valid );  // settings are version specific !
+        DbgPrintf("giExtSrateIdx = %d   %f Msps \n" , giExtSrateIdx, pow(2.0, 1.0+ giExtSrateIdx ) );
+        DbgPrintf("giAttIdxHF = %d \n" , giAttIdxHF);
+        DbgPrintf("giAttIdxVHF = %d \n" , giAttIdxVHF);
+        DbgPrintf("gainadjustHF = %d \n" , BBRF103.GetGainadjustHF());
+        DbgPrintf("gainadjust = %d \n" , BBRF103.GetGainadjust());
+        DbgPrintf("VAntHF = %d \n" , BBRF103.GetVAntHF());
+        DbgPrintf("VAntVHF = %d \n" , BBRF103.GetVAntVHF());
+        DbgPrintf("modeRF = %d \n" , BBRF103.GetmodeRF());
+        DbgPrintf("glTunefreq = %ld \n",(long int) glTunefreq);
+
 	}
 	return gbInitHW;
 }
@@ -647,17 +661,9 @@ bool EXTIO_API OpenHW(void)
 {
 	// .... display here the DLL panel ,if any....
 
-//    ShowWindow(h_dialog, SW_SHOW);
-//     ShowWindow(h_dialog, SW_HIDE);
-#ifdef NDEBUG
-    splashW.showWindow();
-#endif
-
 	if ( pfnCallback )
 		pfnCallback( -1, extHw_Changed_ATT, 0.0F, 0 );
 
-	// in the above statement, F->handle is the window handle of the panel displayed
-	// by the DLL, if such a panel exists
 	return gbInitHW;
 }
 
@@ -665,6 +671,7 @@ bool EXTIO_API OpenHW(void)
 extern "C"
 int  EXTIO_API StartHW(long LOfreq)
 {
+    DbgExtio("*StartHW \n");
 	int64_t ret = StartHW64( (int64_t)LOfreq );
 	return (int)ret;
 }
@@ -673,7 +680,7 @@ int  EXTIO_API StartHW(long LOfreq)
 extern "C"
 int64_t EXTIO_API StartHW64(int64_t LOfreq)
 {
-    DbgPrintf((char *)"\nStartHW \n");
+    DbgExtio("\n*StartHW64 %ld\n",(long int) LOfreq);
 	if (!gbInitHW)
 		return 0;
 
@@ -688,7 +695,8 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
         DbgPrintf((char *) "BBRF103 initialized \n");
     init_AdcSamplesProc();  // allocate buffers...
     SetHWLO64(LOfreq);
-    SetAttenuator(giAttIdxHF);
+ //   SetAttenuator(giAttIdxHF);
+    UpdateAttenuator();
  	startThread();
     splashW.destroySplashWindow();
 
@@ -697,20 +705,28 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
     if (BBRF103.IsReady())
     {
         SetWindowText (h_dialog, "BBRF103 connected");
-        if ((glLOfreq < 32000000)||(BBRF103.R820T2isalive == false))
-            {    // initialize attenuators
-            BBRF103.UpdatemodeRF(HFMODE);
-                SetAttenuator(giAttIdxHF);
-            }
-        else{
-            if (BBRF103.R820T2isalive == true)
+
+            if ((glLOfreq < 32000000)||(BBRF103.R820T2isalive == false))  // IF HF or NO R820T
                 {
-                    BBRF103.UpdatemodeRF(VHFMODE);
-                    SetAttenuator(giAttIdxVHF);
-                    gExtSampleRate = 8000000;
-                    if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate  );
+                   // if (BBRF103.GetmodeRF()== VLFMODE)
+                    if (glTunefreq < 800000)
+                        BBRF103.UpdatemodeRF(VLFMODE);    //  VLF
+                    else
+                        BBRF103.UpdatemodeRF(HFMODE);     //  HF
+                    SetAttenuator(giAttIdxHF);
                 }
-            }
+            else{
+                if (BBRF103.R820T2isalive == true)
+                    {
+                        BBRF103.UpdatemodeRF(VHFMODE);
+                        SetAttenuator(giAttIdxVHF);
+                        if (gExtSampleRate > R820T2_MAXSR)
+                            gExtSampleRate = R820T2_MAXSR;
+                        if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate  );
+                        RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
+                    }
+                }
+
     }
     else
     {
@@ -734,6 +750,7 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
 extern "C"
 void EXTIO_API StopHW(void)
 {
+    DbgExtio("*StopHW\n\n");
 	stopThread();
 	return;
 }
@@ -742,6 +759,7 @@ void EXTIO_API StopHW(void)
 extern "C"
 void EXTIO_API CloseHW(void)
 {
+    DbgExtio("*CloseHW\n");
 	// ..... here you can shutdown your graphical interface, if any............
 	if (h_dialog != NULL)
         DestroyWindow(h_dialog);
@@ -811,29 +829,60 @@ int  EXTIO_API SetHWLO(long LOfreq)
 extern "C"
 int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 {
+
 	// ..... set here the LO frequency in the controlled hardware
 	// Set here the frequency of the controlled hardware to LOfreq
 	const int64_t wishedLO = LOfreq;
 	int64_t ret = 0;
+    DbgExtio("*SetHWLO64   %ld\n",(long int) LOfreq);
+    LOfreq = r2iqCntrl.UptTuneFrq(LOfreq); //update LO freq
 
-    LOfreq = r2iqCntrl.UptTuneFrq(LOfreq); //update
-	// take frequency
 	glLOfreq = LOfreq;
-
     rf_mode rfmode = BBRF103.GetmodeRF();
 	if ((LOfreq > 32000000)&&( rfmode == HFMODE))
     {
         if (BBRF103.R820T2isalive == true)
         {
+            giExtSrateIdxHF = giExtSrateIdx;  // save HF SRate
             BBRF103.UpdatemodeRF(VHFMODE);
-            gExtSampleRate = 8000000;
+            giExtSrateIdx = 2;
+            r2iqCntrl.Setdecimate(giExtSrateIdx);
             if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate  );
+
+            glTunefreqold = glLOfreq;
+            if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE );
+            RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
         }
     }
-	if ((LOfreq < 31000000)&&( rfmode == VHFMODE))
+	if (LOfreq < 31000000)
     {
-        BBRF103.UpdatemodeRF(HFMODE);
+        switch(rfmode)
+        {
+            case VHFMODE:
+                BBRF103.UpdatemodeRF(HFMODE);
+                giExtSrateIdx = giExtSrateIdxHF;  // restore HF SRate
+                r2iqCntrl.Setdecimate(giExtSrateIdx);
+                if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate  );
+                glTunefreqold = glLOfreq;
+                if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE );
+                RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
+                break;
+            case HFMODE:
+                if (glTunefreq < 800000)
+                    BBRF103.UpdatemodeRF(VLFMODE);    //  VLF
+                RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
+                break;
+            case VLFMODE:
+                if (glTunefreq > 800000)
+                    BBRF103.UpdatemodeRF(HFMODE);    //  Bug VLF
+                RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
+                break;
+            default:
+                break;
+
+        }
     }
+
 	if ( wishedLO != LOfreq  &&  pfnCallback )
     {
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO );
@@ -872,32 +921,77 @@ void EXTIO_API SetCallback( pfnExtIOCallback funcptr )
 extern "C"
 long EXTIO_API GetHWLO(void)
 {
+    DbgExtio("*GetHWLO\n");
 	return (long)( glLOfreq & 0xFFFFFFFF );
 }
 
 extern "C"
 int64_t EXTIO_API GetHWLO64(void)
 {
-    if ((glLOfreq == 0)&&(BBRF103.GetmodeRF()== HFMODE))
-        {
-            glLOfreq = gExtSampleRate/2;
-        }
-    if (BBRF103.GetmodeRF()== VLFMODE)
-        glLOfreq = 0;
-        // glLOfreq = gExtSampleRate/2;
-    else
-        if (gExtSampleRate == 32000000)   // case 32 Msps sampling rate LO si fixed to 16M
-           glLOfreq = 16000000;
-
-
+    glLOfreq = r2iqCntrl.UptTuneFrq(glLOfreq); //update
+    DbgExtio("*GetHWLO64 <-%ld\n",(long int) glLOfreq);
 	return glLOfreq;
 }
+
+extern "C" void EXTIO_API TuneChanged(long freq)
+{
+    TuneChanged64(freq);
+}
+extern "C" void EXTIO_API TuneChanged64(int64_t freq)
+{
+    if ((freq < 32000000)&& (glLOfreq > 32000000))
+    {
+        glTunefreqold = glLOfreq;
+        if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE );
+    }
+    else
+    if (((glTunefreq > (freq + 50000))|| (glTunefreq < (freq - 50000)) ) // +- 50kHz isteresis
+        && (freq < 32000000))
+    {
+        glTunefreq = freq;
+        DbgExtio("*TuneChanged64 <-%ld\n",(long int) glTunefreq);
+        rf_mode rfmode = BBRF103.GetmodeRF();
+//        DbgExtio("*rfmode <-%d\n",(int)rfmode);
+        if ( rfmode == HFMODE)
+        {
+            if (glTunefreq < 800000)
+            {
+                glTunefreqold = glTunefreq;
+                BBRF103.UpdatemodeRF(VLFMODE);    //  Bug VLF
+                RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
+                if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE );
+            }
+        }
+        if ( rfmode == VLFMODE)
+        {
+            if (glTunefreq > 800000)
+            {
+                glTunefreqold = glTunefreq;
+                BBRF103.UpdatemodeRF(HFMODE);    //  Bug VLF
+                RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
+                if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE );
+            }
+        }
+    }
+}
+extern "C" int64_t EXTIO_API GetTune64(void)
+{
+    return glTunefreqold;
+}
+
+
+
 
 //---------------------------------------------------------------------------
 extern "C"
 long EXTIO_API GetHWSR(void)
 {
-	// This DLL controls just an oscillator, not a digitizer
+    double newSrate;
+    if ( 0 == ExtIoGetSrates( giExtSrateIdx, &newSrate ) )
+    {
+        gExtSampleRate = (unsigned)( newSrate + 0.5 );
+    }
+    DbgExtio("*GetHWSR  %d\n", gExtSampleRate);
 	return gExtSampleRate;
 }
 
@@ -968,9 +1062,11 @@ int  GetAttenuatorsVHF(int atten_idx, float * attenuation)
 	// sort by attenuation: use idx 0 for highest attenuation / most damping
 	// this functions is called with incrementing idx
 	//    - until this functions return != 0 for no more attenuator setting
-	if ((atten_idx >= 0) && (atten_idx < 15))  // 15 steps
+	if ((atten_idx >= 0) && (atten_idx < GAIN_STEPS))  // 29 steps
 	{
-		*attenuation =  (float) r820t2_lna_gain_steps[atten_idx];
+//		*attenuation = -20.0 + R820T2.get_gain_dB( (UINT) atten_idx );
+		*attenuation =  R820T2.get_gain_dB( (UINT) atten_idx );
+
 		return 0;
 	}
 	return 1;
@@ -986,6 +1082,7 @@ int EXTIO_API GetAttenuators( int atten_idx, float * attenuation )
 	// sort by attenuation: use idx 0 for highest attenuation / most damping
 	// this functions is called with incrementing idx
 	//    - until this functions return != 0 for no more attenuator setting
+//    DbgExtio("*GetAttenuators idx %d\n",atten_idx);
 	if (BBRF103.GetmodeRF() == VHFMODE)
 		return GetAttenuatorsVHF( atten_idx, attenuation);
 	else                     // VLFMODE HFMODE
@@ -996,6 +1093,7 @@ int EXTIO_API GetAttenuators( int atten_idx, float * attenuation )
 extern "C"
 int EXTIO_API GetActualAttIdx(void)
 {
+   // DbgExtio("*GetActualAttIdx\n");
     if (BBRF103.GetmodeRF() == VHFMODE)
         return giAttIdxVHF;	// returns -1 on error
     else
@@ -1005,12 +1103,13 @@ int EXTIO_API GetActualAttIdx(void)
 extern "C"
 int EXTIO_API SetAttenuator( int atten_idx )
 {
+  //  DbgExtio("*SetAttenuator idx %d\n",atten_idx);
     rf_mode rfmode = BBRF103.GetmodeRF();
     if (rfmode== VHFMODE)
     {
-      	if ((atten_idx >=0) && (atten_idx < 15))  // 15 steps 0-14
+      	if ((atten_idx >=0) && (atten_idx < GAIN_STEPS))  // 29 steps 0-50
 		{
-			R820T2.set_lna_gain(atten_idx);
+			R820T2.set_all_gains(atten_idx);
 			giAttIdxVHF = atten_idx;
 		}
     }
@@ -1025,172 +1124,28 @@ int EXTIO_API SetAttenuator( int atten_idx )
 
 //---------------------------------------------------------------------------
 
-// optional function to get AGC Mode: AGC_OFF (always agc_index = 0), AGC_SLOW, AGC_MEDIUM, AGC_FAST, ...
-// this functions is called with incrementing idx
-//    - until this functions returns != 0, which means that all agc modes are already delivered
 
-extern "C"
-int EXTIO_API ExtIoGetAGCs(int agc_idx, char * text)	// text limited to max 16 char
-{
-    if (BBRF103.GetmodeRF()== VHFMODE)
-    {
-        switch (agc_idx)
-        {
-            case 0:		strcpy(text, "Mix");	return 0;  // shows "IF"
-            case 1:		strcpy(text, "VGA");	return 0;
-            default:	return 1;
-        }
-    }
-	return 1;
-}
-
-extern "C"
-int EXTIO_API ExtIoGetActualAGCidx(void)
-{
-	return giAgcIdx;	// returns -1 on error
-}
-
-extern "C"
-int EXTIO_API ExtIoSetAGC(int agc_idx)
-{
-	int iPrevAgcIdx = giAgcIdx;
-	switch (agc_idx)
-	{
-	case 0:
-	case 1:
-		giAgcIdx = agc_idx;
-		if (iPrevAgcIdx != giAgcIdx)
-		{
-			if (pfnCallback)
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
-		}
-		return 0;
-	default:
-		return 1;	// ERROR
-	}
-	return 1;	// ERROR
-}
 
 // optional: HDSDR >= 2.62
 extern "C"
-int EXTIO_API ExtIoShowMGC(int agc_idx)		// return 1, to continue showing MGC slider on AGC
-											// return 0, is default for not showing MGC slider
+int EXTIO_API ExtIoShowMGCX(int agc_idx)		// return 1, to continue showing MGC slider on AGC
+                                           // return 0, is default for not showing MGC slider
 {
-    if (BBRF103.GetmodeRF()== VHFMODE)
-    {
-        switch (agc_idx)
-        {
-        case 0:	return 1;	// MiX (IF)
-        case 1:	return 1;	// VGA
-        default:
-            return 0;	// ERROR
-        }
-    }
+
 	return 0;	// ERROR
 }
 //---------------------------------------------------------------------------
 
-// following "MGC"s visible on "IF" button
 
-extern "C"
-int EXTIO_API ExtIoGetMGCs(int mgc_idx, float * gain)
-{
-	// fill in gain
-	// sort by ascending gain: use idx 0 for lowest gain
-	// this functions is called with incrementing idx
-	//    - until this functions returns != 0, which means that all gains are already delivered
-    if (BBRF103.GetmodeRF()== VHFMODE)
-    {
-        switch (giAgcIdx)
-        {
-        case 0:	// Mix  (IF)
-            if ((mgc_idx >= 0) && (mgc_idx < 16))
-            {
-                *gain = (float) mgc_idx ;	return 0;
-            }else
-                return 1;
-            break;
-        case 1:	// VGA
-            if ((mgc_idx >= 0) && (mgc_idx < 16))
-            {
-                *gain = (float)mgc_idx*3.0F;	return 0;
-            }
-            else
-                return 1;
-            break;
-        }
-    }
-	return 1;
-}
 
-extern "C"
-int EXTIO_API ExtIoGetActualMgcIdx(void)
-{
-	switch (giAgcIdx)
-	{
-	case 0:	// Mix
-		return giMixGainIdx;
-	case 1:	// VGA
-		return giVGAGainIdx;
-	}
-	return -1;
-}
 
-extern "C"
-int EXTIO_API ExtIoSetMGC(int mgc_idx)
-{
-//	int iPrevMgcIdx = giMgcIdx;
-	int iPrevMixIdx = giMixGainIdx;
-	int iPrevVGAIdx = giVGAGainIdx;
-	//
-//	double x = 0.0F;
-	switch (giAgcIdx)
-	{
-	case 0:	// Mix
-		if ((mgc_idx >= 0) && (mgc_idx < 16))
-		{
-			giMixGainIdx = mgc_idx;
-			if (iPrevMixIdx != giMixGainIdx)
-			{
-				if (pfnCallback)
-					EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
-				if (BBRF103.GetmodeRF() == VHFMODE)
-					R820T2.set_mixer_gain(giMixGainIdx);
-			}
-			return 0;
-		}
-		else
-			return 1;	// ERROR
-		break;
-
-	case 1:	// VGA
-		if ((mgc_idx >= 0) && (mgc_idx < 6))
-		{
-			giVGAGainIdx = mgc_idx;
-			if (iPrevVGAIdx != giVGAGainIdx)
-			{
-				if (pfnCallback)
-					EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
-				if (BBRF103.GetmodeRF() == VHFMODE)
-                {
-   					R820T2.set_vga_gain(giVGAGainIdx);
-   					Sleep(30);
-                }
-			}
-			return 0;
-		}
-		else
-			return 1;	// ERROR
-		break;
-	}
-	return 1;	// ERROR
-}
 
 //---------------------------------------------------------------------------
 // fill in possible samplerates
 extern "C"
 int EXTIO_API ExtIoGetSrates( int srate_idx, double * samplerate )
 {
+//    DbgExtio("*ExtIoGetSrate idx %d\n",srate_idx);
     switch ( srate_idx )
     {
     case 0:		*samplerate =  2000000.0;	return 0;
@@ -1205,26 +1160,20 @@ int EXTIO_API ExtIoGetSrates( int srate_idx, double * samplerate )
 extern "C"
 int  EXTIO_API ExtIoGetActualSrateIdx(void)
 {
-    	return giExtSrateIdx;
+//    DbgExtio("*ExtIoGetActualSrateIdx  %d\n ", giExtSrateIdx);
+    return giExtSrateIdx;
 }
 
 extern "C"
 int  EXTIO_API ExtIoSetSrate( int srate_idx )
 {
 	double newSrate = 0.0;
+    DbgExtio("*ExtIoSetSrate idx %d\n",srate_idx);
 	if ( 0 == ExtIoGetSrates( srate_idx, &newSrate ) )
 	{
 		giExtSrateIdx = srate_idx;
 		gExtSampleRate = (unsigned)( newSrate + 0.5 );
-        switch (gExtSampleRate)
-        {
-        case 32000000: gdownsampleratio = 0; break;
-        case 16000000: gdownsampleratio = 1; break;
-        case  8000000: gdownsampleratio = 2; break;
-        case  4000000: gdownsampleratio = 3; break;
-        case  2000000: gdownsampleratio = 4; break;
-        }
-        r2iqCntrl.Setdecimate(gdownsampleratio);
+        r2iqCntrl.Setdecimate(giExtSrateIdx);
         int64_t newLOfreq = r2iqCntrl.UptTuneFrq(glLOfreq);
         if ( newLOfreq != glLOfreq)
         {
@@ -1244,6 +1193,8 @@ long EXTIO_API ExtIoGetBandwidth( int srate_idx )
 {
 	double newSrate = 0.0;
 	long ret = -1L;
+//    DbgExtio("*ExtIoGetBandwidth idx %d\n",srate_idx);
+
 	if ( 0 == ExtIoGetSrates( srate_idx, &newSrate ) )
 	{
 		switch ( srate_idx )
@@ -1267,10 +1218,32 @@ int  EXTIO_API ExtIoGetSetting( int idx, char * description, char * value )
 {
 	switch ( idx )
 	{
-	case 0: snprintf( description, 1024, "%s", "Identifier" );		snprintf( value, 1024, "%s", SETTINGS_IDENTIFIER );	return 0;
-	case 1:	snprintf( description, 1024, "%s", "SampleRateIdx" );	snprintf( value, 1024, "%d", giExtSrateIdx );		return 0;
-	case 2:	snprintf( description, 1024, "%s", "AttenuationIdxHF" );	snprintf( value, 1024, "%d", giAttIdxHF );			return 0;
-	case 3:	snprintf( description, 1024, "%s", "AttenuationIdxVHF" );   snprintf( value, 1024, "%d", giAttIdxVHF );			return 0;
+	case 0: snprintf( description, 1024, "%s", "Identifier" );
+	  snprintf( value, 1024, "%s", SETTINGS_IDENTIFIER );	return 0;
+	case 1:	snprintf( description, 1024, "%s", "SampleRateIdx" );
+	  snprintf( value, 1024, "%d", giExtSrateIdx );		return 0;
+	case 2:	snprintf( description, 1024, "%s", "AttenuationIdxHF" );
+	  snprintf( value, 1024, "%d", giAttIdxHF );		return 0;
+	case 3:	snprintf( description, 1024, "%s", "AttenuationIdxVHF" );
+	  snprintf( value, 1024, "%d", giAttIdxVHF );		return 0;
+    case 4:	snprintf( description, 1024, "%s", "GainadjustHF" );
+	  snprintf( value, 1024, "%d", BBRF103.GetGainadjustHF() );	return 0;
+    case 5:	snprintf( description, 1024, "%s", "GainadjustVHF" );
+	  snprintf( value, 1024, "%d", BBRF103.GetGainadjust() );	return 0;
+    case 6:	snprintf( description, 1024, "%s", "VAntHF" );
+	  snprintf( value, 1024, "%d", BBRF103.GetVAntHF() );	return 0;
+    case 7:	snprintf( description, 1024, "%s", "VAntVHF" );
+	  snprintf( value, 1024, "%d", BBRF103.GetVAntVHF() );	return 0;
+    case 8:	snprintf( description, 1024, "%s", "RFMODE" );
+	  snprintf( value, 1024, "%d", BBRF103.GetmodeRF() );	return 0;
+    case 9:	snprintf( description, 1024, "%s", "Lasttune" );
+	  snprintf( value, 1024, "%ld", glTunefreq);	return 0;
+    case 10: snprintf( description, 1024, "%s", "Dither" );
+	  snprintf( value, 1024, "%d", BBRF103.GetDither() ); return 0;
+    case 11: snprintf( description, 1024, "%s", "Randomize" );
+	  snprintf( value, 1024, "%d", BBRF103.GetRand() ); return 0;
+	case 12: snprintf( description, 1024, "%s", "Freq Ref Correction");
+      snprintf( value, 1024, "%f", freqcorrection ); return 0;
 	default:	return -1;	// ERROR
 	}
 	return -1;	// ERROR
@@ -1283,6 +1256,7 @@ void EXTIO_API ExtIoSetSetting( int idx, const char * value )
 	double newSrate;
 	float  newAtten = 0.0F;
 	int tempInt;
+	double tempDouble;
 	// now we know that there's no need to save our settings into some (.ini) file,
 	// what won't be possible without admin rights!!!,
 	// if the program (and ExtIO) is installed in C:\Program files\..
@@ -1300,20 +1274,52 @@ void EXTIO_API ExtIoSetSetting( int idx, const char * value )
 				{
 					giExtSrateIdx = tempInt;
 					gExtSampleRate = (unsigned)( newSrate + 0.5 );
+                    r2iqCntrl.Setdecimate(tempInt);
 				}
 				break;
 	case 2:		tempInt = atoi( value );
-				if ( 0 == GetAttenuators( tempInt,&newAtten ) )
-					giDefaultAttIdxHF = tempInt;
+				if ( 0 == GetAttenuatorsHF( tempInt,&newAtten ) )  // validate
+					giAttIdxHF = tempInt;
+                else
+					giAttIdxHF = giDefaultAttIdxHF;
 				break;
     case 3:		tempInt = atoi( value );
-				if ( 0 == GetAttenuators( tempInt,&newAtten ) )
-					giDefaultAttIdxVHF =  tempInt;
+				if ( 0 == GetAttenuatorsVHF( tempInt,&newAtten ) ) // validate
+                    giAttIdxVHF =  tempInt;
+                else
+                    giAttIdxVHF = giDefaultAttIdxVHF;
 				break;
+    case 4:		tempInt = atoi( value );
+                BBRF103.UptGainadjustHF(tempInt);
+				break;
+    case 5:		tempInt = atoi( value );
+                BBRF103.UptGainadjust(tempInt);
+				break;
+    case 6:		tempInt = atoi( value );
+                BBRF103.UptVAntHF(tempInt);
+                break;
+    case 7:		tempInt = atoi( value );
+                BBRF103.UptVAntVHF(tempInt);
+				break;
+    case 8:		tempInt = atoi( value );
+                BBRF103.UpdatemodeRF((rf_mode)tempInt);
+				break;
+    case 9:     tempInt = atoi( value );
+                glTunefreq = tempInt;
+                break;
+    case 10:    tempInt = atoi( value );
+                BBRF103.UptDither((bool)tempInt);
+                break;
+    case 11:    tempInt = atoi( value );
+                BBRF103.UptRand((bool)tempInt);
+                break;
+    case 12:    if ( sscanf(value,"%lf", &tempDouble) >0)
+                {
+                    if ((tempDouble < 10000.0) && (tempDouble > -10000.0))    //    if < 10 kHz span
+                        freqcorrection = tempDouble;
+                }
+                break;
 
 	}
-
 }
-
-
 //---------------------------------------------------------------------------

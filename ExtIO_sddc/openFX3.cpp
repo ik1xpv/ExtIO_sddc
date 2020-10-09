@@ -33,6 +33,7 @@ bool fx3Control(FX3Command command, PUINT8 data) { // firmware control BBRF
         fx3dev->ControlEndPt->ReqCode = command;
         fx3dev->ControlEndPt->Value = (USHORT) SI5351_ADDR ;
         fx3dev->ControlEndPt->Index = (USHORT) 0;
+        lgt = 2; // GPIO len
         r = fx3dev->ControlEndPt->Write(data,lgt);
         break;
     case TESTFX3:

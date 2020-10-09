@@ -18,6 +18,10 @@
 #define SHDWN (32)  	//   SHDWN  GPIO28
 #define DITH (64)		//   DITH   GPIO29
 #define RANDO (128)		//   RAND   GPIO20
+#define PWRANTHF  (256) //   PWRANTHF GPIO19
+#define PWRANTVHF (512) //   PWRANTVHF GPIO18
+#define SPARE1    (1024)//   GPIO17
+
 
 
 
@@ -26,6 +30,7 @@ public:
     bbRF103();
     bool Init();
     bool Close();
+    bool ClockInit();
     bool IsReady(){return IsOn;}
     int UpdateattRF(int att);
     int64_t GetLO();
@@ -45,6 +50,14 @@ public:
     bool GetRand () {return randout;}
     bool UptTrace( bool trace){ traceflag = trace; return traceflag;}
     bool GetTrace( ){return traceflag; }
+    bool UptGainadjust( bool gainflg){ gainadjust = gainflg; return gainadjust;}
+    bool GetGainadjust(){return gainadjust; }
+    bool UptGainadjustHF( bool gainflg){ gainadjustHF = gainflg; return gainadjustHF;}
+    bool GetGainadjustHF(){return gainadjustHF; }
+    bool UptVAntVHF( bool gflg);
+    bool GetVAntVHF(){return gpwrVHF; }
+    bool UptVAntHF( bool gflg);
+    bool GetVAntHF(){return gpwrHF; }
     bool ledB;
     bool ledY;
     bool ledR;
@@ -54,16 +67,20 @@ public:
     void ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, UINT8 * pdata, UINT8 len);
     bool R820T2isalive;
 private:
+    void ControlHouseKeeping(void);
     void HouseKeeping();
     int64_t lofreqm[3]; // lo oscillator memory
     bool IsOn;
     bool dither;
     bool randout;
     bool traceflag;
+    bool gainadjust;
+    bool gainadjustHF;
+    bool gpwrHF;
+    bool gpwrVHF;
     int  matt;
-    UINT8 Bgpio; // buffer GPIO
+    UINT16 Bgpio; // buffer GPIO
     rf_mode modeRF;  // VLF, HF, VHF-UHF
-
     int attRF;
 };
 

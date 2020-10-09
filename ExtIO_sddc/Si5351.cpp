@@ -16,7 +16,7 @@ void Si5351init()
     if ((BBRF103.GetmodeRF() == HFMODE) || (BBRF103.GetmodeRF() == VLFMODE))
           si5351aSetFrequency(ADC_FREQ, R820T_ZERO);
     else
-          si5351aSetFrequency(ADC_FREQ,R820T_FREQ);
+          si5351aSetFrequency(ADC_FREQ,R820T2_FREQ);
     DbgPrintf("Si5351_init()\n");
 }
 
@@ -106,7 +106,7 @@ void si5351aSetFrequency(UINT32 freq, UINT32 freq2)
 {
     UINT32 frequency;
 	UINT32 pllFreq;
-	UINT32 xtalFreq = SI5351_FREQ;
+	UINT32 xtalFreq = SI5351_XTAL;
 	UINT32 l;
 	double f;
 	UINT8 mult;
@@ -115,8 +115,8 @@ void si5351aSetFrequency(UINT32 freq, UINT32 freq2)
 	UINT32 divider;
 	UINT32 rdiv;
 
-	double corr = 0.9999314;
-	//double corr = 1.0;
+//	double corr = FREQCORRECTION;
+	double corr = (1.0 + freqcorrection / SI5351_XTAL );
 
 	DbgPrintf("BBRF103 si5351 SetFreq ADC sampling:%d R820T reference:%d\n", freq, freq2);
 
@@ -167,7 +167,7 @@ void si5351aSetFrequency(UINT32 freq, UINT32 freq2)
 		// calculate clk2
 		frequency = (UINT32)((double)freq2 * corr);
 		rdiv = SI_R_DIV_1;
-		xtalFreq = SI5351_FREQ;
+		xtalFreq = SI5351_XTAL;
 		while (frequency <= 1000000)
 		{
 			frequency = frequency * 2;
@@ -207,9 +207,10 @@ void si5351aSetFrequency(UINT32 freq, UINT32 freq2)
 		// Finally switch on the CLK2 output (0x4C)
 		// and set the MultiSynth0 input to be PLL A
 		BBRF103.SendI2cbyte(SI5351_ADDR, SI_CLK2_CONTROL, 0x4C | SI_CLK_SRC_PLL_B);  // select PLLB
-		// calculate clk2
-        BBRF103.UptLedYellow(!BBRF103.ledY);  //blink  gadget Yellow
 	}
-
+    else
+    {
+        BBRF103.SendI2cbyte(SI5351_ADDR, SI_CLK2_CONTROL, 0xCC);		// Refer to SiLabs AN619 to see bit values - 0x80 turns off the output stage
+    }
 }
 

@@ -39,14 +39,22 @@
 
 // PAGE 1 SETUP
 #define IDC_PAGE1_INIT                          40150
-#define IDC_TRACE_PAGE1                           40150
-#define IDC_RADIO21                             40151
-#define IDC_RADIO22                             40152
+#define IDC_TRACE_PAGE1                         40150
+#define IDC_MBUTTON21                           40151
+#define IDC_MBUTTON22                           40152
 #define IDC_STATIC21                            40153
-#define IDC_RADIO23                             40154
-#define IDC_RADIO24                             40155
-#define IDC_RADIO25                             40156
-#define IDC_PAGE1_END                           40160
+#define IDC_MBUTTON23                           40154
+#define IDC_MBUTTON24                           40155
+#define IDC_MBUTTON25                           40156
+#define IDC_MBUTTON26                           40157
+#define IDC_MBUTTON27                           40158
+#define IDC_MBUTTON28                           40159
+#define IDC_MBUTTON29                           40160
+#define IDC_STATIC22                            40161
+#define IDC_STATIC23                            40162
+#define IDC_STATIC24                            40163
+#define IDC_EDIT1                               40165
+#define IDC_PAGE1_END                           40170
 
 // PAGE 2 TEST
 #define IDC_PAGE2_INIT                          40200

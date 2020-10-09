@@ -3,21 +3,27 @@
 #include "tdialog.h"
 #include <commctrl.h>
 #include "bbrf103.h"
+#include "Si5351.h"
 
 HWND hTabCtrlMain;
-UINT nSel = 0; //selected tab
+UINT nSel = 1; //selected tab
 
 #define NTABS 4
 char tabname[NTABS][20]= {" &Status  "," &BBRF103  "," &Test  "," &About  "};
 void UpdateTab(HWND hWnd, UINT tabidx);
+void UpdateFreqCorrection (HWND hWnd);
+void WriteFreqCorrection (HWND hWnd, double corr);
 
 HBITMAP bitmap;
 
 COLORREF clrBtnSel = RGB(24, 160, 244);
 COLORREF clrBtnUnsel = RGB(0, 44, 107);
 COLORREF clrBackground = RGB(15, 15, 15);
+
 COLORREF clrTextL = RGB (128,128,128);
+COLORREF clrTextS = RGB (192,192,192);
 COLORREF clrTextW = RGB (255,255,255);
+
 HBRUSH g_hbrBackground = CreateSolidBrush(clrBackground);
 HBRUSH g_hbrBtnBackg = CreateSolidBrush(clrBtnUnsel);
 HBRUSH g_hbrBtnSelBkg = CreateSolidBrush(clrBtnSel);
@@ -64,7 +70,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_INITDIALOG:
             {
-         //       RegisterHotKey( hWnd, IHK_CR, 0, 0x0D); // no sound on CR
                 HINSTANCE hInstance = (HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE);
                 bitmap = (HBITMAP)::LoadImage(hInstance, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0, 0, 0);
 
@@ -94,8 +99,11 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
                 SendMessage(GetDlgItem(hWnd, IDC_CBMODE30), WM_SETTEXT, 0, (LPARAM)signal_mode[0]);
 
-            //    ShowWindow(GetDlgItem(hWnd, IDC_TRACE_PAGE1),SW_HIDE);
+                WriteFreqCorrection (hWnd, freqcorrection);
 
+            //    SetWindowText(GetDlgItem(hWnd, IDC_EDIT1),ebuffer);
+
+                SendMessage(hTabCtrlMain, TCM_SETCURSEL, nSel, 0);
                 UpdateTab(hWnd, nSel); // Update tab area
             }
             return TRUE;
@@ -179,7 +187,14 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             return TRUE;
                          }
                     break;
-                case IDC_RADIO21:
+                case IDC_EDIT1:
+                     switch(HIWORD(wParam)) // Find out what message it was
+                         {
+                         case EN_UPDATE:    // process EDITTEXT change
+                            return TRUE;
+                         }
+                    break;
+                case IDC_MBUTTON21:
                     switch (HIWORD(wParam))
                     {
                         case BN_CLICKED:
@@ -187,12 +202,22 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         break;
                     }
                     break;
-                case IDC_RADIO22:
+                case IDC_MBUTTON22:
                     switch (HIWORD(wParam))
                     {
                         case BN_CLICKED:
                             BBRF103.UptRand(!BBRF103.GetRand());
                         break;
+                    }
+                    break;
+                case IDC_MBUTTON23:
+                    switch (HIWORD(wParam))
+                    {
+                        case BN_CLICKED:
+                            {
+                                UpdateFreqCorrection (hWnd);
+                                break;
+                            }
                     }
                     break;
                 case IDC_TRACE_PAGE1: // trace
@@ -203,37 +228,54 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         break;
                     }
                     break;
-                case IDC_RADIO23:  // VLFMODE
+
+                case IDC_MBUTTON24: //HFMODE
                     switch (HIWORD(wParam))
                     {
                         case BN_CLICKED:
-                            BBRF103.UpdatemodeRF(VLFMODE);
                             InvalidateRect (hWnd, NULL, TRUE);
                             UpdateWindow (hWnd);
-                            if (  pfnCallback ) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
                         break;
                     }
                     break;
-                case IDC_RADIO24:
+                case IDC_MBUTTON25: //VHFMODE
                     switch (HIWORD(wParam))
                     {
                         case BN_CLICKED:
-                            BBRF103.UpdatemodeRF(HFMODE);
                             InvalidateRect (hWnd, NULL, TRUE);
                             UpdateWindow (hWnd);
-                            if (  pfnCallback )
-                                EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
                         break;
                     }
                     break;
-                case IDC_RADIO25:
+                case IDC_MBUTTON26: // trace
                     switch (HIWORD(wParam))
                     {
                         case BN_CLICKED:
-                            BBRF103.UpdatemodeRF(VHFMODE);
-                            InvalidateRect (hWnd, NULL, TRUE);
-                            UpdateWindow (hWnd);
-                            if (  pfnCallback ) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
+                           BBRF103.UptGainadjust(!BBRF103.GetGainadjust());
+                        break;
+                    }
+                    break;
+                case IDC_MBUTTON27: // Power Ant VHF
+                    switch (HIWORD(wParam))
+                    {
+                        case BN_CLICKED:
+                           BBRF103.UptVAntVHF(!BBRF103.GetVAntVHF());
+                        break;
+                    }
+                    break;
+                case IDC_MBUTTON28: // trace
+                    switch (HIWORD(wParam))
+                    {
+                        case BN_CLICKED:
+                           BBRF103.UptGainadjustHF(!BBRF103.GetGainadjustHF());
+                        break;
+                    }
+                    break;
+                case IDC_MBUTTON29: // Power Ant VHF
+                    switch (HIWORD(wParam))
+                    {
+                        case BN_CLICKED:
+                           BBRF103.UptVAntHF(!BBRF103.GetVAntHF());
                         break;
                     }
                     break;
@@ -244,36 +286,73 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     WORD wID = (WORD)wParam;
                     const DRAWITEMSTRUCT& dis = *(DRAWITEMSTRUCT*)lParam;
                     bool ceck = false;
-                    bool btn2redraw = false;
+                    ButtonCeck bceck = CECK_ON;
+                   // bool btn2redraw = false;
+                    ButtonView btn2redraw = BUTTON_OFF ;
                     switch (wID)
                     {
-                        case IDC_RADIO21:
+                        case IDC_MBUTTON21:
                             ceck = BBRF103.GetDither();
-                            btn2redraw = true;
+                            btn2redraw = BUTTON_ACTIVE ;
                             break;
-                        case IDC_RADIO22:
+                        case IDC_MBUTTON22:
                             ceck = BBRF103.GetRand();
-                            btn2redraw = true;
+                            btn2redraw = BUTTON_ACTIVE;
+                            break;
+                        case IDC_MBUTTON23:
+                            ceck = false;
+                            btn2redraw = BUTTON_ACTIVE;
                             break;
                         case IDC_TRACE_PAGE1:
                             ceck = BBRF103.GetTrace();
-                            btn2redraw = true;
+                            btn2redraw = BUTTON_ACTIVE;
                             break;
-                        case IDC_RADIO23:
-                            if (BBRF103.GetmodeRF() == VLFMODE) ceck = true;
-                            btn2redraw = true;
+
+                        case IDC_MBUTTON24:
+                                if (BBRF103.GetmodeRF() == VLFMODE)
+                                    sprintf(ebuffer,"LW-MW");
+                                else
+                                     sprintf(ebuffer,"HF");
+                                SetWindowText(GetDlgItem(hWnd, IDC_MBUTTON24),ebuffer);
+                                ceck = true;
+                                btn2redraw = BUTTON_INFO;
                             break;
-                        case IDC_RADIO24:
-                            if (BBRF103.GetmodeRF() == HFMODE) ceck = true;
-                            btn2redraw = true;
-                            break;
-                        case IDC_RADIO25:
+                        case IDC_MBUTTON25:
                             if(BBRF103.GetmodeRF() == VHFMODE)ceck = true;
-                            btn2redraw = true;
+                            btn2redraw = BUTTON_INFO;
                             break;
+                        case IDC_MBUTTON26:
+                            if (BBRF103.GetmodeRF() != VHFMODE)
+                                bceck = CECK_OFF;
+                            ceck = BBRF103.GetGainadjust();
+                            btn2redraw = BUTTON_ACTIVE;
+                            break;
+                        case IDC_MBUTTON27: // +vOLT ANT VHF
+                            if (BBRF103.GetmodeRF() != VHFMODE)
+                                bceck = CECK_OFF;
+                            ceck = BBRF103.GetVAntVHF();
+                            btn2redraw = BUTTON_ACTIVE;
+
+                            break;
+                        case IDC_MBUTTON28:
+                            if (BBRF103.GetmodeRF() == VHFMODE)
+                                bceck = CECK_OFF;
+                            ceck = BBRF103.GetGainadjustHF();
+                            btn2redraw = BUTTON_ACTIVE;
+                            break;
+                        case IDC_MBUTTON29: // +vOLT ANT HF
+                            if (BBRF103.GetmodeRF() == VHFMODE)
+                                bceck = CECK_OFF;
+                            ceck = BBRF103.GetVAntHF();
+                            btn2redraw = BUTTON_ACTIVE;
+                            break;
+
                     }
-                    if(btn2redraw)
+
+                    switch(btn2redraw)
                     {
+                    case BUTTON_ACTIVE:
+                        {
                             RECT rect = dis.rcItem;
                             COLORREF bbkg;
                             char buffer [16];
@@ -281,7 +360,10 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             if(ceck){
                                 bbkg = clrBtnSel;
                                 FillRect(dis.hDC,&dis.rcItem, g_hbrBtnSelBkg);
-                                SetTextColor(dis.hDC,clrTextW);
+                                if ( bceck == CECK_ON)
+                                    SetTextColor(dis.hDC,clrTextW);
+                                else
+                                    SetTextColor(dis.hDC,clrTextS);
                             }
                             else{
                                 bbkg = clrBtnUnsel;
@@ -291,9 +373,34 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             SetBkColor(dis.hDC,bbkg);         // set text background to match button’s background.
                             len = GetWindowText(dis.hwndItem,buffer, 16 );
                             DrawText(dis.hDC,buffer,len, &rect,DT_CENTER|DT_VCENTER|DT_SINGLELINE ) ;
-
                             return TRUE;
+                            break;
+                        }
+                    case BUTTON_INFO:
+                        {
+                            RECT rect = dis.rcItem;
+ //                          COLORREF bbkg;
+                            char buffer [16];
+                            int len=0;
+                            if(ceck){
+//                                bbkg = clrBtnUnsel;
+                                FillRect(dis.hDC,&dis.rcItem, g_hbrBackground);
+                                SetTextColor(dis.hDC,clrTextW);
+                            }
+                            else{
+//                                bbkg = clrBtnUnsel;
+                                FillRect(dis.hDC,&dis.rcItem, g_hbrBackground);
+                                SetTextColor(dis.hDC,clrTextL);
+                            }
+                            SetBkColor(dis.hDC,clrBackground);         // set text background to match button’s background.
+                            len = GetWindowText(dis.hwndItem,buffer, 16 );
+                            DrawText(dis.hDC,buffer,len, &rect,DT_CENTER|DT_VCENTER|DT_SINGLELINE ) ;
+                            return TRUE;
+                            break;
+                        }
 
+                        default:
+                            break;
                     }
 
             }
@@ -306,6 +413,37 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
     return FALSE;
 }
+
+
+void WriteFreqCorrection (HWND hWnd, double corr)
+{
+        char ebuffer[64];
+        sprintf(ebuffer,"%4.1f Hz", corr);
+        SetWindowText(GetDlgItem(hWnd, IDC_EDIT1),ebuffer);
+        InvalidateRect (hWnd, NULL, TRUE);
+}
+
+void UpdateFreqCorrection (HWND hWnd)
+{
+        double x;
+        char ebuffer[64];
+        GetWindowText( GetDlgItem(hWnd, IDC_EDIT1),ebuffer,16);
+        if ( sscanf(ebuffer, "%lf", &x) > 0)
+        {
+            if (x > 10000.0) x = 10000.0;
+            else
+            if (x < -10000.0) x = -10000.0;
+
+            freqcorrection = x;
+            BBRF103.ClockInit();
+        }
+        else
+            x = freqcorrection;
+
+        WriteFreqCorrection (hWnd, x);
+}
+
+
 
 
 void UpdateTab(HWND hWnd, UINT tabidx)
@@ -337,7 +475,17 @@ UINT i,j;
           switch (i)
             {
               case 0:
+                #ifdef _NO_TUNER_
+                SetWindowText(GetDlgItem(hWnd, IDC_STATIC11),"R820T2  is disabled in this SW");
+                #else
+                    if (BBRF103.R820T2isalive == true)
+                        SetWindowText(GetDlgItem(hWnd, IDC_STATIC11),"R820T2  is active");
+                    else
+                        SetWindowText(GetDlgItem(hWnd, IDC_STATIC11),"R820T2  is not present");
+                #endif
+
                 for (j =IDC_PAGE0_INIT; j <=IDC_PAGE0_END; j++) ShowWindow(GetDlgItem(hWnd,j), SW_SHOW);
+
                 break;
               case 1:
                 for (j =IDC_PAGE1_INIT; j <=IDC_PAGE1_END; j++) ShowWindow(GetDlgItem(hWnd,j),SW_SHOW);
@@ -369,6 +517,7 @@ UINT i,j;
             }
         }
         #ifdef NDEBUG
+         ShowWindow(GetDlgItem(hWnd, IDC_STATIC23),SW_HIDE);    // hide DEBUG
          ShowWindow(GetDlgItem(hWnd, IDC_TRACE_PAGE1),SW_HIDE);    // hide trace button
         #endif
     }

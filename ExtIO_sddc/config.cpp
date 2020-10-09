@@ -9,6 +9,6 @@ double pi;
 double count2usec;
 double count2msec;
 double count2sec;
-
+double freqcorrection = FREQCORRECTION;
 
 
