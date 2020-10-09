@@ -1,0 +1,77 @@
+
+
+#include <windows.h>
+#include <commctrl.h>
+#include "resource.h"
+#include "config.h"
+
+// images resources
+IDB_BITMAP1      BITMAP  DISCARDABLE    "bbrf103.bmp"
+IDB_BITMAP2      BITMAP  DISCARDABLE    "bbrf103C.bmp"
+IDB_ICON1        ICON    DISCARDABLE    "ExtIO_sddc.ico"
+
+// Dialog resources (not WS_VISIBLE )
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_DLG_MAIN DIALOG 0, 0, 150, 150
+//STYLE DS_3DLOOK | DS_CENTER | WS_CAPTION | WS_POPUP | WS_SYSMENU
+STYLE   WS_SYSMENU
+CAPTION "ExtIO_sddc"
+FONT 8, "Ms Shell Dlg"
+{
+    CONTROL         "", IDT_TAB_CTRL_MAIN, WC_TABCONTROL, WS_TABSTOP, 0, 0, 150, 14,
+                                   WS_EX_LEFT | WS_VISIBLE  | WS_BORDER
+//   page 0 Info
+//    PUSHBUTTON      "Page1 Button", IDB_BTN_PAGE1, 27, 37, 48, 14, 0, WS_EX_LEFT
+//	LTEXT            "name :",      IDC_STATIC01, 10, 20, 50, 12, SS_LEFT
+	LTEXT            SWNAME,        IDC_STATIC02, 10, 20, 50, 12, SS_LEFT
+	LTEXT            "ver.:",       IDC_STATIC03, 90, 20, 80, 12, SS_LEFT
+	LTEXT            SWVERSION,     IDC_STATIC04, 110, 20, 80, 12, SS_LEFT
+
+    LTEXT            "hardware: ",  IDC_STATIC05, 10, 30, 80, 12, SS_LEFT
+	LTEXT            HWMODEL,	    IDC_STATIC06, 50, 30, 80, 12, SS_LEFT
+	LTEXT            "ver.:",       IDC_STATIC07, 90, 30, 80, 12, SS_LEFT
+	LTEXT            HWVERSION,     IDC_STATIC08, 110, 30, 80, 12, SS_LEFT
+/*
+    LTEXT            "ADC rate:",   IDC_STATIC09, 10, 70, 80, 12, SS_LEFT
+    LTEXT            "64000000 Hz", IDC_STATIC10, 50, 70, 80, 12, SS_LEFT
+    LTEXT            "IF rate:",    IDC_STATIC11, 10, 80, 80, 12, SS_LEFT
+    LTEXT            "32000000 Msps", IDC_STATIC12, 50, 80, 80, 12, SS_LEFT
+*/
+    LTEXT            "ADC rate:", IDC_STATIC13,  10, 40, 80, 12, SS_LEFT
+    LTEXT            "off line ", IDC_STATIC14,  50, 40, 80, 12, SS_LEFT
+    LTEXT            "I&&Q rate:", IDC_STATIC15, 10, 50, 80, 12, SS_LEFT
+    LTEXT            "off line  ", IDC_STATIC16, 50, 50, 80, 12, SS_LEFT
+
+//  page 1 Setup
+
+    CONTROL         "Trace", IDC_TRACE_PAGE1,"Button",BS_OWNERDRAW, 45, 20, 38, 13
+    CONTROL         "DITH", IDC_RADIO21,"Button",BS_OWNERDRAW , 5, 80, 38,13
+    CONTROL         "RAND", IDC_RADIO22,"Button",BS_OWNERDRAW , 5, 95, 38,13
+    CONTROL         "LW-MW",  IDC_RADIO23,"Button",BS_OWNERDRAW , 5, 20, 38,13
+    CONTROL         "HF",   IDC_RADIO24,"Button",BS_OWNERDRAW , 5, 35, 38,13
+    CONTROL         "VHF-UHF",  IDC_RADIO25,"Button",BS_OWNERDRAW , 5, 50, 38,13
+
+//  page 2 Test
+    LTEXT            "samples source:", IDC_STATIC31, 10, 22, 80, 12, SS_LEFT
+    COMBOBOX         IDC_CBMODE30, 70, 20, 70, 100, WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWN
+    LTEXT            "IF sweep speed:", IDC_STATIC32, 10, 42, 80, 12, SS_LEFT
+    EDITTEXT         IDC_EDIT33, 70, 40, 60, 14, ES_LEFT | WS_BORDER | WS_TABSTOP | ES_NUMBER
+
+//  page 3 About
+    CONTROL          "",IDC_STATIC42,"Static",SS_BITMAP, 0, 20, 150, 80
+    CONTROL          URL1B, IDC_SYSLINK43,"syslink", WS_TABSTOP,10, 100, 140, 14
+    CONTROL          URL1A, IDC_SYSLINK41,"syslink", WS_TABSTOP,10,115,140,14
+    CONTROL          URL_HDSDRA, IDC_SYSLINK42,"syslink", WS_TABSTOP,10,130,140,14
+
+  //  LTEXT            AUTHOR,   IDC_STATIC41, 10, 170, 100, 12, SS_LEFT
+// all pages
+ //   EDITTEXT         IDE_EDIT_MAIN, 0, 200-14, 150, 14, ES_AUTOHSCROLL, WS_EX_LEFT
+}
+
+
+//
+// Manifest resources
+//
+LANGUAGE 0, SUBLANG_NEUTRAL
+1                  RT_MANIFEST    ".\\manifest.xml"

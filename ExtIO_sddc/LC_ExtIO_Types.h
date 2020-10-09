@@ -8,8 +8,8 @@
 
 // for C99 compiler just #include <stdint.h>
 // MS VC++ 2008 Express does not have stdint.h Try http://msinttypes.googlecode.com/svn/trunk/stdint.h
-#include "stdint.h"
-// for other compilers you may try http://www.azillionmonkeys.com/qed/pstdint.h
+#include "pstdint.h"
+// for other compiles you may try http://www.azillionmonkeys.com/qed/pstdint.h
 // or try boost: http://www.boost.org/doc/libs/1_36_0/boost/cstdint.hpp
 
 /*
@@ -73,7 +73,7 @@
  */
 
 // function implemented by Winrad / HDSDR; see enum extHWstatusT below
-typedef int               (* pfnExtIOCallback)  (int cnt, int status, float IQoffs, void *IQdata);
+typedef int               (* pfnExtIOCallback)  (int cntr, int status, float IQoffs, void *IQdata);
 
 // mandatory functions, which have to be implemented by ExtIO DLL
 #define EXTIO_MAX_NAME_LEN    16    /* name is displayed in Winrad/HDSDR's menu */
@@ -429,7 +429,7 @@ typedef enum
                                       // last option set I/Q and internal swap as with extHw_RX_SwapIQ_ON
 
   , extHw_Changed_RF_IF       = 136   // refresh selectable attenuators and Gains
-                                      // => starts calling GetAttenuators(), GetAGCs() & GetMGCs()
+                                        // => starts calling GetAttenuators(), GetAGCs() & GetMGCs()
   , extHw_Changed_SRATES      = 137   // refresh selectable samplerates => starts calling GetSamplerates()
 
   // Following status codes are for 3rd Party Software, currently not implemented in HDSDR

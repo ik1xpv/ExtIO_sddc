@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="ExtIO_sddc" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="../bin/Debug/ExtIO_sddc" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option host_application="../bin/Debug/HDSDR.exe" />
+				<Option run_host_application_in_terminal="0" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add option="-DBUILD_DLL" />
+				</Compiler>
+				<Linker>
+					<Add library="user32" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="../bin/Release/ExtIO_sddc" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option host_application="D:/CBDEV/ExtIO_sddc/bin/Release/HDSDR.exe" />
+				<Option run_host_application_in_terminal="0" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-O3" />
+					<Add option="-Wall" />
+					<Add option="-DBUILD_DLL" />
+					<Add option="-DNDEBUG" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="user32" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add directory="../Lib/pthreads/include" />
+			<Add directory="../Lib/CyAPI_gcc/inc" />
+			<Add directory="../Lib/fftw" />
+		</Compiler>
+		<Linker>
+			<Add option="-Wl,--add-stdcall-alias" />
+			<Add library="..\Lib\CyAPI_gcc\libcyapi_gcc.a" />
+			<Add library="libsetupapi" />
+			<Add library="..\Lib\pthreads\lib\x86\libpthreadGC2.a" />
+			<Add library="libkernel32.a" />
+			<Add library="libgdi32.a" />
+			<Add library="..\Lib\fftw\libfftw3f-3.dll" />
+		</Linker>
+		<Unit filename="BBRF103.cpp" />
+		<Unit filename="BBRF103.h" />
+		<Unit filename="ExtIO_sddc.cpp" />
+		<Unit filename="ExtIO_sddc.h" />
+		<Unit filename="ExtIO_sddc.ico" />
+		<Unit filename="LC_ExtIO_Types.h" />
+		<Unit filename="R820T2.cpp" />
+		<Unit filename="R820T2.h" />
+		<Unit filename="Si5351.cpp" />
+		<Unit filename="Si5351.h" />
+		<Unit filename="SplashWindow.cpp" />
+		<Unit filename="SplashWindow.h" />
+		<Unit filename="config.cpp" />
+		<Unit filename="config.h" />
+		<Unit filename="ht257_0_0.h" />
+		<Unit filename="ht257_0_7M.h" />
+		<Unit filename="ht257_15_4M.h" />
+		<Unit filename="ht257_1_7M.h" />
+		<Unit filename="ht257_3_6M.h" />
+		<Unit filename="license.txt" />
+		<Unit filename="mytypes.h" />
+		<Unit filename="openFX3.cpp" />
+		<Unit filename="openFX3.h" />
+		<Unit filename="r2iq.cpp" />
+		<Unit filename="r2iq.h" />
+		<Unit filename="resource.h" />
+		<Unit filename="resource.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
+		<Unit filename="stdint.h" />
+		<Unit filename="tdialog.cpp" />
+		<Unit filename="tdialog.h" />
+		<Unit filename="uti.cpp" />
+		<Unit filename="uti.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
