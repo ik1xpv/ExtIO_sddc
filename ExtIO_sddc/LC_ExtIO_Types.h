@@ -6,9 +6,7 @@
 // specification from http://www.sdradio.eu/weaksignals/bin/Winrad_Extio.pdf
 // linked referenced from http://www.weaksignals.com/
 
-// for C99 compiler just #include <stdint.h>
-// MS VC++ 2008 Express does not have stdint.h Try http://msinttypes.googlecode.com/svn/trunk/stdint.h
-#include "pstdint.h"
+#include <stdint.h>
 // for other compiles you may try http://www.azillionmonkeys.com/qed/pstdint.h
 // or try boost: http://www.boost.org/doc/libs/1_36_0/boost/cstdint.hpp
 
@@ -429,7 +427,7 @@ typedef enum
                                       // last option set I/Q and internal swap as with extHw_RX_SwapIQ_ON
 
   , extHw_Changed_RF_IF       = 136   // refresh selectable attenuators and Gains
-                                        // => starts calling GetAttenuators(), GetAGCs() & GetMGCs()
+                                      // => starts calling GetAttenuators(), GetAGCs() & GetMGCs()
   , extHw_Changed_SRATES      = 137   // refresh selectable samplerates => starts calling GetSamplerates()
 
   // Following status codes are for 3rd Party Software, currently not implemented in HDSDR
@@ -470,10 +468,6 @@ typedef enum
   , extSDR_supports_PCMS8         = 8   // exthwUSBdataS8 is supported
   , extSDR_supports_PCM32         = 9   // exthwFullPCM32 is supported
 } extSDR_InfoT;
-
-
-// macro to call callback function with just status extHWstatusT
-#define EXTIO_STATUS_CHANGE( CB, STATUS )   CB( -1, STATUS, 0, NULL )
 
 #endif /* LC_ExtIO_TypesH */
 

@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if 0
 typedef signed char INT8;
 typedef signed short INT16;
 typedef int LONG32, *PLONG32;
@@ -14,7 +14,7 @@ typedef unsigned short UINT16, *PUINT16;
 typedef unsigned int ULONG32, *PULONG32;
 typedef unsigned int DWORD32, *PDWORD32;
 typedef unsigned int UINT32, *PUINT32;
-
+#endif
 #ifdef __cplusplus
 }
 #endif

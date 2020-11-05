@@ -1,8 +1,7 @@
 #ifndef SPLASHWINDOW_H
 #define SPLASHWINDOW_H
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include "framework.h"
 
 //
 // some idea and code from http://freesourcecode.net/cprojects/91599/Win32-splash-screen-in-c#.WmMV3KjiaUk

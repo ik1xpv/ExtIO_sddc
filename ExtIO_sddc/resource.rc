@@ -1,93 +1,183 @@
-
-
-#include <windows.h>
-#include <commctrl.h>
+// Microsoft Visual C++ generated resource script.
+//
 #include "resource.h"
-#include "config.h"
 
-// images resources
-IDB_BITMAP1      BITMAP  DISCARDABLE    "bbrf103.bmp"
-IDB_BITMAP2      BITMAP  DISCARDABLE    "bbrf103C.bmp"
-IDB_ICON1        ICON    DISCARDABLE    "ExtIO_sddc.ico"
+#include "winres.h"
+/////////////////////////////////////////////////////////////////////////////
+// Neutral resources
 
-// Dialog resources (not WS_VISIBLE )
-
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_DLG_MAIN DIALOG 0, 0, 150, 150
-//STYLE DS_3DLOOK | DS_CENTER | WS_CAPTION | WS_POPUP | WS_SYSMENU
-STYLE   WS_SYSMENU
-CAPTION "ExtIO_sddc"
-FONT 8, "Ms Shell Dlg"
-{
-    CONTROL         "", IDT_TAB_CTRL_MAIN, WC_TABCONTROL, WS_TABSTOP, 0, 0, 150, 14,
-                                   WS_EX_LEFT | WS_VISIBLE  | WS_BORDER
-//   page 0 Info
+#pragma code_page(936)
 
-//    PUSHBUTTON      "Page1 Button", IDB_BTN_PAGE1, 27, 37, 48, 14, 0, WS_EX_LEFT
-//	LTEXT            "name :",      IDC_STATIC01, 10, 20, 50, 12, SS_LEFT
-	LTEXT            SWNAME,        IDC_STATIC02, 10, 20, 50, 12, SS_LEFT
-	LTEXT            "ver.:",       IDC_STATIC03, 90, 20, 80, 12, SS_LEFT
-	LTEXT            SWVERSION,     IDC_STATIC04, 110, 20, 80, 12, SS_LEFT
-
-    LTEXT            "hardware: ",  IDC_STATIC05, 10, 30, 80, 12, SS_LEFT
-	LTEXT            HWMODEL,	    IDC_STATIC06, 50, 30, 80, 12, SS_LEFT
-	LTEXT            "ver.:",       IDC_STATIC07, 90, 30, 80, 12, SS_LEFT
-	LTEXT            HWVERSION,     IDC_STATIC08, 110, 30, 80, 12, SS_LEFT
-/*
-    LTEXT            "ADC rate:",   IDC_STATIC09, 10, 70, 80, 12, SS_LEFT
-    LTEXT            "64000000 Hz", IDC_STATIC10, 50, 70, 80, 12, SS_LEFT
-    LTEXT            "IF rate:",    IDC_STATIC11, 10, 80, 80, 12, SS_LEFT
-    LTEXT            "32000000 Msps", IDC_STATIC12, 50, 80, 80, 12, SS_LEFT
-*/
-    LTEXT            "ADC rate:", IDC_STATIC13,  10, 40, 80, 12, SS_LEFT
-    LTEXT            "off line ", IDC_STATIC14,  50, 40, 80, 12, SS_LEFT
-    LTEXT            "I&&Q rate:", IDC_STATIC15, 10, 50, 80, 12, SS_LEFT
-    LTEXT            "off line  ", IDC_STATIC16, 50, 50, 80, 12, SS_LEFT
-
-    LTEXT            "+VANT ctrl",   IDC_STATIC09, 10, 70, 80, 12, SS_LEFT
-    LTEXT            ANTPWRLABEL,   IDC_STATIC10, 50, 70, 80, 12, SS_LEFT
-    LTEXT            "",   IDC_STATIC11, 10, 80, 120, 12, SS_LEFT
-
-//  page 1 BBRF103
-
-    LTEXT           "ADC", IDC_STATIC22, 15, 68, 38, 13, SS_CENTER
-    LTEXT           "ref.corr.", IDC_STATIC24, 15, 110, 38, 13, SS_CENTER
-    EDITTEXT         IDC_EDIT1, 55, 108, 60, 14, ES_LEFT | WS_BORDER | WS_TABSTOP
-    CONTROL         "Set", IDC_MBUTTON23,"Button",BS_OWNERDRAW , 118, 109, 18,12
-    LTEXT           "DEBUG", IDC_STATIC23, 15, 127, 38, 13, SS_CENTER
-    CONTROL         "Trace", IDC_TRACE_PAGE1,"Button",BS_OWNERDRAW, 55,125, 38, 12
-    CONTROL         "DITH", IDC_MBUTTON21,"Button",BS_OWNERDRAW , 55, 65, 38,12
-    CONTROL         "RAND", IDC_MBUTTON22,"Button",BS_OWNERDRAW , 97, 65, 38,12
-    CONTROL         "LEV ADJ",  IDC_MBUTTON28,"Button",BS_OWNERDRAW , 97, 35, 38,12
-    CONTROL         "+V ANT",  IDC_MBUTTON29,"Button",BS_OWNERDRAW , 55, 35, 38,12
-
-
-    CONTROL         "HF",   IDC_MBUTTON24,"Button",BS_OWNERDRAW , 15, 35, 38,12
-    CONTROL         "VHF-UHF",  IDC_MBUTTON25,"Button",BS_OWNERDRAW , 15, 50, 38,12
-
-    CONTROL         "LEV ADJ",  IDC_MBUTTON26,"Button",BS_OWNERDRAW , 97, 50, 38,12
-    CONTROL         "+V ANT",  IDC_MBUTTON27,"Button",BS_OWNERDRAW , 55, 50, 38,12
-
-//  page 2 Test
-    LTEXT            "samples source:", IDC_STATIC31, 10, 22, 80, 12, SS_LEFT
-    COMBOBOX         IDC_CBMODE30, 70, 20, 70, 100, WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWN
-    LTEXT            "IF sweep speed:", IDC_STATIC32, 10, 42, 80, 12, SS_LEFT
-    EDITTEXT         IDC_EDIT33, 70, 40, 60, 14, ES_LEFT | WS_BORDER | WS_TABSTOP | ES_NUMBER
-
-//  page 3 About
-    CONTROL          "",IDC_STATIC42,"Static",SS_BITMAP, 0, 20, 150, 80
-    CONTROL          URL1B, IDC_SYSLINK43,"syslink", WS_TABSTOP,10, 100, 140, 14
-    CONTROL          URL1A, IDC_SYSLINK41,"syslink", WS_TABSTOP,10,115,140,14
-    CONTROL          URL_HDSDRA, IDC_SYSLINK42,"syslink", WS_TABSTOP,10,130,140,14
-
-//  LTEXT            AUTHOR,   IDC_STATIC41, 10, 170, 100, 12, SS_LEFT
-// all pages
-//   EDITTEXT         IDE_EDIT_MAIN, 0, 200-14, 150, 14, ES_AUTOHSCROLL, WS_EX_LEFT
-}
-
-
+/////////////////////////////////////////////////////////////////////////////
 //
-// Manifest resources
+// Dialog
 //
-LANGUAGE 0, SUBLANG_NEUTRAL
-1                  RT_MANIFEST    ".\\manifest.xml"
+
+IDD_DLG_MAIN DIALOGEX 0, 0, 216, DIALOGH  // dimensions release
+
+STYLE DS_SETFONT | WS_CAPTION | WS_SYSMENU
+CAPTION "ExtIO_sddc.dll ver:1.4"
+FONT 8, "Ms Shell Dlg", 0, 0, 0x0
+BEGIN
+        CONTROL "ANT  BiasT", -1, STATIC, SS_LEFT, 2, 2, 50, 12
+        GROUPBOX "", IDC_STATIC, 6, 10, 12, 2
+        GROUPBOX "", IDC_STATIC, 11, 10, 1, 22
+        GROUPBOX "", IDC_STATIC, 12, 30, 32, 2
+        GROUPBOX "", IDC_STATIC, 44, 6, 34, 48
+        CONTROL "ATT", -1, STATIC, SS_LEFT , 52, 17, 24, 10
+        CONTROL "LPF", -1, STATIC, SS_LEFT , 52, 29, 24, 10
+        CONTROL "LNA", -1, STATIC, SS_LEFT , 52, 41, 24, 10
+   
+        GROUPBOX "", IDC_STATIC,   78, 30, 8, 2 // ---
+        GROUPBOX "", IDC_STATIC, 85, 6, 65, 48 // ADC
+        CONTROL "ADC", -1, STATIC, SS_LEFT, 108, 28, 18, 8
+
+        PUSHBUTTON  "USB", IDC_USBOUT, 188, 27, 24,10, WS_EX_STATICEDGE | WS_TABSTOP
+
+        GROUPBOX "", IDC_STATIC, 6, 68, 74, 22
+        PUSHBUTTON  " 00", IDC_GAINCORR, 7, 72, 16, 16, WS_EX_STATICEDGE
+        PUSHBUTTON  "+", IDC_GAINP, 24, 72, 8, 8, WS_EX_STATICEDGE | WS_TABSTOP
+        PUSHBUTTON  "-", IDC_GAINM, 24, 80, 8, 8, WS_EX_STATICEDGE | WS_TABSTOP
+        CONTROL "dB gain corr.", -1, STATIC, SS_LEFT, 36, 76, 40, 10
+    
+        GROUPBOX "", IDC_STATIC,84, 68, 125, 22
+        PUSHBUTTON  "-000.000", IDC_FREQ, 85, 72, 34, 16, WS_EX_STATICEDGE
+        PUSHBUTTON  "+", IDC_FREQP, 120, 72, 8, 8, WS_EX_STATICEDGE | WS_TABSTOP
+        PUSHBUTTON  "-", IDC_FREQM, 120, 80, 8, 8, WS_EX_STATICEDGE | WS_TABSTOP
+        CONTROL "ppm freq corr.", -1, STATIC, SS_LEFT, 132, 76, 60, 10
+        PUSHBUTTON  "restart", IDC_RESTART, 176, 72, 32, 16, WS_TABSTOP
+
+        GROUPBOX "", IDC_STATIC, 149, 30, 10, 2 // ADC---FX3
+        GROUPBOX "", IDC_STATIC, 159, 6, 24, 48 // FX3
+        CONTROL "FX3", -1, STATIC, SS_LEFT, 165, 28, 16, 8
+        GROUPBOX "", IDC_STATIC, 184, 30, 4, 2  // FX3---
+
+        CONTROL "Dither", IDC_DITHER, "Button", BS_AUTOCHECKBOX | WS_TABSTOP , 88, 40, 30, 10
+        CONTROL "Rand", IDC_RAND, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 120, 40, 28, 10
+        
+
+        CONTROL "VHF", IDC_BIAS_VHF, "Button", BS_AUTOCHECKBOX | WS_TABSTOP,15, 16, 25, 10
+        CONTROL "HF", IDC_BIAS_HF, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 15, 40, 25, 10
+
+
+        GROUPBOX "DEBUG", IDC_STATIC, 6, 100, 202, 64
+        CONTROL "ADC rate:", -1, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 86, 110, 39, 10
+        CONTROL "measured ", IDC_STATIC13, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 120, 110, 86, 10
+        CONTROL "ADC rate:", -1, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 86, 120, 39, 10
+        CONTROL "offline ", IDC_STATIC14, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 120, 120, 86, 10
+        CONTROL "I&&Q rate:", -1, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 86, 130, 42, 10
+        CONTROL "offline  ", IDC_STATIC16, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 120, 130, 86, 10
+
+//      CONTROL "Trace", IDC_TRACE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP,      10, 110, 34, 10
+       
+        PUSHBUTTON  "Save ADC samples", IDC_ADCSAMPLES, 10, 144, 64, 10, BS_FLAT
+  
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_MANIFEST
+//
+
+1                       RT_MANIFEST             ".\\manifest.xml"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_DLG_MAIN AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_DLG_MAIN DLGINIT
+BEGIN
+END
+
+#endif    // Neutral resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP2             BITMAP                  "CONNECTING.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDB_ICON1               ICON                    "ExtIO_sddc.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Binary of HF103 firmware
+//
+
+RES_BIN_FIRMWARE        RCDATA                  "SDDC_FX3.img"
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

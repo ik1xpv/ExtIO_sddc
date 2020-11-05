@@ -1,525 +1,324 @@
 #include "license.txt"
-
+#include "framework.h"
+#include "shellapi.h"
 #include "tdialog.h"
-#include <commctrl.h>
-#include "bbrf103.h"
-#include "Si5351.h"
+#include <stdint.h>
+#include <string.h>
+#include "RadioHandler.h"
+#include "ExtIO_sddc.h"
+#include "config.h"
+#include "uti.h"
 
 HWND hTabCtrlMain;
-UINT nSel = 1; //selected tab
-
-#define NTABS 4
-char tabname[NTABS][20]= {" &Status  "," &BBRF103  "," &Test  "," &About  "};
-void UpdateTab(HWND hWnd, UINT tabidx);
-void UpdateFreqCorrection (HWND hWnd);
-void WriteFreqCorrection (HWND hWnd, double corr);
+UINT nSel = 0; //selected tab
 
 HBITMAP bitmap;
 
+extern float	g_Bps;
+extern float	g_SpsIF;
+extern bool     LWMode;
+
 COLORREF clrBtnSel = RGB(24, 160, 244);
 COLORREF clrBtnUnsel = RGB(0, 44, 107);
-COLORREF clrBackground = RGB(15, 15, 15);
-
-COLORREF clrTextL = RGB (128,128,128);
-COLORREF clrTextS = RGB (192,192,192);
-COLORREF clrTextW = RGB (255,255,255);
-
+COLORREF clrBackground = RGB(158, 188, 188);
 HBRUSH g_hbrBackground = CreateSolidBrush(clrBackground);
-HBRUSH g_hbrBtnBackg = CreateSolidBrush(clrBtnUnsel);
-HBRUSH g_hbrBtnSelBkg = CreateSolidBrush(clrBtnSel);
-
+float  _xfp = (float) 0.001;
+float  _xfm = (float) 0.001;
+unsigned int cntime = 0;
 
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    int i;
-    HICON hIcon = NULL;
-    char ebuffer[32];
+	HICON hIcon = NULL;
+	char ebuffer[32];
 
-    switch (uMsg)
-    {
+	switch (uMsg)
+	{
 
-        case WM_DESTROY:
-            DeleteObject(bitmap);
-//            UnregisterHotKey(hWnd,IHK_CR);
-            return TRUE;
+	case WM_DESTROY:
+		DeleteObject(bitmap);
+		//            UnregisterHotKey(hWnd,IHK_CR);
+		return TRUE;
 
-        case WM_CLOSE:
-            ShowWindow(hWnd, SW_HIDE);
-            return TRUE;
+	case WM_CLOSE:
+		ShowWindow(hWnd, SW_HIDE);
+		return TRUE;
 
-        case WM_PAINT:
-            {
-                BITMAP bm;
-                PAINTSTRUCT ps;
-                RECT rect;
-                int dx,dy;
-                HWND hwnd = GetDlgItem(hWnd, IDC_STATIC42); // item to draw
-                GetWindowRect(hwnd,&rect);
-                dx = rect.right-rect.left;
-                dy = rect.bottom-rect.top;
-                HDC hdc = BeginPaint(hwnd, &ps);
-                HDC hdcMem = CreateCompatibleDC(hdc);
-                HGDIOBJ hbmOld = SelectObject(hdcMem, bitmap);
-                GetObject(bitmap, sizeof(bm), &bm);
-                StretchBlt(hdc, 0, 0, dx, dy, hdcMem,0,0, bm.bmWidth, bm.bmHeight, SRCCOPY);
-                SelectObject(hdcMem, hbmOld);
-                DeleteDC(hdcMem);
-                EndPaint(hwnd, &ps);
-            }
-            break;
+	case WM_PAINT:
+	{
+		return FALSE;
+	}
+	break;
 
-        case WM_INITDIALOG:
-            {
-                HINSTANCE hInstance = (HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE);
-                bitmap = (HBITMAP)::LoadImage(hInstance, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0, 0, 0);
+	case WM_INITDIALOG:
+	{
+		//       RegisterHotKey( hWnd, IHK_CR, 0, 0x0D); // no sound on CR
+		HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
 
-                hIcon = LoadIcon(hInstance, MAKEINTRESOURCE( IDB_ICON1 ) );
-                if (hIcon)
-                {
-                    SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
-                }
 
-                TCITEM tcBtn;
-                hTabCtrlMain=GetDlgItem(hWnd,IDT_TAB_CTRL_MAIN);
-                memset(&tcBtn,0x0,sizeof(TCITEM));
-                tcBtn.mask = TCIF_TEXT;
-                for(i= 0; i < NTABS; i++)
-                {
-                    tcBtn.pszText = tabname[i];
-                    SendMessage(hTabCtrlMain, TCM_INSERTITEM, i, (LPARAM)&tcBtn);
-                }
-                sprintf(ebuffer,"%d",Xfreq);
-                SetWindowText(GetDlgItem(hWnd, IDC_EDIT33),ebuffer);
-                for(i = 0; i < 5; i++)
-                {
-                    SendMessage(GetDlgItem(hWnd, IDC_CBMODE30),
-                                CB_ADDSTRING,
-                                0,
-                                reinterpret_cast<LPARAM>((LPCTSTR)signal_mode[i]));
-                }
-                SendMessage(GetDlgItem(hWnd, IDC_CBMODE30), WM_SETTEXT, 0, (LPARAM)signal_mode[0]);
+		hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDB_ICON1));
+		if (hIcon)
+		{
+			SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+		}
 
-                WriteFreqCorrection (hWnd, freqcorrection);
+		SetFocus(GetDlgItem(hWnd, IDC_USBOUT));
+		ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_HIDE);
 
-            //    SetWindowText(GetDlgItem(hWnd, IDC_EDIT1),ebuffer);
+		sprintf(ebuffer, "%2d", (int) gdGainCorr_dB);
+		SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
 
-                SendMessage(hTabCtrlMain, TCM_SETCURSEL, nSel, 0);
-                UpdateTab(hWnd, nSel); // Update tab area
-            }
-            return TRUE;
+		sprintf(ebuffer, "%3.3f", gdFreqCorr_ppm);
+		SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
+		
+		SetTimer(hWnd, 0, 100, NULL);
 
-        case WM_CTLCOLORDLG:
-             return (LONG)g_hbrBackground;
+#ifndef TRACE
+		ShowWindow(GetDlgItem(hWnd, IDC_TRACE),SW_HIDE);
+#endif
+	}
+	return TRUE;
 
-        case WM_CTLCOLORBTN: //In order to make those edges invisble when we use RoundRect(),
-            {                //we make the color of our button's background match window's background
-                return (LRESULT)GetSysColorBrush(COLOR_WINDOW+1);
-            }
-        break;
+	
+	case WM_TIMER:
+	{
+		char lbuffer[64];
+		if (cntime-- <= 0)
+		{
+			cntime = 5;
+			sprintf(lbuffer, "%2.9f Msps",  adcfixedfreq / 1000000);
+			SetWindowText(GetDlgItem(hWnd, IDC_STATIC13), lbuffer);
+			sprintf(lbuffer, "%6.3f Msps measured", g_Bps * adcfixedfreq / ((double)ADC_FREQ*2.0) );
+			SetWindowText(GetDlgItem(hWnd, IDC_STATIC14), lbuffer);
+			sprintf(lbuffer, "%6.3f Msps measured", g_SpsIF);
+			SetWindowText(GetDlgItem(hWnd, IDC_STATIC16), lbuffer);
+		}
+		if (GetStateButton(hWnd, IDC_FREQP))
+		{
+			Command(hWnd, IDC_FREQP, BN_CLICKED);
+			if (_xfp < 10.0) _xfp *= (float) 1.2;
+		}
+		else
+			_xfp = (float) 0.001;
 
-        case WM_CTLCOLOREDIT:
-        case WM_CTLCOLORLISTBOX:
-        case WM_CTLCOLORSTATIC:
-            {
-                HDC hDc = (HDC) wParam;
-                SetTextColor(hDc, RGB(255, 255, 255));
-                SetBkMode (hDc, TRANSPARENT);
-                return (LONG)g_hbrBackground;
-            }
+		if (GetStateButton(hWnd, IDC_FREQM))
+		{
+			Command(hWnd, IDC_FREQM, BN_CLICKED);
+			if (_xfm < 10.0) _xfm *= (float) 1.2;
+		}
+		else
+			_xfm = (float) 0.001;
+		break;
+	}
 
-        case WM_NOTIFY:
-            {
-                UINT uNotify=((LPNMHDR)lParam)->code;
-                switch(uNotify){
-                    case TCN_SELCHANGE:
-                        nSel=SendMessage(hTabCtrlMain, TCM_GETCURSEL, 0, 0);
-                        UpdateTab(hWnd, nSel);
-                    case NM_CLICK:          // Fall through to the next case.
-                    case NM_RETURN:
-                        {
-                            if (((LPNMHDR)lParam)->hwndFrom == GetDlgItem(hWnd,IDC_SYSLINK41))
-                                {
-                                    ShellExecute(NULL, "open", URL1, NULL, NULL, SW_SHOW);
-                                }
-                            if (((LPNMHDR)lParam)->hwndFrom == GetDlgItem(hWnd,IDC_SYSLINK43))
-                                {
-                                    ShellExecute(NULL, "open", URLBBRF103, NULL, NULL, SW_SHOW);
-                                }
-                            if (((LPNMHDR)lParam)->hwndFrom == GetDlgItem(hWnd,IDC_SYSLINK42))
-                                {
-                                    ShellExecute(NULL, "open", URL_HDSR, NULL, NULL, SW_SHOW);
-                                }
-                        }
-                        break;
+	case WM_CTLCOLORDLG:
+	case WM_CTLCOLOREDIT:
+	case WM_CTLCOLORLISTBOX:
+	case WM_CTLCOLORSCROLLBAR:
+	case WM_CTLCOLORSTATIC:
+	{
+		HDC hDc = (HDC)wParam;
+		SetBkMode(hDc, TRANSPARENT);
+		return (LONG)g_hbrBackground;
+	}
 
-                }
-            }
-            return TRUE;
-        case WM_COMMAND:
-            switch(LOWORD(wParam))
-            {
-                case IDC_CBMODE30: // If the combo box sent the message,
-                        switch(HIWORD(wParam)) // Find out what message it was
-                        {
-                        case CBN_DROPDOWN: // the list is about to display, stop
-                            if (  pfnCallback ) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Stop);
-                            break;
-                        case CBN_SELCHANGE:  // the selection is done, start
-                            inject_tone = (Inject_Signal)SendMessage(GetDlgItem(hWnd, IDC_CBMODE30), CB_GETCURSEL, 0, 0);
-                            if (  pfnCallback ) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Start);
-                            UpdateTab(hWnd, nSel); // Update tab area
-                            break;
-                        }
-                        return TRUE;
-                case IDC_EDIT33:
-                     switch(HIWORD(wParam)) // Find out what message it was
-                         {
-                         case EN_UPDATE:    // process EDITTEXT change
-                            GetWindowText( GetDlgItem(hWnd, IDC_EDIT33),ebuffer,16);
-                            int f = atoi(ebuffer);
-                            if (f > 32000)
-                            {
-                                f = 32000;
-                                sprintf(ebuffer,"%d",f);
-                                SetWindowText(GetDlgItem(hWnd, IDC_EDIT33),ebuffer);
-                            }
-                            Xfreq = f;
-                            return TRUE;
-                         }
-                    break;
-                case IDC_EDIT1:
-                     switch(HIWORD(wParam)) // Find out what message it was
-                         {
-                         case EN_UPDATE:    // process EDITTEXT change
-                            return TRUE;
-                         }
-                    break;
-                case IDC_MBUTTON21:
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                             BBRF103.UptDither(!BBRF103.GetDither());
-                        break;
-                    }
-                    break;
-                case IDC_MBUTTON22:
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                            BBRF103.UptRand(!BBRF103.GetRand());
-                        break;
-                    }
-                    break;
-                case IDC_MBUTTON23:
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                            {
-                                UpdateFreqCorrection (hWnd);
-                                break;
-                            }
-                    }
-                    break;
-                case IDC_TRACE_PAGE1: // trace
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                            BBRF103.UptTrace(!BBRF103.GetTrace());
-                        break;
-                    }
-                    break;
+	case WM_NOTIFY:
+	{
+		UINT uNotify = ((LPNMHDR)lParam)->code;
+		switch (uNotify) {
+		case NM_CLICK:          // Fall through to the next case.
+		case NM_RETURN:
+		{
+			if (((LPNMHDR)lParam)->hwndFrom == GetDlgItem(hWnd, IDC_SYSLINK41))
+			{
+				ShellExecute(NULL, "open", URL1, NULL, NULL, SW_SHOW);
+			}
+			if (((LPNMHDR)lParam)->hwndFrom == GetDlgItem(hWnd, IDC_SYSLINK42))
+			{
+				ShellExecute(NULL, "open", URL_HDSR, NULL, NULL, SW_SHOW);
+			}
+		}
+		break;
+		}
+	}
+	return TRUE;
 
-                case IDC_MBUTTON24: //HFMODE
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                            InvalidateRect (hWnd, NULL, TRUE);
-                            UpdateWindow (hWnd);
-                        break;
-                    }
-                    break;
-                case IDC_MBUTTON25: //VHFMODE
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                            InvalidateRect (hWnd, NULL, TRUE);
-                            UpdateWindow (hWnd);
-                        break;
-                    }
-                    break;
-                case IDC_MBUTTON26: // trace
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                           BBRF103.UptGainadjust(!BBRF103.GetGainadjust());
-                        break;
-                    }
-                    break;
-                case IDC_MBUTTON27: // Power Ant VHF
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                           BBRF103.UptVAntVHF(!BBRF103.GetVAntVHF());
-                        break;
-                    }
-                    break;
-                case IDC_MBUTTON28: // trace
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                           BBRF103.UptGainadjustHF(!BBRF103.GetGainadjustHF());
-                        break;
-                    }
-                    break;
-                case IDC_MBUTTON29: // Power Ant VHF
-                    switch (HIWORD(wParam))
-                    {
-                        case BN_CLICKED:
-                           BBRF103.UptVAntHF(!BBRF103.GetVAntHF());
-                        break;
-                    }
-                    break;
-            }
-            break;
-        case WM_DRAWITEM:
-            {
-                    WORD wID = (WORD)wParam;
-                    const DRAWITEMSTRUCT& dis = *(DRAWITEMSTRUCT*)lParam;
-                    bool ceck = false;
-                    ButtonCeck bceck = CECK_ON;
-                   // bool btn2redraw = false;
-                    ButtonView btn2redraw = BUTTON_OFF ;
-                    switch (wID)
-                    {
-                        case IDC_MBUTTON21:
-                            ceck = BBRF103.GetDither();
-                            btn2redraw = BUTTON_ACTIVE ;
-                            break;
-                        case IDC_MBUTTON22:
-                            ceck = BBRF103.GetRand();
-                            btn2redraw = BUTTON_ACTIVE;
-                            break;
-                        case IDC_MBUTTON23:
-                            ceck = false;
-                            btn2redraw = BUTTON_ACTIVE;
-                            break;
-                        case IDC_TRACE_PAGE1:
-                            ceck = BBRF103.GetTrace();
-                            btn2redraw = BUTTON_ACTIVE;
-                            break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDC_DITHER:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				RadioHandler.UptDither(!RadioHandler.GetDither());
+				break;
+			}
+			break;
+		case IDC_RAND:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				RadioHandler.UptRand(!RadioHandler.GetRand());
+				break;
+			}
+			break;
+		case IDC_BIAS_HF:   
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				RadioHandler.UpdBiasT_HF(!RadioHandler.GetBiasT_HF());
+				break;
+			}
+			break;
+		case IDC_BIAS_VHF:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				RadioHandler.UpdBiasT_VHF(!RadioHandler.GetBiasT_VHF());
+				break;
+			}
+			break;
+		case IDC_GAINP:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				GetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer, 16);
+				int x = 0;
+				if (sscanf(ebuffer, "%d", &x) > 0)
+				{
+					x++;
+					if (x > 20) x = 20;
+					if (x < -20) x = -20;
+				}
+				sprintf(ebuffer, "%2d", x);
+				SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
+				gdGainCorr_dB = (double)x;
+				break;
+			}
+			break;
+		case IDC_GAINM:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				GetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer, 16);
+				int x = 0;
+				if (sscanf(ebuffer, "%d", &x) > 0)
+				{
+					x--;
+					if (x > 20) x = 20;
+					if (x < -20) x = -20;
+				}
+				sprintf(ebuffer, "%2d", x);
+				SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
+				gdGainCorr_dB = (double)x;
+				break;
+			}
+			break;
 
-                        case IDC_MBUTTON24:
-                                if (BBRF103.GetmodeRF() == VLFMODE)
-                                    sprintf(ebuffer,"LW-MW");
-                                else
-                                     sprintf(ebuffer,"HF");
-                                SetWindowText(GetDlgItem(hWnd, IDC_MBUTTON24),ebuffer);
-                                ceck = true;
-                                btn2redraw = BUTTON_INFO;
-                            break;
-                        case IDC_MBUTTON25:
-                            if(BBRF103.GetmodeRF() == VHFMODE)ceck = true;
-                            btn2redraw = BUTTON_INFO;
-                            break;
-                        case IDC_MBUTTON26:
-                            if (BBRF103.GetmodeRF() != VHFMODE)
-                                bceck = CECK_OFF;
-                            ceck = BBRF103.GetGainadjust();
-                            btn2redraw = BUTTON_ACTIVE;
-                            break;
-                        case IDC_MBUTTON27: // +vOLT ANT VHF
-                            if (BBRF103.GetmodeRF() != VHFMODE)
-                                bceck = CECK_OFF;
-                            ceck = BBRF103.GetVAntVHF();
-                            btn2redraw = BUTTON_ACTIVE;
+		case IDC_FREQP:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				GetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer, 32);
+				double x = 0;
+				if (sscanf(ebuffer, "%lf", &x) > 0)
+				{
+					x += _xfp;
+					if (x > 200.0) x = 200.0;
+					if (x < -200.0) x = -200.0;
+					sprintf( ebuffer, "%3.3f", x);
+					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
+					gdFreqCorr_ppm = x;
+				}
+	
+				ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_SHOW); // activate Restart
+	
+				break;
+			}
+			break;
 
-                            break;
-                        case IDC_MBUTTON28:
-                            if (BBRF103.GetmodeRF() == VHFMODE)
-                                bceck = CECK_OFF;
-                            ceck = BBRF103.GetGainadjustHF();
-                            btn2redraw = BUTTON_ACTIVE;
-                            break;
-                        case IDC_MBUTTON29: // +vOLT ANT HF
-                            if (BBRF103.GetmodeRF() == VHFMODE)
-                                bceck = CECK_OFF;
-                            ceck = BBRF103.GetVAntHF();
-                            btn2redraw = BUTTON_ACTIVE;
-                            break;
+		case IDC_FREQM:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				GetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer, 32);
+				double x = 0;
+				if (sscanf(ebuffer, "%lf", &x) > 0)
+				{
+					x -= _xfm;
+					if (x > 200.0) x = 200.0;
+					if (x < -200.0) x = -200.0;
+					sprintf(ebuffer, "%3.3f", x);
+					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
+					gdFreqCorr_ppm = x;
+				}
+				
+				ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_SHOW); // activate Restart
 
-                    }
+				break;
+			}
+			break;
 
-                    switch(btn2redraw)
-                    {
-                    case BUTTON_ACTIVE:
-                        {
-                            RECT rect = dis.rcItem;
-                            COLORREF bbkg;
-                            char buffer [16];
-                            int len=0;
-                            if(ceck){
-                                bbkg = clrBtnSel;
-                                FillRect(dis.hDC,&dis.rcItem, g_hbrBtnSelBkg);
-                                if ( bceck == CECK_ON)
-                                    SetTextColor(dis.hDC,clrTextW);
-                                else
-                                    SetTextColor(dis.hDC,clrTextS);
-                            }
-                            else{
-                                bbkg = clrBtnUnsel;
-                                FillRect(dis.hDC,&dis.rcItem, g_hbrBtnBackg);
-                                SetTextColor(dis.hDC,clrTextL);
-                            }
-                            SetBkColor(dis.hDC,bbkg);         // set text background to match button’s background.
-                            len = GetWindowText(dis.hwndItem,buffer, 16 );
-                            DrawText(dis.hDC,buffer,len, &rect,DT_CENTER|DT_VCENTER|DT_SINGLELINE ) ;
-                            return TRUE;
-                            break;
-                        }
-                    case BUTTON_INFO:
-                        {
-                            RECT rect = dis.rcItem;
- //                          COLORREF bbkg;
-                            char buffer [16];
-                            int len=0;
-                            if(ceck){
-//                                bbkg = clrBtnUnsel;
-                                FillRect(dis.hDC,&dis.rcItem, g_hbrBackground);
-                                SetTextColor(dis.hDC,clrTextW);
-                            }
-                            else{
-//                                bbkg = clrBtnUnsel;
-                                FillRect(dis.hDC,&dis.rcItem, g_hbrBackground);
-                                SetTextColor(dis.hDC,clrTextL);
-                            }
-                            SetBkColor(dis.hDC,clrBackground);         // set text background to match button’s background.
-                            len = GetWindowText(dis.hwndItem,buffer, 16 );
-                            DrawText(dis.hDC,buffer,len, &rect,DT_CENTER|DT_VCENTER|DT_SINGLELINE ) ;
-                            return TRUE;
-                            break;
-                        }
+		case IDC_RESTART:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (global.radio == HF103)
+					{
+						ShowWindow(hWnd, SW_HIDE);
+						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Stop);
+						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);     // this is ok!!
+						// EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES); // ? this does not work ?
+						// patch to exit
+						RadioHandler.Stop();
+						ShellExecute(NULL, ("open"), ("StartHDSDR.CMD"), NULL, NULL, SW_SHOWNORMAL); // run restart cmd
+						SendF4();
+					}
+				else
+					{
+						RadioHandler.Stop();
+						RadioHandler.UpdSi5351a();
+						RadioHandler.Start();
+						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);  // to updt demodulators
+					}
+				break;
+			}
+			break;
+#ifdef TRACE
+		case IDC_TRACE: // trace
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				RadioHandler.UptTrace(!RadioHandler.GetTrace());
+				break;
+			}
+			break;
+#endif
+		case IDC_ADCSAMPLES: // ADC in stream screenshot
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				saveADCsamplesflag = true;
+				break;
+			}
+			break;
 
-                        default:
-                            break;
-                    }
+		}
+		break;
+	break;
 
-            }
-            break;
-/*
-        case WM_HOTKEY:
-            int idHotKey = (int) wParam;  // used to disable sound
-            return TRUE;
-*/
-        }
-    return FALSE;
+
+
+	}
+	return FALSE;
+
 }
 
 
-void WriteFreqCorrection (HWND hWnd, double corr)
+void UpdateDialogTitle(HWND hWnd, char dll_version[], char hardware_type[])
 {
-        char ebuffer[64];
-        sprintf(ebuffer,"%4.1f Hz", corr);
-        SetWindowText(GetDlgItem(hWnd, IDC_EDIT1),ebuffer);
-        InvalidateRect (hWnd, NULL, TRUE);
+	char str[80];
+	strcpy(str, dll_version);
+	strcat(str, " | ");
+	strcat(str, hardware_type);
+	SetWindowTextA(hWnd, str);
 }
-
-void UpdateFreqCorrection (HWND hWnd)
-{
-        double x;
-        char ebuffer[64];
-        GetWindowText( GetDlgItem(hWnd, IDC_EDIT1),ebuffer,16);
-        if ( sscanf(ebuffer, "%lf", &x) > 0)
-        {
-            if (x > 10000.0) x = 10000.0;
-            else
-            if (x < -10000.0) x = -10000.0;
-
-            freqcorrection = x;
-            BBRF103.ClockInit();
-        }
-        else
-            x = freqcorrection;
-
-        WriteFreqCorrection (hWnd, x);
-}
-
-
-
-
-void UpdateTab(HWND hWnd, UINT tabidx)
-{
-UINT i,j;
-    if (tabidx >= NTABS) tabidx = NTABS-1;
-    for (i =0; i < NTABS; i++)
-    {
-        if (i != tabidx)
-        {
-          switch (i)
-          {
-              case 0:
-                for (j =IDC_PAGE0_INIT; j <=IDC_PAGE0_END; j++) ShowWindow(GetDlgItem(hWnd,j), SW_HIDE);
-                break;
-              case 1:
-                for (j =IDC_PAGE1_INIT; j <=IDC_PAGE1_END; j++) ShowWindow(GetDlgItem(hWnd,j),SW_HIDE);
-                break;
-              case 2:
-                for (j =IDC_PAGE2_INIT; j <=IDC_PAGE2_END; j++) ShowWindow(GetDlgItem(hWnd,j),SW_HIDE);
-                break;
-              case 3:
-                for (j =IDC_PAGE3_INIT; j <=IDC_PAGE3_END; j++) ShowWindow(GetDlgItem(hWnd,j),SW_HIDE);
-                break;
-          }
-        }
-        else
-        {
-          switch (i)
-            {
-              case 0:
-                #ifdef _NO_TUNER_
-                SetWindowText(GetDlgItem(hWnd, IDC_STATIC11),"R820T2  is disabled in this SW");
-                #else
-                    if (BBRF103.R820T2isalive == true)
-                        SetWindowText(GetDlgItem(hWnd, IDC_STATIC11),"R820T2  is active");
-                    else
-                        SetWindowText(GetDlgItem(hWnd, IDC_STATIC11),"R820T2  is not present");
-                #endif
-
-                for (j =IDC_PAGE0_INIT; j <=IDC_PAGE0_END; j++) ShowWindow(GetDlgItem(hWnd,j), SW_SHOW);
-
-                break;
-              case 1:
-                for (j =IDC_PAGE1_INIT; j <=IDC_PAGE1_END; j++) ShowWindow(GetDlgItem(hWnd,j),SW_SHOW);
-                break;
-              case 2:
-                for (j =IDC_PAGE2_INIT; j <=IDC_PAGE2_END; j++) ShowWindow(GetDlgItem(hWnd,j),SW_SHOW);
-                switch(inject_tone)
-                {
-                    case ToneRF:
-                        ShowWindow(GetDlgItem(hWnd,IDC_STATIC32),SW_SHOW);
-                        SendMessage(GetDlgItem(hWnd,IDC_STATIC32), WM_SETTEXT, 0, (LPARAM) ("Frequency ~kHz"));
-                        ShowWindow(GetDlgItem(hWnd,IDC_EDIT33  ),SW_SHOW);
-                        break;
-                    case SweepIF:
-                        SendMessage(GetDlgItem(hWnd,IDC_STATIC32), WM_SETTEXT, 0, (LPARAM) ("Sweep speed"));
-                        ShowWindow(GetDlgItem(hWnd,IDC_STATIC32),SW_SHOW);
-                        ShowWindow(GetDlgItem(hWnd,IDC_EDIT33  ),SW_SHOW);
-                        break;
-                    default:
-                        ShowWindow(GetDlgItem(hWnd,IDC_STATIC32),SW_HIDE);
-                        ShowWindow(GetDlgItem(hWnd,IDC_EDIT33  ),SW_HIDE);
-                        break;
-                }
-                break;
-              case 3:
-                for (j =IDC_PAGE3_INIT; j <=IDC_PAGE3_END; j++) ShowWindow(GetDlgItem(hWnd,j),SW_SHOW);
- //               SendMessage(GetDlgItem(hWnd, IDC_STATIC42), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM) bitmap);
-                break;
-            }
-        }
-        #ifdef NDEBUG
-         ShowWindow(GetDlgItem(hWnd, IDC_STATIC23),SW_HIDE);    // hide DEBUG
-         ShowWindow(GetDlgItem(hWnd, IDC_TRACE_PAGE1),SW_HIDE);    // hide trace button
-        #endif
-    }
-}
-

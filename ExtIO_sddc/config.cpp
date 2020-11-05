@@ -1,14 +1,15 @@
-#include "license.txt" // Oscar Steila ik1xpv
+#include "license.txt" 
 #include "config.h"
 
+const char* radioname[4] = { "NORADIO","BBRF103","HF103", "RX888" };
+
 class cglobal global;
-const char *signal_mode[] = { "RF ADC stream", "RF virtual tone","RF virtual sweep", "IF virtual tone" , "IF virtual sweep" };
-Inject_Signal inject_tone = ADCstream;
 int Xfreq;
-double pi;
 double count2usec;
 double count2msec;
 double count2sec;
-double freqcorrection = FREQCORRECTION;
-
-
+char strversion[] = "ExtIO_SDDC.dll v1.01";
+double gdFreqCorr_ppm = FREQCORRECTION;
+double adcfixedfreq = ADC_FREQ;
+double gdGainCorr_dB = GAIN_ADJ;            // in dB
+bool saveADCsamplesflag = false;

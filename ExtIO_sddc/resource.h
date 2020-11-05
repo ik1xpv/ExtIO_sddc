@@ -1,77 +1,94 @@
+//{{NO_DEPENDENCIES}}
+// Microsoft Visual C++ generated include file.
+// Used by resource.rc
+//
+#define VS_VERSION_INFO                 1
+#define IDD_DLG_MAIN                    103
+#define IDB_ICON1                       104
+#define IDB_BITMAP1                     105
+#define IDB_BITMAP2                     106
+#define IDC_LW                          1001
+#define IDC_HF                          1002
+#define IDC_VHF                         1003
+#define IDC_ATT                         1004
+#define IDC_LNA                         1006
+#define IDC_VGA                         1007
+#define IDC_COMBO1                      1008
 
-#pragma once
+#define IDC_RAND                        1009
+#define IDC_DITHER                      1010
+#define IDC_CHECK2                      1011
+#define IDC_TRACE                       1012
+#define IDC_RFVIRTUAL					1013
+#define IDC_ADCSAMPLES					1014
+#define RES_BIN_FIRMWARE                2000
+#define IHK_CR                          5001
+#define IDE_EDIT_MAIN                   40002
+#define IDB_BTN_MAIN_B                  40003
+#define IDE_EDIT_PAGE2                  40004
+#define IDB_BTN_MAIN_A                  40005
+#define IDT_TAB_CTRL_MAIN               40006
+#define IDC_PAGE0_INIT                  40101
+#define IDC_GAINCORR                    40101
+#define IDC_GAINP                       40102
+#define IDC_GAINM                       40103
+#define IDC_FREQ                        40104
+#define IDC_FREQP				        40105
+#define IDC_FREQM				        40106
+#define IDC_RESTART                     40107
+#define IDC_USBOUT                      40108
+#define IDC_STATIC09                    40109
+#define IDC_STATIC10                    40110
+#define IDC_STATIC11                    40111
+#define IDC_STATIC12                    40112
+#define IDC_STATIC13                    40113
+#define IDC_STATIC14                    40114
+#define IDC_STATIC15                    40115
+#define IDC_STATIC16                    40116
+#define IDC_STATIC17                    40117
+#define IDC_PAGE0_END                   40120
+#define IDC_PAGE1_INIT                  40150
+#define IDC_TRACE_PAGE1                 40150
+#define IDC_RADIO21                     40151
+#define IDC_RADIO22                     40152
+#define IDC_STATIC21                    40153
+#define IDC_RADIO23                     40154
+#define IDC_RADIO24                     40155
+#define IDC_RADIO25                     40156
+#define IDC_BIAS_VHF                    40157
+#define IDC_BIAS_HF                     40158
+#define IDC_PAGE1_END                   40160
+#define IDC_PAGE2_INIT                  40200
+#define IDC_STATIC31                    40200
+#define IDC_CBMODE30                    40201
+#define IDC_STATIC32                    40202
+#define IDC_EDIT33                      40203
+#define IDC_PAGE2_END                   40210
+#define IDC_PAGE3_INIT                  40300
+#define IDC_SYSLINK41                   40300
+#define IDC_SYSLINK42                   40301
+#define IDC_SYSLINK43                   40302
+#define IDC_STATIC41                    40303
+#define IDC_STATIC42                    40304
+#define IDC_STATIC43                    40305
+#define IDC_PAGE3_END                   40310
+#define IDC_HARDWARETYPE				40400
+#define IDC_STATIC                      -1
 
-#ifndef IDC_STATIC
-#define IDC_STATIC (-1)
+
+#ifdef NDEBUG  // define in processor setup resource !
+ #define DIALOGH 95
+#else
+ #define DIALOGH 170
 #endif
-
-#define IDD_DLG_MAIN                            103
-#define IDB_BITMAP1                             105
-#define IDB_ICON1                               104
-#define IDB_BITMAP2                             106
-
-#define IDE_EDIT_MAIN                           40002
-#define IDB_BTN_MAIN_B                          40003
-#define IDE_EDIT_PAGE2                          40004
-#define IDB_BTN_MAIN_A                          40005
-#define IDT_TAB_CTRL_MAIN                       40006
-
-// PAGE 0 INFO
-#define IDC_PAGE0_INIT                          40101
-
-#define IDC_STATIC01                            40101
-#define IDC_STATIC02                            40102
-#define IDC_STATIC03                            40103
-#define IDC_STATIC04                            40104
-#define IDC_STATIC05                            40105
-#define IDC_STATIC06                            40106
-#define IDC_STATIC07                            40107
-#define IDC_STATIC08                            40108
-#define IDC_STATIC09                            40109
-#define IDC_STATIC10                            40110
-#define IDC_STATIC11                            40111
-#define IDC_STATIC12                            40112
-#define IDC_STATIC13                            40113
-#define IDC_STATIC14                            40114
-#define IDC_STATIC15                            40115
-#define IDC_STATIC16                            40116
-#define IDC_PAGE0_END                           40120
-
-// PAGE 1 SETUP
-#define IDC_PAGE1_INIT                          40150
-#define IDC_TRACE_PAGE1                         40150
-#define IDC_MBUTTON21                           40151
-#define IDC_MBUTTON22                           40152
-#define IDC_STATIC21                            40153
-#define IDC_MBUTTON23                           40154
-#define IDC_MBUTTON24                           40155
-#define IDC_MBUTTON25                           40156
-#define IDC_MBUTTON26                           40157
-#define IDC_MBUTTON27                           40158
-#define IDC_MBUTTON28                           40159
-#define IDC_MBUTTON29                           40160
-#define IDC_STATIC22                            40161
-#define IDC_STATIC23                            40162
-#define IDC_STATIC24                            40163
-#define IDC_EDIT1                               40165
-#define IDC_PAGE1_END                           40170
-
-// PAGE 2 TEST
-#define IDC_PAGE2_INIT                          40200
-#define IDC_STATIC31                            40200
-#define IDC_CBMODE30                            40201
-#define IDC_EDIT33                              40203
-#define IDC_STATIC32                            40202
-#define IDC_PAGE2_END                           40210
-
-// PAGE 3 ABOUT
-#define IDC_PAGE3_INIT                          40300
-#define IDC_SYSLINK41                           40300
-#define IDC_SYSLINK42                           40301
-#define IDC_SYSLINK43                           40302
-#define IDC_STATIC41                            40303
-#define IDC_STATIC42                            40304
-#define IDC_STATIC43                            40305
-#define IDC_PAGE3_END                           40310
-// hot keys id
-#define IHK_CR                                  5001
+//
+// Next default values for new objects
+// 
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE        104
+#define _APS_NEXT_COMMAND_VALUE         40001
+#define _APS_NEXT_CONTROL_VALUE         1012
+#define _APS_NEXT_SYMED_VALUE           101
+#endif
+#endif

@@ -1,0 +1,39 @@
+LIBRARY
+
+EXPORTS
+	InitHW
+	StartHW64
+	OpenHW
+	StartHW
+	StopHW
+	CloseHW
+	SwitchGUI
+	ShowGUI
+	HideGUI
+	SetHWLO
+	SetHWLO64
+	GetStatus
+	SetCallback
+
+	GetHWLO
+	GetHWLO64
+	GetHWSR
+
+	GetTune
+
+	TuneChanged
+	TuneChanged64
+	GetTune64
+	VersionInfo
+
+	GetAttenuators
+	GetActualAttIdx
+	SetAttenuator
+
+	ExtIoGetSrates
+	ExtIoGetActualSrateIdx
+	ExtIoSetSrate
+
+	ExtIoGetSetting
+	ExtIoSetSetting
+
