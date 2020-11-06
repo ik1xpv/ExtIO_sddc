@@ -324,13 +324,17 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	const int64_t wishedLO = LOfreq;
 	int64_t ret = 0;
 
-	LOfreq = r2iqCntrl.UptTuneFrq(LOfreq, glTunefreq); //update LO freq
-	// take frequency
+	if (global.radio == HF103) // HF frequency limits
+	{
+		if (glTunefreq > HF_HIGH) glTunefreq = HF_HIGH;
+		if (LOfreq > HF_HIGH) LOfreq = (HF_HIGH) - 1000000;  
+	}
 
-	glLOfreq = LOfreq;
+	LOfreq = r2iqCntrl.UptTuneFrq(LOfreq, glTunefreq); //update LO freq
+	glLOfreq = LOfreq; 
 
 	rf_mode rfmode = RadioHandler.GetmodeRF();
-	if ((LOfreq > 32000000) && (rfmode != VHFMODE) )
+	if ((LOfreq > 32000000) && (rfmode != VHFMODE)&& (global.radio != HF103))
 	{
 		if (global.radio != HF103)
 		{
@@ -454,9 +458,7 @@ extern "C"
 void    EXTIO_API TuneChanged64(int64_t freq)
 {
 	EnterFunction1((int)freq);
-
 	glTunefreq = freq;
-
 }
 extern "C" int64_t EXTIO_API GetTune64(void)
 {
