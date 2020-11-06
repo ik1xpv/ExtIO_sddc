@@ -1,6 +1,7 @@
 # ExtIO_sddc.dll (software digital down converter) - Oscar Steila, ik1xpv
 
-    v1.01 RC1
+tag  v1.01 date 06/11/2020
+   	v1.01 RC1
         - SDDC_FX3 directory contains ARM sources and GPIFII project to compile sddc_fx3.img 
 	- new software detects HW type: BBRF103, BBRF103, RX888 at run time.
 	- Si5351a and R820T2 programming moved to FX3 code,
@@ -9,10 +10,13 @@
 	- simplified ExtIO GUI Antenna BiasT, Dither, Rand.
 	- reference frequency correction via software +/- 200 ppm range
  	- gain adjust +/-20 dB step 1dB
-	- R820T2 control rf gains viw a single control via HDSDR
+	- R820T2 control rf gains via a single control in HDSDR GUI
 	- ExtIO.dll designed for HDSDR use.
+	- HF103 added tuning limit at ADC_FREQ/2.
+
+
 It requires:
-	Visual Studio 2019
+	Visual Studio 2019 
 	fftw libraries ftp://ftp.fftw.org/pub/fftw/fftw-3.3.5-dll32.zip
 				( copy fftw-3.3.5-dll32.zip contens to /lib/fftw )
 	CyAPI.cpp library source can be downloaded at http://www.cypress.com/file/289981/download (see License)
