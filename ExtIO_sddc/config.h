@@ -49,7 +49,10 @@ inline void null_func(const char *format, ...) { }
 #define	QUEUE_SIZE 64
 #define QUEUE_OUT  64
 
+#ifndef ADC_FREQ
 #define ADC_FREQ  (64000000)	// ADC sampling frequency
+#endif
+
 #define HF_UPPER  (ADC_FREQ/2)	   
 #define FREQCORRECTION (0.0)   // Default xtal frequency correction in ppm
 #define GAIN_ADJ (0.0)          // default gain factor in DB
