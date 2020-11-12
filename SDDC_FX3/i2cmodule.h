@@ -3,7 +3,7 @@
 
 #include "cyu3types.h"
 #include "cyu3usbconst.h"
-#include "application.h"
+#include "Application.h"
 
 /* I2C Data rate */
 #define I2C_ACTIVE

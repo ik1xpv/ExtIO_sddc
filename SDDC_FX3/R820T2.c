@@ -1,5 +1,5 @@
 /*
- * R830T2.c
+ * R820T2.c
  *
  *  Created on: 31/ott/2020
  *      Author: ik1xp
