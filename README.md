@@ -18,13 +18,9 @@
 
 ### tag  v0.96  Version "SDDC-0.96" date  25/02/2018
 
-
-
-
 ### tag  v0.95  Version "SDDC-0.95" date 31/08/2017
+
 Initial version
-
-
 
 ## Build Instructions for ExtIO
 
@@ -40,7 +36,7 @@ Initial version
 > cmake --build .
 ```
 
-* You need to download **32bit version** of fftw library from fftw website http://www.fftw.org/install/windows.html. Copy fftw3-f.dll from the downloaded zip package to the same folder of extio DLL.
+* You need to download **32bit version** of fftw library from fftw website http://www.fftw.org/install/windows.html. Copy libfftw3f-3.dll from the downloaded zip package to the same folder of extio DLL.
 
 ## Build Instructions for firmware
 
@@ -77,4 +73,5 @@ Initial version
 
 #### 2016,2017,2018,2019,2020  IK1XPV Oscar Steila - ik1xpv(at)gmail.com
 https://sdr-prototypes.blogspot.com/
+
 http://www.steila.com/blog
