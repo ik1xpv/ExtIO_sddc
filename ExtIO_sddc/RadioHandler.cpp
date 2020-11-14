@@ -544,27 +544,6 @@ void* tShowStats(void* args)
 	return 0;
 }
 
-bool RadioHandlerClass::SendI2cbyte(UINT8 i2caddr, UINT8 regaddr, UINT8 data)
-{
-	return Fx3->SendI2cbytes(i2caddr, regaddr, &data, 1);
-}
-
-
-bool RadioHandlerClass::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, UINT8* pdata, UINT8 len)
-{
-	if (IsOn)
-	{
-		return  Fx3->SendI2cbytes(i2caddr, regaddr, pdata, len);
-	}
-	return false;
-}
-
-void RadioHandlerClass::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, UINT8* pdata, UINT8 len)
-{
-	if (IsOn)
-		Fx3->ReadI2cbytes(i2caddr, regaddr, pdata, len);
-}
-
 void RadioHandlerClass::UpdBiasT_HF(bool flag) 
 {
 	biasT_HF = flag; 
