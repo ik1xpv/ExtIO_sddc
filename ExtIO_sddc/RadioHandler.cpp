@@ -319,9 +319,16 @@ bool RadioHandlerClass::InitBuffers() {
 		DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
 			, global.transferSize, pktSize, ppx);
 	}
-	// Allocate all the buffers for the input queues
+	// Allocate one big contitues buffer for all buffers in the input queues
+	// Buffer is formated as the following:
+	// [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + ....
+	//                ^                             ^
+	//                buffer[0]                     buffer[1]
+	// use float to grantee the alignment
+	PUCHAR buffer = (PUCHAR)(new float[(FFTN_R_ADC + global.transferSize * QUEUE_SIZE) / sizeof(float) ]);
 	for (int i = 0; i < QUEUE_SIZE; i++) {
-		buffers[i] = new UCHAR[global.transferSize];
+		buffers[i] = buffer + FFTN_R_ADC + global.transferSize * i;
+
 		inOvLap[i].hEvent = CreateEvent(NULL, false, false, NULL);
 	}
 	// Allocate the buffers for the output queue
@@ -499,8 +506,14 @@ bool RadioHandlerClass::UptRand(bool b)
 
 void* tShowStats(void* args)
 {
+	double count2sec;
 	LARGE_INTEGER EndingTime;
 	//   double timeElapsed = 0;
+
+	LARGE_INTEGER Frequency;
+	QueryPerformanceFrequency(&Frequency);
+	count2sec = 1.0 / Frequency.QuadPart;
+
 	BytesXferred = 0;
 	SamplesXIF = 0;
 	UINT8 cnt = 0;
