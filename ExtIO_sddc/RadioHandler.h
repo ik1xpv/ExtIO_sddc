@@ -50,9 +50,7 @@ public:
     UINT16 GetFirmware() { return firmware; }
     void FX3producerOn() { Fx3->Control(STARTFX3); }
     void FX3producerOff() { Fx3->Control(STOPFX3); }
-    bool SendI2cbyte(UINT8 i2caddr, UINT8 regaddr, UINT8 data);
-    bool SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, UINT8* pdata, UINT8 len);
-    void ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, UINT8* pdata, UINT8 len);
+
     bool GetBiasT_HF() { return biasT_HF; }
     void UpdBiasT_HF(bool flag);
     bool GetBiasT_VHF() { return biasT_VHF; }

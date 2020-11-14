@@ -262,7 +262,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
-				if (global.radio == HF103)
+				if (radio == HF103)
 					{
 						ShowWindow(hWnd, SW_HIDE);
 						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Stop);

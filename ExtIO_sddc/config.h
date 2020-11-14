@@ -47,7 +47,6 @@ inline void null_func(const char *format, ...) { }
 #define SWNAME				"ExtIO_sddc.dll"
 
 #define	QUEUE_SIZE 64
-#define QUEUE_OUT  64
 
 #ifndef ADC_FREQ
 #define ADC_FREQ  (64000000)	// ADC sampling frequency
@@ -105,21 +104,9 @@ extern bool saveADCsamplesflag;
 enum radiotype { NORADIO = 0, BBRF103 = 1, HF103 = 2, RX888 = 3 };
 extern const char* radioname[4];
 
-class cglobal {
-public:
-	bool run;
-	int transferSize;
-	radiotype radio;
-
-	cglobal() {
-		run = false;
-		transferSize = 131072;
-		radio = NORADIO;
-		Xfreq = 10000;
-	}
-};
-
-extern class cglobal global;
+extern bool run;
+extern int transferSize;
+extern radiotype radio;
 
 #endif // _CONFIG_H_
 
