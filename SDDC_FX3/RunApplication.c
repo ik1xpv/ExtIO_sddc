@@ -239,6 +239,7 @@ void ApplicationThread ( uint32_t input)
     // Spin up the USB Connection
 	Status = InitializeUSB();
 	CheckStatus("Initialize USB", Status);
+
 	 if (Status == CY_U3P_SUCCESS)
 	    {
 	    	DebugPrint(4, "\r\nApplication started with %d", input);
