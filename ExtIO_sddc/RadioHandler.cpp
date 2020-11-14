@@ -78,26 +78,26 @@ void* AdcSamplesProc(void*)
 	
 	// Queue-up the first batch of transfer requests
 	for (int n = 0; n < QUEUE_SIZE; n++) {
-		contexts[n] = EndPt->BeginDataXfer(buffers[n], global.transferSize, &inOvLap[n]);
+		contexts[n] = EndPt->BeginDataXfer(buffers[n], transferSize, &inOvLap[n]);
 		if (EndPt->NtStatus || EndPt->UsbdStatus) {// BeginDataXfer failed
 			DbgPrintf((char*)"Xfer request rejected. 1 STATUS = %ld %ld\n", EndPt->NtStatus, EndPt->UsbdStatus);
 			return NULL;
 		}
 	}
 	RadioHandler.FX3producerOn();  // FX3 start the producer
-	global.run = true;		
+	run = true;		
 	idx = 0;    // buffer cycle index
 	IDX = 1;    // absolute index
 	QueryPerformanceCounter(&StartingTime);  // set the start time
 	// The infinite xfer loop.
-	while (global.run) {
-		LONG rLen = global.transferSize;	// Reset this each time through because
+	while (run) {
+		LONG rLen = transferSize;	// Reset this each time through because
 		// FinishDataXfer may modify it
 		if (!EndPt->WaitForXfer(&inOvLap[idx], BLOCK_TIMEOUT)) { // block on transfer
 			EndPt->Abort(); // abort if timeout
 			DbgPrintf("BUG1001 IDX %d idx %d", IDX, idx);
 			// Re-submit this queue element to keep the queue full
-			contexts[idx] = EndPt->BeginDataXfer(buffers[idx], global.transferSize, &inOvLap[idx]);
+			contexts[idx] = EndPt->BeginDataXfer(buffers[idx], transferSize, &inOvLap[idx]);
 			if (EndPt->NtStatus || EndPt->UsbdStatus) { // BeginDataXfer failed
 				DbgPrintf("Xfer request rejected. NTSTATUS = 0x%08X\n", (UINT)EndPt->NtStatus);
 				AbortXferLoop(idx);
@@ -108,7 +108,7 @@ void* AdcSamplesProc(void*)
 		if (EndPt->Attributes == 2) { // BULK Endpoint
 			if (EndPt->FinishDataXfer(buffers[idx], rLen, &inOvLap[idx], contexts[idx])) {
 				BytesXferred += rLen;
-				if (rLen < global.transferSize) printf("rLen = %ld\n", rLen);
+				if (rLen < transferSize) printf("rLen = %ld\n", rLen);
 			}
 			else
 			{
@@ -122,7 +122,7 @@ void* AdcSamplesProc(void*)
 
 		if (skip > 0)
 			skip--;
-		else if (pfnCallback && global.run)
+		else if (pfnCallback && run)
 		{
 			if (rd == 1)
 			{
@@ -147,7 +147,7 @@ void* AdcSamplesProc(void*)
 		{
 			saveADCsamplesflag = false; // do it once
 			short* pi = (short*)&buffers[idx][0];
-			unsigned int numsamples = global.transferSize / sizeof(short);
+			unsigned int numsamples = transferSize / sizeof(short);
 			float samplerate  = (float) adcfixedfreq;
 			PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
 				"ADCrealsamples.adc input real ADC 16 bit samples",
@@ -155,7 +155,7 @@ void* AdcSamplesProc(void*)
 		}
 #endif
 		// Re-submit this queue element to keep the queue full
-		contexts[idx] = EndPt->BeginDataXfer(buffers[idx], global.transferSize, &inOvLap[idx]);
+		contexts[idx] = EndPt->BeginDataXfer(buffers[idx], transferSize, &inOvLap[idx]);
 		if (EndPt->NtStatus || EndPt->UsbdStatus) { // BeginDataXfer failed
 			DbgPrintf("Xfer request rejected.2 NTSTATUS = 0x%08X\n", (UINT)EndPt->NtStatus);
 			AbortXferLoop(idx);
@@ -182,7 +182,7 @@ void* AdcSamplesProc(void*)
 
 void AbortXferLoop(int qidx)
 {
-	long len = global.transferSize;
+	long len = transferSize;
 	bool r = true;
 	EndPt->Abort();
 	for (int n = 0; n < QUEUE_SIZE; n++) {
@@ -225,19 +225,19 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 		return IsOn;
 	}
 	UINT8 rdata[64];
-	radiotype oldradio = global.radio;
+	radiotype oldradio = radio;
 	Fx3->Control(TESTFX3, &rdata[0]);
 	switch (rdata[0])
 	{
 	case HF103:
-			global.radio = HF103;
+			radio = HF103;
 			IsOn = true;
 			firmware = (rdata[1] << 8) + rdata[2];
 			DbgPrintf("HF103 | firmware %x\n", firmware);
 		break;
 
 	case BBRF103:
-			global.radio = BBRF103;
+			radio = BBRF103;
 			IsOn = true;
 			firmware = (rdata[1] << 8) + rdata[2];
 			DbgPrintf("BBRF103 | firmware %x\n", firmware);
@@ -254,7 +254,7 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 		break;
 
 	case RX888:
-			global.radio = RX888;
+			radio = RX888;
 			IsOn = true;
 			firmware = (rdata[1] << 8) + rdata[2];
 			DbgPrintf("RX888 | firmware %x\n", firmware);
@@ -273,10 +273,10 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 		break;
 	}
 	if (!Fx3->Control(GPIOFX3, (UINT8*)&bgpio)) IsOn = false;
-	if (oldradio != global.radio)
+	if (oldradio != radio)
 	{
 		char buffer[128];
-		sprintf(buffer, "%s\tnow connected\r\n%s\tprevious radio", radioname[global.radio], radioname[oldradio]);
+		sprintf(buffer, "%s\tnow connected\r\n%s\tprevious radio", radioname[radio], radioname[oldradio]);
 		MessageBox(NULL, buffer, "WARNING settings changed", MB_OK | MB_ICONINFORMATION);
 	}
 	return IsOn;
@@ -314,10 +314,10 @@ bool RadioHandlerClass::InitBuffers() {
 
 	if (EndPt) { // real data
 		long pktSize = EndPt->MaxPktSize;
-		EndPt->SetXferSize(global.transferSize);
-		long ppx = global.transferSize / pktSize;
+		EndPt->SetXferSize(transferSize);
+		long ppx = transferSize / pktSize;
 		DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
-			, global.transferSize, pktSize, ppx);
+			, transferSize, pktSize, ppx);
 	}
 	// Allocate one big contitues buffer for all buffers in the input queues
 	// Buffer is formated as the following:
@@ -325,15 +325,15 @@ bool RadioHandlerClass::InitBuffers() {
 	//                ^                             ^
 	//                buffer[0]                     buffer[1]
 	// use float to grantee the alignment
-	PUCHAR buffer = (PUCHAR)(new float[(FFTN_R_ADC + global.transferSize * QUEUE_SIZE) / sizeof(float) ]);
+	PUCHAR buffer = (PUCHAR)(new float[(FFTN_R_ADC + transferSize * QUEUE_SIZE) / sizeof(float) ]);
 	for (int i = 0; i < QUEUE_SIZE; i++) {
-		buffers[i] = buffer + FFTN_R_ADC + global.transferSize * i;
+		buffers[i] = buffer + FFTN_R_ADC + transferSize * i;
 
 		inOvLap[i].hEvent = CreateEvent(NULL, false, false, NULL);
 	}
 	// Allocate the buffers for the output queue
 	for (int i = 0; i < QUEUE_OUT; i++) {
-		obuffers[i] = new float[global.transferSize / 2];
+		obuffers[i] = new float[transferSize / 2];
 	}
 	// UpdatemodeRF(modeRF); //  Update
 	return IsOn;
@@ -346,19 +346,20 @@ bool RadioHandlerClass::Start()
 	DbgPrintf("RadioHandlerClass::Start\n");
 	kbRead = 0; // zeros the kilobytes counter
 	kSReadIF = 0;
-	global.run = true;
+	run = true;
 	int t = 0;
 	show_stats_thread = new std::thread(tShowStats, (void*)t);
 	initR2iq( 4 - giExtSrateIdx ); // 0,1,2,3,4 => 32,16,8,4,2 MHz
 	adc_samples_thread = new std::thread(AdcSamplesProc, (void*)t);
 	return IsOn;
 }
+
 bool RadioHandlerClass::Stop()
 {
-	DbgPrintf("RadioHandlerClass::Stop %d\n", global.run);
-	if (global.run)
+	DbgPrintf("RadioHandlerClass::Stop %d\n", run);
+	if (run)
 	{
-		global.run = false; // now waits for threads
+		run = false; // now waits for threads
 		mutexShowStats.notify_all(); //  allows exit of
 		show_stats_thread->join(); //first to be joined
 		DbgPrintf("show_stats_thread join2\n");
@@ -388,7 +389,7 @@ int RadioHandlerClass::UpdateattRF(int att)
 	{
 		if (rfm != VHFMODE) // HFMODE, VLFMODE select att HF
 		{ 
-			switch (global.radio)
+			switch (radio)
 			{
 
 			case BBRF103:
@@ -436,9 +437,9 @@ int RadioHandlerClass::UpdateattRF(int att)
 			}
 		}
 	}
-	if ((rfm == VHFMODE) && (global.radio != HF103))
+	if ((rfm == VHFMODE) && (radio != HF103))
 	{
-		if (global.radio == HF103) return -1;
+		if (radio == HF103) return -1;
 		bgpio &= (0xFFFF ^ (ATT_SEL0 | ATT_SEL1)); // R820T2 input
 		if (Fx3 != nullptr) {
 			if (!Fx3->Control(GPIOFX3, (UINT8*)&bgpio)) IsOn = false;
@@ -517,11 +518,11 @@ void* tShowStats(void* args)
 	BytesXferred = 0;
 	SamplesXIF = 0;
 	UINT8 cnt = 0;
-	while (global.run) {
+	while (run) {
 		std::mutex k;
 		std::unique_lock<std::mutex> lk(k);
 		mutexShowStats.wait(lk);
-		if (global.run == false)
+		if (run == false)
 			return NULL;
 
 		double timeStart = double(StartingTime.QuadPart) * count2sec;
