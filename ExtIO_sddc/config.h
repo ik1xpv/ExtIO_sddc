@@ -47,7 +47,6 @@ inline void null_func(const char *format, ...) { }
 #define SWNAME				"ExtIO_sddc.dll"
 
 #define	QUEUE_SIZE 64
-#define QUEUE_OUT  64
 
 #ifndef ADC_FREQ
 #define ADC_FREQ  (64000000)	// ADC sampling frequency

@@ -310,7 +310,7 @@ bool RadioHandlerClass::InitBuffers() {
 
 	buffers = new PUCHAR[QUEUE_SIZE];
 	contexts = new PUCHAR[QUEUE_SIZE];
-	obuffers = new float* [QUEUE_OUT];
+	obuffers = new float* [QUEUE_SIZE];
 
 	if (EndPt) { // real data
 		long pktSize = EndPt->MaxPktSize;
@@ -332,7 +332,7 @@ bool RadioHandlerClass::InitBuffers() {
 		inOvLap[i].hEvent = CreateEvent(NULL, false, false, NULL);
 	}
 	// Allocate the buffers for the output queue
-	for (int i = 0; i < QUEUE_OUT; i++) {
+	for (int i = 0; i < QUEUE_SIZE; i++) {
 		obuffers[i] = new float[transferSize / 2];
 	}
 	// UpdatemodeRF(modeRF); //  Update
