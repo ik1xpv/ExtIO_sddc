@@ -499,8 +499,14 @@ bool RadioHandlerClass::UptRand(bool b)
 
 void* tShowStats(void* args)
 {
+	double count2sec;
 	LARGE_INTEGER EndingTime;
 	//   double timeElapsed = 0;
+
+	LARGE_INTEGER Frequency;
+	QueryPerformanceFrequency(&Frequency);
+	count2sec = 1.0 / Frequency.QuadPart;
+
 	BytesXferred = 0;
 	SamplesXIF = 0;
 	UINT8 cnt = 0;

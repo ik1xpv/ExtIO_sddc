@@ -95,9 +95,6 @@ enum rf_mode { HFMODE = 0x1, VLFMODE = 0x2, VHFMODE = 0x3, NOMODE = 4 };
 #define TIMEOUT (2000)
 
 extern double pi;
-extern double count2usec;
-extern double count2msec;
-extern double count2sec;
 extern int Xfreq;
 extern char strversion[];
 extern double gdFreqCorr_ppm;
