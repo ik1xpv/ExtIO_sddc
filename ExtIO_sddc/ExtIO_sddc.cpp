@@ -29,7 +29,7 @@ static int  SDR_ver_minor = -1;
 static const int	gHwType = exthwUSBfloat32;
 int  giExtSrateIdx = 4;
 int  giExtSrateIdxHF = 4;
-unsigned    gExtSampleRate = 32000000;
+unsigned    gExtSampleRate = ADC_FREQ / 2;
 
 int64_t	glLOfreq = 2000000;
 int64_t	glTunefreq = 999000;	// Turin MW broadcast !
