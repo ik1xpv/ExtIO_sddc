@@ -407,22 +407,32 @@ static void *r2iqThreadf(void *arg) {
 			r2iqCntrl->cntr--;
 		}
 
-		if (idx == 0)
-		{
-			// last 1024 samples need to move the data from last block
-			memcpy(r2iqCntrl->buffers[0] - FFTN_R_ADC, r2iqCntrl->buffers[QUEUE_SIZE - 1] + global.transferSize - FFTN_R_ADC, FFTN_R_ADC);
-		}
 
 		ADCSAMPLE *dataADC; // pointer to input data
 		float *inloop;            // pointer to first fft input buffer
 		int midx = r2iqCntrl->bufIdx;
 		rf_mode  moderf = RadioHandler.GetmodeRF();
 		dataADC = (ADCSAMPLE *)buffer;
+		int blocks = fftPerBuf;
+		int k = 0;
 		if (!r2iqCntrl->randADC)        // plain samples no ADC rand set
 		{
-			// all other frames
-			dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap
-			for (int k = 0; k < fftPerBuf; k++) {
+			if (idx == 0) {
+				inloop = th->ADCinTime[0];
+				int16_t *out = (int16_t*)(r2iqCntrl->buffers[QUEUE_SIZE - 1] + global.transferSize - FFTN_R_ADC);
+				for (int m = 0; m < halfFft; m++) {
+					*inloop++ = *out++;
+				}
+				for (int m = 0; m < halfFft; m++) {
+					*inloop++ = *dataADC++;
+				}
+				k++;
+			} else {
+				// all other frames
+				dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap
+			}
+
+			for (; k < fftPerBuf; k++) {
 				inloop = th->ADCinTime[k];
 				for (int m = 0; m < 2 * halfFft; m++) {
 					*inloop++ = *dataADC++;
@@ -432,9 +442,24 @@ static void *r2iqThreadf(void *arg) {
 		}
 		else
 		{
+			if (idx == 0) {
+				inloop = th->ADCinTime[0];
+				int16_t *out = (int16_t*)(r2iqCntrl->buffers[QUEUE_SIZE - 1] + global.transferSize - FFTN_R_ADC);
+				for (int m = 0; m < halfFft; m++) {
+					*inloop++ = (RandTable[(UINT16)*out++]);
+				}
+				for (int m = 0; m < halfFft; m++) {
+					*inloop++ = (RandTable[(UINT16)*dataADC++]);
+				}
+				k++;
+			} else {
+				// all other frames
+				dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap	
+			}
+
 			// all other frames
 			dataADC = dataADC - halfFft / 2;  // halfFft/2 overlap
-			for (int k = 0; k < fftPerBuf; k++) {
+			for (; k < fftPerBuf; k++) {
 				inloop = th->ADCinTime[k];
 				for (int m = 0; m < 2 * halfFft; m++) {
 					*inloop++ = (RandTable[(UINT16)*dataADC++]);
