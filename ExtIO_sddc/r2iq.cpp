@@ -53,7 +53,7 @@ static void *r2iqThreadf(void *arg);   // thread function
 static std::thread* r2iq_thread[N_R2IQ_THREAD]; // thread pointers
 
 const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
-static int fftPerBuf;                  // number of fft per input buffer
+const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 static fftwf_complex *pfilterht;       // time filter ht
 static fftwf_complex **filterHw;       // Hw complex to each decimation ratio
 #ifndef NDEBUG
@@ -191,7 +191,7 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 	LOfreq /= loprecision;
 	LOfreq *= loprecision;
 
-	switch (global.radio) // update gains
+	switch (radio) // update gains
 	{
 	case BBRF103:
 		GainScale = BBRF103_GAINFACTOR;
@@ -242,7 +242,6 @@ void initR2iq(int downsample) {
 	r2iqCntrl.buffers = buffers;    // set to the global exported by main_loop
 	r2iqCntrl.obuffers = obuffers;  // set to the global exported by main_loop
 	r2iqCntrl.Setdecimate(downsample);  // save downsample index.
-	fftPerBuf = global.transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 
 	// Get the processor count
 	auto processor_count = std::thread::hardware_concurrency();
@@ -379,7 +378,7 @@ static void *r2iqThreadf(void *arg) {
 	int lastdecimate = -1;
 
 	float * pout;
-	while (global.run) {
+	while (run) {
 		int decimate = r2iqCntrl->getDecidx();
 		int mfft = r2iqCntrl->getFftN();
 		int mratio = r2iqCntrl->getRatio();
@@ -397,7 +396,7 @@ static void *r2iqThreadf(void *arg) {
 			cvADCbufferAvailable.wait(lk, [r2iqCntrl] {return r2iqCntrl->cntr > 0; });
 			}
 
-			if (!global.run) 
+			if (!run) 
 				return 0;
 
 			buffer = (char *)r2iqCntrl->buffers[r2iqCntrl->bufIdx];
@@ -419,7 +418,7 @@ static void *r2iqThreadf(void *arg) {
 		{
 			if (idx == 0) {
 				inloop = th->ADCinTime[0];
-				int16_t *out = (int16_t*)(r2iqCntrl->buffers[QUEUE_SIZE - 1] + global.transferSize - FFTN_R_ADC);
+				int16_t *out = (int16_t*)(r2iqCntrl->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
 				for (int m = 0; m < halfFft; m++) {
 					*inloop++ = *out++;
 				}
@@ -444,7 +443,7 @@ static void *r2iqThreadf(void *arg) {
 		{
 			if (idx == 0) {
 				inloop = th->ADCinTime[0];
-				int16_t *out = (int16_t*)(r2iqCntrl->buffers[QUEUE_SIZE - 1] + global.transferSize - FFTN_R_ADC);
+				int16_t *out = (int16_t*)(r2iqCntrl->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
 				for (int m = 0; m < halfFft; m++) {
 					*inloop++ = (RandTable[(UINT16)*out++]);
 				}
@@ -497,7 +496,6 @@ static void *r2iqThreadf(void *arg) {
 						th->inFreqTmp[halfFft / 2 + m][1] = 0;
                     }
                 }
-#if 0
 				else if (moderf == VLFMODE)
                 {
                   int mtunebin = halfFft/2 - halfFft/32;
@@ -528,7 +526,6 @@ static void *r2iqThreadf(void *arg) {
                     }
 
                 }
-#endif
 				else
 				{
 					for (int m = 0; m < halfFft / 2; m++) // circular shift tune fs/2 half array
@@ -579,7 +576,7 @@ static void *r2iqThreadf(void *arg) {
 		{      // decimate in frequency plus tuning
 			int modx = midx / mratio;
 			int moff = midx - modx * mratio;
-			int offset = ((global.transferSize / 2) / mratio) *moff;
+			int offset = ((transferSize / 2) / mratio) *moff;
 			pout = (float *)(r2iqCntrl->obuffers[modx] + offset);
 			int mtunebin = r2iqCntrl->getTunebin();
 
@@ -604,7 +601,6 @@ static void *r2iqThreadf(void *arg) {
 						th->inFreqTmp[mfft / 2 + m][1] = 0;
 					}
 				}
-#if 0
 				else if (moderf == VLFMODE)
 				{
 				  int mm;
@@ -632,7 +628,6 @@ static void *r2iqThreadf(void *arg) {
 						}
 					}
 				}
-#endif
 				else
 				{
 					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
@@ -706,7 +701,7 @@ static void *r2iqThreadf(void *arg) {
 			}
 		}
 
-	} // while(global.run)
+	} // while(run)
 //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
 	return 0;
 }
