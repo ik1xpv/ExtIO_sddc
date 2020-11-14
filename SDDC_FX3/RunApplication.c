@@ -8,6 +8,20 @@
  *  modified from: SuperSpeed Device Design By Example - John Hyde
  *
  *  https://sdr-prototypes.blogspot.com/
+ *
+ *  add USB CDC debug port
+ *  Author: Franco Venturi
+ *  modified from: SuperSpeed Device Design By Example - John Hyde
+ *  Date: Sat Nov 14 09:35:27 AM EST 2020
+ *
+ *  - If the device has a UART connected, then the debug console will work as follows:
+ *      On power on the CDC interface is looped-back such that characters are
+ *      just echoed and the UART is connected as the Debug Console
+ *      Following a "switch" command the Debug Console is connected to the CDC
+ *      interface. Another "switch" will switch it back to the UART
+ *
+ *  - If the device wdoes not have a UART connected, then the debug console
+ *    will always be connected to the CDC interface
  */
 #include "Application.h"
 

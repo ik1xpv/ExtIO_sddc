@@ -8,6 +8,12 @@
  *  modified from: SuperSpeed Device Design By Example - John Hyde
  *
  *  https://sdr-prototypes.blogspot.com/
+ *
+ *  add USB CDC debug port
+ *  Author: Franco Venturi
+ *  modified from: SuperSpeed Device Design By Example - John Hyde
+ *                 see also FX3 SDK example 'serialif_examples/cyfxusbuart'
+ *  Date: Sat Nov 14 09:41:32 AM EST 2020
  */
 
 #include "Application.h"
@@ -33,16 +39,20 @@ extern void set_all_gains(UINT8 gain_index);
 extern void set_freq(UINT32 freq);
 extern void rt820shutdown(void);
 extern uint8_t m_gain_index;
-// Global data owned by this module
-
 
 
 #define CYFX_SDRAPP_MAX_EP0LEN  64      /* Max. data length supported for EP0 requests. */
+
+/* CDC Class specific requests to be handled by this application. */
+#define SET_LINE_CODING        0x20
+#define GET_LINE_CODING        0x21
+#define SET_CONTROL_LINE_STATE 0x22
 
 extern CyU3PDmaMultiChannel glMultiChHandleSlFifoPtoU;
 // Global data owned by this module
 CyU3PDmaChannel glGPIF2USB_Handle;
 uint8_t  *glEp0Buffer = 0;              /* Buffer used to handle vendor specific control requests. */
+CyU3PUartConfig_t glUartConfig = {0};   /* Current UART configuration. */
 uint8_t  vendorRqtCnt = 0;
 
 /* Callback to handle the USB setup requests. */
@@ -54,7 +64,7 @@ CyFxSlFifoApplnUSBSetupCB (
 {
     /* Fast enumeration is used. Only requests addressed to the interface, class,
      * vendor and unknown control requests are received by this function.
-     * This application does not support any class or vendor requests. */
+     * This application only supports class requests for a CDC device. */
 
     uint8_t  bRequest, bReqType;
     uint8_t  bType, bTarget;
@@ -325,6 +335,82 @@ CyFxSlFifoApplnUSBSetupCB (
    	    uint8_t * pd = (uint8_t *) &glEp0Buffer[0];
     	uint32_t event =( (VENDOR_RQT<<24) | ( bRequest<<16) | (pd[1]<<8) | pd[0] );
     	CyU3PQueueSend(&EventAvailable, &event, CYU3P_NO_WAIT);
+    } else if (bType == CY_U3P_USB_CLASS_RQT) {
+	isHandled = CyFalse;
+	if (bRequest == SET_LINE_CODING) {
+	    if (CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL) == CY_U3P_SUCCESS) {
+		CyU3PUartConfig_t uartConfig;
+		CyBool_t isValid = CyTrue;
+		CyU3PMemSet((uint8_t *) &uartConfig, 0, sizeof(uartConfig));
+		uartConfig.baudRate = (CyU3PUartBaudrate_t) (glEp0Buffer[0] |
+		    (glEp0Buffer[1] << 8) | (glEp0Buffer[2] << 16) | (glEp0Buffer[3] << 24));
+		if (glEp0Buffer[4] == 0) {
+		    uartConfig.stopBit = CY_U3P_UART_ONE_STOP_BIT;
+		} else if (glEp0Buffer[4] == 2) {
+		    uartConfig.stopBit = CY_U3P_UART_TWO_STOP_BIT;
+		} else {
+		    isValid = CyFalse;
+		}
+		if (glEp0Buffer[5] == 0) {
+		    uartConfig.parity = CY_U3P_UART_NO_PARITY;
+		} else if (glEp0Buffer[5] == 1) {
+		    uartConfig.parity = CY_U3P_UART_ODD_PARITY;
+		} else if (glEp0Buffer[5] == 2) {
+		    uartConfig.parity = CY_U3P_UART_EVEN_PARITY;
+		} else {
+		    isValid = CyFalse;
+		}
+		uartConfig.txEnable = CyTrue;
+		uartConfig.rxEnable = CyTrue;
+		uartConfig.flowCtrl = CyFalse;
+		uartConfig.isDma = CyTrue;
+		if (isValid) {
+		    apiRetStatus = CyU3PUartSetConfig(&uartConfig, NULL);
+		    if (apiRetStatus == CY_U3P_SUCCESS) {
+			CyU3PMemCopy((uint8_t *) &glUartConfig, (uint8_t *) &uartConfig,
+			    sizeof (CyU3PUartConfig_t));
+			isHandled = CyTrue;
+		    }
+		}
+	    }
+	} else if (bRequest == GET_LINE_CODING) {
+	    /* get current UART config */
+	    glEp0Buffer[0] = (glUartConfig.baudRate & 0x000000ff) >>  0;
+	    glEp0Buffer[1] = (glUartConfig.baudRate & 0x0000ff00) >>  8;
+	    glEp0Buffer[2] = (glUartConfig.baudRate & 0x00ff0000) >> 16;
+	    glEp0Buffer[3] = (glUartConfig.baudRate & 0xff000000) >> 24;
+	    if (glUartConfig.stopBit == CY_U3P_UART_ONE_STOP_BIT) {
+		glEp0Buffer[4] = 0;
+	    } else if (glUartConfig.stopBit == CY_U3P_UART_TWO_STOP_BIT) {
+		glEp0Buffer[4] = 2;
+	    } else {
+		glEp0Buffer[4] = 2;
+	    }
+	    if (glUartConfig.parity == CY_U3P_UART_NO_PARITY) {
+		glEp0Buffer[5] = 0;
+	    } else if (glUartConfig.parity == CY_U3P_UART_ODD_PARITY) {
+		glEp0Buffer[5] = 1;
+	    } else if (glUartConfig.parity == CY_U3P_UART_EVEN_PARITY) {
+		glEp0Buffer[5] = 2;
+	    } else {
+		glEp0Buffer[5] = 0;
+	    }
+	    glEp0Buffer[6] = 0;
+	    CyU3PUsbSendEP0Data(7, glEp0Buffer);
+	    isHandled = CyTrue;
+	} else if (bRequest == SET_CONTROL_LINE_STATE) {
+	    if (glIsApplnActive) {
+		CyU3PUsbAckSetup();
+		isHandled = CyTrue;
+	    } else {
+		CyU3PDebugPrint(4, "STALL CDC EP0 V.REQ %x\n", bRequest);
+		CyU3PUsbStall(0, CyTrue, CyFalse);
+	    }
+	} else {
+	    /* invalid request */
+	    CyU3PDebugPrint(4, "STALL CDC EP0 V.REQ %x\n", bRequest);
+	    CyU3PUsbStall(0, CyTrue, CyFalse);
+	}
     }
     return isHandled;
 }
