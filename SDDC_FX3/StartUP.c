@@ -86,5 +86,4 @@ int main (void)
 		}
 	}
     while (1);			// Get here on a failure, can't recover, just hang here
-	return 0;			// Won't get here but compiler wants this!
 }
