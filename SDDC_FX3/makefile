@@ -14,17 +14,17 @@
 ## installation root directory path.
 ##
 
-FX3FWROOT=../..
-FX3PFWROOT=../../u3p_firmware
+FX3FWROOT=../SDK
+FX3PFWROOT=../SDK/u3p_firmware
 
-all:compile
+MODULE = SDDC_FX3
+CYCONFOPT=fx3_release
+
+all:compile $(MODULE).img
 
 include $(FX3FWROOT)/common/fx3_build_config.mak
 
-MODULE = cyfxslfifosync
-
-SOURCE += $(MODULE).c
-SOURCE += cyfxslfifousbdscr.c
+SOURCE +=  DebugConsole.c  i2cmodule.c  R820T2.c  RunApplication.c  Si5351.c  StartStopApplication.c  StartUP.c  Support.c  USBdescriptor.c  USBhandler.c
 
 C_OBJECT=$(SOURCE:%.c=./%.o)
 A_OBJECT=$(SOURCE_ASM:%.S=./%.o)
@@ -34,17 +34,25 @@ EXES = $(MODULE).$(EXEEXT)
 $(MODULE).$(EXEEXT): $(A_OBJECT) $(C_OBJECT)
 	$(LINK)
 
-$(C_OBJECT) : %.o : %.c cyfxslfifosync.h cyfxgpif_syncsf.h
+$(C_OBJECT) : %.o : %.c
 	$(COMPILE)
 
 $(A_OBJECT) : %.o : %.S
 	$(ASSEMBLE)
 
+./elf2img : $(FX3FWROOT)/util/elf2img.c
+	gcc -o elf2img $<
+
 clean:
 	rm -f ./$(MODULE).$(EXEEXT)
+	rm -f ./elf2img
+	rm -f ./$(MODULE).img
 	rm -f ./$(MODULE).map
 	rm -f ./*.o
 
 compile: $(C_OBJECT) $(A_OBJECT) $(EXES)
+
+$(MODULE).img : $(MODULE).$(EXEEXT) ./elf2img
+	./elf2img -i $< -o $@
 
 #[]#
