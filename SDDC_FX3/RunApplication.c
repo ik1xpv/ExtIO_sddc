@@ -166,10 +166,12 @@ HF103_GpioInit ()
     else  //BBRF103, RX666, RX888
     {
         // check if BBRF103 or RX888 (RX666 ?)
-        if(GPIOtestInputPulldown(LED_KIT))
+        if(GPIOtestInputPulldown(LED_KIT)) {
         	HWconfig = BBRF103;
-        else
+		}
+        else {
         	HWconfig = RX888;
+		}
 
 		ConfGPIOsimpleout(17);   // free
 		ConfGPIOsimpleout(18);   // VHF ANT Bias-T
