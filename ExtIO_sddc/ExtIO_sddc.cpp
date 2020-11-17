@@ -131,8 +131,8 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		gbInitHW = RadioHandler.Init(hInst); // Check if it there hardware
 		if (!gbInitHW)
 		{
-			MessageBox(NULL, "Is HF103 powered on and connected ?\r\n\r\nPlease start HDSDR again",
-				"WARNING HF103 NOT FOUND", MB_OK | MB_ICONWARNING);
+			MessageBox(NULL, "Is SDR powered on and connected ?\r\n\r\nPlease start HDSDR again",
+				"WARNING SDR NOT FOUND", MB_OK | MB_ICONWARNING);
 				ExitProcess(0); // exit without saving settings
 			return gbInitHW;
 		}
