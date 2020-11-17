@@ -101,7 +101,7 @@ const uint8_t CyFxUSBSSConfigDscr[] __attribute__ ((aligned (32))) =
     /* Configuration descriptor */
     0x09,                           /* Descriptor size */
     CY_U3P_USB_CONFIG_DESCR,        /* Configuration descriptor type */
-    0x80,0x00,                      /* Length of this descriptor and all sub descriptors */
+    0x73,0x00,                      /* Length of this descriptor and all sub descriptors */
     /* 3 interfaces: 0, 1 -> CDC (Call Management and Data) - 2 -> Bulk IN */
     0x03,                           /* Number of interfaces */
     0x01,                           /* Configuration number */
@@ -249,7 +249,7 @@ const uint8_t CyFxUSBHSConfigDscr[] __attribute__ ((aligned (32))) =
     /* Configuration descriptor */
     0x09,                           /* Descriptor size */
     CY_U3P_USB_CONFIG_DESCR,        /* Configuration descriptor type */
-    0x19,0x00,                      /* Length of this descriptor and all sub descriptors */
+    0x5b,0x00,                      /* Length of this descriptor and all sub descriptors */
     0x03,                           /* Number of interfaces */
     0x01,                           /* Configuration number */
     0x00,                           /* COnfiguration string index */
@@ -368,7 +368,7 @@ const uint8_t CyFxUSBFSConfigDscr[] __attribute__ ((aligned (32))) =
     /* Configuration descriptor */
     0x09,                           /* Descriptor size */
     CY_U3P_USB_CONFIG_DESCR,        /* Configuration descriptor type */
-    0x19,0x00,                      /* Length of this descriptor and all sub descriptors */
+    0x5b,0x00,                      /* Length of this descriptor and all sub descriptors */
     0x03,                           /* Number of interfaces */
     0x01,                           /* Configuration number */
     0x00,                           /* COnfiguration string index */
