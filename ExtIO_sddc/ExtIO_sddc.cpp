@@ -363,7 +363,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			break;
 		case HFMODE:
 		default:
-			RadioHandler.UpdatemodeRF(HFMODE);    //  Bug VLF
+			RadioHandler.UpdatemodeRF(HFMODE);    
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 			break;
 		}
