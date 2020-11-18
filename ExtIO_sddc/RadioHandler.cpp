@@ -24,9 +24,6 @@ float** obuffers;
 int idx;            // queue index              // export
 unsigned long IDX;  // absolute index
 
-
-
-
 // transfer variables
 double kbRead = 0;
 LARGE_INTEGER StartingTime;
@@ -329,9 +326,8 @@ bool RadioHandlerClass::Stop()
 
 bool RadioHandlerClass::Close()
 {
-	hardware->FX3SetGPIO(SHDWN);
-
 	delete hardware;
+	hardware = nullptr;
 
 	return true;
 }
@@ -370,14 +366,6 @@ int64_t RadioHandlerClass::TuneLO(int64_t freq)
 {
 	return hardware->TuneLo(freq);
 }
-
-
-// TODO: Move to right place for hardware
-#define SHDWN           (32) 	
-#define DITH            (64)
-#define RANDO           (128)
-#define BIAS_HF         (256)	
-#define BIAS_VHF        (512)	
 
 bool RadioHandlerClass::UptDither(bool b)
 {

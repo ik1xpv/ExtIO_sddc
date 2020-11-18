@@ -11,20 +11,11 @@
 #include <stdint.h>
 #include "FX3handler.h"
 
-
-
-
-#define SHDWN           (32)  	
-#define DITH            (64)	
-#define RANDO           (128)	 
-
-#define BIAS_HF         (256)	
-#define BIAS_VHF        (512)	
-#define LED_YELLOW      (1024)
-#define LED_RED         (2048)
-#define LED_BLUE        (4096)
-#define ATT_SEL0        (8192)
-#define ATT_SEL1		(16384)
+#define SHDWN           (32)
+#define DITH            (64)
+#define RANDO           (128)
+#define BIAS_HF         (256)
+#define BIAS_VHF        (512)
 
 #define GAIN_STEPS (29)  // R820 steps
 
@@ -90,11 +81,7 @@ class RadioHardware {
 public:
     RadioHardware(fx3class* fx3) : Fx3(fx3), gpios(0) {}
 
-    virtual ~RadioHardware() {
-        Fx3->Control(RESETFX3);       //FX3    reset the fx3 firmware
-        delete Fx3;
-    }
-
+    virtual ~RadioHardware();
     virtual const char* getName() = 0;
     virtual void getFrequencyRange(int64_t& low, int64_t& high) = 0;
     virtual float getGain() { return BBRF103_GAINFACTOR; }
