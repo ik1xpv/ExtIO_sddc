@@ -86,8 +86,6 @@ r2iqControlClass::~r2iqControlClass()
 	Initialized = false;
 }
 
-
-
 int r2iqControlClass::Setdecimate(int dec)
 {
 	mdecimation =  dec;  // 0 , 2 , 4, 8, 16 =>  32, 16, 8, 4, 2 MHz
@@ -191,22 +189,6 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 	LOfreq /= loprecision;
 	LOfreq *= loprecision;
 
-	switch (radio) // update gains
-	{
-	case BBRF103:
-		GainScale = BBRF103_GAINFACTOR;
-		break;
-	case HF103:
-		GainScale = HF103_GAINFACTOR;
-		break;
-	case RX888:
-		GainScale = RX888_GAINFACTOR;
-		break;
-	default:
-		GainScale = BBRF103_GAINFACTOR;
-		break;
-	}
-
 	return LOfreq;
 }
 
@@ -218,8 +200,6 @@ r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
 void r2iqTurnOn(int idx) {
 	r2iqCntrl.r2iqOn = true;
 }
-
-
 
 void r2iqTurnOff(void) {
 	r2iqCntrl.r2iqOn = false;
@@ -238,10 +218,12 @@ void r2iqDataReady(void) { // signals new sample buffer arrived
 	cvADCbufferAvailable.notify_one(); // signal data available
 }
 
-void initR2iq(int downsample) {
+void initR2iq(int downsample, float gain) {
 	r2iqCntrl.buffers = buffers;    // set to the global exported by main_loop
 	r2iqCntrl.obuffers = obuffers;  // set to the global exported by main_loop
 	r2iqCntrl.Setdecimate(downsample);  // save downsample index.
+
+	r2iqCntrl.GainScale = gain;
 
 	// Get the processor count
 	auto processor_count = std::thread::hardware_concurrency();

@@ -97,6 +97,7 @@ public:
 
     virtual const char* getName() = 0;
     virtual void getFrequencyRange(int64_t& low, int64_t& high) = 0;
+    virtual float getGain() { return BBRF103_GAINFACTOR; }
     virtual void Initialize() = 0;
     virtual bool UpdatemodeRF(rf_mode mode) = 0;
     virtual bool UpdateattRF(int attIndex) = 0;
@@ -117,6 +118,7 @@ class BBRF103Radio : public RadioHardware {
 public:
     BBRF103Radio(fx3class* fx3);
     const char* getName() override { return "BBRF103"; }
+    float getGain() override { return BBRF103_GAINFACTOR; }
     void getFrequencyRange(int64_t& low, int64_t& high) override;
     void Initialize() override;
     bool UpdatemodeRF(rf_mode mode) override;
@@ -128,12 +130,14 @@ class RX888Radio : public BBRF103Radio {
 public:
     RX888Radio(fx3class* fx3) : BBRF103Radio(fx3) {}
     const char* getName() override { return "RX888"; }
+    float getGain() override { return RX888_GAINFACTOR; }
 };
 
 class HF103Radio : public RadioHardware {
 public:
     HF103Radio(fx3class* fx3) : RadioHardware(fx3) {}
     const char* getName() override { return "HF103"; }
+    float getGain() override { return HF103_GAINFACTOR; }
 
     void getFrequencyRange(int64_t& low, int64_t& high) override;
 

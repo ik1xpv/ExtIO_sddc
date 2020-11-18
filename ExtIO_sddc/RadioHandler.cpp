@@ -298,7 +298,8 @@ bool RadioHandlerClass::Start()
 	run = true;
 	int t = 0;
 	show_stats_thread = new std::thread(tShowStats, (void*)t);
-	initR2iq( 4 - giExtSrateIdx ); // 0,1,2,3,4 => 32,16,8,4,2 MHz
+	// 0,1,2,3,4 => 32,16,8,4,2 MHz
+	initR2iq( 4 - giExtSrateIdx, hardware->getGain());
 	adc_samples_thread = new std::thread(
 		[this](void* arg){
 			this->AdcSamplesProcess();
