@@ -31,7 +31,7 @@ const uint8_t CyFxUSB30DeviceDscr[] __attribute__ ((aligned (32))) =
     0x01,                           /* Device protocol */
     0x09,                           /* Maxpacket size for EP0 : 2^9 */
     0x42,0x42,                      /* Vendor ID */
-    0x04,0xEC,                      /* Product ID */
+    0xAB,0xAB,                      /* Product ID */
     0x30,0x00,                      /* Device release number */
     0x01,                           /* Manufacture string index */
     0x02,                           /* Product string index */
@@ -50,7 +50,7 @@ const uint8_t CyFxUSB20DeviceDscr[] __attribute__ ((aligned (32))) =
     0x01,                           /* Device protocol */
     0x40,                           /* Maxpacket size for EP0 : 64 bytes */
     0x42,0x42,                      /* Vendor ID */
-    0x04,0xEC,                      /* Product ID */
+    0xAB,0xAB,                      /* Product ID */
     0x00,0x00,                      /* Device release number */
     0x01,                           /* Manufacture string index */
     0x02,                           /* Product string index */
@@ -516,9 +516,9 @@ const uint8_t CyFxUSBInterface1Dscr[] __attribute__ ((aligned (32))) =
 };
 const uint8_t CyFxUSBInterface2Dscr[] __attribute__ ((aligned (32))) =
 {
-    16,                           	/* Descriptor size */
+    18,                           	/* Descriptor size */
     CY_U3P_USB_STRING_DESCR,        /* Device descriptor type */
-    'B',0,'u',0,'l',0,'k',0,' ',0,'I',0,'N',0
+    's',0,'d',0,'d',0,'c',0,' ',0,'A',0,'D',0,'C',0
 };
 
 /* NOT USED??? - fv */
