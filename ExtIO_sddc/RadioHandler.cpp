@@ -53,18 +53,8 @@ void* tShowStats(void* args);
 static const UINT8 vga_gains[GAIN_STEPS] = { 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8 };
 static const UINT8 mixer_gains[GAIN_STEPS] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12,12,13,13,14 };
 static const UINT8 lna_gains[GAIN_STEPS] = { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12,12,13,13,14,15 };
-// total gain dB x 10
-static const UINT16 total_gain[GAIN_STEPS] = { 0, 9, 14, 27, 37, 77, 87, 125, 144, 157,
-							166, 197, 207, 229, 254, 280, 297, 328,
-							338, 364, 372, 386, 402, 421, 434, 439,
-							445, 480, 496 };
 
-
-
-
-
-
-void* AdcSamplesProc(void*)
+void RadioHandlerClass::AdcSamplesProcess()
 {
 	DbgPrintf("AdcSamplesProc thread runs\n");
 	int callShowStatsRate = 32 * QUEUE_SIZE;
@@ -74,6 +64,7 @@ void* AdcSamplesProc(void*)
 	unsigned int kidx = 0, strd = 0;
 	int rd = r2iqCntrl.getRatio();
 
+	InitBuffers();
 	r2iqTurnOn(0);  
 	
 	// Queue-up the first batch of transfer requests
@@ -81,10 +72,10 @@ void* AdcSamplesProc(void*)
 		contexts[n] = EndPt->BeginDataXfer(buffers[n], transferSize, &inOvLap[n]);
 		if (EndPt->NtStatus || EndPt->UsbdStatus) {// BeginDataXfer failed
 			DbgPrintf((char*)"Xfer request rejected. 1 STATUS = %ld %ld\n", EndPt->NtStatus, EndPt->UsbdStatus);
-			return NULL;
+			return;
 		}
 	}
-	RadioHandler.FX3producerOn();  // FX3 start the producer
+	hardware->FX3producerOn();  // FX3 start the producer
 	run = true;		
 	idx = 0;    // buffer cycle index
 	IDX = 1;    // absolute index
@@ -171,16 +162,16 @@ void* AdcSamplesProc(void*)
 	}  // End of the infinite loop
 
 
-	RadioHandler.FX3producerOff();     //FX3 stop the producer
+	hardware->FX3producerOff();     //FX3 stop the producer
 	Sleep(10);
 	mutexShowStats.notify_all(); //  allows exit of
 	r2iqTurnOff();
 
 	DbgPrintf("AdcSamplesProc thread_exit\n");
-	return 0;  // void *
+	return;  // void *
 }
 
-void AbortXferLoop(int qidx)
+void RadioHandlerClass::AbortXferLoop(int qidx)
 {
 	long len = transferSize;
 	bool r = true;
@@ -202,7 +193,6 @@ void AbortXferLoop(int qidx)
 
 
 RadioHandlerClass::RadioHandlerClass() :
-	IsOn(false),
 	dither(false),
 	randout(false),
 	biasT_HF(false),
@@ -212,98 +202,55 @@ RadioHandlerClass::RadioHandlerClass() :
 	attRF(0),
 	firmware(0)
 {
-	bgpio = 0x0;
 }
 
 bool RadioHandlerClass::Init(HMODULE hInst)
 {
-	IsOn = false;
 	int r = -1;
-	Fx3 = new fx3class();
+	auto Fx3 = new fx3class();
 	if (!Fx3->Open(hInst))
 	{
-		return IsOn;
+		hardware = new DummyRadio(Fx3);
+		return false;
 	}
 	UINT8 rdata[64];
 	radiotype oldradio = radio;
 	Fx3->Control(TESTFX3, &rdata[0]);
+
+	radio = HF103;
+	firmware = (rdata[1] << 8) + rdata[2];
+
 	switch (rdata[0])
 	{
 	case HF103:
-			radio = HF103;
-			IsOn = true;
-			firmware = (rdata[1] << 8) + rdata[2];
-			DbgPrintf("HF103 | firmware %x\n", firmware);
+		hardware = new HF103Radio(Fx3);			
 		break;
 
 	case BBRF103:
-			radio = BBRF103;
-			IsOn = true;
-			firmware = (rdata[1] << 8) + rdata[2];
-			DbgPrintf("BBRF103 | firmware %x\n", firmware);
-			InitSi5351a(ADC_FREQ, R820T_FREQ);
-			R820T2stdby();
-			if (oldradio == HF103)
-			{
-				RadioHandler.UpdateattRF(0);
-				RadioHandler.UpdateattRF(giAttIdx);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_ATT);
-			}
-
-
+		hardware = new BBRF103Radio(Fx3);
 		break;
 
 	case RX888:
-			radio = RX888;
-			IsOn = true;
-			firmware = (rdata[1] << 8) + rdata[2];
-			DbgPrintf("RX888 | firmware %x\n", firmware);
-			InitSi5351a(ADC_FREQ, R820T_FREQ);
-			R820T2stdby();
-			if (oldradio == HF103)
-			{
-				RadioHandler.UpdateattRF(0);
-				RadioHandler.UpdateattRF(giAttIdx);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_ATT);
-			}
+		hardware = new RX888Radio(Fx3);
 		break;
 
 	default:
-			DbgPrintf("WARNING no SDR connected\n");
+		hardware = new DummyRadio(Fx3);
+		DbgPrintf("WARNING no SDR connected\n");
 		break;
 	}
-	if (!Fx3->Control(GPIOFX3, (UINT8*)&bgpio)) IsOn = false;
+
+	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
+	hardware->Initialize();
+
 	if (oldradio != radio)
 	{
 		char buffer[128];
 		sprintf(buffer, "%s\tnow connected\r\n%s\tprevious radio", radioname[radio], radioname[oldradio]);
 		MessageBox(NULL, buffer, "WARNING settings changed", MB_OK | MB_ICONINFORMATION);
 	}
-	return IsOn;
-}
-bool RadioHandlerClass::InitSi5351a(UINT32 freqa, UINT32 freqb)
-{
-	// freqa = nominal ADC sampling frequecy
-	// freqb = nominal R820T2 reference freuency , 0 = disable
-	mfreqa = freqa;
-	mfreqb = freqb;
-	return UpdSi5351a();
-}
-bool RadioHandlerClass::UpdSi5351a()
-{
-	// mfreqa = nominal ADC sampling frequecy
-	// mfreqb = nominal R820T2 reference freuency 
 
-	UINT32 data[2];
-	data[0] = (UINT32)((double) mfreqa * (1.0 + (gdFreqCorr_ppm * 0.000001)));
-	data[1] = (UINT32)((double) mfreqb * (1.0 + (gdFreqCorr_ppm * 0.000001)));
-
-	if (Fx3 != nullptr) {
-		if (!Fx3->Control(SI5351A, (UINT8*)&data[0])) IsOn = false;
-		return true;
-	}
-	else
-		return false;
+	return true;
 }
 
 bool RadioHandlerClass::InitBuffers() {
@@ -336,13 +283,12 @@ bool RadioHandlerClass::InitBuffers() {
 		obuffers[i] = new float[transferSize / 2];
 	}
 	// UpdatemodeRF(modeRF); //  Update
-	return IsOn;
+	return true;
 }
 
 bool RadioHandlerClass::Start()
 {
 	Stop();
-	if (!IsOn) return IsOn;
 	DbgPrintf("RadioHandlerClass::Start\n");
 	kbRead = 0; // zeros the kilobytes counter
 	kSReadIF = 0;
@@ -350,8 +296,11 @@ bool RadioHandlerClass::Start()
 	int t = 0;
 	show_stats_thread = new std::thread(tShowStats, (void*)t);
 	initR2iq( 4 - giExtSrateIdx ); // 0,1,2,3,4 => 32,16,8,4,2 MHz
-	adc_samples_thread = new std::thread(AdcSamplesProc, (void*)t);
-	return IsOn;
+	adc_samples_thread = new std::thread(
+		[this](void* arg){
+			this->AdcSamplesProcess();
+		}, nullptr);
+	return true;
 }
 
 bool RadioHandlerClass::Stop()
@@ -372,83 +321,18 @@ bool RadioHandlerClass::Stop()
 
 bool RadioHandlerClass::Close()
 {
-	if (IsOn)
-	{
-		IsOn = false;
-		Fx3->Control(RESETFX3);       //FX3    reset the fx3 firmware
-		delete Fx3;
-	}
-	return IsOn;
+	delete hardware;
+
+	return true;
 }
 
 // attenuator RF used in HF
 int RadioHandlerClass::UpdateattRF(int att)
 {
-	rf_mode rfm = RadioHandler.GetmodeRF();
-	if (matt != att)	// if value change
+	if (hardware->UpdateattRF(att))
 	{
-		if (rfm != VHFMODE) // HFMODE, VLFMODE select att HF
-		{ 
-			switch (radio)
-			{
-
-			case BBRF103:
-			case RX888:
-				if (att > 2) att = 2;
-				if (att < 0) att = 0;
-				giAttIdx = att;
-				matt = att;
-				attRF = 20 - att * 10;
-				{
-					UINT16 tmp = bgpio & (0xFFFF ^ (ATT_SEL0 || ATT_SEL1));
-					switch (attRF)
-					{
-					case 10: //11
-						tmp = tmp | ATT_SEL0 | ATT_SEL1;
-						break;
-					case 20: //01
-						tmp = (tmp | ATT_SEL0) & (0xFFFF ^ ATT_SEL1);
-						break;
-					case 0:   //10
-					default:
-						tmp = (tmp | ATT_SEL1) & (0xFFFF ^ ATT_SEL0);
-						break;
-					}
-					bgpio = tmp;
-					if (Fx3 != nullptr) {
-						if (!Fx3->Control(GPIOFX3, (UINT8*)&bgpio)) IsOn = false;
-					}
-				}
-				break;
-
-			case HF103:
-				if (att > 31) att = 31;
-				if (att < 0) att = 0;
-				giAttIdx = att;
-				matt = att;
-				attRF = 31 - att;
-				UINT8 d = attRF << 1; // bit0 =0
-				if (IsOn)
-				{
-					DbgPrintf("UpdateattRF  -%d \n", attRF);
-					if (!Fx3->Control(DAT31FX3, (PUINT8)&d)) IsOn = false;
-				}
-				break;
-			}
-		}
+		matt = att;
 	}
-	if ((rfm == VHFMODE) && (radio != HF103))
-	{
-		if (radio == HF103) return -1;
-		bgpio &= (0xFFFF ^ (ATT_SEL0 | ATT_SEL1)); // R820T2 input
-		if (Fx3 != nullptr) {
-			if (!Fx3->Control(GPIOFX3, (UINT8*)&bgpio)) IsOn = false;
-		}
-	    R820T2SetAttenuator(att); // R820 att
-
-	}
-
-	matt = att;
 	return matt;
 }
 
@@ -457,6 +341,8 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 {
 	if (modeRF != mode){
 		modeRF = mode;
+
+		hardware->UpdatemodeRF(mode);
 
 		if (pfnCallback)
 		{
@@ -470,40 +356,39 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 	return true;
 }
 
+int64_t RadioHandlerClass::TuneLO(int64_t freq)
+{
+	return hardware->TuneLo(freq);
+}
+
+
+// TODO: Move to right place for hardware
+#define SHDWN           (32) 	
+#define DITH            (64)
+#define RANDO           (128)
+#define BIAS_HF         (256)	
+#define BIAS_VHF        (512)	
+
 bool RadioHandlerClass::UptDither(bool b)
 {
-	if (IsOn)
-	{
-		dither = b;
-		if (dither == true)
-			bgpio = bgpio | DITH;
-		else
-			bgpio = bgpio & (0xffff ^ DITH);
-		if (Fx3 != nullptr) {
-			if (!Fx3->Control(GPIOFX3, (UINT8*)&bgpio)) IsOn = false;
-		}
-	}
+	dither = b;
+	if (dither)
+		hardware->FX3SetGPIO(DITH);
+	else
+		hardware->FX3UnsetGPIO(DITH);
 	return dither;
 }
 
 bool RadioHandlerClass::UptRand(bool b)
 {
-	if (IsOn)
-	{
-		randout = b;
-		if (randout == true)
-			bgpio = bgpio | RANDO;
-		else
-			bgpio = bgpio & (0xffff ^ RANDO);
-		if (Fx3 != nullptr) {
-			if (!Fx3->Control(GPIOFX3, (UINT8*)&bgpio)) IsOn = false;
-		}
-	}
+	randout = b;
+	if (randout)
+		hardware->FX3SetGPIO(RANDO);
+	else
+		hardware->FX3UnsetGPIO(RANDO);
 	r2iqCntrl.randADC = randout;
 	return randout;
 }
-
-
 
 void* tShowStats(void* args)
 {
@@ -546,80 +431,20 @@ void* tShowStats(void* args)
 
 void RadioHandlerClass::UpdBiasT_HF(bool flag) 
 {
-	biasT_HF = flag; 
+	biasT_HF = flag;
+
 	if (biasT_HF)
-		bgpio |= BIAS_HF;
+		hardware->FX3SetGPIO(BIAS_HF);
 	else
-		bgpio &= (0xffff ^ BIAS_HF);
-	if (Fx3 != nullptr)	Fx3->Control(GPIOFX3, (UINT8*)&bgpio);
+		hardware->FX3UnsetGPIO(BIAS_HF);
 }
+
 void RadioHandlerClass::UpdBiasT_VHF(bool flag)
 {
 	biasT_VHF = flag;
 	if (biasT_VHF)
-		bgpio |= BIAS_VHF;
+		hardware->FX3SetGPIO(BIAS_VHF);
 	else
-		bgpio &= (0xffff ^ BIAS_VHF);
-	if (Fx3 != nullptr)	Fx3->Control(GPIOFX3, (UINT8*)&bgpio);
+		hardware->FX3UnsetGPIO(BIAS_VHF);
 }
 
-int RadioHandlerClass::R820T2init()
-{
-	INT32 retcode = 0;
-	if (!Fx3->Control(R820T2INIT, (UINT8*) & retcode))  IsOn = false;
-	DbgPrintf( "R820T2 init ret 0x%04X\r\n", retcode );
-	return (int) retcode;
-}
-void RadioHandlerClass::R820T2stdby()
-{
-	UINT8 dummy = 0;
-	if (!Fx3->Control(R820T2STDBY, (UINT8*)&dummy))  IsOn = false;
-}
-
-
-int RadioHandlerClass::R820T2Tune(UINT64 freq)
-{
-	UINT32 f = (UINT32) freq;
-	DbgPrintf("R820T2Tune %I64d \n", freq);
-	if (Fx3 != nullptr) {
-		if (!Fx3->Control(R820T2TUNE, (UINT8*)&f)){
-			IsOn = false;
-			return -1;
-		}
-	}
-	return 0;
-}
-
-
-float RadioHandlerClass::R820T2getAttenuator(UINT8 idx)
-{
-	// locally computed
-	float gdB = 0.0;
-	if (idx < GAIN_STEPS)
-		gdB = (float)( total_gain[idx] + 0.5) / 10.0F;
-	return gdB;
-}
-
-int RadioHandlerClass::R820T2SetAttenuator(UINT8 idx)
-{
-	UINT8 index;
-	UINT8 check= 0xff;
-	index  = idx;
-	if (idx < GAIN_STEPS)
-	{
-		if (Fx3 != nullptr) {
-			if (!Fx3->Control(R820T2SETATT, (UINT8*) &index))
-				IsOn = false;
-			else
-			{
-				Fx3->Control(R820T2GETATT, (UINT8*)&check);
-				if (check == index)
-					return index;
-				else
-					DbgPrintf("WARNING R820T2SetAttenuator failed index %x \n", index);
-			}
-		}
-
-	}
-	return -1;
-}

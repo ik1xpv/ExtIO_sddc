@@ -54,7 +54,7 @@ public:
 	~fx3class(void);
 	bool Open(HMODULE hInst);
 	bool IsOn() { return Fx3IsOn; }
-	void Control(FX3Command command);
+	bool Control(FX3Command command);
 	bool Control(FX3Command command, PUINT8 data);
 	bool SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);
 	bool ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);

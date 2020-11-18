@@ -141,8 +141,6 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 
 		ADCFrequencyCorrection();
 
-		RadioHandler.InitBuffers();
-
 		DbgPrintf((char*)"Init values \n");
 		DbgPrintf("SDR_settings_valid = %d \n", SDR_settings_valid);  // settings are version specific !
 		DbgPrintf("giExtSrateIdx = %d   %f Msps \n", giExtSrateIdx, pow(2.0, 1.0 + giExtSrateIdx));
@@ -334,27 +332,22 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	glLOfreq = LOfreq; 
 
 	rf_mode rfmode = RadioHandler.GetmodeRF();
-	if ((LOfreq > 32000000) && (rfmode != VHFMODE)&& (radio != HF103))
+	if ((LOfreq > 32000000) && (rfmode != VHFMODE))
 	{
-		if (radio != HF103)
-		{
-			if (rfmode != NOMODE) giExtSrateIdxHF = giExtSrateIdx;	// save HF SRate
-			RadioHandler.UpdatemodeRF(VHFMODE);
-			RadioHandler.R820T2init();  // activate R820T2
-			giExtSrateIdx = 2;
-			r2iqCntrl.Setdecimate(giExtSrateIdx);
-			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
-			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
-			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
-		}
+		if (rfmode != NOMODE) giExtSrateIdxHF = giExtSrateIdx;	// save HF SRate
+		RadioHandler.UpdatemodeRF(VHFMODE);
+		giExtSrateIdx = 2;
+		r2iqCntrl.Setdecimate(giExtSrateIdx);
+		if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
+		if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
+		RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
-	if (LOfreq < 31000000)
+	else if (LOfreq < 31000000)
 	{
 		switch (rfmode)
 		{
 		case VHFMODE:
 			RadioHandler.UpdatemodeRF(HFMODE);
-			RadioHandler.R820T2stdby();  // R820T2 standby
 			giExtSrateIdx = giExtSrateIdxHF;  // restore HF SRate
 			r2iqCntrl.Setdecimate(giExtSrateIdx);
 			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
@@ -373,8 +366,8 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	{
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 	}
-	if (RadioHandler.GetmodeRF() == VHFMODE)
-		RadioHandler.R820T2Tune( LOfreq);
+
+	RadioHandler.TuneLO(LOfreq);
 	// 0 The function did complete without errors.
 	// < 0 (a negative number N)
 	//     The specified frequency  is  lower than the minimum that the hardware  is capable to generate.
@@ -494,9 +487,6 @@ void EXTIO_API VersionInfo(const char * progname, int ver_major, int ver_minor)
 	}
 }
 
-
-
-
 extern "C"
 int  GetAttenuatorsHF(int atten_idx, float * attenuation)
 {
@@ -529,12 +519,19 @@ int  GetAttenuatorsHF(int atten_idx, float * attenuation)
 
 }
 
+// TODO, move this to hardware
+// total gain dB x 10
+static const UINT16 total_gain[GAIN_STEPS] = { 0, 9, 14, 27, 37, 77, 87, 125, 144, 157,
+							166, 197, 207, 229, 254, 280, 297, 328,
+							338, 364, 372, 386, 402, 421, 434, 439,
+							445, 480, 496 };
+
 int  GetAttenuatorsVHF(int atten_idx, float* attenuation)
 {
 	EnterFunction1(atten_idx);
 	if ((atten_idx >= 0) && (atten_idx < GAIN_STEPS))  // 29 steps
 	{
-		*attenuation = RadioHandler.R820T2getAttenuator((UINT)atten_idx);
+		*attenuation = (float)( total_gain[atten_idx] + 0.5) / 10.0F;
 		return 0;
 	}
 	return 1;

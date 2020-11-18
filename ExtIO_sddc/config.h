@@ -101,6 +101,8 @@ extern double adcfixedfreq;
 extern double gdGainCorr_dB;
 extern bool saveADCsamplesflag;
 
+#define CORRECT(FREQ) ((double) ADC_FREQ * (1.0 + (gdFreqCorr_ppm * 0.000001)))
+
 enum radiotype { NORADIO = 0, BBRF103 = 1, HF103 = 2, RX888 = 3 };
 extern const char* radioname[4];
 
