@@ -33,6 +33,7 @@ class RadioHardware;
 class RadioHandlerClass {
 public:
     RadioHandlerClass();
+    virtual ~RadioHandlerClass();
     bool Init(HMODULE hInst);
     bool Start();
     bool Stop();
@@ -63,7 +64,6 @@ public:
 #endif
 
 private:
-    bool InitBuffers();
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
 
@@ -88,7 +88,7 @@ extern int	giAttIdx;
 
 class RadioHardware {
 public:
-    RadioHardware(fx3class* fx3) : Fx3(fx3) {}
+    RadioHardware(fx3class* fx3) : Fx3(fx3), gpios(0) {}
 
     virtual ~RadioHardware() {
         Fx3->Control(RESETFX3);       //FX3    reset the fx3 firmware

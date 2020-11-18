@@ -64,9 +64,16 @@ void RadioHandlerClass::AdcSamplesProcess()
 	unsigned int kidx = 0, strd = 0;
 	int rd = r2iqCntrl.getRatio();
 
-	InitBuffers();
 	r2iqTurnOn(0);  
 	
+	if (EndPt) { // real data
+		long pktSize = EndPt->MaxPktSize;
+		EndPt->SetXferSize(transferSize);
+		long ppx = transferSize / pktSize;
+		DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
+			, transferSize, pktSize, ppx);
+	}
+
 	// Queue-up the first batch of transfer requests
 	for (int n = 0; n < QUEUE_SIZE; n++) {
 		contexts[n] = EndPt->BeginDataXfer(buffers[n], transferSize, &inOvLap[n]);
@@ -182,13 +189,8 @@ void RadioHandlerClass::AbortXferLoop(int qidx)
 			EndPt->WaitForXfer(&inOvLap[n], TIMEOUT);
 			EndPt->FinishDataXfer(buffers[n], len, &inOvLap[n], contexts[n]);
 		}
-		r = CloseHandle(inOvLap[n].hEvent);
 		DbgPrintf("CloseHandle[%d]  %d\n", n, r);
 	}
-	//Deallocate all the buffers for the input queues
-	delete[] buffers;
-	delete[] contexts;
-
 }
 
 
@@ -202,6 +204,40 @@ RadioHandlerClass::RadioHandlerClass() :
 	attRF(0),
 	firmware(0)
 {
+	buffers = new PUCHAR[QUEUE_SIZE];
+	contexts = new PUCHAR[QUEUE_SIZE];
+	obuffers = new float* [QUEUE_SIZE];
+
+	// Allocate one big contitues buffer for all buffers in the input queues
+	// Buffer is formated as the following:
+	// [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + ....
+	//                ^                             ^
+	//                buffer[0]                     buffer[1]
+	// use float to grantee the alignment
+	PUCHAR buffer = (PUCHAR)(new float[(FFTN_R_ADC + transferSize * QUEUE_SIZE) / sizeof(float) ]);
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		buffers[i] = buffer + FFTN_R_ADC + transferSize * i;
+
+		inOvLap[i].hEvent = CreateEvent(NULL, false, false, NULL);
+	}
+	// Allocate the buffers for the output queue
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		obuffers[i] = new float[transferSize / 2];
+	}
+}
+
+RadioHandlerClass::~RadioHandlerClass()
+{
+	for (int n = 0; n < QUEUE_SIZE; n++) {
+		CloseHandle(inOvLap[n].hEvent);
+		delete[] obuffers[n];
+	}
+
+	delete[] (buffers[0] - FFTN_R_ADC);
+
+	delete[] buffers;
+	delete[] obuffers;
+	delete[] contexts;
 }
 
 bool RadioHandlerClass::Init(HMODULE hInst)
@@ -250,39 +286,6 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 		MessageBox(NULL, buffer, "WARNING settings changed", MB_OK | MB_ICONINFORMATION);
 	}
 
-	return true;
-}
-
-bool RadioHandlerClass::InitBuffers() {
-
-	buffers = new PUCHAR[QUEUE_SIZE];
-	contexts = new PUCHAR[QUEUE_SIZE];
-	obuffers = new float* [QUEUE_SIZE];
-
-	if (EndPt) { // real data
-		long pktSize = EndPt->MaxPktSize;
-		EndPt->SetXferSize(transferSize);
-		long ppx = transferSize / pktSize;
-		DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
-			, transferSize, pktSize, ppx);
-	}
-	// Allocate one big contitues buffer for all buffers in the input queues
-	// Buffer is formated as the following:
-	// [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + ....
-	//                ^                             ^
-	//                buffer[0]                     buffer[1]
-	// use float to grantee the alignment
-	PUCHAR buffer = (PUCHAR)(new float[(FFTN_R_ADC + transferSize * QUEUE_SIZE) / sizeof(float) ]);
-	for (int i = 0; i < QUEUE_SIZE; i++) {
-		buffers[i] = buffer + FFTN_R_ADC + transferSize * i;
-
-		inOvLap[i].hEvent = CreateEvent(NULL, false, false, NULL);
-	}
-	// Allocate the buffers for the output queue
-	for (int i = 0; i < QUEUE_SIZE; i++) {
-		obuffers[i] = new float[transferSize / 2];
-	}
-	// UpdatemodeRF(modeRF); //  Update
 	return true;
 }
 
