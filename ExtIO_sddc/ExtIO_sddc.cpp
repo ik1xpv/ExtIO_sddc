@@ -682,6 +682,7 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		{
 			radio = (radiotype)(tempInt);
 		}
+		break;
 	case 2:
 		tempInt = 4 - atoi(value);
 		if (0 == ExtIoGetSrates(tempInt, &newSrate))
@@ -696,10 +697,7 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		if (radio != HF103)
 			if (tempInt > 2)
 				tempInt = 2;
-		if (0 == GetAttenuators(tempInt, &newAtten))
-		{
-			SetAttenuator(tempInt);
-		}
+		GetAttenuators(tempInt, &newAtten);
 		break;
 	case 4:
 		if (sscanf(value, "%lf", &tempDouble) > 0)
