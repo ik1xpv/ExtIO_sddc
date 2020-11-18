@@ -259,19 +259,23 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 	switch (rdata[0])
 	{
 	case HF103:
-		hardware = new HF103Radio(Fx3);			
+		hardware = new HF103Radio(Fx3);	
+		radio = HF103;
 		break;
 
 	case BBRF103:
 		hardware = new BBRF103Radio(Fx3);
+		radio = BBRF103;
 		break;
 
 	case RX888:
 		hardware = new RX888Radio(Fx3);
+		radio = RX888;
 		break;
 
 	default:
 		hardware = new DummyRadio(Fx3);
+		radio = NORADIO;
 		DbgPrintf("WARNING no SDR connected\n");
 		break;
 	}
@@ -325,6 +329,8 @@ bool RadioHandlerClass::Stop()
 
 bool RadioHandlerClass::Close()
 {
+	hardware->FX3SetGPIO(SHDWN);
+
 	delete hardware;
 
 	return true;

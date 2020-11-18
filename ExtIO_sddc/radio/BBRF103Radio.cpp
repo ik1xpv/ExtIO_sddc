@@ -61,7 +61,7 @@ bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
 
 bool BBRF103Radio::UpdateattRF(int att)
 {
-    if (gpios | (ATT_SEL0 | ATT_SEL1))  {
+    if (gpios & (ATT_SEL0 | ATT_SEL1))  {
         // this is in HF mode
         if (att > 2) att = 2;
         if (att < 0) att = 0;
@@ -92,7 +92,7 @@ bool BBRF103Radio::UpdateattRF(int att)
 
 int64_t BBRF103Radio::TuneLo(int64_t freq)
 {
-   if (gpios | (ATT_SEL0 | ATT_SEL1))  {
+   if (gpios & (ATT_SEL0 | ATT_SEL1))  {
         // this is in HF mode
         return ADC_FREQ / 2;
     }
