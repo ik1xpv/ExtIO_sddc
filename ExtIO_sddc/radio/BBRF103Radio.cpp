@@ -35,7 +35,7 @@ bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
         FX3UnsetGPIO(ATT_SEL0 | ATT_SEL1);
 
         // Enable Tuner reference clock
-    	data[1] = CORRECT(R820T_FREQ);
+    	data[1] = (int32_t)CORRECT(R820T_FREQ);
         Fx3->Control(SI5351A, (uint8_t*)&data[0]);
 
         // Initialize Tuner
