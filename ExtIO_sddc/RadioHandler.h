@@ -93,12 +93,12 @@ public:
     bool FX3producerOn() { return Fx3->Control(STARTFX3); }
     bool FX3producerOff() { return Fx3->Control(STOPFX3); }
 
-    bool FX3SetGPIO(int32_t mask);
-    bool FX3UnsetGPIO(int32_t mask);
+    bool FX3SetGPIO(uint16_t mask);
+    bool FX3UnsetGPIO(uint16_t mask);
 
 protected:
     fx3class* Fx3;
-    uint32_t gpios;
+    uint16_t gpios;
 };
 
 class BBRF103Radio : public RadioHardware {
