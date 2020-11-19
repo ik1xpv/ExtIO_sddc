@@ -1,13 +1,13 @@
 #include "RadioHandler.h"
 
-bool RadioHardware::FX3SetGPIO(uint16_t mask)
+bool RadioHardware::FX3SetGPIO(uint32_t mask)
 {
     gpios |= mask;
 
     return Fx3->Control(GPIOFX3, (uint8_t*)&gpios);
 }
 
-bool RadioHardware::FX3UnsetGPIO(uint16_t mask)
+bool RadioHardware::FX3UnsetGPIO(uint32_t mask)
 {
     gpios &= ~mask;
 

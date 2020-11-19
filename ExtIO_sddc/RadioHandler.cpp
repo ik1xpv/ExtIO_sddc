@@ -247,7 +247,7 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 		return false;
 	}
 	UINT8 rdata[64];
-	radiotype oldradio = radio;
+	RadioModel oldradio = radio;
 	Fx3->Control(TESTFX3, &rdata[0]);
 
 	radio = HF103;

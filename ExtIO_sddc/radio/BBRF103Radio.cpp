@@ -1,11 +1,5 @@
 #include "RadioHandler.h"
 
-#define LED_YELLOW      (1024)
-#define LED_RED         (2048)
-#define LED_BLUE        (4096)
-#define ATT_SEL0        (8192)
-#define ATT_SEL1		(16384)
-
 BBRF103Radio::BBRF103Radio(fx3class* fx3)
     : RadioHardware(fx3)
 {

@@ -11,12 +11,6 @@
 #include <stdint.h>
 #include "FX3handler.h"
 
-#define SHDWN           (32)
-#define DITH            (64)
-#define RANDO           (128)
-#define BIAS_HF         (256)
-#define BIAS_VHF        (512)
-
 #define GAIN_STEPS (29)  // R820 steps
 
 class RadioHardware;
@@ -93,12 +87,12 @@ public:
     bool FX3producerOn() { return Fx3->Control(STARTFX3); }
     bool FX3producerOff() { return Fx3->Control(STOPFX3); }
 
-    bool FX3SetGPIO(uint16_t mask);
-    bool FX3UnsetGPIO(uint16_t mask);
+    bool FX3SetGPIO(uint32_t mask);
+    bool FX3UnsetGPIO(uint32_t mask);
 
 protected:
     fx3class* Fx3;
-    uint16_t gpios;
+    uint32_t gpios;
 };
 
 class BBRF103Radio : public RadioHardware {

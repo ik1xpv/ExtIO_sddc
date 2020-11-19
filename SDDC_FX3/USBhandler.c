@@ -126,7 +126,7 @@ CyFxSlFifoApplnUSBSetupCB (
 
     	switch (bRequest)
     	 {
-			case GPIOWFX3:
+			case GPIOFX3:
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 					{
 						uint16_t mdata = * (uint16_t *) &glEp0Buffer[0];

@@ -680,7 +680,7 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		tempInt = atoi(value);
 		if ((tempInt >= BBRF103 ) && (tempInt <= RX888))
 		{
-			radio = (radiotype)(tempInt);
+			radio = (RadioModel)(tempInt);
 		}
 		break;
 	case 2:

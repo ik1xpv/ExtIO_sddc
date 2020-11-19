@@ -3,6 +3,7 @@
 
 #include "license.txt" 
 
+#include "../Interface.h"
 #include <windows.h>   // LARGE_INTEGER
 #include <math.h>      // atan => PI
 #include <thread>
@@ -103,12 +104,11 @@ extern bool saveADCsamplesflag;
 
 #define CORRECT(FREQ) ((double) ADC_FREQ * (1.0 + (gdFreqCorr_ppm * 0.000001)))
 
-enum radiotype { NORADIO = 0, BBRF103 = 1, HF103 = 2, RX888 = 3 };
 extern const char* radioname[4];
 
 extern bool run;
 extern int transferSize;
-extern radiotype radio;
+extern RadioModel radio;
 
 #endif // _CONFIG_H_
 
