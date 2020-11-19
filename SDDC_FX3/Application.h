@@ -84,4 +84,21 @@ typedef struct outxio_t
 
 
 #include "cyu3externcend.h"
+
+CyU3PReturnStatus_t ConfGPIOsimpleout( uint8_t gpioid);
+
+// bbrf103
+void bbrf103_GpioSet(uint16_t mdata);
+void bbrf103_GpioInitialize();
+
+// hf103
+void hf103_GpioSet(uint16_t mdata);
+void hf103_GpioInitialize();
+void hf103_SetAttenuator(uint8_t value);
+
+// rx888
+void rx888_GpioSet(uint16_t mdata);
+void rx888_GpioInitialize();
+
+
 #endif // _INCLUDED_APPLICATION_H_

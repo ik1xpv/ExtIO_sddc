@@ -133,46 +133,22 @@ CyFxSlFifoApplnUSBSetupCB (
 						switch(HWconfig)
 						{
 						case BBRF103:
-							CyU3PGpioSetValue (26, (mdata & ATT_SEL0) == ATT_SEL0 ); // ATT_SEL0
-							CyU3PGpioSetValue (27, (mdata & ATT_SEL1) == ATT_SEL1 ); // ATT_SEL1
-							CyU3PGpioSetValue (28, (mdata & SHDWN) == SHDWN ); 		 // SHDN
-							CyU3PGpioSetValue (29, (mdata & DITH ) == DITH  ); 		 // DITH
-							CyU3PGpioSetValue (20, (mdata & RANDO) == RANDO ); 		 // RAND
-							CyU3PGpioSetValue (19, ((mdata & BIAS_HF) == BIAS_HF) ^ 1);	  // negate
-							CyU3PGpioSetValue (18, ((mdata & BIAS_VHF) == BIAS_VHF) ^ 1); // negate
-							CyU3PGpioSetValue (21, (mdata & LED_RED) == LED_RED);
-							CyU3PGpioSetValue (22, (mdata & LED_YELLOW) == LED_YELLOW);
-							CyU3PGpioSetValue (23, (mdata & LED_BLUE) == LED_BLUE);
+							bbrf103_GpioSet(mdata);
 							isHandled = CyTrue;
 						   break;
 
 						case HF103:
-							CyU3PGpioSetValue (21, (mdata & OUTXIO0) == OUTXIO0 ); // ATT_LE
-							CyU3PGpioSetValue (22, (mdata & OUTXIO1) == OUTXIO1 ); // ATT_CLK
-							CyU3PGpioSetValue (23, (mdata & OUTXIO2) == OUTXIO2 ); // ATT_DATA
-							CyU3PGpioSetValue (26, (mdata & OUTXIO3) == OUTXIO3 ); // GPIO26
-							CyU3PGpioSetValue (27, (mdata & OUTXIO4) == OUTXIO4 ); // GPIO27
-							CyU3PGpioSetValue (18, (mdata & SHDWN) == SHDWN ); 	   // SHDN
-							CyU3PGpioSetValue (17, (mdata & DITH ) == DITH ) ;     // DITH
-							CyU3PGpioSetValue (29, (mdata & RANDO) == RANDO );     // RAND
-							CyU3PGpioSetValue (19, (mdata & OUTXIO8) == OUTXIO8 ); // GPIO19
-							CyU3PGpioSetValue (20, (mdata & OUTXIO9) == OUTXIO9 ); // GPIO20
+							hf103_GpioSet(mdata);
 							isHandled = CyTrue;
 							break;
 
-						case RX888:
-							CyU3PGpioSetValue (26, (mdata & ATT_SEL0) == ATT_SEL0 ); // ATT_SEL0
-							CyU3PGpioSetValue (27, (mdata & ATT_SEL1) == ATT_SEL1 ); // ATT_SEL1
-							CyU3PGpioSetValue (28, (mdata & SHDWN) == SHDWN ); 		 // SHDN
-							CyU3PGpioSetValue (29, (mdata & DITH ) == DITH  ); 		 // DITH
-							CyU3PGpioSetValue (20, (mdata & RANDO) == RANDO ); 		 // RAND
-							CyU3PGpioSetValue (19, (mdata & BIAS_HF) == BIAS_HF);
-							CyU3PGpioSetValue (18, (mdata & BIAS_VHF) == BIAS_VHF);
-							CyU3PGpioSetValue (21, (mdata & LED_RED) == LED_RED);
-							CyU3PGpioSetValue (22, (mdata & LED_YELLOW) == LED_YELLOW);
-							CyU3PGpioSetValue (23, (mdata & LED_BLUE) == LED_BLUE);
 							isHandled = CyTrue;
 						   break;
+
+						case RX888:
+							rx888_GpioSet(mdata);
+							isHandled = CyTrue;
+							break;
 
 						}
 					}
@@ -182,8 +158,13 @@ CyFxSlFifoApplnUSBSetupCB (
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 					{
 						pdata = (outxio_t *) &glEp0Buffer[0];
-						WriteAttenuator(pdata->buffer[0]);
-						isHandled = CyTrue;
+						switch(HWconfig)
+						{
+							case HF103:
+							hf103_SetAttenuator(pdata->buffer[0]);
+							isHandled = CyTrue;
+							break;
+						}
 					}
 					break;
 

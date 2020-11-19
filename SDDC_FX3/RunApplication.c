@@ -31,8 +31,8 @@ uint32_t Qevent __attribute__ ((aligned (32)));
 CyU3PThread ThreadHandle[APP_THREADS];		// Handles to my Application Threads
 void *StackPtr[APP_THREADS];				// Stack allocated to each thread
 
-uint8_t HWconfig = 0x01;       // Hardware config type BBRF103
-uint16_t FWconfig = 0x0101;    // Firmware rc1 ver 1.01
+uint8_t HWconfig = NORADIO;       // Hardware config type BBRF103
+uint16_t FWconfig = 0x0102;    // Firmware rc1 ver 1.02
 
 CyU3PReturnStatus_t
 ConfGPIOsimpleout( uint8_t gpioid)
@@ -117,76 +117,17 @@ HF103_GpioInit ()
     Status = CyU3PGpioInit(&gpioClock,   NULL);
     CheckStatus("CyU3PGpioInit", Status);
 
-    if (HWconfig == HF103)
-    {
-		ConfGPIOsimpleout(17);   // DITH
-		ConfGPIOsimpleout(18);   // SHDN
-		ConfGPIOsimpleout(19);	 // free
-		ConfGPIOsimpleout(20);	 // free
-		ConfGPIOsimpleout(21);   // ATT_LE Latch Enable
-		ConfGPIOsimpleout(22);   // ATT_CLK
-		ConfGPIOsimpleout(23);   // ATT_DATA - set 23 as input to check HW version link 10K resistor
-		ConfGPIOsimpleout(24);	 // free
-		ConfGPIOsimpleout(25);	 // free
-		ConfGPIOsimpleout(26);	 // free
-		ConfGPIOsimpleout(27);	 // free
-		ConfGPIOsimpleinput(28); // OFA overflow flag
-		ConfGPIOsimpleout(29);   // RAND
-
-    	ConfGPIOsimpleout(LED_KIT);  // H103 found
-    	CyU3PGpioSetValue (LED_KIT, 0);
-
-		CyU3PGpioSetValue (17, 0);
-		CyU3PGpioSetValue (18, 0);
-		CyU3PGpioSetValue (19, 0);
-		CyU3PGpioSetValue (20, 0);
-		CyU3PGpioSetValue (21, 0);  // ATT_LE latched
-		CyU3PGpioSetValue (22, 1);  // test version
-		CyU3PGpioSetValue (23, 1);  // ATT_DATA
-		CyU3PGpioSetValue (24, 0);
-		CyU3PGpioSetValue (25, 0);
-		CyU3PGpioSetValue (26, 0);
-		CyU3PGpioSetValue (27, 0);
-		CyU3PGpioSetValue (29, 0);
+	switch(HWconfig) {
+		case HF103:
+			hf103_GpioInitialize();
+			break;
+		case BBRF103:
+			bbrf103_GpioInitialize();
+			break;
+		case RX888:
+			rx888_GpioInitialize();
     }
-    else  //BBRF103, RX666, RX888
-    {
-        // check if BBRF103 or RX888 (RX666 ?)
-        if(GPIOtestInputPulldown(LED_KIT)) {
-        	HWconfig = BBRF103;
 		}
-        else {
-        	HWconfig = RX888;
-		}
-
-		ConfGPIOsimpleout(17);   // free
-		ConfGPIOsimpleout(18);   // VHF ANT Bias-T
-		ConfGPIOsimpleout(19);	 // HF ANT Bias-T
-		ConfGPIOsimpleout(20);	 // RAND
-		ConfGPIOsimpleout(21);   // LED RED
-		ConfGPIOsimpleout(22);   // LED YELLOW
-		ConfGPIOsimpleout(23);   // LED BLUE
-		ConfGPIOsimpleout(24);	 // IF PWM R820T2
-		ConfGPIOsimpleinput(25); // IN OFA
-		ConfGPIOsimpleout(26);	 // OUT SEL0
-		ConfGPIOsimpleout(27);	 // OUT SEL1
-		ConfGPIOsimpleout(28); 	 // SHDN
-		ConfGPIOsimpleout(29);   // DITH
-
-		CyU3PGpioSetValue (17, 0);
-		CyU3PGpioSetValue (18, 0);
-		CyU3PGpioSetValue (19, 0);
-		CyU3PGpioSetValue (20, 0);
-		CyU3PGpioSetValue (21, 1);
-		CyU3PGpioSetValue (22, 1);
-		CyU3PGpioSetValue (23, 1);
-		CyU3PGpioSetValue (24, 0);
-		CyU3PGpioSetValue (25, 0);
-		CyU3PGpioSetValue (26, 0);
-		CyU3PGpioSetValue (27, 0);
-		CyU3PGpioSetValue (29, 0);
-    }
-}
 
 void MsgParsing(uint32_t qevent)
 {
@@ -221,6 +162,15 @@ void ApplicationThread ( uint32_t input)
     Status = I2cInit ();
     if (Status != CY_U3P_SUCCESS)
     	 HWconfig = HF103;
+	else {
+		// check if BBRF103 or RX888 (RX666 ?)
+        if(GPIOtestInputPulldown(LED_KIT)) {
+        	HWconfig = BBRF103;
+		}
+        else {
+        	HWconfig = RX888;
+		}
+	}
 
 	HF103_GpioInit();
 
@@ -302,29 +252,4 @@ void CyFxApplicationDefine (void) {
     if (Status != 0)
     	while(1); // Application cannot continue. Loop indefinitely
 }
-
-/*
- 	HF103
-    DAT-31-SP+  control
-	direct GPIO output implementation  31 step 1 dB
-*/
-void WriteAttenuator(uint8_t value)
-{
-	uint8_t bits = 6;
-	uint8_t mask = 0x20;
-	uint8_t i,b;
-	CyU3PGpioSetValue (GPIO_ATT_LE, 0);    // ATT_LE latched
-	CyU3PGpioSetValue (GPIO_ATT_CLK, 0);   // ATT_CLK
-	for( i = bits ; i >0; i--)
-	{
-		b = (value & mask) >> 5;
-		CyU3PGpioSetValue (GPIO_ATT_DATA, b); // ATT_DATA
-		CyU3PGpioSetValue (GPIO_ATT_CLK, 1);
-		value = value << 1;
-		CyU3PGpioSetValue (GPIO_ATT_CLK, 0);
-	}
-	CyU3PGpioSetValue (GPIO_ATT_LE, 1);    // ATT_LE latched
-	CyU3PGpioSetValue (GPIO_ATT_LE, 0);    // ATT_LE latched
-}
-
 
