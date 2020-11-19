@@ -49,11 +49,6 @@ enum GPIOPin {
     ATT_SEL0 = OUTXI13,
     ATT_SEL1 = OUTXI14,
 
-    // HF103
-    ATT_LE = OUTXIO0,
-    ATT_CLK = OUTXIO1,
-    ATT_DATA = OUTXIO2,
-
     // RX888r2
     VHF_EN = OUTXI15,
 };

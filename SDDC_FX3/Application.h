@@ -66,14 +66,8 @@
 // void null_func(uint8_t, ...)  // redefine DebugPrint if required
 #define DebugPrint (CyU3PDebugPrint)
 
-// GPIO
-#define LED_OVERLOAD  (21)
-
-#define GPIO_ATT_LE    (21)
-#define GPIO_ATT_CLK   (22)
-#define GPIO_ATT_DATA  (23)
+// detect pin for HF103
 #define LED_KIT		   (54)		// This is also UART_CTS
-
 
 typedef struct outxio_t
 {
