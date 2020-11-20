@@ -11,4 +11,4 @@ double gdGainCorr_dB = GAIN_ADJ;            // in dB
 bool saveADCsamplesflag = false;
 bool run = false;
 int transferSize = 131072;
-radiotype radio = NORADIO;
+RadioModel radio = NORADIO;

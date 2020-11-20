@@ -86,8 +86,6 @@ r2iqControlClass::~r2iqControlClass()
 	Initialized = false;
 }
 
-
-
 int r2iqControlClass::Setdecimate(int dec)
 {
 	mdecimation =  dec;  // 0 , 2 , 4, 8, 16 =>  32, 16, 8, 4, 2 MHz
@@ -191,22 +189,6 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 	LOfreq /= loprecision;
 	LOfreq *= loprecision;
 
-	switch (radio) // update gains
-	{
-	case BBRF103:
-		GainScale = BBRF103_GAINFACTOR;
-		break;
-	case HF103:
-		GainScale = HF103_GAINFACTOR;
-		break;
-	case RX888:
-		GainScale = RX888_GAINFACTOR;
-		break;
-	default:
-		GainScale = BBRF103_GAINFACTOR;
-		break;
-	}
-
 	return LOfreq;
 }
 
@@ -218,8 +200,6 @@ r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
 void r2iqTurnOn(int idx) {
 	r2iqCntrl.r2iqOn = true;
 }
-
-
 
 void r2iqTurnOff(void) {
 	r2iqCntrl.r2iqOn = false;
@@ -238,10 +218,12 @@ void r2iqDataReady(void) { // signals new sample buffer arrived
 	cvADCbufferAvailable.notify_one(); // signal data available
 }
 
-void initR2iq(int downsample) {
+void initR2iq(int downsample, float gain) {
 	r2iqCntrl.buffers = buffers;    // set to the global exported by main_loop
 	r2iqCntrl.obuffers = obuffers;  // set to the global exported by main_loop
 	r2iqCntrl.Setdecimate(downsample);  // save downsample index.
+
+	r2iqCntrl.GainScale = gain;
 
 	// Get the processor count
 	auto processor_count = std::thread::hardware_concurrency();
@@ -378,16 +360,15 @@ static void *r2iqThreadf(void *arg) {
 	int lastdecimate = -1;
 
 	float * pout;
+	int decimate = r2iqCntrl->getDecidx();
+	int mtunebin = r2iqCntrl->getTunebin();
+	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
+
 	while (run) {
-		int decimate = r2iqCntrl->getDecidx();
 		int mfft = r2iqCntrl->getFftN();
 		int mratio = r2iqCntrl->getRatio();
 		int idx;
 
-		if (lastdecimate != decimate) {
-			th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
-			lastdecimate = decimate;
-		}
 
 		{
 			std::unique_lock<std::mutex> lk(mutexR2iqControl);
@@ -498,19 +479,19 @@ static void *r2iqThreadf(void *arg) {
                 }
 				else if (moderf == VLFMODE)
                 {
-                  int mtunebin = halfFft/2 - halfFft/32;
+                  int _mtunebin = halfFft/2 - halfFft/32;
                   int mm;
                   for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
                     {
-                        th->inFreqTmp[m][0] =  ( th->ADCinFreq[ mtunebin+m][0] * filter[m][0]  +
-                                                         th->ADCinFreq[ mtunebin+m][1] * filter[m][1]);
-                        th->inFreqTmp[m][1] =  ( th->ADCinFreq[ mtunebin+m][1] * filter[m][0]  -
-                                                         th->ADCinFreq[ mtunebin+m][0] * filter[m][1]);
+                        th->inFreqTmp[m][0] =  ( th->ADCinFreq[_mtunebin +m][0] * filter[m][0]  +
+                                                         th->ADCinFreq[_mtunebin +m][1] * filter[m][1]);
+                        th->inFreqTmp[m][1] =  ( th->ADCinFreq[_mtunebin +m][1] * filter[m][0]  -
+                                                         th->ADCinFreq[_mtunebin +m][0] * filter[m][1]);
                     }
 
                   for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
                     {
-                        mm = mtunebin - halfFft/2 + m;
+                        mm = _mtunebin - halfFft/2 + m;
                         if ( mm >0)
                         {
 
@@ -578,7 +559,6 @@ static void *r2iqThreadf(void *arg) {
 			int moff = midx - modx * mratio;
 			int offset = ((transferSize / 2) / mratio) *moff;
 			pout = (float *)(r2iqCntrl->obuffers[modx] + offset);
-			int mtunebin = r2iqCntrl->getTunebin();
 
 			for (int k = 0; k < fftPerBuf; k++)
 			{
