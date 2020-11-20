@@ -620,6 +620,8 @@ static void *r2iqThreadf(void *arg) {
 
 					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 					{
+						if (mtunebin - mfft / 2 + m < 0)
+							continue;
 						th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][0] +
 							th->ADCinFreq[mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][1]);
 
@@ -627,7 +629,6 @@ static void *r2iqThreadf(void *arg) {
 							th->ADCinFreq[mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][1]);
 					}
 				}
-
 
 				fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
 				float scale;
