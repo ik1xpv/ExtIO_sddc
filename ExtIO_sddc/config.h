@@ -3,6 +3,7 @@
 
 #include "license.txt" 
 
+#include "../Interface.h"
 #include <windows.h>   // LARGE_INTEGER
 #include <math.h>      // atan => PI
 #include <thread>
@@ -67,7 +68,7 @@ inline void null_func(const char *format, ...) { }
 #define HF103_GAINFACTOR   (0.0000000114F)      // HF103
 #define RX888_GAINFACTOR   (0.00000000695F)     // RX888
 
-enum rf_mode { HFMODE = 0x1, VHFMODE = 0x3, NOMODE = 4 };
+enum rf_mode { HFMODE = 0x1, VHFMODE = 0x3, NOMODE = 4 };  // removed VLFMODE 
 
 #define HF_HIGH (ADC_FREQ/2)    // 32M
 #define MW_HIGH (2000000)
@@ -101,12 +102,13 @@ extern double adcfixedfreq;
 extern double gdGainCorr_dB;
 extern bool saveADCsamplesflag;
 
-enum radiotype { NORADIO = 0, BBRF103 = 1, HF103 = 2, RX888 = 3 };
+#define CORRECT(FREQ) ((double) FREQ * (1.0 + (gdFreqCorr_ppm * 0.000001)))
+
 extern const char* radioname[4];
 
 extern bool run;
 extern int transferSize;
-extern radiotype radio;
+extern RadioModel radio;
 
 #endif // _CONFIG_H_
 

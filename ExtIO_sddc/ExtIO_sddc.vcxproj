@@ -128,7 +128,7 @@
       <PreprocessorDefinitions>TRACE;WIN32;_DEBUG;EXTIORX103_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\radio;$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -167,7 +167,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;EXTIORX103_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\radio;$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -196,7 +196,7 @@
       <PreprocessorDefinitions>TRACE;WIN32;NDEBUG;EXTIORX103_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\radio;$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -287,6 +287,10 @@
     <ClCompile Include="FX3handler.cpp" />
     <ClCompile Include="PScope_uti.cpp" />
     <ClCompile Include="r2iq.cpp" />
+    <ClCompile Include="radio\BBRF103Radio.cpp" />
+    <ClCompile Include="radio\HF103Radio.cpp" />
+    <ClCompile Include="radio\RadioHardware.cpp" />
+    <ClCompile Include="radio\RX888Radio.cpp" />
     <ClCompile Include="SplashWindow.cpp" />
     <ClCompile Include="tdialog.cpp" />
     <ClCompile Include="uti.cpp" />

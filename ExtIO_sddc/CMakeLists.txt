@@ -3,7 +3,7 @@ project(ExtIO_RX888)
 
 set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3")
 
-file(GLOB SRC "*.cpp" "CyAPI/*.cpp" extio.def resource.rc manifest.xml)
+file(GLOB SRC "*.cpp" "radio/*.cpp" "CyAPI/*.cpp" extio.def resource.rc manifest.xml)
 
 include_directories("." "CyAPI/" "FFTW3/")
 

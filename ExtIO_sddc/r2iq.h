@@ -41,7 +41,7 @@ private:
 };
 
 extern class r2iqControlClass r2iqCntrl;
-void initR2iq( int downsample );
+void initR2iq(int downsample, float gain);
 void r2iqTurnOn(int idx);
 void r2iqTurnOff(void);
 bool r2iqIsOn(void);

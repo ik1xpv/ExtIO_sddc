@@ -69,7 +69,6 @@ r2iqControlClass::r2iqControlClass()
 	r2iqOn = false;
 	Initialized = false;
 	randADC = false;
-	LWmode = false;
 	mtunebin = halfFft / 4;
 	mfftdim[0] = halfFft; 
 	mratio[0] = 1;  // 1,2,4,8,16
@@ -86,8 +85,6 @@ r2iqControlClass::~r2iqControlClass()
 {
 	Initialized = false;
 }
-
-
 
 int r2iqControlClass::Setdecimate(int dec)
 {
@@ -160,9 +157,7 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 			LOfreq = LOfreq + loprecision / 2;
 			LOfreq /= loprecision;
 			LOfreq *= loprecision;
-			//mtunebin = halfFft / 2 - halfFft / 32; // upshift 1 MHz to have LW band in bandpass filter
 			mtunebin = (int)((LOfreq * halfFft) / (ADC_FREQ / 2));
-
 			LOfreq = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
 		}
 	} else {
@@ -176,21 +171,6 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 	LOfreq /= loprecision;
 	LOfreq *= loprecision;
 	*/
-	switch (radio) // update gains
-	{
-	case BBRF103:
-		GainScale = BBRF103_GAINFACTOR;
-		break;
-	case HF103:
-		GainScale = HF103_GAINFACTOR;
-		break;
-	case RX888:
-		GainScale = RX888_GAINFACTOR;
-		break;
-	default:
-		GainScale = BBRF103_GAINFACTOR;
-		break;
-	}
 
 	return LOfreq;
 }
@@ -203,8 +183,6 @@ r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
 void r2iqTurnOn(int idx) {
 	r2iqCntrl.r2iqOn = true;
 }
-
-
 
 void r2iqTurnOff(void) {
 	r2iqCntrl.r2iqOn = false;
@@ -223,10 +201,12 @@ void r2iqDataReady(void) { // signals new sample buffer arrived
 	cvADCbufferAvailable.notify_one(); // signal data available
 }
 
-void initR2iq(int downsample) {
+void initR2iq(int downsample, float gain) {
 	r2iqCntrl.buffers = buffers;    // set to the global exported by main_loop
 	r2iqCntrl.obuffers = obuffers;  // set to the global exported by main_loop
 	r2iqCntrl.Setdecimate(downsample);  // save downsample index.
+
+	r2iqCntrl.GainScale = gain;
 
 	// Get the processor count
 	auto processor_count = std::thread::hardware_concurrency();
@@ -363,12 +343,16 @@ static void *r2iqThreadf(void *arg) {
 	int lastdecimate = -1;
 
 	float * pout;
+	int decimate = r2iqCntrl->getDecidx();
+	int _mtunebin = r2iqCntrl->getTunebin();
+	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
+
 	while (run) {
-		int decimate = r2iqCntrl->getDecidx();
 		int mfft = r2iqCntrl->getFftN();
 		int mratio = r2iqCntrl->getRatio();
 		int idx;
-
+	    _mtunebin = r2iqCntrl->getTunebin();  // Update LO tune is possible during run
+		 
 		if (lastdecimate != decimate) {
 			th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 			lastdecimate = decimate;
@@ -483,19 +467,19 @@ static void *r2iqThreadf(void *arg) {
                 }
 				else if (moderf == HFMODE)
                 {
-				  int mtunebin = halfFft / 2 -halfFft / 32; // upshift 1 MHz to have LW band in bandpass filter
+				  int _mtunebin = halfFft / 2 -halfFft / 32; // upshift 1 MHz to have LW band in bandpass filter
                   int mm;
                   for(int m = 0 ; m < (halfFft/2); m++) // circular shift tune fs/2 half array
                     {
-                        th->inFreqTmp[m][0] =  ( th->ADCinFreq[ mtunebin+m][0] * filter[m][0]  +
-                                                         th->ADCinFreq[ mtunebin+m][1] * filter[m][1]);
-                        th->inFreqTmp[m][1] =  ( th->ADCinFreq[ mtunebin+m][1] * filter[m][0]  -
-                                                         th->ADCinFreq[ mtunebin+m][0] * filter[m][1]);
+                        th->inFreqTmp[m][0] =  ( th->ADCinFreq[ _mtunebin+m][0] * filter[m][0]  +
+                                                         th->ADCinFreq[ _mtunebin+m][1] * filter[m][1]);
+                        th->inFreqTmp[m][1] =  ( th->ADCinFreq[ _mtunebin+m][1] * filter[m][0]  -
+                                                         th->ADCinFreq[ _mtunebin+m][0] * filter[m][1]);
                     }
 
                   for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
                     {
-                        mm = mtunebin - halfFft/2 + m;
+                        mm = _mtunebin - halfFft/2 + m;
                         if ( mm >0)
                         {
 
@@ -563,7 +547,6 @@ static void *r2iqThreadf(void *arg) {
 			int moff = midx - modx * mratio;
 			int offset = ((transferSize / 2) / mratio) *moff;
 			pout = (float *)(r2iqCntrl->obuffers[modx] + offset);
-			int mtunebin = r2iqCntrl->getTunebin();
 
 			for (int k = 0; k < fftPerBuf; k++)
 			{
@@ -586,54 +569,25 @@ static void *r2iqThreadf(void *arg) {
 						th->inFreqTmp[mfft / 2 + m][1] = 0;
 					}
 				}
-			/*
-				else if (moderf == VLFMODE)
-				{
-				  int mm;
-				  for(int m = 0 ; m < mfft/2; m++) // circular shift tune fs/2 half array
-					{
-						th->inFreqTmp[m][0] =  ( th->ADCinFreq[ mtunebin+m][0] * filter[m][0]  +
-														 th->ADCinFreq[ mtunebin+m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] =  ( th->ADCinFreq[ mtunebin+m][1] * filter[m][0]  -
-														 th->ADCinFreq[ mtunebin+m][0] * filter[m][1]);
-					}
-				  for(int m = 0 ; m < mfft/2; m++) // circular shift tune fs/2 half array
-					{
-						mm = mtunebin - mfft/2 + m;
-						if ( mm > 0)
-						{
-
-						th->inFreqTmp[mfft/2+m][0] = ( th->ADCinFreq[mm][0] * filter[halfFft - mfft/2 + m][0]  +
-																  th->ADCinFreq[mm][1] * filter[halfFft - mfft/2 + m][1]);
-
-						th->inFreqTmp[mfft/2+m][1] = ( th->ADCinFreq[mm][1] * filter[halfFft - mfft/2 + m][0]  -
-																  th->ADCinFreq[mm][0] * filter[halfFft - mfft/2 + m][1]);
-						}else
-						{
-							th->inFreqTmp[mfft/2+m][0]= th->inFreqTmp[mfft/2+m][1] = 0;
-						}
-					}
-				}
-				*/
 				else
 				{
 					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 					{
-						th->inFreqTmp[m][0] = (th->ADCinFreq[mtunebin + m][0] * filter[m][0] +
-							th->ADCinFreq[mtunebin + m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] = (th->ADCinFreq[mtunebin + m][1] * filter[m][0] -
-							th->ADCinFreq[mtunebin + m][0] * filter[m][1]);
+						th->inFreqTmp[m][0] = (th->ADCinFreq[_mtunebin + m][0] * filter[m][0] +
+							th->ADCinFreq[_mtunebin + m][1] * filter[m][1]);
+						th->inFreqTmp[m][1] = (th->ADCinFreq[_mtunebin + m][1] * filter[m][0] -
+							th->ADCinFreq[_mtunebin + m][0] * filter[m][1]);
 					}
 
 					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 					{
-						if ((mtunebin - mfft / 2 + m) >= 0) // corrects off limits
+						if ((_mtunebin - mfft / 2 + m) >= 0) // corrects off limits
 						{
-							th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][0] +
-								th->ADCinFreq[mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][1]);
+							th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[_mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][0] +
+								th->ADCinFreq[_mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][1]);
 
-							th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][0] -
-								th->ADCinFreq[mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][1]);
+							th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[_mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][0] -
+								th->ADCinFreq[_mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][1]);
 						}
 						else
 						{
@@ -642,7 +596,6 @@ static void *r2iqThreadf(void *arg) {
 						}
 					}
 				}
-
 
 				fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
 				float scale;

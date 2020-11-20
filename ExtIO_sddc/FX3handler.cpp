@@ -169,11 +169,11 @@ bool  fx3class::Open(HMODULE hInst) {
 
 using namespace std;
 
-void fx3class::Control(FX3Command command) { // firmware control
+bool fx3class::Control(FX3Command command) { // firmware control
 	long lgt = 1;
 	UINT8 z = 0; // dummy data = 0
 	fx3dev->ControlEndPt->ReqCode = command;
-	fx3dev->ControlEndPt->Write(&z, lgt);
+	return fx3dev->ControlEndPt->Write(&z, lgt);
 }
 
 bool fx3class::Control(FX3Command command, PUINT8 data) { // firmware control BBRF
