@@ -360,16 +360,15 @@ static void *r2iqThreadf(void *arg) {
 	int lastdecimate = -1;
 
 	float * pout;
+	int decimate = r2iqCntrl->getDecidx();
+	int mtunebin = r2iqCntrl->getTunebin();
+	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
+
 	while (run) {
-		int decimate = r2iqCntrl->getDecidx();
 		int mfft = r2iqCntrl->getFftN();
 		int mratio = r2iqCntrl->getRatio();
 		int idx;
 
-		if (lastdecimate != decimate) {
-			th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
-			lastdecimate = decimate;
-		}
 
 		{
 			std::unique_lock<std::mutex> lk(mutexR2iqControl);
@@ -480,19 +479,19 @@ static void *r2iqThreadf(void *arg) {
                 }
 				else if (moderf == VLFMODE)
                 {
-                  int mtunebin = halfFft/2 - halfFft/32;
+                  int _mtunebin = halfFft/2 - halfFft/32;
                   int mm;
                   for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
                     {
-                        th->inFreqTmp[m][0] =  ( th->ADCinFreq[ mtunebin+m][0] * filter[m][0]  +
-                                                         th->ADCinFreq[ mtunebin+m][1] * filter[m][1]);
-                        th->inFreqTmp[m][1] =  ( th->ADCinFreq[ mtunebin+m][1] * filter[m][0]  -
-                                                         th->ADCinFreq[ mtunebin+m][0] * filter[m][1]);
+                        th->inFreqTmp[m][0] =  ( th->ADCinFreq[_mtunebin +m][0] * filter[m][0]  +
+                                                         th->ADCinFreq[_mtunebin +m][1] * filter[m][1]);
+                        th->inFreqTmp[m][1] =  ( th->ADCinFreq[_mtunebin +m][1] * filter[m][0]  -
+                                                         th->ADCinFreq[_mtunebin +m][0] * filter[m][1]);
                     }
 
                   for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
                     {
-                        mm = mtunebin - halfFft/2 + m;
+                        mm = _mtunebin - halfFft/2 + m;
                         if ( mm >0)
                         {
 
@@ -560,7 +559,6 @@ static void *r2iqThreadf(void *arg) {
 			int moff = midx - modx * mratio;
 			int offset = ((transferSize / 2) / mratio) *moff;
 			pout = (float *)(r2iqCntrl->obuffers[modx] + offset);
-			int mtunebin = r2iqCntrl->getTunebin();
 
 			for (int k = 0; k < fftPerBuf; k++)
 			{

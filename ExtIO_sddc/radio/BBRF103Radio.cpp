@@ -37,7 +37,7 @@ bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
         
         return (ret == 0);
     }
-    else if (mode == HFMODE)
+    else if (mode == HFMODE || mode == VLFMODE)
     {
         // Stop Tuner
         Fx3->Control(R820T2STDBY, (uint8_t*)&ret);
