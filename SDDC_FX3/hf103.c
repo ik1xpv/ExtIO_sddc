@@ -16,6 +16,9 @@ void hf103_GpioSet(uint16_t mdata)
     CyU3PGpioSetValue (GPIO_SHDWN, (mdata & SHDWN) == SHDWN ); 		 // SHDN
     CyU3PGpioSetValue (GPIO_DITH, (mdata & DITH ) == DITH  ); 		 // DITH
     CyU3PGpioSetValue (GPIO_RANDO, (mdata & RANDO) == RANDO ); 		 // RAND
+
+
+
 }
 
 void hf103_GpioInitialize()
@@ -24,9 +27,11 @@ void hf103_GpioInitialize()
     ConfGPIOsimpleout (GPIO_DITH);
     ConfGPIOsimpleout (GPIO_RANDO);
     ConfGPIOsimpleout (GPIO_LED_KIT);
+    ConfGPIOsimpleout (GPIO_ATT_LE);
+    ConfGPIOsimpleout (GPIO_ATT_CLK);
+    ConfGPIOsimpleout (GPIO_ATT_DATA);
 
     hf103_GpioSet(0);
-
     CyU3PGpioSetValue (GPIO_LED_KIT, 0);
     CyU3PGpioSetValue (GPIO_ATT_LE, 0);  // ATT_LE latched
     CyU3PGpioSetValue (GPIO_ATT_CLK, 1);  // test version
