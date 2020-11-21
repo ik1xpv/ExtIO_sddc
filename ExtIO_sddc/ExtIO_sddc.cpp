@@ -325,24 +325,25 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	if (radio == HF103) // HF frequency limits
 	{
 		if (glTunefreq > HF_HIGH) glTunefreq = HF_HIGH;
-		if (LOfreq > HF_HIGH) LOfreq = (HF_HIGH) - 1000000;  
+		if (LOfreq > HF_HIGH - 1000000) LOfreq = (HF_HIGH) - 1000000;  
 	}
 
 	LOfreq = r2iqCntrl.UptTuneFrq(LOfreq, glTunefreq); //update LO freq
 	glLOfreq = LOfreq; 
 
 	rf_mode rfmode = RadioHandler.GetmodeRF();
-	if ((LOfreq > 32000000) && (rfmode != VHFMODE))
+	if ((LOfreq > 32000000) && (rfmode != VHFMODE)&& (radio != HF103))
 	{
-		if (rfmode != NOMODE) giExtSrateIdxHF = giExtSrateIdx;	// save HF SRate
-		RadioHandler.UpdatemodeRF(VHFMODE);
-		giExtSrateIdx = 2;
-		r2iqCntrl.Setdecimate(giExtSrateIdx);
-		if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
-		if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
-		RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
+			if (rfmode != NOMODE) giExtSrateIdxHF = giExtSrateIdx;	// save HF SRate
+			RadioHandler.UpdatemodeRF(VHFMODE);
+			// RadioHandler.R820T2init();  // activate R820T2
+			giExtSrateIdx = 2;
+			r2iqCntrl.Setdecimate(giExtSrateIdx);
+			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
+			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
+			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
-	else if (LOfreq < 31000000)
+	if (LOfreq < 31000000)
 	{
 		switch (rfmode)
 		{
@@ -366,7 +367,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	{
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 	}
-
+        if (RadioHandler.GetmodeRF() == VHFMODE)
 	RadioHandler.TuneLO(LOfreq);
 	// 0 The function did complete without errors.
 	// < 0 (a negative number N)

@@ -68,7 +68,7 @@ inline void null_func(const char *format, ...) { }
 #define HF103_GAINFACTOR   (0.0000000114F)      // HF103
 #define RX888_GAINFACTOR   (0.00000000695F)     // RX888
 
-enum rf_mode { HFMODE = 0x1, VHFMODE = 0x3, NOMODE = 4 };
+enum rf_mode { HFMODE = 0x1, VHFMODE = 0x3, NOMODE = 4 };  // removed VLFMODE 
 
 #define HF_HIGH (ADC_FREQ/2)    // 32M
 #define MW_HIGH (2000000)
