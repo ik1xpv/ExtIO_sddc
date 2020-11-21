@@ -349,6 +349,13 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 		modeRF = mode;
 
 		hardware->UpdatemodeRF(mode);
+		
+		IDX = 0;  // patch for BUG1001
+		// it restart the IDX counter
+		// failures count is allowed in first first 64 block
+		// see
+		// line 110		if (IDX > 64) { // avoid first 64 block
+		// line 64  DbgPrintf("BUG1001 IDX %d idx %d", IDX, idx);
 
 		if (pfnCallback)
 		{
