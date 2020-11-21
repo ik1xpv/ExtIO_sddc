@@ -352,7 +352,6 @@ static void *r2iqThreadf(void *arg) {
 		int mratio = r2iqCntrl->getRatio();
 		int idx;
 
-
 	    _mtunebin = r2iqCntrl->getTunebin();  // Update LO tune is possible during run
 		 
 		if (lastdecimate != decimate) {
@@ -585,6 +584,7 @@ static void *r2iqThreadf(void *arg) {
 
 					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 					{
+
 
 						if ((_mtunebin - mfft / 2 + m) >= 0) // corrects off limits
 

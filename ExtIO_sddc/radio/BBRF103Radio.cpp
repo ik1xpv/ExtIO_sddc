@@ -48,6 +48,7 @@ bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
     	data[1] = 0;
         Fx3->Control(SI5351A, (uint8_t*)&data[0]);
 
+
         // switch to HF Attenna
         return FX3SetGPIO(ATT_SEL0 | ATT_SEL1);
     }
