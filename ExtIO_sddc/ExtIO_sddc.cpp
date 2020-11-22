@@ -332,7 +332,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	glLOfreq = LOfreq; 
 
 	rf_mode rfmode = RadioHandler.GetmodeRF();
-	if ((LOfreq > 32000000) && (rfmode != VHFMODE)&& (radio != HF103))
+	if ((LOfreq > 32000000) && (rfmode != VHFMODE))
 	{
 			if (rfmode != NOMODE) giExtSrateIdxHF = giExtSrateIdx;	// save HF SRate
 			RadioHandler.UpdatemodeRF(VHFMODE);
@@ -367,7 +367,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	{
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 	}
-        if (RadioHandler.GetmodeRF() == VHFMODE)
+   
 	RadioHandler.TuneLO(LOfreq);
 	// 0 The function did complete without errors.
 	// < 0 (a negative number N)
