@@ -37,14 +37,17 @@ bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
         
         return (ret == 0);
     }
-    else if (mode == HFMODE || mode == VLFMODE)
+
+    else if (mode == HFMODE )   // (mode == HFMODE || mode == VLFMODE) no more VLFMODE
     {
+
         // Stop Tuner
         Fx3->Control(R820T2STDBY, (uint8_t*)&ret);
 
         // Disable Tuner reference clock
     	data[1] = 0;
         Fx3->Control(SI5351A, (uint8_t*)&data[0]);
+
 
         // switch to HF Attenna
         return FX3SetGPIO(ATT_SEL0 | ATT_SEL1);

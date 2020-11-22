@@ -101,23 +101,19 @@ void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* fLO, int64_t* fTu
 		rf_mode rfm = RadioHandler.GetmodeRF();
 		if (mdecimation == 0) // no decimation
 		{
-			rfm = VLFMODE;
+			rfm = HFMODE;
 			RadioHandler.UpdatemodeRF(rfm);
 			LOfreq = (int64_t)(((double)ADC_FREQ / 4.0) - 1000000.0);
 			LOfreq = (int)(((double)LOfreq * (adcfixedfreq) / (double)ADC_FREQ)); // frequency correction
 			*fLO = LOfreq;
 		}
-		else
+		else if (rfm != VHFMODE)
 		{
-			if (*fTune < 500000)
-				rfm = VLFMODE;
-			else
-				rfm = HFMODE;
+			rfm = HFMODE;
 			RadioHandler.UpdatemodeRF(rfm);
 			LOfreq = (int64_t)(*fTune * (double)ADC_FREQ / (double)adcfixedfreq);
 			// LO lower and upper limits
-			if (LOfreq < ((double)ADC_FREQ / 4.0) / mratio[mdecimation])
-				LOfreq = (int64_t)((double)ADC_FREQ / 4.0) / mratio[mdecimation];
+			if (LOfreq < 0) LOfreq = 0;
 			if (LOfreq > (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation])
 				LOfreq = (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation];
 			/*
@@ -126,9 +122,8 @@ void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* fLO, int64_t* fTu
 				LOfreq /= loprecision;
 				LOfreq *= loprecision;
 				*/
-			mtunebin = (int)((LOfreq * halfFft) / (ADC_FREQ / 2));
+			mtunebin = (int)((LOfreq * halfFft) / (ADC_FREQ / 2));// -halfFft / 32;
 			*fLO = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
-
 		}
 	}
 
@@ -136,41 +131,27 @@ void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* fLO, int64_t* fTu
 
 int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 {
-	int64_t loprecision;
+	int64_t loprecision = 1;
 	if (LOfreq < (ADC_FREQ / 2))
 	{
 		rf_mode rfm = RadioHandler.GetmodeRF();
 
 		if (mdecimation == 0) // no decimation
 		{
-			rfm = VLFMODE;
+			rfm = HFMODE;
 			RadioHandler.UpdatemodeRF(rfm);
-			//LOfreq = (int64_t)((adcfixedfreq / 4.0) - 1000000.0);
 			LOfreq = (int64_t)((ADC_FREQ / 4.0) - 1000000.0);
 			LOfreq = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
 			loprecision = 1;
 		}
-		else
+		else if (rfm != VHFMODE)
 		{
-			if (rfm != VHFMODE)
-			{
-				if (tunefreq < 1000000)
-					rfm = VLFMODE;
-				else
-					rfm = HFMODE;
-			}
-
+			rfm = HFMODE;
 			RadioHandler.UpdatemodeRF(rfm);
-
-			if (LOfreq < (ADC_FREQ / 4) / mratio[mdecimation])
-				LOfreq = (ADC_FREQ / 4) / mratio[mdecimation];
+			if (LOfreq < 0)  
+				LOfreq = 0;
 			if (LOfreq > (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation])
 				LOfreq = (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation];
-
-			if (rfm == VLFMODE)
-			{
-				LOfreq = (ADC_FREQ / 4) / mratio[mdecimation] - 500000;
-			}
 
 			loprecision = (ADC_FREQ / 2) / 256;   // ie 32000000 / 256 = 125 kHz  bin even span
 			LOfreq = LOfreq + loprecision / 2;
@@ -185,9 +166,11 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 	}
 	// calculate nearest possible frequency
 	// - emulate receiver which don't have 1 Hz resolution
+	/*
 	LOfreq += loprecision / 2;
 	LOfreq /= loprecision;
 	LOfreq *= loprecision;
+	*/
 
 	return LOfreq;
 }
@@ -361,13 +344,20 @@ static void *r2iqThreadf(void *arg) {
 
 	float * pout;
 	int decimate = r2iqCntrl->getDecidx();
-	int mtunebin = r2iqCntrl->getTunebin();
+	int _mtunebin = r2iqCntrl->getTunebin();
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
 	while (run) {
 		int mfft = r2iqCntrl->getFftN();
 		int mratio = r2iqCntrl->getRatio();
 		int idx;
+
+	    _mtunebin = r2iqCntrl->getTunebin();  // Update LO tune is possible during run
+		 
+		if (lastdecimate != decimate) {
+			th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
+			lastdecimate = decimate;
+		}
 
 
 		{
@@ -477,16 +467,17 @@ static void *r2iqThreadf(void *arg) {
 						th->inFreqTmp[halfFft / 2 + m][1] = 0;
                     }
                 }
-				else if (moderf == VLFMODE)
+				else if (moderf == HFMODE)
                 {
-                  int _mtunebin = halfFft/2 - halfFft/32;
+
+				  int _mtunebin = halfFft / 2 -halfFft / 32; // upshift 1 MHz to have LW band in bandpass filter
                   int mm;
-                  for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
+                  for(int m = 0 ; m < (halfFft/2); m++) // circular shift tune fs/2 half array
                     {
-                        th->inFreqTmp[m][0] =  ( th->ADCinFreq[_mtunebin +m][0] * filter[m][0]  +
-                                                         th->ADCinFreq[_mtunebin +m][1] * filter[m][1]);
-                        th->inFreqTmp[m][1] =  ( th->ADCinFreq[_mtunebin +m][1] * filter[m][0]  -
-                                                         th->ADCinFreq[_mtunebin +m][0] * filter[m][1]);
+                        th->inFreqTmp[m][0] =  ( th->ADCinFreq[ _mtunebin+m][0] * filter[m][0]  +
+                                                         th->ADCinFreq[ _mtunebin+m][1] * filter[m][1]);
+                        th->inFreqTmp[m][1] =  ( th->ADCinFreq[ _mtunebin+m][1] * filter[m][0]  -
+                                                         th->ADCinFreq[ _mtunebin+m][0] * filter[m][1]);
                     }
 
                   for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
@@ -581,52 +572,34 @@ static void *r2iqThreadf(void *arg) {
 						th->inFreqTmp[mfft / 2 + m][1] = 0;
 					}
 				}
-				else if (moderf == VLFMODE)
-				{
-				  int mm;
-				  for(int m = 0 ; m < mfft/2; m++) // circular shift tune fs/2 half array
-					{
-						th->inFreqTmp[m][0] =  ( th->ADCinFreq[ mtunebin+m][0] * filter[m][0]  +
-														 th->ADCinFreq[ mtunebin+m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] =  ( th->ADCinFreq[ mtunebin+m][1] * filter[m][0]  -
-														 th->ADCinFreq[ mtunebin+m][0] * filter[m][1]);
-					}
-				  for(int m = 0 ; m < mfft/2; m++) // circular shift tune fs/2 half array
-					{
-						mm = mtunebin - mfft/2 + m;
-						if ( mm > 0)
-						{
-
-						th->inFreqTmp[mfft/2+m][0] = ( th->ADCinFreq[mm][0] * filter[halfFft - mfft/2 + m][0]  +
-																  th->ADCinFreq[mm][1] * filter[halfFft - mfft/2 + m][1]);
-
-						th->inFreqTmp[mfft/2+m][1] = ( th->ADCinFreq[mm][1] * filter[halfFft - mfft/2 + m][0]  -
-																  th->ADCinFreq[mm][0] * filter[halfFft - mfft/2 + m][1]);
-						}else
-						{
-							th->inFreqTmp[mfft/2+m][0]= th->inFreqTmp[mfft/2+m][1] = 0;
-						}
-					}
-				}
 				else
 				{
 					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 					{
-						th->inFreqTmp[m][0] = (th->ADCinFreq[mtunebin + m][0] * filter[m][0] +
-							th->ADCinFreq[mtunebin + m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] = (th->ADCinFreq[mtunebin + m][1] * filter[m][0] -
-							th->ADCinFreq[mtunebin + m][0] * filter[m][1]);
+						th->inFreqTmp[m][0] = (th->ADCinFreq[_mtunebin + m][0] * filter[m][0] +
+							th->ADCinFreq[_mtunebin + m][1] * filter[m][1]);
+						th->inFreqTmp[m][1] = (th->ADCinFreq[_mtunebin + m][1] * filter[m][0] -
+							th->ADCinFreq[_mtunebin + m][0] * filter[m][1]);
 					}
 
 					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 					{
-						if (mtunebin - mfft / 2 + m < 0)
-							continue;
-						th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][0] +
-							th->ADCinFreq[mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][1]);
 
-						th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][0] -
-							th->ADCinFreq[mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][1]);
+
+						if ((_mtunebin - mfft / 2 + m) >= 0) // corrects off limits
+
+						{
+							th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[_mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][0] +
+								th->ADCinFreq[_mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][1]);
+
+							th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[_mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][0] -
+								th->ADCinFreq[_mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][1]);
+						}
+						else
+						{
+							th->inFreqTmp[mfft / 2 + m][0] = 0;
+							th->inFreqTmp[mfft / 2 + m][1] = 0;
+						}
 					}
 				}
 
