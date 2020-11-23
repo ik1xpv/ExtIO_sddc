@@ -275,9 +275,7 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 
 	if (oldradio != radio)
 	{
-		char buffer[128];
-		sprintf(buffer, "%s\tnow connected\r\n%s\tprevious radio", radioname[radio], radioname[oldradio]);
-		MessageBox(NULL, buffer, "WARNING settings changed", MB_OK | MB_ICONINFORMATION);
+		DbgPrintf("%s\tnow connected\r\n%s\tprevious radio", radioname[radio], radioname[oldradio]);
 	}
 
 	return true;

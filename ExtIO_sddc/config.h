@@ -59,7 +59,7 @@ inline void null_func(const char *format, ...) { }
 
 #define R820T_FREQ (32000000)	// R820T reference frequency
 #define R820T_ZERO (0)          // freq 0
-#define R820T2_IF_CARRIER (5000000)
+#define R820T2_IF_CARRIER (4570000)
 
 #define FFTN_R_ADC (2048)       // FFTN used for ADC real stream DDC
 

@@ -41,13 +41,31 @@ int rt820init(void)
 		DbgPrintf("Failed to initialize\n"); 
 	}
 
+    uint32_t bw;
+    r82xx_set_bandwidth(&priv, 8000000, 0, &bw, 1);
+
     return 0;
 }
 
+static const uint8_t vga_gains[29] =   { 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
+static const uint8_t mixer_gains[29] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12,12,13,13,14 };
+static const uint8_t lna_gains[29] =   { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12,12,13,13,14,15 };
+
+
 void set_all_gains(UINT8 gain_index)
 {
-  r82xx_set_gain(&priv, false, gain_index * 10, 0, 0, 0, 0, nullptr);
-  DbgPrintf("\r\nset_all_gains %d", gain_index);
+    uint8_t lna, mix;
+    lna = lna_gains [ gain_index ];
+    mix = mixer_gains [ gain_index ];
+
+    r82xx_set_gain(&priv, false, 0, 1, lna, mix, 9, nullptr);
+    DbgPrintf("\r\nset_all_gains %d", gain_index);
+}
+
+void set_vga_gain(UINT8 gain_index)
+{
+    r82xx_set_if_mode(&priv, 10000 + gain_index, nullptr);
+    DbgPrintf("\r\nset_vga_gain %d", gain_index);
 }
 
 void set_freq(UINT32 freq)
