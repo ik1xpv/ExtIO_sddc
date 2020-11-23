@@ -192,7 +192,6 @@ RadioHandlerClass::RadioHandlerClass() :
 	biasT_VHF(false),
 	matt(-1),  // force update
 	modeRF(NOMODE),
-	attRF(0),
 	firmware(0),
 	hardware(new DummyRadio())
 {

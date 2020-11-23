@@ -61,7 +61,6 @@ private:
     int  matt;
     UINT16 firmware;
     rf_mode modeRF;  
-    int attRF;
 
     RadioHardware* hardware;
 };
