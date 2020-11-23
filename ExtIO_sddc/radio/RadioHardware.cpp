@@ -16,9 +16,11 @@ bool RadioHardware::FX3UnsetGPIO(uint32_t mask)
 
 RadioHardware::~RadioHardware()
 {
-    FX3SetGPIO(SHDWN);
+    if (Fx3) {
+        FX3SetGPIO(SHDWN);
 
-    Fx3->Control(RESETFX3);
+        Fx3->Control(RESETFX3);
 
-    delete Fx3;
+        delete Fx3;
+    }
 }
