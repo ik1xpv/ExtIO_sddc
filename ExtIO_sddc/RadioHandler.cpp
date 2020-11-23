@@ -190,7 +190,6 @@ RadioHandlerClass::RadioHandlerClass() :
 	randout(false),
 	biasT_HF(false),
 	biasT_VHF(false),
-	matt(-1),  // force update
 	modeRF(NOMODE),
 	firmware(0),
 	hardware(new DummyRadio())
@@ -331,14 +330,30 @@ int RadioHandlerClass::UpdateattRF(int att)
 {
 	if (hardware->UpdateattRF(att))
 	{
-		matt = att;
+		return att;
 	}
-	return matt;
+	return 0;
+}
+
+// attenuator RF used in HF
+int RadioHandlerClass::UpdateIFGain(int idx)
+{
+	if (hardware->UpdateGainIF(idx))
+	{
+		return idx;
+	}
+
+	return 0;
 }
 
 int RadioHandlerClass::GetRFAttSteps(const float **steps) 
 {
-	return hardware->getLNASteps(steps);
+	return hardware->getRFSteps(steps);
+}
+
+int RadioHandlerClass::GetIFGainSteps(const float **steps) 
+{
+	return hardware->getIFSteps(steps);
 }
 
 bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)

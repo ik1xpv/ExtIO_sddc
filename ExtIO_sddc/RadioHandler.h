@@ -26,6 +26,9 @@ public:
     int GetRFAttSteps(const float **steps);
     int UpdateattRF(int attIdx);
 
+    int GetIFGainSteps(const float **steps);
+    int UpdateIFGain(int attIdx);
+
     bool UpdatemodeRF(rf_mode mode);
     rf_mode GetmodeRF(){return (rf_mode)modeRF;}
     bool UptDither (bool b);
@@ -58,7 +61,6 @@ private:
     bool biasT_VHF;
     bool traceflag;
     bool samplesADCflag;
-    int  matt;
     UINT16 firmware;
     rf_mode modeRF;  
 
@@ -83,7 +85,9 @@ public:
     virtual bool UpdateattRF(int attIndex) = 0;
     virtual int64_t TuneLo(int64_t freq) = 0;
 
-    virtual int getLNASteps(const float** steps ) { return 0; }
+    virtual int getRFSteps(const float** steps ) { return 0; }
+    virtual int getIFSteps(const float** steps ) { return 0; }
+    virtual bool UpdateGainIF(int attIndex) { return false; }
 
     bool FX3producerOn() { return Fx3->Control(STARTFX3); }
     bool FX3producerOff() { return Fx3->Control(STOPFX3); }
@@ -106,12 +110,18 @@ public:
     bool UpdatemodeRF(rf_mode mode) override;
     int64_t TuneLo(int64_t freq) override;
     bool UpdateattRF(int attIndex) override;
-    int getLNASteps(const float** steps ) override;
+    bool UpdateGainIF(int attIndex) override;
+
+    int getRFSteps(const float** steps ) override;
+    int getIFSteps(const float** steps ) override;
 
 private:
     static const int step_size = 29;
     static const float steps[step_size];
     static const float hfsteps[3];
+
+    static const int if_step_size = 16;
+    static const float if_steps[if_step_size];
 };
 
 class RX888Radio : public BBRF103Radio {
@@ -137,7 +147,7 @@ public:
     
     bool UpdateattRF(int attIndex) override;
 
-    int getLNASteps(const float** steps ) override;
+    int getRFSteps(const float** steps ) override;
 
 private:
     static const int step_size = 64;

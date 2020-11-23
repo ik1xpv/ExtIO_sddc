@@ -7,6 +7,10 @@ const float BBRF103Radio::steps[BBRF103Radio::step_size] =  {
     44.5f, 48.0f, 49.6f
 };
 
+const float BBRF103Radio::if_steps[BBRF103Radio::if_step_size] =  {
+    -4.7f, -2.1f, 0.5f, 3.5f, 7.7f, 11.2f, 13.6f, 14.9f, 16.3f, 19.5f, 23.1f, 26.5f, 30.0f, 33.7f, 37.2f, 40.8f
+};
+
 const float BBRF103Radio::hfsteps[3] = {
     -20.0f, -10.0f, 0.0f
 };
@@ -111,7 +115,7 @@ int64_t BBRF103Radio::TuneLo(int64_t freq)
     }
 }
 
-int BBRF103Radio::getLNASteps(const float** steps )
+int BBRF103Radio::getRFSteps(const float** steps )
 {
     if (gpios & (ATT_SEL0 | ATT_SEL1))  {
         *steps = this->hfsteps;
@@ -122,5 +126,29 @@ int BBRF103Radio::getLNASteps(const float** steps )
         *steps = this->steps;
         return step_size;
     }
+}
 
+int BBRF103Radio::getIFSteps(const float** steps )
+{
+    if (gpios & (ATT_SEL0 | ATT_SEL1))  {
+        return 0;
+    }
+    else
+    {
+        *steps = this->if_steps;
+        return if_step_size;
+    }
+}
+
+bool BBRF103Radio::UpdateGainIF(int attIndex)
+{
+    if (gpios & (ATT_SEL0 | ATT_SEL1))  {
+        // this is in HF mode
+        return false;
+    }
+    else {
+        // this is in VHF mode
+        Fx3->Control(R820T2SETVGA, (UINT8*)&attIndex);
+        return true;
+    }
 }

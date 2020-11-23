@@ -30,6 +30,7 @@ extern uint16_t  FWconfig;       			    // Firmware config hb.lb
 
 extern ReturnStatus_t rt820init(void);
 extern void set_all_gains(UINT8 gain_index);
+extern void set_vga_gain(UINT8 gain_index);
 extern void set_freq(UINT32 freq);
 extern void rt820shutdown(void);
 extern uint8_t m_gain_index;
@@ -247,6 +248,16 @@ CyFxSlFifoApplnUSBSetupCB (
 						uint8_t attIdx;
 						attIdx = glEp0Buffer[0];
 						set_all_gains(attIdx); // R820T2 set att
+						isHandled = CyTrue;
+					}
+					break;
+
+			case R820T2SETVGA:
+					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
+					{
+						uint8_t attIdx;
+						attIdx = glEp0Buffer[0];
+						set_vga_gain(attIdx); // R820T2 set att
 						isHandled = CyTrue;
 					}
 					break;

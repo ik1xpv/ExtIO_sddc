@@ -36,12 +36,13 @@ int64_t	glTunefreq = 999000;	// Turin MW broadcast !
 
 bool	gbInitHW = false;
 bool    LWMode = false;
-int		giDefaultAttIdxHF = 2;	// 0 dB
-int		giAttIdxHF = giDefaultAttIdxHF;
-int		giDefaultAttIdxVHF = 10;	// 0 dB
-int		giAttIdxVHF = giDefaultAttIdxVHF;
-int		giAttIdx = 31;
-int		giDefaultAttIdx = 31;	// 0 dB
+int		giAttIdxHF = 0;
+int		giAttIdxVHF = 0;
+int		giAttIdx = 0;
+
+int		giMgcIdxHF = 0;
+int		giMgcIdxVHF = 0;
+int		giMgcIdx = 0;
 
 pfnExtIOCallback	pfnCallback = 0;
 HWND Hconsole;
@@ -531,6 +532,49 @@ int EXTIO_API SetAttenuator(int atten_idx)
 		giAttIdxVHF = atten_idx;
 	else
 		giAttIdxHF = atten_idx;
+	return 0; 
+}
+
+//
+// MGC
+// sort by ascending gain: use idx 0 for lowest gain
+// this functions is called with incrementing idx
+//    - until this functions returns != 0, which means that all gains are already delivered
+extern "C" int EXTIO_API ExtIoGetMGCs(int mgc_idx, float * gain)
+{
+    EnterFunction();
+
+	const float *steps;
+	int max_step = RadioHandler.GetIFGainSteps(&steps);
+	if (mgc_idx < max_step) {
+		*gain = steps[mgc_idx];
+		return 0;
+	}
+
+	return 1;
+}
+
+// returns -1 on error
+extern "C" int EXTIO_API ExtIoGetActualMgcIdx(void)
+{
+	int MgcIdx;	
+	if (RadioHandler.GetmodeRF() == VHFMODE)
+		MgcIdx = giMgcIdxVHF;
+	else
+		MgcIdx = giMgcIdxHF;
+	EnterFunction1(MgcIdx);
+	return MgcIdx;
+}
+
+// returns != 0 on error
+extern "C"  int EXTIO_API ExtIoSetMGC(int mgc_idx)
+{
+    EnterFunction1(mgc_idx);
+	RadioHandler.UpdateIFGain(mgc_idx);
+	if (RadioHandler.GetmodeRF() == VHFMODE)
+		giMgcIdxVHF = mgc_idx;
+	else
+		giMgcIdxHF = mgc_idx;
 	return 0; 
 }
 
