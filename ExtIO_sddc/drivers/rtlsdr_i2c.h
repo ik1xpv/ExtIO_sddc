@@ -3,8 +3,8 @@
 #include <stdio.h>
 
 extern int I2cTransfer (
-        uint8_t   byteAddress,
-        uint8_t   devAddr,
+        uint8_t   i2caddr,
+        uint8_t   reg,
         uint8_t   byteCount,
         uint8_t   *buffer,
         bool  isRead);
@@ -15,23 +15,12 @@ struct r82xx_config config;
 #define fprintf(e, s, ...) DbgPrintf(s, __VA_ARGS__)
 
 int rtlsdr_i2c_write_fn(void* dev, int i2caddr, uint8_t * buf, uint8_t len){
-    if (I2cTransfer(buf[0], i2caddr, len - 1, &buf[1], false) == 0)
+    if (I2cTransfer(i2caddr, buf[0], len - 1, &buf[1], false) == 0)
     {
         return len;
     }
     return -1;
 
-}
-
-int rtlsdr_i2c_read_fn(void* dev, int i2caddr, uint8_t *buf, uint8_t len)
-{
-
-    if (I2cTransfer(buf[0], i2caddr, len - 1, &buf[1], true) == 0)
-    {
-        return len;
-    }
-
-    return -1;
 }
 
 int rt820init(void)
@@ -39,9 +28,9 @@ int rt820init(void)
     priv.cfg = &config;
 
  	config.xtal = R820T_FREQ;
-	config.max_i2c_msg_len = 30;
+	config.max_i2c_msg_len = 8;
     config.verbose = true;
-    config.vco_algo = 1;
+    config.vco_algo = 0;
     config.vco_curr_max = 0xff;
     config.vco_curr_min = 0xff;
     config.harmonic = 0;
@@ -84,12 +73,12 @@ uint8_t rt820detect(void)
     memset(&priv, 0, sizeof(priv));
 
    // detect the hardware
-    if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == 0)
+    if (I2cTransfer(R820T_I2C_ADDR, 0, 1, &identity, true) == 0)
     {
         config.i2c_addr = R820T_I2C_ADDR;
         config.rafael_chip = CHIP_R820T;
     }
-    else if (I2cTransfer(0, R828D_I2C_ADDR, 1, &identity, true) == 0)
+    else if (I2cTransfer(R828D_I2C_ADDR, 0, 1, &identity, true) == 0)
     {
         config.i2c_addr = R828D_I2C_ADDR;
         config.rafael_chip = CHIP_R828D;

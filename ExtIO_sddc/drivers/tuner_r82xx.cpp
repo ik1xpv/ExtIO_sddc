@@ -665,22 +665,12 @@ static uint8_t r82xx_bitrev(uint8_t byte)
 static int r82xx_read(struct r82xx_priv *priv, uint8_t reg, uint8_t *val, int len)
 {
 	int rc, i;
-	uint8_t *p = &priv->buf[1];
 
-	priv->buf[0] = reg;
-	rc = rtlsdr_i2c_read_fn(priv->rtl_dev, priv->cfg->i2c_addr, p, len);
-
-	if (rc != len) {
-		fprintf(stderr, "%s: i2c rd failed=%d reg=%02x len=%d\n",
-			   __FUNCTION__, rc, reg, len);
-		if (rc < 0)
-			return rc;
-		return -1;
-	}
+	I2cTransfer(priv->cfg->i2c_addr, reg, len, val, true);
 
 	/* Copy data to the output buffer */
 	for (i = 0; i < len; i++)
-		val[i] = r82xx_bitrev(p[i]);
+		val[i] = r82xx_bitrev(val[i]);
 
 	return 0;
 }
@@ -1130,7 +1120,7 @@ static int r82xx_set_pll(struct r82xx_priv *priv, uint32_t freq)
 		priv->has_lock = 0;
 		return -1;
 	}
-#if 0
+#if 1
 	else
 		fprintf(stderr, "[R82XX] PLL locked at Tuner LO %u Hz for RF %f MHz!\n", freq, priv->rf_freq * 1E-6);
 #endif

@@ -12,8 +12,8 @@
 typedef int ReturnStatus_t;
 #define CY_U3P_SUCCESS 0
 extern int I2cTransfer (
-        uint8_t   byteAddress,
-        uint8_t   devAddr,
+        uint8_t   i2caddr,
+        uint8_t   reg,
         uint8_t   byteCount,
         uint8_t   *buffer,
         bool  isRead);
@@ -236,14 +236,14 @@ void i2c_write_reg(UINT8 reg, UINT8 data)
 {
     if(reg>=R820T2_NUM_REGS) return;
     r820t_regs[reg] = data;
-	  I2cTransfer ( reg , i2c_addr, 1, &r820t_regs[reg], false); // write 1 byte
+	  I2cTransfer ( i2c_addr, reg ,  1, &r820t_regs[reg], false); // write 1 byte
 }
 
 // get all regs up to & including desired reg
 void i2c_read_raw(UINT8 *data, UINT8 sz)
 {
 	int i;
-	I2cTransfer ( 0 , i2c_addr, sz, data, true); //read
+	I2cTransfer (i2c_addr,  0 , sz, data, true); //read
 	for ( i =0; i <sz; i++) // nibble reverse
 	{
         data[i] = (bitrevnibble[data[i] & 0xf] << 4) | bitrevnibble[data[i] >> 4]; // bit reverse
@@ -254,7 +254,7 @@ void i2c_write_cache_mask(UINT8 reg, UINT8 data, UINT8 mask)
 {
     data = (data & mask) | (r820t_regs[reg] & ~mask);    // update with mask
     r820t_regs[reg] = data;                              // update buffer
-    I2cTransfer ( reg , i2c_addr, 1, &data, false); // write 1 byte
+    I2cTransfer ( i2c_addr, reg , 1, &data, false); // write 1 byte
 }
 
 /*
@@ -283,7 +283,7 @@ ReturnStatus_t i2c_write(UINT8 reg, UINT8 *data, UINT8 sz)
 {
 	ReturnStatus_t r = -1;
 	if (sz <= R820T2_NUM_REGS)
-		r = I2cTransfer ( reg , i2c_addr, sz, data, false);
+		r = I2cTransfer ( i2c_addr, reg , sz, data, false);
     return r;
 }
 
@@ -806,10 +806,10 @@ uint8_t rt820detect(void)
 {
   uint8_t identity;
   // detect the hardware
-  if (I2cTransfer( 0 , R820T2_ADDRESS, 1, &identity, true) == CY_U3P_SUCCESS) {
+  if (I2cTransfer( R820T2_ADDRESS, 0 , 1, &identity, true) == CY_U3P_SUCCESS) {
     i2c_addr = R820T2_ADDRESS;
   }
-	else if (I2cTransfer ( 0 , R828D_ADDRESS, 1, &identity, true) == CY_U3P_SUCCESS) {
+	else if (I2cTransfer ( R828D_ADDRESS, 0 , 1, &identity, true) == CY_U3P_SUCCESS) {
     i2c_addr = R828D_ADDRESS;
   }
   else

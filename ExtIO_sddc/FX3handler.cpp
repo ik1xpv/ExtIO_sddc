@@ -341,8 +341,8 @@ bool fx3class::Close() {
 }
 
 int I2cTransfer (
-        uint8_t   byteAddress,
-        uint8_t   devAddr,
+        uint8_t   i2caddr,
+        uint8_t   reg,
         uint8_t   byteCount,
         uint8_t   *buffer,
         bool  isRead)
@@ -350,11 +350,11 @@ int I2cTransfer (
     bool ret;
     if (isRead)
     {
-        ret = fx0->ReadI2cbytes(devAddr, byteAddress, buffer, byteCount);
+        ret = fx0->ReadI2cbytes(i2caddr, reg, buffer, byteCount);
     }
     else
     {
-        ret = fx0->SendI2cbytes(devAddr, byteAddress, buffer, byteCount);
+        ret = fx0->SendI2cbytes(i2caddr, reg, buffer, byteCount);
     }
 
     if (ret)
