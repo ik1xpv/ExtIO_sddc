@@ -35,11 +35,11 @@ bool HF103Radio::UpdatemodeRF(rf_mode mode)
 
 bool HF103Radio::UpdateattRF(int att)
 {
-    if (att > 31) att = 31;
+    if (att > step_size) att = step_size - 1;
     if (att < 0) att = 0;
-    uint8_t d = (31 - att) << 1; // bit0 =0
+    uint8_t d = step_size - att - 1;
 
-    DbgPrintf("UpdateattRF  -%d \n", (31 - att));
+    DbgPrintf("UpdateattRF %f \n", this->steps[att]);
 
     return Fx3->Control(DAT31FX3, &d);
 }
