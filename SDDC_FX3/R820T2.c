@@ -486,15 +486,11 @@ void set_freq(UINT32 freq)
 void set_all_gains(UINT8 gain_index)
 {
   m_gain_index = gain_index;
-  uint8_t lna, mix, vga;
+  uint8_t lna, mix;
   lna = lna_gains [ gain_index ];
   mix = mixer_gains [ gain_index ];
-  vga =  vga_gains [ gain_index ];
-  totalgain = total_gain[ gain_index ];
-  vga = 9;
   set_lna_gain(lna);
   set_mixer_gain(mix);
-  set_vga_gain(vga);
   DebugPrint(4, "\r\nset_all_gains %d",gain_index);
 }
 

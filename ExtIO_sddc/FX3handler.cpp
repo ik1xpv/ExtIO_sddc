@@ -237,6 +237,12 @@ bool fx3class::Control(FX3Command command, PUINT8 data) { // firmware control BB
 		fx3dev->ControlEndPt->Index = (USHORT)0;
 		r = fx3dev->ControlEndPt->Write(data, lgt);
 		break;
+	case R820T2SETVGA:
+		fx3dev->ControlEndPt->ReqCode = command;
+		fx3dev->ControlEndPt->Value = (USHORT)0;
+		fx3dev->ControlEndPt->Index = (USHORT)0;
+		r = fx3dev->ControlEndPt->Write(data, lgt);
+		break;
 	case R820T2GETATT:  // used for debug
 	//	command = TESTFX3;
 		fx3dev->ControlEndPt->ReqCode = command;

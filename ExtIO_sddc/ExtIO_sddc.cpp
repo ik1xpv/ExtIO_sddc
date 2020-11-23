@@ -36,12 +36,13 @@ int64_t	glTunefreq = 999000;	// Turin MW broadcast !
 
 bool	gbInitHW = false;
 bool    LWMode = false;
-int		giDefaultAttIdxHF = 2;	// 0 dB
-int		giAttIdxHF = giDefaultAttIdxHF;
-int		giDefaultAttIdxVHF = 10;	// 0 dB
-int		giAttIdxVHF = giDefaultAttIdxVHF;
-int		giAttIdx = 31;
-int		giDefaultAttIdx = 31;	// 0 dB
+int		giAttIdxHF = 0;
+int		giAttIdxVHF = 0;
+int		giAttIdx = 0;
+
+int		giMgcIdxHF = 0;
+int		giMgcIdxVHF = 0;
+int		giMgcIdx = 0;
 
 pfnExtIOCallback	pfnCallback = 0;
 HWND Hconsole;
@@ -489,56 +490,6 @@ void EXTIO_API VersionInfo(const char * progname, int ver_major, int ver_minor)
 }
 
 extern "C"
-int  GetAttenuatorsHF(int atten_idx, float * attenuation)
-{
-    EnterFunction1(atten_idx);
-	switch (radio)
-	{
-		
-		case BBRF103:
-		case RX888:
-			switch (atten_idx)
-			{
-			case 0:		*attenuation = -20.0F;	return 0;
-			case 1:		*attenuation = -10.0F;	return 0;
-			case 2:		*attenuation = 0.0F;	return 0;
-			default:	return 1;
-			}
-			break;
-		case HF103:
-			if ((atten_idx < 32) && (atten_idx >= 0))
-			{
-				*attenuation = (float)-1.0 * (31 - atten_idx);
-				return 0;
-			}
-			return 1;
-		default:
-			return 0;
-			break;
-
-	}
-
-}
-
-// TODO, move this to hardware
-// total gain dB x 10
-static const UINT16 total_gain[GAIN_STEPS] = { 0, 9, 14, 27, 37, 77, 87, 125, 144, 157,
-							166, 197, 207, 229, 254, 280, 297, 328,
-							338, 364, 372, 386, 402, 421, 434, 439,
-							445, 480, 496 };
-
-int  GetAttenuatorsVHF(int atten_idx, float* attenuation)
-{
-	EnterFunction1(atten_idx);
-	if ((atten_idx >= 0) && (atten_idx < GAIN_STEPS))  // 29 steps
-	{
-		*attenuation = (float)( total_gain[atten_idx] + 0.5) / 10.0F;
-		return 0;
-	}
-	return 1;
-}
-
-extern "C"
 int EXTIO_API GetAttenuators(int atten_idx, float* attenuation)
 {
 	
@@ -549,10 +500,15 @@ int EXTIO_API GetAttenuators(int atten_idx, float* attenuation)
 	// this functions is called with incrementing idx
 	//    - until this functions return != 0 for no more attenuator setting
     EnterFunction();
-	if ((RadioHandler.GetmodeRF() == VHFMODE) && (radio != HF103 ))
-		return GetAttenuatorsVHF(atten_idx, attenuation);
-	else                     // VLFMODE HFMODE
-		return GetAttenuatorsHF(atten_idx, attenuation);
+
+	const float *steps;
+	int max_step = RadioHandler.GetRFAttSteps(&steps);
+	if (atten_idx < max_step) {
+		*attenuation = steps[atten_idx];
+		return 0;
+	}
+
+	return 1;
 }
 
 extern "C"
@@ -564,7 +520,6 @@ int EXTIO_API GetActualAttIdx(void)
 	else
 		AttIdx = giAttIdxHF;
 	EnterFunction1(AttIdx);
-	RadioHandler.UpdateattRF(AttIdx);
 	return AttIdx;
 }
 
@@ -577,6 +532,49 @@ int EXTIO_API SetAttenuator(int atten_idx)
 		giAttIdxVHF = atten_idx;
 	else
 		giAttIdxHF = atten_idx;
+	return 0; 
+}
+
+//
+// MGC
+// sort by ascending gain: use idx 0 for lowest gain
+// this functions is called with incrementing idx
+//    - until this functions returns != 0, which means that all gains are already delivered
+extern "C" int EXTIO_API ExtIoGetMGCs(int mgc_idx, float * gain)
+{
+    EnterFunction();
+
+	const float *steps;
+	int max_step = RadioHandler.GetIFGainSteps(&steps);
+	if (mgc_idx < max_step) {
+		*gain = steps[mgc_idx];
+		return 0;
+	}
+
+	return 1;
+}
+
+// returns -1 on error
+extern "C" int EXTIO_API ExtIoGetActualMgcIdx(void)
+{
+	int MgcIdx;	
+	if (RadioHandler.GetmodeRF() == VHFMODE)
+		MgcIdx = giMgcIdxVHF;
+	else
+		MgcIdx = giMgcIdxHF;
+	EnterFunction1(MgcIdx);
+	return MgcIdx;
+}
+
+// returns != 0 on error
+extern "C"  int EXTIO_API ExtIoSetMGC(int mgc_idx)
+{
+    EnterFunction1(mgc_idx);
+	RadioHandler.UpdateIFGain(mgc_idx);
+	if (RadioHandler.GetmodeRF() == VHFMODE)
+		giMgcIdxVHF = mgc_idx;
+	else
+		giMgcIdxHF = mgc_idx;
 	return 0; 
 }
 

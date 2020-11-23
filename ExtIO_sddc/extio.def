@@ -37,3 +37,6 @@ EXPORTS
 	ExtIoGetSetting
 	ExtIoSetSetting
 
+	ExtIoGetMGCs
+	ExtIoGetActualMgcIdx
+	ExtIoSetMGC
