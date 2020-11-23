@@ -520,6 +520,7 @@ int EXTIO_API GetActualAttIdx(void)
 	else
 		AttIdx = giAttIdxHF;
 	EnterFunction1(AttIdx);
+
 	return AttIdx;
 }
 

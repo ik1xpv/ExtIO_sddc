@@ -77,17 +77,16 @@ bool BBRF103Radio::UpdateattRF(int att)
         // this is in HF mode
         if (att > 2) att = 2;
         if (att < 0) att = 0;
-        auto attRF = 20 - att * 10;
-        switch (attRF)
+        switch (att)
         {
-        case 10: //11
+        case 1: //11
             gpios |= ATT_SEL0 | ATT_SEL1;
             break;
-        case 20: //01
+        case 0: //01
             gpios |=  ATT_SEL0;
             gpios &=  ~ATT_SEL1;
             break;
-        case 0:   //10
+        case 2:   //10
         default:
             gpios |=  ATT_SEL1;
             gpios &=  ~ATT_SEL0;

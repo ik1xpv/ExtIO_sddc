@@ -57,7 +57,7 @@ inline void null_func(const char *format, ...) { }
 #define FREQCORRECTION (0.0)   // Default xtal frequency correction in ppm
 #define GAIN_ADJ (0.0)          // default gain factor in DB
 
-#define R820T_FREQ (32000000)	// R820T reference frequency
+#define R820T_FREQ (16000000)	// R820T reference frequency
 #define R820T_ZERO (0)          // freq 0
 #define R820T2_IF_CARRIER (5000000)
 

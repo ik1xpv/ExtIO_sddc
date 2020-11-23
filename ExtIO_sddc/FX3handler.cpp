@@ -13,6 +13,18 @@
 
 using namespace std;
 
+#define USE_INLINE_DRIVER
+
+#ifdef USE_INLINE_DRIVER
+extern int rt820init(void);
+extern void set_all_gains(UINT8 gain_index);
+extern void set_freq(UINT32 freq);
+extern void rt820shutdown(void);
+extern uint8_t rt820detect(void);
+#endif
+
+static fx3class *fx0;
+
 CCyUSBEndPoint* EndPt;
 
 fx3class::fx3class():
@@ -163,6 +175,7 @@ bool  fx3class::Open(HMODULE hInst) {
 		return r;      // init failed
 	}
 	Fx3IsOn = true;
+	fx0 = this;
 	return Fx3IsOn;          // init success
 }
 
@@ -194,7 +207,7 @@ bool fx3class::Control(FX3Command command, PUINT8 data) { // firmware control BB
 		fx3dev->ControlEndPt->ReqCode = command;
 		fx3dev->ControlEndPt->Value = (USHORT)0;
 		fx3dev->ControlEndPt->Index = (USHORT)0;
-		lgt = 2; // GPIO len
+		lgt = 1;
 		r = fx3dev->ControlEndPt->Write(data, lgt);
 		break;
 	case TESTFX3:
@@ -212,30 +225,51 @@ bool fx3class::Control(FX3Command command, PUINT8 data) { // firmware control BB
 		r = fx3dev->ControlEndPt->Write(data, lgt);
 		break;
 	case R820T2INIT:
+#ifdef USE_INLINE_DRIVER        
+        rt820detect();
+        rt820init();
+        r = true;
+#else
 		fx3dev->ControlEndPt->ReqCode = command;
 		fx3dev->ControlEndPt->Value = (USHORT)0;
 		fx3dev->ControlEndPt->Index = (USHORT)0;
 		lgt = 4; //  len 4 = UINT32
 		r = fx3dev->ControlEndPt->Read(data, lgt);
+#endif
 		break;
 	case R820T2STDBY:
+#ifdef USE_INLINE_DRIVER
+		rt820shutdown();
+        r = true;
+#else
 		fx3dev->ControlEndPt->ReqCode = command;
 		fx3dev->ControlEndPt->Value = (USHORT)0;
 		fx3dev->ControlEndPt->Index = (USHORT)0;
 		r = fx3dev->ControlEndPt->Write(data, lgt);
+#endif
 		break;
 	case R820T2TUNE:
+#ifdef USE_INLINE_DRIVER                
+        set_freq(*(uint32_t*)data);
+		r = true;
+#else
 		fx3dev->ControlEndPt->ReqCode = command;
 		fx3dev->ControlEndPt->Value = (USHORT)0;
 		fx3dev->ControlEndPt->Index = (USHORT)0;
 		lgt = 4; //  len 4 = UINT32
 		r = fx3dev->ControlEndPt->Write(data, lgt);
+#endif
 		break;
 	case R820T2SETATT:
+#ifdef USE_INLINE_DRIVER
+        set_all_gains(*data);
+        r = true;
+#else
 		fx3dev->ControlEndPt->ReqCode = command;
 		fx3dev->ControlEndPt->Value = (USHORT)0;
 		fx3dev->ControlEndPt->Index = (USHORT)0;
 		r = fx3dev->ControlEndPt->Write(data, lgt);
+#endif
 		break;
 	case R820T2SETVGA:
 		fx3dev->ControlEndPt->ReqCode = command;
@@ -306,6 +340,25 @@ bool fx3class::Close() {
 	return true;
 }
 
+int I2cTransfer (
+        uint8_t   byteAddress,
+        uint8_t   devAddr,
+        uint8_t   byteCount,
+        uint8_t   *buffer,
+        bool  isRead)
+{
+    bool ret;
+    if (isRead)
+    {
+        ret = fx0->ReadI2cbytes(devAddr, byteAddress, buffer, byteCount);
+    }
+    else
+    {
+        ret = fx0->SendI2cbytes(devAddr, byteAddress, buffer, byteCount);
+    }
 
-
-
+    if (ret)
+        return 0;
+    else
+        return -1;
+}
