@@ -11,8 +11,6 @@
 #include <stdint.h>
 #include "FX3handler.h"
 
-#define GAIN_STEPS (29)  // R820 steps
-
 class RadioHardware;
 
 class RadioHandlerClass {
@@ -24,8 +22,10 @@ public:
     bool Stop();
     bool Close();
     bool IsReady(){return true;}
-    int UpdateattRF(int att);
-    int GetAttRF(){return attRF;}
+    
+    int GetRFAttSteps(const float **steps);
+    int UpdateattRF(int attIdx);
+
     bool UpdatemodeRF(rf_mode mode);
     rf_mode GetmodeRF(){return (rf_mode)modeRF;}
     bool UptDither (bool b);
@@ -84,6 +84,8 @@ public:
     virtual bool UpdateattRF(int attIndex) = 0;
     virtual int64_t TuneLo(int64_t freq) = 0;
 
+    virtual int getLNASteps(const float** steps ) { return 0; }
+
     bool FX3producerOn() { return Fx3->Control(STARTFX3); }
     bool FX3producerOff() { return Fx3->Control(STOPFX3); }
 
@@ -105,6 +107,12 @@ public:
     bool UpdatemodeRF(rf_mode mode) override;
     int64_t TuneLo(int64_t freq) override;
     bool UpdateattRF(int attIndex) override;
+    int getLNASteps(const float** steps ) override;
+
+private:
+    static const int step_size = 29;
+    static const float steps[step_size];
+    static const float hfsteps[3];
 };
 
 class RX888Radio : public BBRF103Radio {
@@ -129,11 +137,17 @@ public:
     int64_t TuneLo(int64_t freq) override { return ADC_FREQ / 2; }
     
     bool UpdateattRF(int attIndex) override;
+
+    int getLNASteps(const float** steps ) override;
+
+private:
+    static const int step_size = 64;
+    float steps[step_size];
 };
 
 class DummyRadio : public RadioHardware {
 public:
-    DummyRadio(fx3class* fx3) : RadioHardware(fx3) {}
+    DummyRadio() : RadioHardware(nullptr) {}
     const char* getName() override { return "HF103"; }
 
     void getFrequencyRange(int64_t& low, int64_t& high) override

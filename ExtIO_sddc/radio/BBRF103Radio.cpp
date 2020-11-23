@@ -1,5 +1,16 @@
 #include "RadioHandler.h"
 
+const float BBRF103Radio::steps[BBRF103Radio::step_size] =  {
+    0.0f, 0.9f, 1.4f, 2.7f, 3.7f, 7.7f, 8.7f, 12.5f, 14.4f, 15.7f,
+    16.6f, 19.7f, 20.7f, 22.9f, 25.4f, 28.0f, 29.7f, 32.8f,
+    33.8f, 36.4f, 37.2f, 38.6f, 40.2f, 42.1f, 43.4f, 43.9f,
+    44.5f, 48.0f, 49.6f
+};
+
+const float BBRF103Radio::hfsteps[3] = {
+    -20.0f, -10.0f, 0.0f
+};
+
 BBRF103Radio::BBRF103Radio(fx3class* fx3)
     : RadioHardware(fx3)
 {
@@ -100,3 +111,16 @@ int64_t BBRF103Radio::TuneLo(int64_t freq)
     }
 }
 
+int BBRF103Radio::getLNASteps(const float** steps )
+{
+    if (gpios & (ATT_SEL0 | ATT_SEL1))  {
+        *steps = this->hfsteps;
+        return 3;
+    }
+    else
+    {
+        *steps = this->steps;
+        return step_size;
+    }
+
+}

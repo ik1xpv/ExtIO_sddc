@@ -45,12 +45,6 @@ void* AdcSamplesProc(void*);
 void AbortXferLoop(int qidx);
 void* tShowStats(void* args);
 
-//R820T2 
-#define GAIN_STEPS (29)  // aprox 20*2 = 40
-static const UINT8 vga_gains[GAIN_STEPS] = { 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8 };
-static const UINT8 mixer_gains[GAIN_STEPS] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12,12,13,13,14 };
-static const UINT8 lna_gains[GAIN_STEPS] = { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12,12,13,13,14,15 };
-
 void RadioHandlerClass::AdcSamplesProcess()
 {
 	DbgPrintf("AdcSamplesProc thread runs\n");
@@ -199,7 +193,8 @@ RadioHandlerClass::RadioHandlerClass() :
 	matt(-1),  // force update
 	modeRF(NOMODE),
 	attRF(0),
-	firmware(0)
+	firmware(0),
+	hardware(new DummyRadio())
 {
 	buffers = new PUCHAR[QUEUE_SIZE];
 	contexts = new PUCHAR[QUEUE_SIZE];
@@ -243,7 +238,6 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 	auto Fx3 = new fx3class();
 	if (!Fx3->Open(hInst))
 	{
-		hardware = new DummyRadio(Fx3);
 		return false;
 	}
 	UINT8 rdata[64];
@@ -253,6 +247,7 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 	radio = HF103;
 	firmware = (rdata[1] << 8) + rdata[2];
 
+	delete hardware; // delete dummy instance
 	switch (rdata[0])
 	{
 	case HF103:
@@ -271,7 +266,7 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 		break;
 
 	default:
-		hardware = new DummyRadio(Fx3);
+		hardware = new DummyRadio();
 		radio = NORADIO;
 		DbgPrintf("WARNING no SDR connected\n");
 		break;
@@ -342,6 +337,10 @@ int RadioHandlerClass::UpdateattRF(int att)
 	return matt;
 }
 
+int RadioHandlerClass::GetRFAttSteps(const float **steps) 
+{
+	return hardware->getLNASteps(steps);
+}
 
 bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 {
