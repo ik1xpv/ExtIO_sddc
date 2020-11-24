@@ -31,7 +31,9 @@ int  giExtSrateIdx = 4;
 int  giExtSrateIdxHF = 4;
 unsigned    gExtSampleRate = ADC_FREQ / 2;
 
-int64_t	glLOfreq = 2000000;
+int64_t	glLOfreq = 2000000; //
+int64_t glLOcorr = 0;
+
 int64_t	glTunefreq = 999000;	// Turin MW broadcast !
 
 bool	gbInitHW = false;

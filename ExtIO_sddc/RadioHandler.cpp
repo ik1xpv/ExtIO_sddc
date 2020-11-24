@@ -121,7 +121,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 		{
 			if (rd == 1)
 			{
-				FineTuneLO((complexf*) obuffers[idx], EXT_BLOCKLEN, -0.00009F, rd );
+				FineTuneLO((complexf*) obuffers[idx], EXT_BLOCKLEN, -0.00009F, rd);
 				pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx]);
 				SamplesXIF += EXT_BLOCKLEN;
 			}
@@ -226,7 +226,8 @@ RadioHandlerClass::RadioHandlerClass() :
 		obuffers[i] = new float[transferSize / 2];
 	}
 	// Allocate finetune
-	state = (shift_limited_unroll_C_sse_data_t*) malloc(sizeof(shift_limited_unroll_C_sse_data_t));
+	stateFineTune = (shift_limited_unroll_C_sse_data_t*) malloc(sizeof(shift_limited_unroll_C_sse_data_t));
+	*stateFineTune = shift_limited_unroll_C_sse_init(0.0F, 0.0F);
 }
 
 RadioHandlerClass::~RadioHandlerClass()
@@ -241,6 +242,7 @@ RadioHandlerClass::~RadioHandlerClass()
 	delete[] buffers;
 	delete[] obuffers;
 	delete[] contexts;
+	delete[] stateFineTune;
 }
 
 bool RadioHandlerClass::Init(HMODULE hInst)
@@ -451,6 +453,11 @@ void RadioHandlerClass::UpdBiasT_HF(bool flag)
 		hardware->FX3UnsetGPIO(BIAS_HF);
 }
 
+void RadioHandlerClass::UpdFine_LO(bool flag)
+{
+	fine_LO = flag;
+}
+
 void RadioHandlerClass::UpdBiasT_VHF(bool flag)
 {
 	biasT_VHF = flag;
@@ -462,22 +469,19 @@ void RadioHandlerClass::UpdBiasT_VHF(bool flag)
 
 void RadioHandlerClass::FineTuneLO(complexf* input, int nsample, float nfrqHz, int rd)
 {
-	if  ((nfrqHz != mfinefreq)||( rd  != mrdecimate ))
+	if (GetFine_LO()) // if Fine Local Oscillator Tuning allowed
 	{
-		mrdecimate = rd;
-		mfinefreq = nfrqHz;
-	
-		nfrqHz = 10000; // +10000 Hz offset test
-		
-		float k = 1.0F;
-	
-		float fc = (float)(nfrqHz) /((float) gExtSampleRate * k);
+		if ((nfrqHz != mfinefreq) || (rd != mrdecimate))
+		{
+			mrdecimate = rd;
+			mfinefreq = nfrqHz;
 
-		DbgPrintf("MixerIF  f %f  ridx %d k %f \n", fc,  k );
+			nfrqHz = 10000; // +10000 Hz offset test
 
-		*state = shift_limited_unroll_C_sse_init(fc, 0.0F);
+			float fc = (float)(nfrqHz) / ((float)gExtSampleRate);
+			*stateFineTune = shift_limited_unroll_C_sse_init(fc, 0.0F);
+		}
+
+		shift_limited_unroll_C_sse_inp_c(input, nsample, stateFineTune); // FineTune
 	}
-
-	shift_limited_unroll_C_sse_inp_c(input , nsample, state); // work
-
 }

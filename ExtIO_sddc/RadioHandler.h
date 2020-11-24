@@ -42,7 +42,11 @@ public:
     bool GetBiasT_VHF() { return biasT_VHF; }
     void UpdBiasT_VHF(bool flag);
 
+    bool GetFine_LO() { return fine_LO; }
+    void UpdFine_LO(bool flag);
+
     int64_t TuneLO(int64_t lo);
+  
 
 #ifdef TRACE
     bool UptTrace( bool trace){ traceflag = trace; return traceflag; }
@@ -52,17 +56,18 @@ public:
 private:
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
-
    
-    shift_limited_unroll_C_sse_data_t* state;
+    shift_limited_unroll_C_sse_data_t* stateFineTune;
     void FineTuneLO(complexf* input, int nsample, float nfrq , int rdecimation);
     float mfinefreq;
     int mrdecimate;
+    bool fineLOtuning;
 
     bool dither;
     bool randout;
     bool biasT_HF;
     bool biasT_VHF;
+    bool fine_LO;
     bool traceflag;
     bool samplesADCflag;
     int  matt;
