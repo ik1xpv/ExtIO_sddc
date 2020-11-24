@@ -10,6 +10,7 @@
 #include <math.h>
 #include <stdint.h>
 #include "FX3handler.h"
+#include "pf_mixer.h"
 
 #define GAIN_STEPS (29)  // R820 steps
 
@@ -51,6 +52,12 @@ public:
 private:
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
+
+   
+    shift_limited_unroll_C_sse_data_t* state;
+    void FineTuneLO(complexf* input, int nsample, float nfrq , int rdecimation);
+    float mfinefreq;
+    int mrdecimate;
 
     bool dither;
     bool randout;

@@ -121,6 +121,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 		{
 			if (rd == 1)
 			{
+				FineTuneLO((complexf*) obuffers[idx], EXT_BLOCKLEN, -0.00009F, rd );
 				pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx]);
 				SamplesXIF += EXT_BLOCKLEN;
 			}
@@ -129,6 +130,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 				odx = (idx + 1) / rd;
 				if ((odx * rd) == (idx + 1))
 				{
+					FineTuneLO((complexf*)obuffers[idx / rd], EXT_BLOCKLEN, -0.00009F, rd);
 					pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx / rd]);
 					SamplesXIF += EXT_BLOCKLEN;
 				}
@@ -196,7 +198,9 @@ RadioHandlerClass::RadioHandlerClass() :
 	randout(false),
 	biasT_HF(false),
 	biasT_VHF(false),
-	matt(-1),  // force update
+	matt(-1), // force update
+	mrdecimate(-1), // force update fine tuning
+	mfinefreq(0.0),
 	modeRF(NOMODE),
 	attRF(0),
 	firmware(0)
@@ -221,6 +225,8 @@ RadioHandlerClass::RadioHandlerClass() :
 	for (int i = 0; i < QUEUE_SIZE; i++) {
 		obuffers[i] = new float[transferSize / 2];
 	}
+	// Allocate finetune
+	state = (shift_limited_unroll_C_sse_data_t*) malloc(sizeof(shift_limited_unroll_C_sse_data_t));
 }
 
 RadioHandlerClass::~RadioHandlerClass()
@@ -371,6 +377,7 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 
 int64_t RadioHandlerClass::TuneLO(int64_t freq)
 {
+	// add fine tune here 
 	return hardware->TuneLo(freq);
 }
 
@@ -453,3 +460,24 @@ void RadioHandlerClass::UpdBiasT_VHF(bool flag)
 		hardware->FX3UnsetGPIO(BIAS_VHF);
 }
 
+void RadioHandlerClass::FineTuneLO(complexf* input, int nsample, float nfrqHz, int rd)
+{
+	if  ((nfrqHz != mfinefreq)||( rd  != mrdecimate ))
+	{
+		mrdecimate = rd;
+		mfinefreq = nfrqHz;
+	
+		nfrqHz = 10000; // +10000 Hz offset test
+		
+		float k = 1.0F;
+	
+		float fc = (float)(nfrqHz) /((float) gExtSampleRate * k);
+
+		DbgPrintf("MixerIF  f %f  ridx %d k %f \n", fc,  k );
+
+		*state = shift_limited_unroll_C_sse_init(fc, 0.0F);
+	}
+
+	shift_limited_unroll_C_sse_inp_c(input , nsample, state); // work
+
+}
