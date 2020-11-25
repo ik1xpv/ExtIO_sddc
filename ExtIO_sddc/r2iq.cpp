@@ -92,43 +92,6 @@ int r2iqControlClass::Setdecimate(int dec)
 	return mratio[mdecimation];
 }
 
-void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* pfLO, int64_t* pfTune)
-{
-	int64_t LOfreq = *pfLO;
-	if (LOfreq < (ADC_FREQ / 2))
-	{
-		Setdecimate(4 - srate_idx); // reverse order 32,16,8,4,2 MHz
-		rf_mode rfm = RadioHandler.GetmodeRF();
-		if (mdecimation == 0) // no decimation
-		{
-			rfm = HFMODE;
-			RadioHandler.UpdatemodeRF(rfm);
-			LOfreq = (int64_t)(((double)ADC_FREQ / 4.0) - 1000000.0);
-			LOfreq = (int)(((double)LOfreq * (adcfixedfreq) / (double)ADC_FREQ)); // frequency correction
-			*pfLO = LOfreq;
-		}
-		else if (rfm != VHFMODE)
-		{
-			rfm = HFMODE;
-			RadioHandler.UpdatemodeRF(rfm);
-			LOfreq = (int64_t)(*pfTune * (double)ADC_FREQ / (double)adcfixedfreq);
-			// LO lower and upper limits
-			if (LOfreq < 0) LOfreq = 0;
-			if (LOfreq > (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation])
-				LOfreq = (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation];
-			/*
-				int64_t loprecision = (ADC_FREQ / 2) / 256;   // ie 32000000 / 256 = 125 kHz  bin even span
-				LOfreq = LOfreq + loprecision / 2;
-				LOfreq /= loprecision;
-				LOfreq *= loprecision;
-				*/
-			mtunebin = (int)((LOfreq * halfFft) / (ADC_FREQ / 2));// -halfFft / 32;
-			*pfLO = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
-		}
-	}
-
-}
-
 int64_t r2iqControlClass::UptTuneFrq(int64_t* pLOfreq, int64_t* ptunefreq, int64_t* pLOcorr)
 {
 	int64_t loprecision = 1;

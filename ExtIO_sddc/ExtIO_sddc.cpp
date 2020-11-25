@@ -631,7 +631,8 @@ int  EXTIO_API ExtIoSetSrate(int srate_idx)
 		giExtSrateIdx = srate_idx;
 		gExtSampleRate = (unsigned)(newSrate + 0.5);      // update
 
-		r2iqCntrl.Updt_SR_LO_TUNE(srate_idx, &glLOfreq, &glTunefreq);
+		r2iqCntrl.Setdecimate(4 - srate_idx); // reverse order 32,16,8,4,2 MHz
+		r2iqCntrl.UptTuneFrq(&glLOfreq, &glTunefreq, &glLOcorr);
 
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
