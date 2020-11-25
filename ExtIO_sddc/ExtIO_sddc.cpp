@@ -26,9 +26,8 @@ static char SDR_progname[32 + 1] = "\0";
 static int  SDR_ver_major = -1;
 static int  SDR_ver_minor = -1;
 static const int	gHwType = exthwUSBfloat32;
-int  giExtSrateIdx = 4;
+int  giExtSrateIdxVHF = 4;
 int  giExtSrateIdxHF = 4;
-unsigned    gExtSampleRate = ADC_FREQ / 2;
 
 int64_t	glLOfreq = 2000000;
 int64_t	glTunefreq = 999000;	// Turin MW broadcast !
@@ -141,7 +140,8 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 
 		DbgPrintf((char*)"Init values \n");
 		DbgPrintf("SDR_settings_valid = %d \n", SDR_settings_valid);  // settings are version specific !
-		DbgPrintf("giExtSrateIdx = %d   %f Msps \n", giExtSrateIdx, pow(2.0, 1.0 + giExtSrateIdx));
+		DbgPrintf("giExtSrateIdxHF = %d   %f Msps \n", giExtSrateIdxHF, pow(2.0, 1.0 + giExtSrateIdxHF));
+		DbgPrintf("giExtSrateIdxVHF = %d   %f Msps \n", giExtSrateIdxVHF, pow(2.0, 1.0 + giExtSrateIdxVHF));
 		DbgPrintf("giAttIdxHF = %d \n", giAttIdxHF);
 		DbgPrintf("giAttIdxVHF = %d \n", giAttIdxVHF);
 		DbgPrintf("giMgcIdxHF = %d \n", giMgcIdxHF);
@@ -200,7 +200,7 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
 	if (!gbInitHW)
 		return 0;
 
-	RadioHandler.Start();
+	RadioHandler.Start(ExtIoGetActualSrateIdx());
 	SetHWLO64(LOfreq);
 	
 	if (RadioHandler.IsReady()) //  HF103 connected
@@ -332,12 +332,11 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	rf_mode rfmode = RadioHandler.GetmodeRF();
 	if ((LOfreq > 32000000) && (rfmode != VHFMODE))
 	{
-			if (rfmode != NOMODE) giExtSrateIdxHF = giExtSrateIdx;	// save HF SRate
 			RadioHandler.UpdatemodeRF(VHFMODE);
 			ExtIoSetMGC(giMgcIdxVHF);
 			SetAttenuator(giAttIdxVHF);
-			giExtSrateIdx = 2;
-			r2iqCntrl.Setdecimate(giExtSrateIdx);
+			giExtSrateIdxVHF = 2;
+			r2iqCntrl.Setdecimate(giExtSrateIdxVHF);
 			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
@@ -348,8 +347,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 		{
 		case VHFMODE:
 			RadioHandler.UpdatemodeRF(HFMODE);
-			giExtSrateIdx = giExtSrateIdxHF;  // restore HF SRate
-			r2iqCntrl.Setdecimate(giExtSrateIdx);
+			r2iqCntrl.Setdecimate(giExtSrateIdxHF);
 			ExtIoSetMGC(giMgcIdxHF);
 			SetAttenuator(giAttIdxHF);
 			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
@@ -419,14 +417,21 @@ int64_t EXTIO_API GetHWLO64(void)
 extern "C"
 long EXTIO_API GetHWSR(void)
 {
-    EnterFunction1(giExtSrateIdx);
+    EnterFunction();
 
 	double newSrate;
-	if (0 == ExtIoGetSrates(giExtSrateIdx, &newSrate))
+	int srate;
+	long sampleRate;
+	if (RadioHandler.GetmodeRF() == VHFMODE)
+		srate = giExtSrateIdxVHF;
+	else
+		srate = giExtSrateIdxHF;
+
+	if (0 == ExtIoGetSrates(srate, &newSrate))
 	{
-		gExtSampleRate = (unsigned)(newSrate + 0.5);
+		sampleRate = (unsigned)(newSrate + 0.5);
 	}
-	return gExtSampleRate;
+	return sampleRate;
 
 }
 
@@ -601,7 +606,10 @@ extern "C"
 int  EXTIO_API ExtIoGetActualSrateIdx(void)
 {
     EnterFunction();
-	return giExtSrateIdx;
+	if (RadioHandler.GetmodeRF() == VHFMODE)
+		return giExtSrateIdxVHF;
+	else
+		return giExtSrateIdxHF;
 }
 
 extern "C"
@@ -613,8 +621,10 @@ int  EXTIO_API ExtIoSetSrate(int srate_idx)
 
 	if (0 == ExtIoGetSrates(srate_idx, &newSrate))
 	{
-		giExtSrateIdx = srate_idx;
-		gExtSampleRate = (unsigned)(newSrate + 0.5);      // update
+		if (RadioHandler.GetmodeRF() == VHFMODE)
+			giExtSrateIdxVHF = srate_idx;
+		else
+			giExtSrateIdxHF = srate_idx;
 
 		r2iqCntrl.Updt_SR_LO_TUNE(srate_idx, &glLOfreq, &glTunefreq);
 
@@ -637,7 +647,7 @@ int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
 	{
 	case 0: strcpy(description, "Identifier");	snprintf(value, 1024, "%s", SETTINGS_IDENTIFIER);	return 0;
 	case 1:	strcpy(description, "RadioHWtype");	snprintf(value, 1024, "%d", radio);			return 0;
-	case 2:	strcpy(description, "SampleRateIdx");	snprintf(value, 1024, "%d", giExtSrateIdx);			return 0;
+	case 2:	strcpy(description, "HF_SampleRateIdx");	snprintf(value, 1024, "%d", giExtSrateIdxHF);			return 0;
 	case 3:	strcpy(description, "HF_AttenuationIdx");	snprintf(value, 1024, "%d", giAttIdxHF);			return 0;
 	case 4:	strcpy(description, "HF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxHF);			return 0;
 	case 5:	strcpy(description, "VHF_AttenuationIdx");	snprintf(value, 1024, "%d", giAttIdxVHF);			return 0;
@@ -648,6 +658,7 @@ int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
 	case 10: strcpy(description, "VHF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
 	case 11: strcpy(description, "LoFrequencyHz");   snprintf(value, 1024, "%ld",(unsigned long) glLOfreq); return 0;
 	case 12: strcpy(description, "TuneFrequencyHz");   snprintf(value, 1024, "%ld", (unsigned long) glTunefreq); return 0;
+	case 13:	strcpy(description, "VHF_SampleRateIdx");	snprintf(value, 1024, "%d", giExtSrateIdxVHF);			return 0;
 	default: return -1;	// ERROR
 	}
 	return -1;	// ERROR
@@ -685,11 +696,17 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		}
 		break;
 	case 2:
-		tempInt = 4 - atoi(value);
+		tempInt = atoi(value);
 		if (0 == ExtIoGetSrates(tempInt, &newSrate))
 		{
-			giExtSrateIdx = tempInt;
-			gExtSampleRate = (unsigned)(newSrate + 0.5);
+			giExtSrateIdxHF = tempInt;
+		}
+		break;
+	case 13:
+		tempInt = atoi(value);
+		if (0 == ExtIoGetSrates(tempInt, &newSrate))
+		{
+			giExtSrateIdxVHF = tempInt;
 		}
 		break;
 	case 3:

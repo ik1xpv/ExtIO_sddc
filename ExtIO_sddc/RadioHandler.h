@@ -18,7 +18,7 @@ public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
     bool Init(HMODULE hInst);
-    bool Start();
+    bool Start(int srate_idx);
     bool Stop();
     bool Close();
     bool IsReady(){return true;}
