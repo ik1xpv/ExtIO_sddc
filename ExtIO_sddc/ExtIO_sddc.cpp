@@ -336,7 +336,6 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			ExtIoSetMGC(giMgcIdxVHF);
 			SetAttenuator(giAttIdxVHF);
 			giExtSrateIdxVHF = 2;
-			r2iqCntrl.Setdecimate(giExtSrateIdxVHF);
 			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
@@ -347,7 +346,6 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 		{
 		case VHFMODE:
 			RadioHandler.UpdatemodeRF(HFMODE);
-			r2iqCntrl.Setdecimate(giExtSrateIdxHF);
 			ExtIoSetMGC(giMgcIdxHF);
 			SetAttenuator(giAttIdxHF);
 			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
