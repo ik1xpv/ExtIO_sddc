@@ -18,23 +18,9 @@ public:
     r2iqControlClass();
     ~r2iqControlClass();
 
-    bool r2iqOn;        // r2iq on flag
-    uint8_t** buffers;    // pointer to input buffers
-    float** obuffers;   // pointer to output buffers
-    int bufIdx;         // index to next buffer to be processed
-    int cntr;           // counter of input buffer to be processed
-    int Setdecimate(int dec);
-    bool randADC;       // randomized ADC output
-    long lastThread;    // last thread previous to the current
-    bool Initialized;   // r2iq already initialized
-    bool LWmode;
-
-    bool LWactive() {return LWmode; }
-    int getDecidx() {return mdecimation;}
-    int getFftN()   {return mfftdim [mdecimation];}
-    int getFftN(int x)   {return mfftdim [x];}
     int getRatio()  {return mratio [mdecimation];}
     int getTunebin() {return mtunebin;}
+    void updateRand(bool v) {this->randADC = v; }
     int64_t UptTuneFrq(int64_t freq, int64_t tunefreq);  // Update tunebin and return normalized LO frequency.
     void Updt_SR_LO_TUNE(int srate_idx, int64_t* oldLO, int64_t* oldTune);
 
@@ -45,6 +31,15 @@ public:
     void DataReady(void);
 
 private:
+    bool r2iqOn;        // r2iq on flag
+    uint8_t** buffers;    // pointer to input buffers
+    float** obuffers;   // pointer to output buffers
+    int bufIdx;         // index to next buffer to be processed
+    int cntr;           // counter of input buffer to be processed
+    bool randADC;       // randomized ADC output
+    bool Initialized;   // r2iq already initialized
+    bool LWmode;
+
     float GainScale;
     int mdecimation ;   // selected decimation ratio
                         // 0 => 32Msps, 1=> 16Msps, 2 = 8Msps, 3 = 4Msps, 5 = 2Msps
@@ -60,16 +55,22 @@ private:
     int fftPerBuf; // number of ffts per buffer with 256|768 overlap
     fftwf_complex *pfilterht;       // time filter ht
     fftwf_complex **filterHw;       // Hw complex to each decimation ratio
-    #ifdef _DEBUG
+#ifdef _DEBUG
     fftwf_plan *filterplan_f2t_c2c; // frequency to time fft used for debug
     fftwf_complex **filterHt;       // Ht time vector used for debug
-    #endif
+#endif
 
     uint32_t processor_count;
     r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
     std::condition_variable cvADCbufferAvailable;  // unlock when a sample buffer is ready
     std::mutex mutexR2iqControl;                   // r2iq control lock
     std::thread* r2iq_thread[N_R2IQ_THREAD]; // thread pointers
+
+protected:
+    int Setdecimate(int dec);
+    int getDecidx() {return mdecimation;}
+    int getFftN()   {return mfftdim [mdecimation];}
+    int getFftN(int x)   {return mfftdim [x];}
 
 };
 

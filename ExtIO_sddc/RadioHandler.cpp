@@ -402,7 +402,7 @@ bool RadioHandlerClass::UptRand(bool b)
 		hardware->FX3SetGPIO(RANDO);
 	else
 		hardware->FX3UnsetGPIO(RANDO);
-	r2iqCntrl.randADC = randout;
+	r2iqCntrl.updateRand(randout);
 	return randout;
 }
 

@@ -29,7 +29,7 @@ struct r2iqThreadArg {
 
 	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
 	fftwf_plan plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
-	fftwf_plan *plans_f2t_c2c;
+	fftwf_plan plans_f2t_c2c[NDECIDX];
 	float **ADCinTime;                // point to each threads input buffers [nftt][n]
 	fftwf_complex *ADCinFreq;         // buffers in frequency
 	fftwf_complex *inFreqTmp;         // tmp decimation output buffers (after tune shift)
@@ -286,7 +286,6 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 			th->inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
 			th->outTimeTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));
 			th->plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, th->ADCinTime[0], th->ADCinFreq, FFTW_MEASURE);
-			th->plans_f2t_c2c = (fftwf_plan *)malloc(sizeof(fftwf_plan)   * NDECIDX);
 			for (int d = 0; d < NDECIDX; d++)
 			{
 				th->plans_f2t_c2c[d] = fftwf_plan_dft_1d(r2iqCntrl.getFftN(d), th->inFreqTmp, th->outTimeTmp, FFTW_BACKWARD, FFTW_MEASURE);
@@ -314,13 +313,12 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 	//    DbgPrintf((char *) "r2iqThreadf idx %d pthread_self is %u\n",(int)th->t, pthread_self());
 	//    DbgPrintf((char *) "decimate idx %d  %d  %d \n",r2iqCntrl->getDecidx(),r2iqCntrl->getFftN(),r2iqCntrl->getRatio());
 
-	bool LWzero = this->LWactive();
+	bool LWzero = this->LWmode;
 	char *buffer;
 	int lastdecimate = -1;
 
 	float * pout;
 	int decimate = this->getDecidx();
-	int _mtunebin = this->getTunebin();
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
 	while (run) {
@@ -328,13 +326,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		int mratio = this->getRatio();
 		int idx;
 
-	    _mtunebin = this->getTunebin();  // Update LO tune is possible during run
-		 
-		if (lastdecimate != decimate) {
-			th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
-			lastdecimate = decimate;
-		}
-
+	    int _mtunebin = this->getTunebin();  // Update LO tune is possible during run
 
 		{
 			std::unique_lock<std::mutex> lk(mutexR2iqControl);
