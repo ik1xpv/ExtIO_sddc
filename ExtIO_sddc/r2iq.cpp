@@ -21,7 +21,6 @@ The name r2iq as Real 2 I+Q stream
 #include "config.h"
 #include "fftw3.h"
 #include "RadioHandler.h"
-#include "resource.h"
 #include "ht257_0_0.h"
 #include "ht257_0_7M.h"
 #include "ht257_1_7M.h"
@@ -56,7 +55,7 @@ const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 
 const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 static fftwf_complex *pfilterht;       // time filter ht
 static fftwf_complex **filterHw;       // Hw complex to each decimation ratio
-#ifndef NDEBUG
+#ifdef _DEBUG
 static fftwf_plan *filterplan_f2t_c2c; // frequency to time fft used for debug
 static fftwf_complex **filterHt;       // Ht time vector used for debug
 #endif
@@ -235,14 +234,14 @@ void initR2iq(int downsample, float gain) {
 		   // filters
 		pfilterht = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
 		filterHw = (fftwf_complex**)fftwf_malloc(sizeof(fftwf_complex*)*NDECIDX);
-#ifndef NDEBUG
+#ifdef _DEBUG
 		filterHt = (fftwf_complex**)fftwf_malloc(sizeof(fftwf_complex*)*NDECIDX);
 		filterplan_f2t_c2c = (fftwf_plan *)malloc(sizeof(fftwf_plan) * NDECIDX);
 #endif
 		for (int d = 0; d < NDECIDX; d++)
 		{
 			filterHw[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
-#ifndef NDEBUG
+#ifdef _DEBUG
 			filterHt[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
 			filterplan_f2t_c2c[d] = fftwf_plan_dft_1d(halfFft, filterHw[d], filterHt[d], FFTW_BACKWARD, FFTW_MEASURE); // 0??
 #endif

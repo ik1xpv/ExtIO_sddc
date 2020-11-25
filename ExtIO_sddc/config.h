@@ -34,7 +34,7 @@ inline void null_func(const char *format, ...) { }
 #define EnterFunction1(v1) \
   DbgPrintf("==>%s(%d)\n", __FUNCDNAME__, (v1))
 
-#ifdef TRACE
+#ifdef _DEBUG
 #define DbgPrintf (printf)
 #else
 #define DbgPrintf DbgEmpty
@@ -44,7 +44,7 @@ inline void null_func(const char *format, ...) { }
 
 #define HWNAME				"BBRF103"			
 #define HWMODEL				"HF103"
-#define SETTINGS_IDENTIFIER	"sddc_1.01"
+#define SETTINGS_IDENTIFIER	"sddc_1.02"
 #define SWNAME				"ExtIO_sddc.dll"
 
 #define	QUEUE_SIZE 64

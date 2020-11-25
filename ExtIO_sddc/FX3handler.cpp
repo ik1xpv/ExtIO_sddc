@@ -9,7 +9,7 @@
 // 
 
 #include "FX3handler.h"
-#include "resource.h"
+#include "resource.h" // for RES_BIN_FIRMWARE
 
 using namespace std;
 
