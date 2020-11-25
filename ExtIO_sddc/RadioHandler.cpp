@@ -50,8 +50,6 @@ void RadioHandlerClass::AdcSamplesProcess()
 	int odx = 0;
 	unsigned int kidx = 0, strd = 0;
 	int rd = r2iqCntrl.getRatio();
-
-	r2iqCntrl.TurnOn(0);  
 	
 	if (EndPt) { // real data
 		long pktSize = EndPt->MaxPktSize;
@@ -296,6 +294,8 @@ bool RadioHandlerClass::Start(int srate_idx)
 		[this](void* arg){
 			this->AdcSamplesProcess();
 		}, nullptr);
+	r2iqCntrl.TurnOn(0);
+
 	return true;
 }
 

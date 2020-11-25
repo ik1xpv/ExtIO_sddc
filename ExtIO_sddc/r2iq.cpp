@@ -155,12 +155,20 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 
 void r2iqControlClass::TurnOn(int idx) {
 	this->r2iqOn = true;
+	for (unsigned t = 0; t < processor_count; t++) {
+		r2iq_thread[t] = new std::thread(
+			[this] (void* arg)
+				{ return this->r2iqThreadf((r2iqThreadArg*)arg); }   , (void*)threadArgs[t]);
+	}
 }
 
 void r2iqControlClass::TurnOff(void) {
 	this->r2iqOn = false;
 	this->cntr = 100;
 	cvADCbufferAvailable.notify_all();
+	for (unsigned t = 0; t < processor_count; t++) {
+		r2iq_thread[t]->join();
+	}
 }
 
 bool r2iqControlClass::IsOn(void) { return(this->r2iqOn); }
@@ -183,7 +191,9 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 	this->GainScale = gain;
 
 	// Get the processor count
-	auto processor_count = std::thread::hardware_concurrency();
+	processor_count = std::thread::hardware_concurrency() - 1;
+	if (processor_count == 0)
+		processor_count = 1;
 	if (processor_count > N_R2IQ_THREAD)
 		processor_count = N_R2IQ_THREAD;
 
@@ -296,11 +306,6 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 	}
 #endif
 
-	for (unsigned t = 0; t < processor_count; t++) {
-		r2iq_thread[t] = new std::thread(
-			[this] (void* arg) 
-				{ return this->r2iqThreadf((r2iqThreadArg*)arg); }   , (void*)threadArgs[t]);
-	}
 	r2iqCntrl.Initialized = true;
 }
 

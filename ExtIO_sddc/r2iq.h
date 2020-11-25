@@ -65,6 +65,7 @@ private:
     fftwf_complex **filterHt;       // Ht time vector used for debug
     #endif
 
+    uint32_t processor_count;
     r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
     std::condition_variable cvADCbufferAvailable;  // unlock when a sample buffer is ready
     std::mutex mutexR2iqControl;                   // r2iq control lock
