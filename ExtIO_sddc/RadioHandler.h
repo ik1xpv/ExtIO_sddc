@@ -69,8 +69,6 @@ private:
 
 extern class RadioHandlerClass RadioHandler;
 extern unsigned long Failures;
-extern int	giAttIdx;
-
 
 class RadioHardware {
 public:

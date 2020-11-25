@@ -131,7 +131,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 		r2iqDataReady();   // inform r2iq buffer ready
 
-#ifndef NDEBUG		//PScope buffer screenshot
+#ifdef _DEBUG		//PScope buffer screenshot
 		if (saveADCsamplesflag == true)
 		{
 			saveADCsamplesflag = false; // do it once
@@ -273,12 +273,14 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
 	hardware->Initialize();
 
+#ifdef _DEBUG
 	if (oldradio != radio)
 	{
 		char buffer[128];
 		sprintf(buffer, "%s\tnow connected\r\n%s\tprevious radio", radioname[radio], radioname[oldradio]);
 		MessageBox(NULL, buffer, "WARNING settings changed", MB_OK | MB_ICONINFORMATION);
 	}
+#endif
 
 	return true;
 }
