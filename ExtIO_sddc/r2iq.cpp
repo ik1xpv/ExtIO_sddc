@@ -356,7 +356,6 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
 		ADCSAMPLE *dataADC; // pointer to input data
 		float *inloop;            // pointer to first fft input buffer
-		int midx = this->bufIdx;
 		rf_mode  moderf = RadioHandler.GetmodeRF();
 		dataADC = (ADCSAMPLE *)buffer;
 		int blocks = fftPerBuf;
@@ -522,8 +521,8 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		}
 		else
 		{      // decimate in frequency plus tuning
-			int modx = midx / mratio;
-			int moff = midx - modx * mratio;
+			int modx = idx / mratio;
+			int moff = idx - modx * mratio;
 			int offset = ((transferSize / 2) / mratio) *moff;
 			pout = (float *)(this->obuffers[modx] + offset);
 
