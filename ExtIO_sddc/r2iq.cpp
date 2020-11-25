@@ -12,11 +12,6 @@ The name r2iq as Real 2 I+Q stream
 
 */
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 #include "r2iq.h"
 #include "config.h"
 #include "fftw3.h"
@@ -28,14 +23,9 @@ The name r2iq as Real 2 I+Q stream
 #include "ht257_7_5M.h"
 #include "ht257_15_4M.h"
 
-
-extern PUCHAR	*buffers;       // ExtIO_sddc defined
-extern float**   obuffers;
-
 class r2iqControlClass r2iqCntrl;
 
 struct r2iqThreadArg {
-	class r2iqControlClass *r2iqCntrl;
 
 	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
 	fftwf_plan plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
@@ -46,20 +36,6 @@ struct r2iqThreadArg {
 	fftwf_complex *outTimeTmp;        // tmp decimation output buffers baseband time cplx
 };
 
-static INT16 RandTable[65536];  // ADC RANDomize table used to whitening EMI from ADC data bus.
-
-static void *r2iqThreadf(void *arg);   // thread function
-static std::thread* r2iq_thread[N_R2IQ_THREAD]; // thread pointers
-
-const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
-const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
-static fftwf_complex *pfilterht;       // time filter ht
-static fftwf_complex **filterHw;       // Hw complex to each decimation ratio
-#ifdef _DEBUG
-static fftwf_plan *filterplan_f2t_c2c; // frequency to time fft used for debug
-static fftwf_complex **filterHt;       // Ht time vector used for debug
-#endif
-
 r2iqControlClass::r2iqControlClass()
 	
 {
@@ -68,6 +44,9 @@ r2iqControlClass::r2iqControlClass()
 	r2iqOn = false;
 	Initialized = false;
 	randADC = false;
+	halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
+    fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
+
 	mtunebin = halfFft / 4;
 	mfftdim[0] = halfFft; 
 	mratio[0] = 1;  // 1,2,4,8,16
@@ -174,45 +153,41 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 	return LOfreq;
 }
 
-static std::condition_variable cvADCbufferAvailable;  // unlock when a sample buffer is ready
-static std::mutex mutexR2iqControl;                   // r2iq control lock
-
-r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
-
-void r2iqTurnOn(int idx) {
-	r2iqCntrl.r2iqOn = true;
+void r2iqControlClass::TurnOn(int idx) {
+	this->r2iqOn = true;
 }
 
-void r2iqTurnOff(void) {
-	r2iqCntrl.r2iqOn = false;
-	r2iqCntrl.cntr = 100;
+void r2iqControlClass::TurnOff(void) {
+	this->r2iqOn = false;
+	this->cntr = 100;
 	cvADCbufferAvailable.notify_all();
 }
 
-bool r2iqIsOn(void) { return(r2iqCntrl.r2iqOn); }
+bool r2iqControlClass::IsOn(void) { return(this->r2iqOn); }
 
-void r2iqDataReady(void) { // signals new sample buffer arrived
-	if (!r2iqCntrl.r2iqOn)
+void r2iqControlClass::DataReady(void) { // signals new sample buffer arrived
+	if (!this->r2iqOn)
 		return;
 	mutexR2iqControl.lock();
-	r2iqCntrl.cntr++;
+	this->cntr++;
 	mutexR2iqControl.unlock();
 	cvADCbufferAvailable.notify_one(); // signal data available
 }
 
-void initR2iq(int downsample, float gain) {
-	r2iqCntrl.buffers = buffers;    // set to the global exported by main_loop
-	r2iqCntrl.obuffers = obuffers;  // set to the global exported by main_loop
-	r2iqCntrl.Setdecimate(downsample);  // save downsample index.
+void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float** obuffers)
+{
+	this->buffers = buffers;    // set to the global exported by main_loop
+	this->obuffers = obuffers;  // set to the global exported by main_loop
+	this->Setdecimate(downsample);  // save downsample index.
 
-	r2iqCntrl.GainScale = gain;
+	this->GainScale = gain;
 
 	// Get the processor count
 	auto processor_count = std::thread::hardware_concurrency();
 	if (processor_count > N_R2IQ_THREAD)
 		processor_count = N_R2IQ_THREAD;
 
-	if (!r2iqCntrl.Initialized) // only at init
+	if (!this->Initialized) // only at init
 	{
 		fftwf_plan filterplan_t2f_c2c; // time to frequency fft
 
@@ -292,7 +267,6 @@ void initR2iq(int downsample, float gain) {
 			r2iqThreadArg *th = new r2iqThreadArg();
 			threadArgs[t] = th;
 
-			th->r2iqCntrl = &r2iqCntrl;
 			th->ADCinTime = (float**)malloc(sizeof(float*) * fftPerBuf + 1);
 			for (int n = 0; n < fftPerBuf; n++) {
 				th->ADCinTime[n] = (float*)fftwf_malloc(sizeof(float) * 2 * halfFft);                 // 2048
@@ -323,35 +297,33 @@ void initR2iq(int downsample, float gain) {
 #endif
 
 	for (unsigned t = 0; t < processor_count; t++) {
-		r2iq_thread[t] = new std::thread(r2iqThreadf, (void*)threadArgs[t]);
+		r2iq_thread[t] = new std::thread(
+			[this] (void* arg) 
+				{ return this->r2iqThreadf((r2iqThreadArg*)arg); }   , (void*)threadArgs[t]);
 	}
 	r2iqCntrl.Initialized = true;
 }
 
-static void *r2iqThreadf(void *arg) {
-
-	r2iqThreadArg *th = (struct r2iqThreadArg *)arg;
-	r2iqControlClass *r2iqCntrl = (r2iqControlClass*)th->r2iqCntrl;
-
+void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
 	//    DbgPrintf((char *) "r2iqThreadf idx %d pthread_self is %u\n",(int)th->t, pthread_self());
 	//    DbgPrintf((char *) "decimate idx %d  %d  %d \n",r2iqCntrl->getDecidx(),r2iqCntrl->getFftN(),r2iqCntrl->getRatio());
 
-	bool LWzero = r2iqCntrl->LWactive();
+	bool LWzero = this->LWactive();
 	char *buffer;
 	int lastdecimate = -1;
 
 	float * pout;
-	int decimate = r2iqCntrl->getDecidx();
-	int _mtunebin = r2iqCntrl->getTunebin();
+	int decimate = this->getDecidx();
+	int _mtunebin = this->getTunebin();
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
 	while (run) {
-		int mfft = r2iqCntrl->getFftN();
-		int mratio = r2iqCntrl->getRatio();
+		int mfft = this->getFftN();
+		int mratio = this->getRatio();
 		int idx;
 
-	    _mtunebin = r2iqCntrl->getTunebin();  // Update LO tune is possible during run
+	    _mtunebin = this->getTunebin();  // Update LO tune is possible during run
 		 
 		if (lastdecimate != decimate) {
 			th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
@@ -361,34 +333,34 @@ static void *r2iqThreadf(void *arg) {
 
 		{
 			std::unique_lock<std::mutex> lk(mutexR2iqControl);
-			while (r2iqCntrl->cntr <= 0)
+			while (this->cntr <= 0)
 			{
-			cvADCbufferAvailable.wait(lk, [r2iqCntrl] {return r2iqCntrl->cntr > 0; });
+			cvADCbufferAvailable.wait(lk, [this] {return this->cntr > 0; });
 			}
 
 			if (!run) 
 				return 0;
 
-			buffer = (char *)r2iqCntrl->buffers[r2iqCntrl->bufIdx];
-			pout = (float *)r2iqCntrl->obuffers[r2iqCntrl->bufIdx];
-			idx = r2iqCntrl->bufIdx;
-			r2iqCntrl->bufIdx = ((r2iqCntrl->bufIdx + 1) % QUEUE_SIZE);
-			r2iqCntrl->cntr--;
+			buffer = (char *)this->buffers[this->bufIdx];
+			pout = (float *)this->obuffers[this->bufIdx];
+			idx = this->bufIdx;
+			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
+			this->cntr--;
 		}
 
 
 		ADCSAMPLE *dataADC; // pointer to input data
 		float *inloop;            // pointer to first fft input buffer
-		int midx = r2iqCntrl->bufIdx;
+		int midx = this->bufIdx;
 		rf_mode  moderf = RadioHandler.GetmodeRF();
 		dataADC = (ADCSAMPLE *)buffer;
 		int blocks = fftPerBuf;
 		int k = 0;
-		if (!r2iqCntrl->randADC)        // plain samples no ADC rand set
+		if (!this->randADC)        // plain samples no ADC rand set
 		{
 			if (idx == 0) {
 				inloop = th->ADCinTime[0];
-				int16_t *out = (int16_t*)(r2iqCntrl->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
+				int16_t *out = (int16_t*)(this->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
 				for (int m = 0; m < halfFft; m++) {
 					*inloop++ = *out++;
 				}
@@ -413,7 +385,7 @@ static void *r2iqThreadf(void *arg) {
 		{
 			if (idx == 0) {
 				inloop = th->ADCinTime[0];
-				int16_t *out = (int16_t*)(r2iqCntrl->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
+				int16_t *out = (int16_t*)(this->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
 				for (int m = 0; m < halfFft; m++) {
 					*inloop++ = (RandTable[(UINT16)*out++]);
 				}
@@ -519,7 +491,7 @@ static void *r2iqThreadf(void *arg) {
 				fftwf_execute(th->plan_f2t_c2c);                  //  c2c + decimation
 				float scale;
 				float gainadj = (float) pow(10.0, gdGainCorr_dB / 20.0);
-				scale = r2iqCntrl->GainScale * gainadj;
+				scale = this->GainScale * gainadj;
 				float * pTimeTmp;
 				if (k == 0)
 				{ // first frame is 512 sample long
@@ -548,7 +520,7 @@ static void *r2iqThreadf(void *arg) {
 			int modx = midx / mratio;
 			int moff = midx - modx * mratio;
 			int offset = ((transferSize / 2) / mratio) *moff;
-			pout = (float *)(r2iqCntrl->obuffers[modx] + offset);
+			pout = (float *)(this->obuffers[modx] + offset);
 
 			for (int k = 0; k < fftPerBuf; k++)
 			{
@@ -605,7 +577,7 @@ static void *r2iqThreadf(void *arg) {
 				fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
 				float scale;
 				float gainadj = (float)pow(10.0, gdGainCorr_dB / 20.0);
-				scale = r2iqCntrl->GainScale * gainadj;
+				scale = this->GainScale * gainadj;
 
 				float * pTimeTmp;
 				// here invert spectrum VHF

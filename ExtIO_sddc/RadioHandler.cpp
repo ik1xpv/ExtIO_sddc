@@ -16,10 +16,10 @@ RadioHandlerClass RadioHandler;
 std::thread* adc_samples_thread;
 std::thread* show_stats_thread;
 // transfer variables
-PUCHAR* buffers;                       // export, main data buffers
-PUCHAR* contexts;
-OVERLAPPED	inOvLap[QUEUE_SIZE];
-float** obuffers;
+static PUCHAR* buffers;                       // export, main data buffers
+static PUCHAR* contexts;
+static OVERLAPPED	inOvLap[QUEUE_SIZE];
+static float** obuffers;
 
 int idx;            // queue index              // export
 unsigned long IDX;  // absolute index
@@ -51,7 +51,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 	unsigned int kidx = 0, strd = 0;
 	int rd = r2iqCntrl.getRatio();
 
-	r2iqTurnOn(0);  
+	r2iqCntrl.TurnOn(0);  
 	
 	if (EndPt) { // real data
 		long pktSize = EndPt->MaxPktSize;
@@ -125,7 +125,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 			}
 		}
 
-		r2iqDataReady();   // inform r2iq buffer ready
+		r2iqCntrl.DataReady();   // inform r2iq buffer ready
 
 #ifdef _DEBUG		//PScope buffer screenshot
 		if (saveADCsamplesflag == true)
@@ -159,7 +159,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 	hardware->FX3producerOff();     //FX3 stop the producer
 	Sleep(10);
 	mutexShowStats.notify_all(); //  allows exit of
-	r2iqTurnOff();
+	r2iqCntrl.TurnOff();
 
 	DbgPrintf("AdcSamplesProc thread_exit\n");
 	return;  // void *
@@ -291,7 +291,7 @@ bool RadioHandlerClass::Start(int srate_idx)
 	int t = 0;
 	show_stats_thread = new std::thread(tShowStats, (void*)t);
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
-	initR2iq( 4 - srate_idx, hardware->getGain());
+	r2iqCntrl.Init( 4 - srate_idx, hardware->getGain(), buffers, obuffers);
 	adc_samples_thread = new std::thread(
 		[this](void* arg){
 			this->AdcSamplesProcess();
