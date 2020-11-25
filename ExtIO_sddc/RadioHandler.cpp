@@ -37,9 +37,6 @@ float	g_SpsIF;
 
 std::condition_variable mutexShowStats;     // unlock to show stats
 
-
-extern unsigned	gExtSampleRate;
-
 void* AdcSamplesProc(void*);
 void AbortXferLoop(int qidx);
 void* tShowStats(void* args);
