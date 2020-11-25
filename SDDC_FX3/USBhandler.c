@@ -12,6 +12,8 @@
 
 #include "Application.h"
 
+#include "tuner_r82xx.h"
+
 // Declare external functions
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
 extern void StartApplication(void);
@@ -28,13 +30,14 @@ extern CyBool_t glIsApplnActive;				// Set true once device is enumerated
 extern uint8_t  HWconfig;       			    // Hardware config
 extern uint16_t  FWconfig;       			    // Firmware config hb.lb
 
-extern ReturnStatus_t rt820init(void);
-extern void set_all_gains(UINT8 gain_index);
-extern void set_vga_gain(UINT8 gain_index);
-extern void set_freq(UINT32 freq);
-extern void rt820shutdown(void);
+// r820xx data
+#define R820T2_FREQ  (32000000)
+struct r82xx_priv tuner;
+struct r82xx_config tuner_config;
+
+extern void set_all_gains(struct r82xx_priv *priv, UINT8 gain_index);
+extern void set_vga_gain(struct r82xx_priv *priv, UINT8 gain_index);
 extern uint8_t m_gain_index;
-// Global data owned by this module
 
 
 
@@ -208,12 +211,23 @@ CyFxSlFifoApplnUSBSetupCB (
 
 			case R820T2INIT:
 					{
-						uint16_t dataw = rt820init();
-						glEp0Buffer[0] = dataw;
-						glEp0Buffer[1] = dataw >> 8;
-						glEp0Buffer[2] = 0;
-						glEp0Buffer[3] = 0;
+						memset(&tuner_config, 0, sizeof(tuner_config));
+						memset(&tuner, 0, sizeof(tuner));
 
+						tuner_config.i2c_addr = R820T_I2C_ADDR;
+						tuner_config.vco_curr_min = 0xff;
+						tuner_config.vco_curr_max = 0xff;
+						tuner_config.vco_algo = 0;
+						tuner_config.xtal = R820T2_FREQ;
+						tuner_config.rafael_chip = CHIP_R820T;
+
+						tuner.cfg = &tuner_config;
+
+						uint32_t bw;
+						r82xx_init(&tuner);
+						r82xx_set_bandwidth(&tuner, 8*1000*1000, 0, &bw, 1);
+
+						glEp0Buffer[0] = 1;
 						CyU3PUsbSendEP0Data (4, glEp0Buffer);
 						vendorRqtCnt++;
 						isHandled = CyTrue;
@@ -223,7 +237,7 @@ CyFxSlFifoApplnUSBSetupCB (
 			case R820T2STDBY:
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 						{
-							rt820shutdown();
+							r82xx_standby(&tuner);
 							isHandled = CyTrue;
 						}
 					break;
@@ -235,7 +249,7 @@ CyFxSlFifoApplnUSBSetupCB (
 
 						uint32_t freq;
 						freq = *(uint32_t *) &glEp0Buffer[0];
-						set_freq((uint32_t) freq);
+						r82xx_set_freq(&tuner, freq);
 						// R820T2 tune
 						DebugPrint(4, "\r\n\r\nTune R820T2 %d \r\n",freq);
 						isHandled = CyTrue;
@@ -247,7 +261,7 @@ CyFxSlFifoApplnUSBSetupCB (
 					{
 						uint8_t attIdx;
 						attIdx = glEp0Buffer[0];
-						set_all_gains(attIdx); // R820T2 set att
+						set_all_gains(&tuner, attIdx); // R820T2 set att
 						isHandled = CyTrue;
 					}
 					break;
@@ -257,7 +271,7 @@ CyFxSlFifoApplnUSBSetupCB (
 					{
 						uint8_t attIdx;
 						attIdx = glEp0Buffer[0];
-						set_vga_gain(attIdx); // R820T2 set att
+						set_vga_gain(&tuner, attIdx); // R820T2 set att
 						isHandled = CyTrue;
 					}
 					break;
