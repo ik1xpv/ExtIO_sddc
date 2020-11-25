@@ -92,9 +92,9 @@ int r2iqControlClass::Setdecimate(int dec)
 	return mratio[mdecimation];
 }
 
-void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* fLO, int64_t* fTune)
+void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* pfLO, int64_t* pfTune)
 {
-	int64_t LOfreq = *fLO;
+	int64_t LOfreq = *pfLO;
 	if (LOfreq < (ADC_FREQ / 2))
 	{
 		Setdecimate(4 - srate_idx); // reverse order 32,16,8,4,2 MHz
@@ -105,13 +105,13 @@ void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* fLO, int64_t* fTu
 			RadioHandler.UpdatemodeRF(rfm);
 			LOfreq = (int64_t)(((double)ADC_FREQ / 4.0) - 1000000.0);
 			LOfreq = (int)(((double)LOfreq * (adcfixedfreq) / (double)ADC_FREQ)); // frequency correction
-			*fLO = LOfreq;
+			*pfLO = LOfreq;
 		}
 		else if (rfm != VHFMODE)
 		{
 			rfm = HFMODE;
 			RadioHandler.UpdatemodeRF(rfm);
-			LOfreq = (int64_t)(*fTune * (double)ADC_FREQ / (double)adcfixedfreq);
+			LOfreq = (int64_t)(*pfTune * (double)ADC_FREQ / (double)adcfixedfreq);
 			// LO lower and upper limits
 			if (LOfreq < 0) LOfreq = 0;
 			if (LOfreq > (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation])
@@ -123,16 +123,18 @@ void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* fLO, int64_t* fTu
 				LOfreq *= loprecision;
 				*/
 			mtunebin = (int)((LOfreq * halfFft) / (ADC_FREQ / 2));// -halfFft / 32;
-			*fLO = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
+			*pfLO = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
 		}
 	}
 
 }
 
-int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
+int64_t r2iqControlClass::UptTuneFrq(int64_t* pLOfreq, int64_t* ptunefreq, int64_t* pLOcorr)
 {
 	int64_t loprecision = 1;
-	if (LOfreq < (ADC_FREQ / 2))
+	int64_t LOinput = *pLOfreq + *pLOcorr;
+	
+	if ( *pLOfreq < (ADC_FREQ / 2))
 	{
 		rf_mode rfm = RadioHandler.GetmodeRF();
 
@@ -140,39 +142,31 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 		{
 			rfm = HFMODE;
 			RadioHandler.UpdatemodeRF(rfm);
-			LOfreq = (int64_t)((ADC_FREQ / 4.0) - 1000000.0);
-			LOfreq = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
+			*pLOfreq = (int64_t)((ADC_FREQ / 4.0) - 1000000.0);
+			*pLOfreq = (int)(((double) *pLOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
 			loprecision = 1;
 		}
 		else if (rfm != VHFMODE)
 		{
 			rfm = HFMODE;
 			RadioHandler.UpdatemodeRF(rfm);
-			if (LOfreq < 0)  
-				LOfreq = 0;
-			if (LOfreq > (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation])
-				LOfreq = (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation];
+			if (*pLOfreq < 0)  
+				*pLOfreq = 0;
+			if (*pLOfreq > (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation])
+				*pLOfreq = (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation];
 
 			loprecision = (ADC_FREQ / 2) / 256;   // ie 32000000 / 256 = 125 kHz  bin even span
-			LOfreq = LOfreq + loprecision / 2;
-			LOfreq /= loprecision;
-			LOfreq *= loprecision;
-			mtunebin = (int)((LOfreq * halfFft) / (ADC_FREQ / 2));
-			LOfreq = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
+			*pLOfreq = *pLOfreq + loprecision / 2;
+			*pLOfreq /= loprecision;
+			*pLOfreq *= loprecision;
+			mtunebin = (int)((*pLOfreq * halfFft) / (ADC_FREQ / 2));
+			*pLOfreq = (int)(((double) *pLOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
 		}
+		*pLOcorr = LOinput - *pLOfreq; // correction to the exact LO -75 kHz < corr < 75 kHz
 	} else {
 		mtunebin = (int)(((int64_t)R820T2_IF_CARRIER * halfFft) / (ADC_FREQ / 2));
-		loprecision = 1; // 1 Hz
 	}
-	// calculate nearest possible frequency
-	// - emulate receiver which don't have 1 Hz resolution
-	/*
-	LOfreq += loprecision / 2;
-	LOfreq /= loprecision;
-	LOfreq *= loprecision;
-	*/
-
-	return LOfreq;
+	return *pLOcorr;
 }
 
 static std::condition_variable cvADCbufferAvailable;  // unlock when a sample buffer is ready

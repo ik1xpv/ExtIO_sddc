@@ -27,7 +27,7 @@ bool HF103Radio::UpdateattRF(int att)
 {
     if (att > 31) att = 31;
     if (att < 0) att = 0;
-    uint8_t d = (31 - att) << 1; // bit0 =0
+    uint8_t d = (31 - att) << 1; // bit0 = 0
 
     DbgPrintf("UpdateattRF  -%d \n", (31 - att));
 

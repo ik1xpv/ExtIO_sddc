@@ -329,9 +329,13 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 		if (glTunefreq > HF_HIGH) glTunefreq = HF_HIGH;
 		if (LOfreq > HF_HIGH - 1000000) LOfreq = (HF_HIGH) - 1000000;  
 	}
-
+/*
 	LOfreq = r2iqCntrl.UptTuneFrq(LOfreq, glTunefreq); //update LO freq
 	glLOfreq = LOfreq; 
+*/
+	int64_t LOcorr = 0;
+	glLOcorr = r2iqCntrl.UptTuneFrq(&LOfreq, &glTunefreq, &LOcorr); //update LO freq
+	glLOfreq = LOfreq;
 
 	rf_mode rfmode = RadioHandler.GetmodeRF();
 	if ((LOfreq > 32000000) && (rfmode != VHFMODE))
@@ -406,16 +410,21 @@ extern "C"
 long EXTIO_API GetHWLO(void)
 {
     EnterFunction();
-
-	return (long)(glLOfreq & 0xFFFFFFFF);
+	if (RadioHandler.GetFine_LO())
+	   return (long)( glLOfreq + glLOcorr) & 0xFFFFFFFF;
+	else
+	   return (long)(glLOfreq & 0xFFFFFFFF);
 }
 
 extern "C"
 int64_t EXTIO_API GetHWLO64(void)
 {
-	glLOfreq = r2iqCntrl.UptTuneFrq(glLOfreq, glTunefreq);
-	EnterFunction1((int) glLOfreq);
-	return glLOfreq;
+	EnterFunction();
+	glLOcorr = r2iqCntrl.UptTuneFrq(&glLOfreq, &glTunefreq, &glLOcorr); //update LO freq
+	if (RadioHandler.GetFine_LO())
+		return glLOfreq + glLOcorr;
+	else
+		return glLOfreq;
 }
 
 //---------------------------------------------------------------------------

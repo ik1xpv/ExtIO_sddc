@@ -58,7 +58,7 @@ private:
     void AbortXferLoop(int qidx);
    
     shift_limited_unroll_C_sse_data_t* stateFineTune;
-    void FineTuneLO(complexf* input, int nsample, float nfrq , int rdecimation);
+    void FineTuneLO(complexf* input, int nsample, int rdecimation);
     float mfinefreq;
     int mrdecimate;
     bool fineLOtuning;

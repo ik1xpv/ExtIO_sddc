@@ -28,7 +28,7 @@ public:
     int getFftN(int x)   {return mfftdim [x];}
     int getRatio()  {return mratio [mdecimation];}
     int getTunebin() {return mtunebin;}
-    int64_t UptTuneFrq(int64_t freq, int64_t tunefreq);  // Update tunebin and return normalized LO frequency.
+    int64_t UptTuneFrq(int64_t* freq, int64_t* tunefreq, int64_t* pLOcorr);  // Update tunebin and return LO frequency.
     void Updt_SR_LO_TUNE(int srate_idx, int64_t* oldLO, int64_t* oldTune);
     float GainScale;
 private:
