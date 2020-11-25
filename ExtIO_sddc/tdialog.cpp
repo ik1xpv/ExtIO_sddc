@@ -276,7 +276,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else
 					{
 						RadioHandler.Stop();
-						RadioHandler.Start();
+						RadioHandler.Start(ExtIoGetActualSrateIdx());
 						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);  // to updt demodulators
 					}
 				break;

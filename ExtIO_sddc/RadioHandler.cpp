@@ -39,7 +39,6 @@ std::condition_variable mutexShowStats;     // unlock to show stats
 
 
 extern unsigned	gExtSampleRate;
-extern int  giExtSrateIdx;
 
 void* AdcSamplesProc(void*);
 void AbortXferLoop(int qidx);
@@ -285,7 +284,7 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 	return true;
 }
 
-bool RadioHandlerClass::Start()
+bool RadioHandlerClass::Start(int srate_idx)
 {
 	Stop();
 	DbgPrintf("RadioHandlerClass::Start\n");
@@ -295,7 +294,7 @@ bool RadioHandlerClass::Start()
 	int t = 0;
 	show_stats_thread = new std::thread(tShowStats, (void*)t);
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
-	initR2iq( 4 - giExtSrateIdx, hardware->getGain());
+	initR2iq( 4 - srate_idx, hardware->getGain());
 	adc_samples_thread = new std::thread(
 		[this](void* arg){
 			this->AdcSamplesProcess();
