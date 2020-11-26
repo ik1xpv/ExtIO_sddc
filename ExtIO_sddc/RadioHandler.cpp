@@ -380,7 +380,7 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 	return true;
 }
 
-int64_t RadioHandlerClass::TuneLO(int64_t freq)
+uint64_t RadioHandlerClass::TuneLO(uint64_t freq)
 {
 	return hardware->TuneLo(freq);
 }

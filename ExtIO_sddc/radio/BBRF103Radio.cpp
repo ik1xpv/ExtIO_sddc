@@ -101,7 +101,7 @@ bool BBRF103Radio::UpdateattRF(int att)
     }
 }
 
-int64_t BBRF103Radio::TuneLo(int64_t freq)
+uint64_t BBRF103Radio::TuneLo(uint64_t freq)
 {
    if (gpios & (ATT_SEL0 | ATT_SEL1))  {
         // this is in HF mode
