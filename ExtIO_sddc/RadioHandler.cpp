@@ -469,16 +469,23 @@ void RadioHandlerClass::UpdBiasT_VHF(bool flag)
 
 void RadioHandlerClass::FineTuneLO(complexf* input, int nsample, int rd)
 {
-	if (GetFine_LO() && (glLOcorr != 0.0F)) // if Fine Local Oscillator Tuning allowed and required
+	if (GetFine_LO()) // if Fine Local Oscillator Tuning allowed and required
 	{
-		// todo: if rd = 1 (32MHz) limit tuning of LO ?
-		if ((glLOcorr != mfinefreq) || (rd != mrdecimate))
+		if (glLOcorr != 0.0F)
 		{
-			mrdecimate = rd;
-			mfinefreq = glLOcorr;
-			float fc = (float)(-mfinefreq) / ((float)gExtSampleRate);
-			*stateFineTune = shift_limited_unroll_C_sse_init(fc, 0.0F);
+			// todo: if rd = 1 (32MHz) limit tuning of LO ?
+			if ((glLOcorr != mfinefreq) || (rd != mrdecimate))
+			{
+				mrdecimate = rd;
+				mfinefreq = glLOcorr;
+				float fc = (float)(-mfinefreq) / ((float)gExtSampleRate);
+				*stateFineTune = shift_limited_unroll_C_sse_init(fc, 0.0F);
+			}
+			shift_limited_unroll_C_sse_inp_c(input, nsample, stateFineTune); // Fine Tune
 		}
-		shift_limited_unroll_C_sse_inp_c(input, nsample, stateFineTune); // FineTune
+	}
+	else
+	{
+		glLOcorr = 0.0F;   
 	}
 }

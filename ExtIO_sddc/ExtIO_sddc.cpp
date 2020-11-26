@@ -410,10 +410,10 @@ extern "C"
 long EXTIO_API GetHWLO(void)
 {
     EnterFunction();
-	if (RadioHandler.GetFine_LO())
-	   return (long)( glLOfreq + glLOcorr) & 0xFFFFFFFF;
-	else
-	   return (long)(glLOfreq & 0xFFFFFFFF);
+	if (!RadioHandler.GetFine_LO())
+		glLOfreq = 0;
+	return (long)(glLOfreq + glLOcorr) & 0xFFFFFFFF;
+
 }
 
 extern "C"
