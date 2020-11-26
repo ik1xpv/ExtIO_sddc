@@ -129,6 +129,33 @@ public:
     float getGain() override { return RX888_GAINFACTOR; }
 };
 
+class RX888R2Radio : public RadioHardware {
+public:
+    RX888R2Radio(fx3class* fx3);
+    const char* getName() override { return "RX888r2"; }
+    float getGain() override { return RX888_GAINFACTOR; }
+    void getFrequencyRange(int64_t& low, int64_t& high) override;
+    void Initialize() override;
+    bool UpdatemodeRF(rf_mode mode) override;
+    uint64_t TuneLo(uint64_t freq) override;
+    bool UpdateattRF(int attIndex) override;
+    bool UpdateGainIF(int attIndex) override;
+
+    int getRFSteps(const float** steps ) override;
+    int getIFSteps(const float** steps ) override;
+
+private:
+    static const int  hf_rf_step_size = 64;
+    static const int  hf_if_step_size = 128;
+    static const int vhf_if_step_size = 16;
+    static const int vhf_rf_step_size = 29;
+
+    float  hf_rf_steps[hf_rf_step_size];
+    float  hf_if_steps[hf_if_step_size];
+    static const float vhf_rf_steps[vhf_rf_step_size];
+    static const float vhf_if_steps[vhf_if_step_size];
+};
+
 class HF103Radio : public RadioHardware {
 public:
     HF103Radio(fx3class* fx3) : RadioHardware(fx3) {}

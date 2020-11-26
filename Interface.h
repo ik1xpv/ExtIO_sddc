@@ -17,7 +17,9 @@ enum FX3Command {
 	R820T2SETATT = 0xB6,
 	R820T2GETATT = 0xB7,
 	R820T2STDBY = 0xB8,
-    R820T2SETVGA = 0xB9
+    R820T2SETVGA = 0xB9,
+
+    AD8340FX3 = 0xBA,
 };
 
 #define OUTXIO0 (1U << 0) 	// ATT_LE
@@ -59,4 +61,5 @@ enum RadioModel {
     BBRF103 = 0x01,
     HF103 = 0x02,
     RX888 = 0x03,
+    RX888r2 = 0x04,
 };

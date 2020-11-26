@@ -197,6 +197,13 @@ bool fx3class::Control(FX3Command command, PUINT8 data) { // firmware control BB
 		lgt = 2; // GPIO len
 		r = fx3dev->ControlEndPt->Write(data, lgt);
 		break;
+	case AD8340FX3:
+		fx3dev->ControlEndPt->ReqCode = command;
+		fx3dev->ControlEndPt->Value = (USHORT)0;
+		fx3dev->ControlEndPt->Index = (USHORT)0;
+		lgt = 1;
+		r = fx3dev->ControlEndPt->Write(data, lgt);
+		break;
 	case TESTFX3:
 		fx3dev->ControlEndPt->ReqCode = command;
 		fx3dev->ControlEndPt->Value = (USHORT)0;
