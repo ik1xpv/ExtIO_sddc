@@ -247,9 +247,9 @@ CyFxSlFifoApplnUSBSetupCB (
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 					{
 
-						uint32_t freq;
-						freq = *(uint32_t *) &glEp0Buffer[0];
-						r82xx_set_freq(&tuner, freq);
+						uint64_t freq;
+						freq = *(uint64_t *) &glEp0Buffer[0];
+						r82xx_set_freq64(&tuner, freq);
 						// R820T2 tune
 						DebugPrint(4, "\r\n\r\nTune R820T2 %d \r\n",freq);
 						isHandled = CyTrue;

@@ -44,7 +44,7 @@ public:
     bool GetBiasT_VHF() { return biasT_VHF; }
     void UpdBiasT_VHF(bool flag);
 
-    int64_t TuneLO(int64_t lo);
+    uint64_t TuneLO(uint64_t lo);
 
 #ifdef TRACE
     bool UptTrace( bool trace){ traceflag = trace; return traceflag; }
@@ -81,7 +81,7 @@ public:
     virtual void Initialize() = 0;
     virtual bool UpdatemodeRF(rf_mode mode) = 0;
     virtual bool UpdateattRF(int attIndex) = 0;
-    virtual int64_t TuneLo(int64_t freq) = 0;
+    virtual uint64_t TuneLo(uint64_t freq) = 0;
 
     virtual int getRFSteps(const float** steps ) { return 0; }
     virtual int getIFSteps(const float** steps ) { return 0; }
@@ -106,7 +106,7 @@ public:
     void getFrequencyRange(int64_t& low, int64_t& high) override;
     void Initialize() override;
     bool UpdatemodeRF(rf_mode mode) override;
-    int64_t TuneLo(int64_t freq) override;
+    uint64_t TuneLo(uint64_t freq) override;
     bool UpdateattRF(int attIndex) override;
     bool UpdateGainIF(int attIndex) override;
 
@@ -141,7 +141,7 @@ public:
 
     bool UpdatemodeRF(rf_mode mode) override;
 
-    int64_t TuneLo(int64_t freq) override { return ADC_FREQ / 2; }
+    uint64_t TuneLo(uint64_t freq) override { return ADC_FREQ / 2; }
     
     bool UpdateattRF(int attIndex) override;
 
@@ -162,7 +162,7 @@ public:
     void Initialize() override {}
     bool UpdatemodeRF(rf_mode mode) override { return true; }
     bool UpdateattRF(int attIndex) override { return true; }
-    int64_t TuneLo(int64_t freq) override { return freq; }
+    uint64_t TuneLo(uint64_t freq) override { return freq; }
 };
 
 #endif  RADIOHANDLER_H
