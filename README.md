@@ -38,6 +38,13 @@ Initial version
 
 * You need to download **32bit version** of fftw library from fftw website http://www.fftw.org/install/windows.html. Copy libfftw3f-3.dll from the downloaded zip package to the same folder of extio DLL.
 
+* If you are running **64bit** OS, you need to run the following different commands instead of "cmake .." based on your Visual Studio Version:
+```
+VS2019: >cmake .. -G "Visual Studio 16 2019" -A Win32
+VS2017: >cmake .. -G "Visual Studio 15 2017 Win32"
+VS2015: >cmake .. -G "Visual Studio 14 2015 Win32"
+```
+
 ## Build Instructions for firmware
 
 //TODO
