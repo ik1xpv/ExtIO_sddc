@@ -11,6 +11,8 @@
  */
 #include "Application.h"
 
+#include "tuner_r82xx.h"
+
 // Declare external functions
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
 extern void CheckStatusSilent(char* StringPtr, CyU3PReturnStatus_t Status);
@@ -18,6 +20,8 @@ extern CyU3PReturnStatus_t InitializeDebugConsole(void);
 extern void IndicateError(uint16_t ErrorCode);
 extern CyU3PReturnStatus_t InitializeUSB(void);
 extern void ParseCommand(void);
+
+extern CyU3PReturnStatus_t Si5351init();
 
 // Declare external data
 extern const char* EventName[];
@@ -126,8 +130,12 @@ HF103_GpioInit ()
 			break;
 		case RX888:
 			rx888_GpioInitialize();
-    }
-		}
+			break;
+		case RX888r2:
+			rx888r2_GpioInitialize();
+			break;
+	}
+}
 
 void MsgParsing(uint32_t qevent)
 {
@@ -163,13 +171,30 @@ void ApplicationThread ( uint32_t input)
     if (Status != CY_U3P_SUCCESS)
     	 HWconfig = HF103;
 	else {
-		// check if BBRF103 or RX888 (RX666 ?)
-        if(GPIOtestInputPulldown(LED_KIT)) {
-        	HWconfig = BBRF103;
+		Si5351init(64000000, 16000000);
+
+		uint8_t identity;
+		if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
+		{
+			// check if BBRF103 or RX888 (RX666 ?)
+			if(GPIOtestInputPulldown(LED_KIT)) {
+				HWconfig = BBRF103;
+			}
+			else
+			{
+					HWconfig = RX888;
+			}
 		}
-        else {
-        	HWconfig = RX888;
+		else if (I2cTransfer(0, R828D_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
+		{
+			HWconfig = RX888r2;
 		}
+		else
+		{
+			HWconfig = 0;
+		}
+
+		Si5351init(64000000, 0);
 	}
 
 	HF103_GpioInit();

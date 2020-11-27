@@ -31,7 +31,6 @@ extern uint8_t  HWconfig;       			    // Hardware config
 extern uint16_t  FWconfig;       			    // Firmware config hb.lb
 
 // r820xx data
-#define R820T2_FREQ  (32000000)
 struct r82xx_priv tuner;
 struct r82xx_config tuner_config;
 
@@ -146,11 +145,13 @@ CyFxSlFifoApplnUSBSetupCB (
 							isHandled = CyTrue;
 							break;
 
-							isHandled = CyTrue;
-						   break;
-
 						case RX888:
 							rx888_GpioSet(mdata);
+							isHandled = CyTrue;
+							break;
+
+						case RX888r2:
+							rx888r2_GpioSet(mdata);
 							isHandled = CyTrue;
 							break;
 
@@ -168,6 +169,24 @@ CyFxSlFifoApplnUSBSetupCB (
 							hf103_SetAttenuator(pdata->buffer[0]);
 							isHandled = CyTrue;
 							break;
+							case RX888r2:
+								rx888r2_SetAttenuator(pdata->buffer[0]);
+								isHandled = CyTrue;
+								break;
+						}
+					}
+					break;
+
+			case AD8340FX3:
+					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
+					{
+						pdata = (outxio_t *) &glEp0Buffer[0];
+						switch(HWconfig)
+						{
+							case RX888r2:
+								rx888r2_SetGain(pdata->buffer[0]);
+								isHandled = CyTrue;
+								break;
 						}
 					}
 					break;
@@ -214,12 +233,23 @@ CyFxSlFifoApplnUSBSetupCB (
 						memset(&tuner_config, 0, sizeof(tuner_config));
 						memset(&tuner, 0, sizeof(tuner));
 
-						tuner_config.i2c_addr = R820T_I2C_ADDR;
 						tuner_config.vco_curr_min = 0xff;
 						tuner_config.vco_curr_max = 0xff;
 						tuner_config.vco_algo = 0;
-						tuner_config.xtal = R820T2_FREQ;
-						tuner_config.rafael_chip = CHIP_R820T;
+
+						// detect the hardware
+						if (HWconfig == RX888 || HWconfig == BBRF103)
+						{
+							tuner_config.xtal = R820T2_XTAL_FREQ;
+							tuner_config.i2c_addr = R820T_I2C_ADDR;
+							tuner_config.rafael_chip = CHIP_R820T;
+						}
+						else if (HWconfig == RX888r2)
+						{
+							tuner_config.xtal = R828D_XTAL_FREQ;
+							tuner_config.i2c_addr = R828D_I2C_ADDR;
+							tuner_config.rafael_chip = CHIP_R828D;
+						}
 
 						tuner.cfg = &tuner_config;
 

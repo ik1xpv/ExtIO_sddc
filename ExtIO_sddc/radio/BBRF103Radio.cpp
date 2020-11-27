@@ -1,5 +1,7 @@
 #include "RadioHandler.h"
 
+#define R820T_FREQ (32000000)	// R820T reference frequency
+
 const float BBRF103Radio::steps[BBRF103Radio::step_size] =  {
     0.0f, 0.9f, 1.4f, 2.7f, 3.7f, 7.7f, 8.7f, 12.5f, 14.4f, 15.7f,
     16.6f, 19.7f, 20.7f, 22.9f, 25.4f, 28.0f, 29.7f, 32.8f,

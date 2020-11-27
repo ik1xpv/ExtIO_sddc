@@ -257,6 +257,11 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 		radio = RX888;
 		break;
 
+	case RX888r2:
+		hardware = new RX888R2Radio(Fx3);
+		radio = RX888r2;
+		break;
+
 	default:
 		hardware = new DummyRadio();
 		radio = NORADIO;

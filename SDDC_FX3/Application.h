@@ -94,5 +94,10 @@ void hf103_SetAttenuator(uint8_t value);
 void rx888_GpioSet(uint16_t mdata);
 void rx888_GpioInitialize();
 
+// rx888r2
+void rx888r2_GpioSet(uint16_t mdata);
+void rx888r2_GpioInitialize();
+void rx888r2_SetAttenuator(uint8_t value);
+void rx888r2_SetGain(uint8_t value);
 
 #endif // _INCLUDED_APPLICATION_H_
