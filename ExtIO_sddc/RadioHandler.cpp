@@ -21,13 +21,10 @@ static PUCHAR* contexts;
 static OVERLAPPED	inOvLap[QUEUE_SIZE];
 static float** obuffers;
 
-int idx;            // queue index              // export
-unsigned long IDX;  // absolute index
-
 // transfer variables
 double kbRead = 0;
 LARGE_INTEGER StartingTime;
-LARGE_INTEGER Time1, Time2;
+
 unsigned long BytesXferred = 0;
 unsigned long SamplesXIF = 0;
 double kSReadIF = 0;
@@ -35,29 +32,23 @@ unsigned long Failures = 0;
 float	g_Bps;
 float	g_SpsIF;
 
-std::condition_variable mutexShowStats;     // unlock to show stats
-
-void* AdcSamplesProc(void*);
-void AbortXferLoop(int qidx);
-void* tShowStats(void* args);
-
 void RadioHandlerClass::AdcSamplesProcess()
 {
 	DbgPrintf("AdcSamplesProc thread runs\n");
 	int callShowStatsRate = 32 * QUEUE_SIZE;
-	unsigned skip = QUEUE_SIZE;
+	int idx;            // queue index              // export
+	unsigned long count;  // absolute index
+
 	Failures = 0;
 	int odx = 0;
 	unsigned int kidx = 0, strd = 0;
 	int rd = r2iqCntrl.getRatio();
 	
-	if (EndPt) { // real data
-		long pktSize = EndPt->MaxPktSize;
-		EndPt->SetXferSize(transferSize);
-		long ppx = transferSize / pktSize;
-		DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
-			, transferSize, pktSize, ppx);
-	}
+	long pktSize = EndPt->MaxPktSize;
+	EndPt->SetXferSize(transferSize);
+	long ppx = transferSize / pktSize;
+	DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
+		, transferSize, pktSize, ppx);
 
 	// Queue-up the first batch of transfer requests
 	for (int n = 0; n < QUEUE_SIZE; n++) {
@@ -70,7 +61,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 	hardware->FX3producerOn();  // FX3 start the producer
 	run = true;		
 	idx = 0;    // buffer cycle index
-	IDX = 1;    // absolute index
+	count = 1;    // absolute index
 	QueryPerformanceCounter(&StartingTime);  // set the start time
 	// The infinite xfer loop.
 	while (run) {
@@ -78,7 +69,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 		// FinishDataXfer may modify it
 		if (!EndPt->WaitForXfer(&inOvLap[idx], BLOCK_TIMEOUT)) { // block on transfer
 			EndPt->Abort(); // abort if timeout
-			DbgPrintf("BUG1001 IDX %d idx %d", IDX, idx);
+			DbgPrintf("BUG1001 Count %d idx %d", count, idx);
 			// Re-submit this queue element to keep the queue full
 			contexts[idx] = EndPt->BeginDataXfer(buffers[idx], transferSize, &inOvLap[idx]);
 			if (EndPt->NtStatus || EndPt->UsbdStatus) { // BeginDataXfer failed
@@ -88,55 +79,45 @@ void RadioHandlerClass::AdcSamplesProcess()
 			}
 
 		}
-		if (EndPt->Attributes == 2) { // BULK Endpoint
-			if (EndPt->FinishDataXfer(buffers[idx], rLen, &inOvLap[idx], contexts[idx])) {
-				BytesXferred += rLen;
-				if (rLen < transferSize) printf("rLen = %ld\n", rLen);
-			}
-			else
-			{
-				if (IDX > 64) { // avoid first 64 block
-					Failures++;
-					pfnCallback(-1, extHw_Stop, 0.0F, 0); // Stop realtime see Failures
-				}
-			}
 
-		}
-
-		if (skip > 0)
-			skip--;
-		else if (pfnCallback && run)
-		{
-			if (rd == 1)
+		if (EndPt->FinishDataXfer(buffers[idx], rLen, &inOvLap[idx], contexts[idx])) {
+			BytesXferred += rLen;
+			if (rLen < transferSize) DbgPrintf("rLen = %ld\n", rLen);
+			// submit result to SDR application before processing next packet
+			if (pfnCallback && run && count > QUEUE_SIZE)
 			{
-				pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx]);
-				SamplesXIF += EXT_BLOCKLEN;
-			}
-			else
-			{
-				odx = (idx + 1) / rd;
-				if ((odx * rd) == (idx + 1))
+				if (rd == 1)
 				{
-					pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx / rd]);
+					pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx]);
 					SamplesXIF += EXT_BLOCKLEN;
 				}
+				else
+				{
+					odx = (idx + 1) / rd;
+					if ((odx * rd) == (idx + 1))
+					{
+						pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx / rd]);
+						SamplesXIF += EXT_BLOCKLEN;
+					}
+				}
 			}
-		}
 
-		r2iqCntrl.DataReady();   // inform r2iq buffer ready
+			r2iqCntrl.DataReady();   // inform r2iq buffer ready
 
 #ifdef _DEBUG		//PScope buffer screenshot
-		if (saveADCsamplesflag == true)
-		{
-			saveADCsamplesflag = false; // do it once
-			short* pi = (short*)&buffers[idx][0];
-			unsigned int numsamples = transferSize / sizeof(short);
-			float samplerate  = (float) adcfixedfreq;
-			PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
-				"ADCrealsamples.adc input real ADC 16 bit samples",
-				pi, samplerate, numsamples);
-		}
+			if (saveADCsamplesflag == true)
+			{
+				saveADCsamplesflag = false; // do it once
+				short* pi = (short*)&buffers[idx][0];
+				unsigned int numsamples = transferSize / sizeof(short);
+				float samplerate  = (float) adcfixedfreq;
+				PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
+					"ADCrealsamples.adc input real ADC 16 bit samples",
+					pi, samplerate, numsamples);
+			}
 #endif
+		}
+
 		// Re-submit this queue element to keep the queue full
 		contexts[idx] = EndPt->BeginDataXfer(buffers[idx], transferSize, &inOvLap[idx]);
 		if (EndPt->NtStatus || EndPt->UsbdStatus) { // BeginDataXfer failed
@@ -145,18 +126,17 @@ void RadioHandlerClass::AdcSamplesProcess()
 			break;
 		}
 
-		if ((IDX % callShowStatsRate) == 0) { //Only update the display at the call rate
-			mutexShowStats.notify_all();
+		if ((count % callShowStatsRate) == 0) { //Only update the display at the call rate
+			mutexShowStats.notify_one();
 		}
-		++idx;
-		++IDX;
-		idx = idx % QUEUE_SIZE;
+		idx = (idx + 1) % QUEUE_SIZE;
+		++count;
 	}  // End of the infinite loop
 
 
 	hardware->FX3producerOff();     //FX3 stop the producer
 	Sleep(10);
-	mutexShowStats.notify_all(); //  allows exit of
+	mutexShowStats.notify_one(); //  allows exit of
 	r2iqCntrl.TurnOff();
 
 	DbgPrintf("AdcSamplesProc thread_exit\n");
@@ -176,6 +156,7 @@ void RadioHandlerClass::AbortXferLoop(int qidx)
 		}
 		DbgPrintf("CloseHandle[%d]  %d\n", n, r);
 	}
+	pfnCallback(-1, extHw_Stop, 0.0F, 0); // Stop realtime see Failures
 }
 
 
@@ -203,9 +184,8 @@ RadioHandlerClass::RadioHandlerClass() :
 		buffers[i] = buffer + FFTN_R_ADC + transferSize * i;
 
 		inOvLap[i].hEvent = CreateEvent(NULL, false, false, NULL);
-	}
-	// Allocate the buffers for the output queue
-	for (int i = 0; i < QUEUE_SIZE; i++) {
+
+		// Allocate the buffers for the output queue
 		obuffers[i] = new float[transferSize / 2];
 	}
 }
@@ -286,8 +266,9 @@ bool RadioHandlerClass::Start(int srate_idx)
 	kbRead = 0; // zeros the kilobytes counter
 	kSReadIF = 0;
 	run = true;
-	int t = 0;
-	show_stats_thread = new std::thread(tShowStats, (void*)t);
+	show_stats_thread = new std::thread([this](void*) {
+		this->CaculateStats();
+	}, nullptr);
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
 	r2iqCntrl.Init( 4 - srate_idx, hardware->getGain(), buffers, obuffers);
 	adc_samples_thread = new std::thread(
@@ -361,13 +342,6 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 
 		hardware->UpdatemodeRF(mode);
 		
-		IDX = 0;  // patch for BUG1001
-		// it restart the IDX counter
-		// failures count is allowed in first first 64 block
-		// see
-		// line 110		if (IDX > 64) { // avoid first 64 block
-		// line 64  DbgPrintf("BUG1001 IDX %d idx %d", IDX, idx);
-
 		if (pfnCallback)
 		{
 			pfnCallback(-1, extHw_Changed_RF_IF, 0.0F, 0);
@@ -406,7 +380,7 @@ bool RadioHandlerClass::UptRand(bool b)
 	return randout;
 }
 
-void* tShowStats(void* args)
+void RadioHandlerClass::CaculateStats()
 {
 	double count2sec;
 	LARGE_INTEGER EndingTime;
@@ -424,7 +398,7 @@ void* tShowStats(void* args)
 		std::unique_lock<std::mutex> lk(k);
 		mutexShowStats.wait(lk);
 		if (run == false)
-			return NULL;
+			return;
 
 		double timeStart = double(StartingTime.QuadPart) * count2sec;
 		QueryPerformanceCounter(&EndingTime);
@@ -442,7 +416,7 @@ void* tShowStats(void* args)
 		g_SpsIF = (float)mSpsIF;
 
 	}
-	return 0;
+	return;
 }
 
 void RadioHandlerClass::UpdBiasT_HF(bool flag) 

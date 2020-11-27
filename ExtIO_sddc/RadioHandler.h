@@ -54,6 +54,7 @@ public:
 private:
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
+    void CaculateStats();
 
     bool dither;
     bool randout;
@@ -64,6 +65,7 @@ private:
     UINT16 firmware;
     rf_mode modeRF;  
 
+    std::condition_variable mutexShowStats;     // unlock to show stats
     RadioHardware* hardware;
 };
 
