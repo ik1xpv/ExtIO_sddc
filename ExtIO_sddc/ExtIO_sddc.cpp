@@ -336,8 +336,13 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			ExtIoSetMGC(giMgcIdxVHF);
 			SetAttenuator(giAttIdxVHF);
 			giExtSrateIdxVHF = 2;
-			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
-			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
+			if (pfnCallback)
+			{
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
+			}
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
 	if (LOfreq < 31000000)
@@ -348,8 +353,13 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			RadioHandler.UpdatemodeRF(HFMODE);
 			ExtIoSetMGC(giMgcIdxHF);
 			SetAttenuator(giAttIdxHF);
-			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
-			if (pfnCallback) EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
+			if (pfnCallback)
+			{
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
+			}
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 			break;
 		}
