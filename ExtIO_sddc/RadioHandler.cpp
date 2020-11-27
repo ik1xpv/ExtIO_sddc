@@ -367,15 +367,6 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 		// see
 		// line 110		if (IDX > 64) { // avoid first 64 block
 		// line 64  DbgPrintf("BUG1001 IDX %d idx %d", IDX, idx);
-
-		if (pfnCallback)
-		{
-			pfnCallback(-1, extHw_Changed_RF_IF, 0.0F, 0);
-			pfnCallback(-1, extHw_Changed_AGCS, 0.0F, 0);
-			pfnCallback(-1, extHw_Changed_AGC, 0.0F, 0);
-			pfnCallback(-1, extHw_Changed_LO, 0.0F, 0);
-		}
-		
 	}
 	return true;
 }
