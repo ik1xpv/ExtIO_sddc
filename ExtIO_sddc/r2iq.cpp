@@ -174,12 +174,17 @@ void r2iqControlClass::TurnOff(void) {
 bool r2iqControlClass::IsOn(void) { return(this->r2iqOn); }
 
 void r2iqControlClass::DataReady(void) { // signals new sample buffer arrived
+	int pending;
 	if (!this->r2iqOn)
 		return;
 	mutexR2iqControl.lock();
+	pending = this->cntr;
 	this->cntr++;
 	mutexR2iqControl.unlock();
-	cvADCbufferAvailable.notify_one(); // signal data available
+	if (pending == 0)
+		cvADCbufferAvailable.notify_one(); // signal data available
+	else
+		cvADCbufferAvailable.notify_all(); // signal data available
 }
 
 void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float** obuffers)
