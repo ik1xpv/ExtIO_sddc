@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include "mytypes.h"
 #include "config.h"
 #include "ExtIO_sddc.h"
 #include "RadioHandler.h"
