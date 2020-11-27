@@ -1,7 +1,6 @@
 #include "license.txt" 
 
 #include <stdio.h>
-#include "mytypes.h"
 #include "RadioHandler.h"
 #include "config.h"
 #include "r2iq.h"
