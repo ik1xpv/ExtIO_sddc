@@ -107,7 +107,7 @@ extern bool saveADCsamplesflag;
 extern const char* radioname[4];
 
 extern bool run;
-extern int transferSize;
+const int transferSize = 131072;
 extern RadioModel radio;
 
 #endif // _CONFIG_H_
