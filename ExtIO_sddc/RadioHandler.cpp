@@ -8,7 +8,11 @@
 #include "config.h"
 #include "PScope_uti.h"
 
+#include <chrono>
+
 #define BLOCK_TIMEOUT (80) // block 65.536 ms timeout is 80
+
+using namespace std::chrono;
 
 extern pfnExtIOCallback	pfnCallback;
 
@@ -23,7 +27,7 @@ static float** obuffers;
 
 // transfer variables
 double kbRead = 0;
-LARGE_INTEGER StartingTime;
+high_resolution_clock::time_point StartingTime;
 
 unsigned long BytesXferred = 0;
 unsigned long SamplesXIF = 0;
@@ -62,7 +66,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 	run = true;		
 	idx = 0;    // buffer cycle index
 	count = 1;    // absolute index
-	QueryPerformanceCounter(&StartingTime);  // set the start time
+	StartingTime = high_resolution_clock::now();
 	// The infinite xfer loop.
 	while (run) {
 		LONG rLen = transferSize;	// Reset this each time through because
@@ -378,17 +382,10 @@ bool RadioHandlerClass::UptRand(bool b)
 
 void RadioHandlerClass::CaculateStats()
 {
-	double count2sec;
-	LARGE_INTEGER EndingTime;
-	//   double timeElapsed = 0;
-
-	LARGE_INTEGER Frequency;
-	QueryPerformanceFrequency(&Frequency);
-	count2sec = 1.0 / Frequency.QuadPart;
+	high_resolution_clock::time_point EndingTime;
 
 	BytesXferred = 0;
 	SamplesXIF = 0;
-	UINT8 cnt = 0;
 	while (run) {
 		std::mutex k;
 		std::unique_lock<std::mutex> lk(k);
@@ -396,14 +393,15 @@ void RadioHandlerClass::CaculateStats()
 		if (run == false)
 			return;
 
-		double timeStart = double(StartingTime.QuadPart) * count2sec;
-		QueryPerformanceCounter(&EndingTime);
-		double timeElapsed = double(EndingTime.QuadPart) * count2sec - timeStart;
 		kbRead += double(BytesXferred) / 1000.;
-		double mBps = (double)kbRead / timeElapsed / 1000;
 		kSReadIF += double(SamplesXIF) / 1000.;
-		double mSpsIF = (double)kSReadIF / timeElapsed / 1000;
 
+		EndingTime = high_resolution_clock::now();
+
+		duration<double,std::ratio<1,1>> timeElapsed(EndingTime-StartingTime);
+
+		double mBps = (double)kbRead / timeElapsed.count() / 1000;
+		double mSpsIF = (double)kSReadIF / timeElapsed.count() / 1000;
 
 		BytesXferred = 0;
 		SamplesXIF = 0;
