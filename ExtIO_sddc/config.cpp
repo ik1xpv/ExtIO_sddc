@@ -10,5 +10,4 @@ double adcfixedfreq = ADC_FREQ;
 double gdGainCorr_dB = GAIN_ADJ;            // in dB
 bool saveADCsamplesflag = false;
 bool run = false;
-int transferSize = 131072;
 RadioModel radio = NORADIO;
