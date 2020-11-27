@@ -84,6 +84,7 @@ void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* fLO, int64_t* fTu
 			LOfreq = (int64_t)(((double)ADC_FREQ / 4.0) - 1000000.0);
 			LOfreq = (int)(((double)LOfreq * (adcfixedfreq) / (double)ADC_FREQ)); // frequency correction
 			*fLO = LOfreq;
+			mtunebin = halfFft / 2 -halfFft / 32; // upshift 1 MHz to have LW band in bandpass filter
 		}
 		else if (rfm != VHFMODE)
 		{
@@ -121,6 +122,7 @@ int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
 			LOfreq = (int64_t)((ADC_FREQ / 4.0) - 1000000.0);
 			LOfreq = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
 			loprecision = 1;
+			mtunebin = halfFft / 2 -halfFft / 32; // upshift 1 MHz to have LW band in bandpass filter
 		}
 		else if (rfm != VHFMODE)
 		{
@@ -326,21 +328,29 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		int mratio = this->getRatio();
 		int idx;
 
-	    int _mtunebin = this->getTunebin();  // Update LO tune is possible during run
-
 		{
+			int wakecnt = 0;
 			std::unique_lock<std::mutex> lk(mutexR2iqControl);
 			while (this->cntr <= 0)
 			{
-			cvADCbufferAvailable.wait(lk, [this] {return this->cntr > 0; });
+				cvADCbufferAvailable.wait(lk, [&wakecnt, this] 
+				{
+					wakecnt++;
+					return this->cntr > 0; 
+				});
 			}
 
 			if (!run) 
 				return 0;
 
 			buffer = (char *)this->buffers[this->bufIdx];
-			pout = (float *)this->obuffers[this->bufIdx];
 			idx = this->bufIdx;
+
+			int modx = idx / mratio;
+			int moff = idx - modx * mratio;
+			int offset = ((transferSize / 2) / mratio) *moff;
+			pout = (float *)(this->obuffers[modx] + offset);
+
 			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
 			this->cntr--;
 		}
@@ -405,223 +415,110 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			}
 		}
 
-		fftwf_complex* filter;
-		filter = filterHw[decimate];
+		fftwf_complex* filter = filterHw[decimate];
+		float scale = this->GainScale * (float)pow(10.0, gdGainCorr_dB / 20.0);
+		int _mtunebin = this->getTunebin();  // Update LO tune is possible during run
 
-		if (decimate == 0)     // plain 32Msps no downsampling and tuning
+		// decimate in frequency plus tuning
+		for (int k = 0; k < fftPerBuf; k++)
 		{
-			for (int k = 0; k < fftPerBuf; k++)
+			// FFT first stage time to frequency, real to complex
+			fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime[k], th->ADCinFreq);
+
+			if (LWzero)
 			{
-				// FFT first stage time to frequency, real to complex
-				fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime[k], th->ADCinFreq);
-				// th->ADCinFreq[k][0] = th->ADCinFreq[k][0] /2.0f;   // DC component correction ? see
-				// http://www.fftw.org/fftw3_doc/One_002dDimensional-DFTs-of-Real-Data.html
-
-				if (LWzero)
+				th->inFreqTmp[0][0] = th->inFreqTmp[0][1] = 0;  // bin[0] = 0;
+				for (int m = 1; m < mfft / 2; m++) // circular shift tune fs/2 half array
 				{
-					th->inFreqTmp[0][0] = th->inFreqTmp[0][1] = 0;  // bin[0] = 0;
-
-					for (int m = 1; m < halfFft / 2; m++) // circular shift tune fs/2 half array
-					{
-						th->inFreqTmp[m][0] = th->ADCinFreq[m][0] * filter[m][0] +
-							th->ADCinFreq[m][1] * filter[m][1]; ;
-						th->inFreqTmp[m][1] = th->ADCinFreq[m][1] * filter[m][0] -
-							th->ADCinFreq[m][0] * filter[m][1];
-					}
-					for (int m = 0; m < halfFft / 2; m++) // circular shift tune fs/2 half array
-					{
-						th->inFreqTmp[halfFft / 2 + m][0] = 0;
-						th->inFreqTmp[halfFft / 2 + m][1] = 0;
-                    }
-                }
-				else if (moderf == HFMODE)
-                {
-
-				  int _mtunebin = halfFft / 2 -halfFft / 32; // upshift 1 MHz to have LW band in bandpass filter
-                  int mm;
-                  for(int m = 0 ; m < (halfFft/2); m++) // circular shift tune fs/2 half array
-                    {
-                        th->inFreqTmp[m][0] =  ( th->ADCinFreq[ _mtunebin+m][0] * filter[m][0]  +
-                                                         th->ADCinFreq[ _mtunebin+m][1] * filter[m][1]);
-                        th->inFreqTmp[m][1] =  ( th->ADCinFreq[ _mtunebin+m][1] * filter[m][0]  -
-                                                         th->ADCinFreq[ _mtunebin+m][0] * filter[m][1]);
-                    }
-
-                  for(int m = 0 ; m < halfFft/2; m++) // circular shift tune fs/2 half array
-                    {
-                        mm = _mtunebin - halfFft/2 + m;
-                        if ( mm >0)
-                        {
-
-                        th->inFreqTmp[halfFft/2+m][0] = ( th->ADCinFreq[mm][0] * filter[halfFft - halfFft/2 + m][0]  +
-                                                                  th->ADCinFreq[mm][1] * filter[halfFft - halfFft/2 + m][1]);
-
-                        th->inFreqTmp[halfFft/2+m][1] = ( th->ADCinFreq[mm][1] * filter[halfFft - halfFft/2 + m][0]  -
-                                                                  th->ADCinFreq[mm][0] * filter[halfFft - halfFft/2 + m][1]);
-                        }else
-                        {
-                            th->inFreqTmp[halfFft/2+m][0]= th->inFreqTmp[halfFft/2+m][1] = 0;
-                        }
-                    }
-
-                }
-				else
+					th->inFreqTmp[m][0] = (th->ADCinFreq[m][0] * filter[m][0] +
+						th->ADCinFreq[m][1] * filter[m][1]);
+					th->inFreqTmp[m][1] = (th->ADCinFreq[m][1] * filter[m][0] -
+						th->ADCinFreq[m][0] * filter[m][1]);
+				}
+				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 				{
-					for (int m = 0; m < halfFft / 2; m++) // circular shift tune fs/2 half array
-					{
-						th->inFreqTmp[m][0] = th->ADCinFreq[halfFft / 2 + m][0] * filter[m][0] +
-							th->ADCinFreq[halfFft / 2 + m][1] * filter[m][1]; ;
-						th->inFreqTmp[m][1] = th->ADCinFreq[halfFft / 2 + m][1] * filter[m][0] -
-							th->ADCinFreq[halfFft / 2 + m][0] * filter[m][1];
-					}
-					for (int m = 0; m < halfFft / 2; m++) // circular shift tune fs/2 half array
-					{
-						th->inFreqTmp[halfFft / 2 + m][0] = th->ADCinFreq[m][0] * filter[halfFft / 2 + m][0] +
-							th->ADCinFreq[m][1] * filter[halfFft / 2 + m][1];
-
-						th->inFreqTmp[halfFft / 2 + m][1] = th->ADCinFreq[m][1] * filter[halfFft / 2 + m][0] -
-							th->ADCinFreq[m][0] * filter[halfFft / 2 + m][1];
-
-					}
+					th->inFreqTmp[mfft / 2 + m][0] = 0;
+					th->inFreqTmp[mfft / 2 + m][1] = 0;
 				}
-				fftwf_execute(th->plan_f2t_c2c);                  //  c2c + decimation
-				float scale;
-				float gainadj = (float) pow(10.0, gdGainCorr_dB / 20.0);
-				scale = this->GainScale * gainadj;
-				float * pTimeTmp;
-				if (k == 0)
-				{ // first frame is 512 sample long
-					pTimeTmp = &th->outTimeTmp[halfFft / 4][0];
-					for (int i = 0; i < halfFft / 2; i++)
-					{
-						*pout++ = scale * (*pTimeTmp++);
-						*pout++ = scale * (*pTimeTmp++);
-					}
-				}
-				else
-				{ // (fftPerBuf-1) frames 768 sample long
-					pTimeTmp = &th->outTimeTmp[0][0];
-					for (int i = 0; i < 3 * halfFft / 4; i++)
-					{
-						*pout++ = scale * (*pTimeTmp++);
-						*pout++ = scale * (*pTimeTmp++);
-					}
-				}
-				// 42 * 768 + 512 = 32.768  sample output
 			}
-			//     DbgPrintf("len %d \n",j);
-		}
-		else
-		{      // decimate in frequency plus tuning
-			int modx = idx / mratio;
-			int moff = idx - modx * mratio;
-			int offset = ((transferSize / 2) / mratio) *moff;
-			pout = (float *)(this->obuffers[modx] + offset);
-
-			for (int k = 0; k < fftPerBuf; k++)
+			else
 			{
-				// FFT first stage time to frequency, real to complex
-				fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime[k], th->ADCinFreq);
-
-				if (LWzero)
+				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 				{
-					th->inFreqTmp[0][0] = th->inFreqTmp[0][1] = 0;  // bin[0] = 0;
-					for (int m = 1; m < mfft / 2; m++) // circular shift tune fs/2 half array
+					th->inFreqTmp[m][0] = (th->ADCinFreq[_mtunebin + m][0] * filter[m][0] +
+						th->ADCinFreq[_mtunebin + m][1] * filter[m][1]);
+					th->inFreqTmp[m][1] = (th->ADCinFreq[_mtunebin + m][1] * filter[m][0] -
+						th->ADCinFreq[_mtunebin + m][0] * filter[m][1]);
+				}
+
+				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
+				{
+
+					int mm = _mtunebin - mfft / 2 + m;
+					int fm = halfFft - mfft / 2 + m;
+					if (mm >= 0) // corrects off limits
 					{
-						th->inFreqTmp[m][0] = (th->ADCinFreq[m][0] * filter[m][0] +
-							th->ADCinFreq[m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] = (th->ADCinFreq[m][1] * filter[m][0] -
-							th->ADCinFreq[m][0] * filter[m][1]);
+						th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
+							th->ADCinFreq[mm][1] * filter[fm][1]);
+
+						th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
+							th->ADCinFreq[mm][0] * filter[fm][1]);
 					}
-					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
+					else
 					{
 						th->inFreqTmp[mfft / 2 + m][0] = 0;
 						th->inFreqTmp[mfft / 2 + m][1] = 0;
 					}
 				}
+			}
+
+			fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
+
+			float * pTimeTmp;
+			// here invert spectrum VHF
+			if (moderf == VHFMODE) // invert spectrum
+			{
+				if (k == 0)
+				{
+					pTimeTmp = &th->outTimeTmp[mfft / 4][0];
+					for (int i = 0; i < mfft / 2; i++)
+					{
+						*pout++ = scale * (*pTimeTmp++);
+						*pout++ = -scale * (*pTimeTmp++);
+					}
+				}
 				else
 				{
-					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
+					pTimeTmp = &th->outTimeTmp[0][0];
+					for (int i = 0; i < 3 * mfft / 4; i++)
 					{
-						th->inFreqTmp[m][0] = (th->ADCinFreq[_mtunebin + m][0] * filter[m][0] +
-							th->ADCinFreq[_mtunebin + m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] = (th->ADCinFreq[_mtunebin + m][1] * filter[m][0] -
-							th->ADCinFreq[_mtunebin + m][0] * filter[m][1]);
-					}
-
-					for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
-					{
-
-
-						if ((_mtunebin - mfft / 2 + m) >= 0) // corrects off limits
-
-						{
-							th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[_mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][0] +
-								th->ADCinFreq[_mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][1]);
-
-							th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[_mtunebin - mfft / 2 + m][1] * filter[halfFft - mfft / 2 + m][0] -
-								th->ADCinFreq[_mtunebin - mfft / 2 + m][0] * filter[halfFft - mfft / 2 + m][1]);
-						}
-						else
-						{
-							th->inFreqTmp[mfft / 2 + m][0] = 0;
-							th->inFreqTmp[mfft / 2 + m][1] = 0;
-						}
+						*pout++ = scale * (*pTimeTmp++);
+						*pout++ = -scale * (*pTimeTmp++);
 					}
 				}
-
-				fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
-				float scale;
-				float gainadj = (float)pow(10.0, gdGainCorr_dB / 20.0);
-				scale = this->GainScale * gainadj;
-
-				float * pTimeTmp;
-				// here invert spectrum VHF
-				if (moderf == VHFMODE) // invert spectrum
-				{
-					if (k == 0)
+			}
+			else // normal
+			{
+				if (k == 0)
+				{  // first frame is mfft/2 long
+					pTimeTmp = &th->outTimeTmp[mfft / 4][0];
+					for (int i = 0; i < mfft / 2; i++)
 					{
-						pTimeTmp = &th->outTimeTmp[mfft / 4][0];
-						for (int i = 0; i < mfft / 2; i++)
-						{
-							*pout++ = scale * (*pTimeTmp++);
-							*pout++ = -scale * (*pTimeTmp++);
-						}
-					}
-					else
-					{
-						pTimeTmp = &th->outTimeTmp[0][0];
-						for (int i = 0; i < 3 * mfft / 4; i++)
-						{
-							*pout++ = scale * (*pTimeTmp++);
-							*pout++ = -scale * (*pTimeTmp++);
-						}
+						*pout++ = scale * (*pTimeTmp++);
+						*pout++ = scale * (*pTimeTmp++);
 					}
 				}
-				else // normal
-				{
-					if (k == 0)
-					{  // first frame is mfft/2 long
-						pTimeTmp = &th->outTimeTmp[mfft / 4][0];
-						for (int i = 0; i < mfft / 2; i++)
-						{
-							*pout++ = scale * (*pTimeTmp++);
-							*pout++ = scale * (*pTimeTmp++);
-						}
-					}
-					else
-					{  // other frames are 3*mfft/4 long
-						pTimeTmp = &th->outTimeTmp[0][0];
-						for (int i = 0; i < 3 * mfft / 4; i++)
-						{
-							*pout++ = scale * (*pTimeTmp++);
-							*pout++ = scale * (*pTimeTmp++);
-						}
+				else
+				{  // other frames are 3*mfft/4 long
+					pTimeTmp = &th->outTimeTmp[0][0];
+					for (int i = 0; i < 3 * mfft / 4; i++)
+					{
+						*pout++ = scale * (*pTimeTmp++);
+						*pout++ = scale * (*pTimeTmp++);
 					}
 				}
 			}
 		}
-
 	} // while(run)
 //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
 	return 0;
