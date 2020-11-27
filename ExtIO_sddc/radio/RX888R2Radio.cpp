@@ -5,7 +5,7 @@
 #define HIGH_MODE 0x80
 #define LOW_MODE 0x00
 
-#define MODE LOW_MODE
+#define MODE HIGH_MODE
 
 const float RX888R2Radio::vhf_rf_steps[RX888R2Radio::vhf_rf_step_size] = {
     0.0f, 0.9f, 1.4f, 2.7f, 3.7f, 7.7f, 8.7f, 12.5f, 14.4f, 15.7f,
