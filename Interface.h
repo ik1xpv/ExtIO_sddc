@@ -35,6 +35,12 @@ enum FX3Command {
     // WRITE: NONE
 	RESETFX3 = 0xB1,
 
+    // Set Argument, packet Index/Vaule contains the data
+    // WRITE: (Additional Data)
+    // INDEX: Argument_index
+    // VALUE: arguement value
+	SETARGFX3 = 0xB6,
+
     // Start ADC with the specific frequency
     // Optional, if ADC is running with crystal, this is not needed.
     // WRITE: UINT32 -> adc frequency
@@ -52,20 +58,6 @@ enum FX3Command {
     // Stop Tuner
     // WRITE: NONE
 	R82XXSTDBY = 0xB8,
-
-    // Set Argument, packet Index/Vaule contains the data
-    // WRITE: NONE
-    // INDEX: Argument_index
-    // VALUE: arguement value
-	R82XXSETARG = 0xB6,
-
-    // Set DAT-31 Att
-    // WRITE: UINT8
-	DAT31FX3 = 0xB0,
-
-    // Set AD8340 chip vga
-    // WRITE: UINT8
-    AD8340FX3 = 0xBA,
 };
 
 #define OUTXIO0 (1U << 0) 	// ATT_LE
@@ -110,9 +102,28 @@ enum RadioModel {
     RX888r2 = 0x04,
 };
 
-enum R82XXArgument {
-    ATTENUATOR = 1,
-    VGA = 2,
-    SIDEBAND = 3,
-    HARMONIC = 4,
+enum ArgumentList {
+    // Set R8xx lna/mixer gain
+    // value: 0-29
+    R82XX_ATTENUATOR = 1,
+
+    // Set R8xx vga gain
+    // value: 0-15
+    R82XX_VGA = 2,
+
+    // Set R8xx sideband
+    // value: 0/1
+    R82XX_SIDEBAND = 3,
+
+    // Set R8xx harmonic
+    // value: 0/1
+    R82XX_HARMONIC = 4,
+
+    // Set DAT-31 Att
+    // Value: 0-63
+    DAT31_ATT = 10,
+
+    // Set AD8340 chip vga
+    // Value: 0-255
+    AD8340_VGA = 11,
 };

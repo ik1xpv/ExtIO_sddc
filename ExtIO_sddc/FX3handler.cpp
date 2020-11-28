@@ -224,16 +224,15 @@ bool fx3class::Control(FX3Command command, UINT64 data) { // firmware control BB
 }
 
 
-bool fx3class::SetArgument(FX3Command command, UINT16 index, UINT16 value) { // firmware control BBRF
+bool fx3class::SetArgument(UINT16 index, UINT16 value) { // firmware control BBRF
 	long lgt = 1;
 	uint8_t data = 0;
 
-	DbgPrintf("SetArgument Running .%x (%x, %x)\n", command, index, value);
-	fx3dev->ControlEndPt->ReqCode = command;
+	fx3dev->ControlEndPt->ReqCode = SETARGFX3;
 	fx3dev->ControlEndPt->Value = (USHORT)index;
 	fx3dev->ControlEndPt->Index = (USHORT)value;
 	bool r = fx3dev->ControlEndPt->Write((PUCHAR)&data, lgt);
-	DbgPrintf("SetArgument %x .%x (%x, %x)\n", r, command, index, value);
+	DbgPrintf("SetArgument %x .%x (%x, %x)\n", r, SETARGFX3, index, value);
 	if (r == false)
 	{
 		Close();

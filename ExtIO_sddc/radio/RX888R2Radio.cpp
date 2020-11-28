@@ -64,7 +64,7 @@ bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
 
         // high gain, 0db
         uint8_t gain = 75 | 0x80;
-        Fx3->Control(AD8340FX3, gain);
+        Fx3->SetArgument(AD8340_VGA, gain);
         // Enable Tuner reference clock
         uint32_t ref = R828D_FREQ;
         return Fx3->Control(R82XXINIT, ref); // Initialize Tuner
@@ -93,13 +93,13 @@ bool RX888R2Radio::UpdateattRF(int att)
 
         DbgPrintf("UpdateattRF %f \n", this->hf_rf_steps[att]);
 
-        return Fx3->Control(DAT31FX3, d);
+        return Fx3->SetArgument(DAT31_ATT, d);
     }
     else
     {
         uint16_t index = att;
         // this is in VHF mode
-        return Fx3->SetArgument(R82XXSETARG, ATTENUATOR, index);
+        return Fx3->SetArgument(R82XX_ATTENUATOR, index);
     }
 }
 
@@ -156,11 +156,11 @@ bool RX888R2Radio::UpdateGainIF(int gain_index)
 
         DbgPrintf("UpdateGainIF %d \n", gain);
 
-        return Fx3->Control(AD8340FX3, gain);
+        return Fx3->SetArgument(AD8340_VGA, gain);
     }
     else
     {
         // this is in VHF mode
-        return Fx3->SetArgument(R82XXSETARG, VGA, (uint16_t)gain_index);
+        return Fx3->SetArgument(R82XX_VGA, (uint16_t)gain_index);
     }
 }

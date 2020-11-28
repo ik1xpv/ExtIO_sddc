@@ -37,7 +37,7 @@ bool HF103Radio::UpdateattRF(int att)
 
     DbgPrintf("UpdateattRF %f \n", this->steps[att]);
 
-    return Fx3->Control(DAT31FX3, d);
+    return Fx3->SetArgument(DAT31_ATT, d);
 }
 
 int HF103Radio::getRFSteps(const float** steps )

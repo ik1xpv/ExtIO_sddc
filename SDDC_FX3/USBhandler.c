@@ -34,8 +34,8 @@ extern uint16_t  FWconfig;       			    // Firmware config hb.lb
 struct r82xx_priv tuner;
 struct r82xx_config tuner_config;
 
-extern void set_all_gains(struct r82xx_priv *priv, UINT8 gain_index);
-extern void set_vga_gain(struct r82xx_priv *priv, UINT8 gain_index);
+extern int set_all_gains(struct r82xx_priv *priv, UINT8 gain_index);
+extern int set_vga_gain(struct r82xx_priv *priv, UINT8 gain_index);
 extern uint8_t m_gain_index;
 
 
@@ -119,7 +119,6 @@ CyFxSlFifoApplnUSBSetupCB (
         }
     } else if (bType == CY_U3P_USB_VENDOR_RQT) {
 
-    	outxio_t * pdata;
     	/*
    	    uint8_t * pd = (uint8_t *) &glEp0Buffer[0];
     	uint32_t event =( (VENDOR_RQT<<24) | ( bRequest<<16) | (pd[0]<<8) | pd[1] );
@@ -155,38 +154,6 @@ CyFxSlFifoApplnUSBSetupCB (
 							isHandled = CyTrue;
 							break;
 
-						}
-					}
-					break;
-
-			case DAT31FX3:
-					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
-					{
-						pdata = (outxio_t *) &glEp0Buffer[0];
-						switch(HWconfig)
-						{
-							case HF103:
-							hf103_SetAttenuator(pdata->buffer[0]);
-							isHandled = CyTrue;
-							break;
-							case RX888r2:
-								rx888r2_SetAttenuator(pdata->buffer[0]);
-								isHandled = CyTrue;
-								break;
-						}
-					}
-					break;
-
-			case AD8340FX3:
-					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
-					{
-						pdata = (outxio_t *) &glEp0Buffer[0];
-						switch(HWconfig)
-						{
-							case RX888r2:
-								rx888r2_SetGain(pdata->buffer[0]);
-								isHandled = CyTrue;
-								break;
 						}
 					}
 					break;
@@ -289,26 +256,49 @@ CyFxSlFifoApplnUSBSetupCB (
 					}
 					break;
 
-			case R82XXSETARG:
+			case SETARGFX3:
 				{
+					int rc = -1;
 					CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL);
 					switch(wIndex) {
-						case ATTENUATOR:
-							set_all_gains(&tuner, wValue); // R820T2 set att
+						case R82XX_ATTENUATOR:
+							rc = set_all_gains(&tuner, wValue); // R820T2 set att
 							break;
-    					case VGA:
-							set_vga_gain(&tuner, wValue); // R820T2 set vga
+    					case R82XX_VGA:
+							rc = set_vga_gain(&tuner, wValue); // R820T2 set vga
 							break;
-    					case SIDEBAND:
-							r82xx_set_sideband(&tuner, wValue);
+    					case R82XX_SIDEBAND:
+							rc = r82xx_set_sideband(&tuner, wValue);
 							break;
-    					case HARMONIC:
+    					case R82XX_HARMONIC:
+							// todo
 							break;
-						default:
+						case DAT31_ATT:
+							switch(HWconfig)
+							{
+								case HF103:
+									hf103_SetAttenuator(wValue);
+									rc = 0;
+									break;
+								case RX888r2:
+									rx888r2_SetAttenuator(wValue);
+									rc = 0;
+									break;
+							}
+							break;
+						case AD8340_VGA:
+							switch(HWconfig)
+							{
+								case RX888r2:
+									rx888r2_SetGain(wValue);
+									rc = 0;
+									break;
+							}
 							break;
 					}
 					vendorRqtCnt++;
-					isHandled = CyTrue;
+					if (rc == 0)
+						isHandled = CyTrue;
 				}
 				break;
 

@@ -84,7 +84,7 @@ bool BBRF103Radio::UpdateattRF(int att)
     else {
         uint16_t index = att;
         // this is in VHF mode
-        return Fx3->SetArgument(R82XXSETARG, ATTENUATOR, index);
+        return Fx3->SetArgument(R82XX_ATTENUATOR, index);
     }
 }
 
@@ -134,6 +134,6 @@ bool BBRF103Radio::UpdateGainIF(int attIndex)
     }
     else {
         // this is in VHF mode
-        return Fx3->SetArgument(R82XXSETARG, VGA, (uint16_t)attIndex);
+        return Fx3->SetArgument(R82XX_VGA, (uint16_t)attIndex);
     }
 }
