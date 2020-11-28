@@ -341,6 +341,8 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
 			}
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
@@ -358,6 +360,8 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
 			}
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 			break;
