@@ -26,11 +26,7 @@ bool HF103Radio::UpdatemodeRF(rf_mode mode)
     if (mode == VHFMODE)
         return false;
 
-	UINT32 data[2];
-	data[0] = (UINT32)CORRECT(ADC_FREQ);
-	data[1] = 0;
-
-	return Fx3->Control(SI5351A, (UINT8*)&data[0]);
+    return true;
 }
 
 bool HF103Radio::UpdateattRF(int att)
@@ -41,7 +37,7 @@ bool HF103Radio::UpdateattRF(int att)
 
     DbgPrintf("UpdateattRF %f \n", this->steps[att]);
 
-    return Fx3->Control(DAT31FX3, &d);
+    return Fx3->Control(DAT31FX3, d);
 }
 
 int HF103Radio::getRFSteps(const float** steps )

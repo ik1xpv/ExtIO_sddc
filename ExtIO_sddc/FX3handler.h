@@ -38,7 +38,12 @@ public:
 	bool Open(HMODULE hInst);
 	bool IsOn() { return Fx3IsOn; }
 	bool Control(FX3Command command);
-	bool Control(FX3Command command, PUINT8 data);
+	bool Control(FX3Command command, UINT8 data);
+	bool Control(FX3Command command, UINT32 data);
+	bool Control(FX3Command command, UINT64 data);
+	bool SetArgument(FX3Command command, UINT16 index, UINT16 value);
+	bool GetHardwareInfo(UINT32* data);
+
 	bool SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);
 	bool ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);
 	

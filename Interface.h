@@ -2,23 +2,69 @@
 
 // HF103 commands !!!
 enum FX3Command {
+    // Start GPII engine and stream the data from ADC
+    // WRITE: UINT32
 	STARTFX3 = 0xAA,
-	STOPFX3 = 0xAB,
-	TESTFX3 = 0xAC,
-	GPIOFX3 = 0xAD,
-	I2CWFX3 = 0xAE,
-	I2CRFX3 = 0xAF,
-	DAT31FX3 = 0xB0,
-	RESETFX3 = 0xB1,
-	SI5351A = 0xB2,
-	SI5351ATUNE = 0xB3,
-	R820T2INIT = 0xB4,
-	R820T2TUNE = 0xB5,
-	R820T2SETATT = 0xB6,
-	R820T2GETATT = 0xB7,
-	R820T2STDBY = 0xB8,
-    R820T2SETVGA = 0xB9,
 
+    // Stop GPII engine
+    // WRITE: UINT32
+	STOPFX3 = 0xAB,
+
+    // Get the information of device
+    // including model, version
+    // READ: UINT32
+	TESTFX3 = 0xAC,
+
+    // Control GPIOs
+    // WRITE: UINT32
+	GPIOFX3 = 0xAD,
+
+    // Write data to I2c bus
+    // WRITE: DATA
+    // INDEX: reg
+    // VALUE: i2c_addr
+	I2CWFX3 = 0xAE,
+
+    // Read data from I2c bus
+    // READ: DATA
+    // INDEX: reg
+    // VALUE: i2c_addr
+	I2CRFX3 = 0xAF,
+
+    // Reset USB chip and get back to bootloader mode
+    // WRITE: NONE
+	RESETFX3 = 0xB1,
+
+    // Start ADC with the specific frequency
+    // Optional, if ADC is running with crystal, this is not needed.
+    // WRITE: UINT32 -> adc frequency
+	STARTADC = 0xB2,
+
+    // R82XX family Tuner functions
+    // Initialize R82XX tuner
+    // WRITE: NONE
+	R82XXINIT = 0xB4,
+
+    // Tune to a sepcific frequency 
+    // WRITE: UINT64
+	R82XXTUNE = 0xB5,
+
+    // Stop Tuner
+    // WRITE: NONE
+	R82XXSTDBY = 0xB8,
+
+    // Set Argument, packet Index/Vaule contains the data
+    // WRITE: NONE
+    // INDEX: Argument_index
+    // VALUE: arguement value
+	R82XXSETARG = 0xB6,
+
+    // Set DAT-31 Att
+    // WRITE: UINT8
+	DAT31FX3 = 0xB0,
+
+    // Set AD8340 chip vga
+    // WRITE: UINT8
     AD8340FX3 = 0xBA,
 };
 
@@ -62,4 +108,11 @@ enum RadioModel {
     HF103 = 0x02,
     RX888 = 0x03,
     RX888r2 = 0x04,
+};
+
+enum R82XXArgument {
+    ATTENUATOR = 1,
+    VGA = 2,
+    SIDEBAND = 3,
+    HARMONIC = 4,
 };
