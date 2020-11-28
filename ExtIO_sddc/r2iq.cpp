@@ -351,13 +351,14 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			buffer = (char *)this->buffers[this->bufIdx];
 			idx = this->bufIdx;
 
-			int modx = idx / mratio;
-			int moff = idx - modx * mratio;
+			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
+			this->cntr--;
+
+			int modx = this->bufIdx / mratio;
+			int moff = this->bufIdx - modx * mratio;
 			int offset = ((transferSize / 2) / mratio) *moff;
 			pout = (float *)(this->obuffers[modx] + offset);
 
-			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
-			this->cntr--;
 		}
 
 
