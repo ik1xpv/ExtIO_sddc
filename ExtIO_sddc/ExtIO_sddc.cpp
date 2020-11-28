@@ -346,11 +346,8 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			}
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
-	if (LOfreq < 31000000)
+	if ((LOfreq < 31000000) && (rfmode != HFMODE))
 	{
-		switch (rfmode)
-		{
-		case VHFMODE:
 			RadioHandler.UpdatemodeRF(HFMODE);
 			ExtIoSetMGC(giMgcIdxHF);
 			SetAttenuator(giAttIdxHF);
@@ -364,8 +361,6 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
 			}
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
-			break;
-		}
 	}
 
 	LOfreq = r2iqCntrl.UptTuneFrq(LOfreq, glTunefreq); //update LO freq
