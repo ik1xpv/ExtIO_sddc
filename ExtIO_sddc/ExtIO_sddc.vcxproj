@@ -290,6 +290,7 @@
     <ClCompile Include="radio\BBRF103Radio.cpp" />
     <ClCompile Include="radio\HF103Radio.cpp" />
     <ClCompile Include="radio\RadioHardware.cpp" />
+    <ClCompile Include="radio\RX888R2Radio.cpp" />
     <ClCompile Include="radio\RX888Radio.cpp" />
     <ClCompile Include="SplashWindow.cpp" />
     <ClCompile Include="tdialog.cpp" />
