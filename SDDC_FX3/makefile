@@ -14,8 +14,8 @@
 ## installation root directory path.
 ##
 
-FX3FWROOT=../SDK
-FX3PFWROOT=../SDK/u3p_firmware
+FX3FWROOT?=../SDK
+FX3PFWROOT=$(FX3FWROOT)/u3p_firmware
 
 MODULE = SDDC_FX3
 CYCONFOPT=fx3_release
