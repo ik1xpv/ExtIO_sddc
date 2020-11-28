@@ -264,13 +264,13 @@ CyFxSlFifoApplnUSBSetupCB (
 						case R82XX_ATTENUATOR:
 							rc = set_all_gains(&tuner, wValue); // R820T2 set att
 							break;
-    					case R82XX_VGA:
+						case R82XX_VGA:
 							rc = set_vga_gain(&tuner, wValue); // R820T2 set vga
 							break;
-    					case R82XX_SIDEBAND:
+						case R82XX_SIDEBAND:
 							rc = r82xx_set_sideband(&tuner, wValue);
 							break;
-    					case R82XX_HARMONIC:
+						case R82XX_HARMONIC:
 							// todo
 							break;
 						case DAT31_ATT:
