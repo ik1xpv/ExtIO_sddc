@@ -91,9 +91,12 @@ void RadioHandlerClass::AdcSamplesProcess()
 			{
 				if (rd == 1)
 				{
-					if (fc != 0.0f)
 					{
-						shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[idx], EXT_BLOCKLEN, &stateFineTune);
+						std::unique_lock<std::mutex> lk(fc_mutex);
+						if (fc != 0.0f)
+						{
+							shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[idx], EXT_BLOCKLEN, &stateFineTune);
+						}
 					}
 
 					pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx]);
@@ -104,9 +107,12 @@ void RadioHandlerClass::AdcSamplesProcess()
 					odx = (idx + 1) / rd;
 					if ((odx * rd) == (idx + 1))
 					{
-						if (fc != 0.0f)
 						{
-							shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[idx/rd], EXT_BLOCKLEN, &stateFineTune);
+							std::unique_lock<std::mutex> lk(fc_mutex);
+							if (fc != 0.0f)
+							{
+								shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[idx / rd], EXT_BLOCKLEN, &stateFineTune);
+							}
 						}
 						pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx / rd]);
 						SamplesXIF += EXT_BLOCKLEN;
@@ -372,6 +378,7 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 
 	if (this->fc != fc)
 	{
+		std::unique_lock<std::mutex> lk(fc_mutex);
 		stateFineTune = shift_limited_unroll_C_sse_init(fc, 0.0F);
 		this->fc = fc;
 	}
