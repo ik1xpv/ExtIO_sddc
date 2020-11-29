@@ -134,15 +134,6 @@ void setupMultisynth(UINT8 synth, UINT32 divider, UINT8 rDiv)
 	I2cTransfer ( synth , SI5351_ADDR, sizeof(data), data, false);
 }
 
-// Switches off Si5351a output
-// Example: si5351aOutputOff(SI_CLK0_CONTROL);
-// will switch off output CLK0
-//
-void si5351aOutputOff(UINT8 clk)
-{
-	I2cTransferW1 ( clk , SI5351_ADDR, 0x80); // clocks off
-}
-
 void si5351aSetFrequencyA(UINT32 freq)
 {
 	UINT32 frequency;
@@ -158,7 +149,7 @@ void si5351aSetFrequencyA(UINT32 freq)
 
 	if (freq == 0)
 	{
-		I2cTransferW1 ( SI_CLK2_CONTROL, SI5351_ADDR, 0x80); // clk2 off
+		I2cTransferW1 ( SI_CLK0_CONTROL, SI5351_ADDR, 0x80); // clk1 off
 		return;
 	}
 
