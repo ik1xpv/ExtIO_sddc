@@ -11,7 +11,7 @@
 #define GPIO_SHDWN 28
 #define GPIO_DITH 29
 
-void bbrf103_GpioSet(uint16_t mdata)
+void bbrf103_GpioSet(uint32_t mdata)
 {
     CyU3PGpioSetValue (GPIO_ATT_SEL0, (mdata & ATT_SEL0) == ATT_SEL0 ); // ATT_SEL0
     CyU3PGpioSetValue (GPIO_ATT_SEL1, (mdata & ATT_SEL1) == ATT_SEL1 ); // ATT_SEL1

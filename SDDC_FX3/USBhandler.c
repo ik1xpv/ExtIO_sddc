@@ -20,9 +20,9 @@ extern void StartApplication(void);
 extern void StopApplication(void);
 extern CyU3PReturnStatus_t SetUSBdescriptors(void);
 extern void WriteAttenuator(uint8_t value);
-extern CyU3PReturnStatus_t Si5351init(UINT32 freqa, UINT32 freqb);
 
-
+void si5351aSetFrequencyA(UINT32 freq);
+void si5351aSetFrequencyB(UINT32 freq2);
 
 // Declare external data
 extern CyU3PQueue EventAvailable;			  	// Used for threads communications
@@ -34,8 +34,8 @@ extern uint16_t  FWconfig;       			    // Firmware config hb.lb
 struct r82xx_priv tuner;
 struct r82xx_config tuner_config;
 
-extern void set_all_gains(struct r82xx_priv *priv, UINT8 gain_index);
-extern void set_vga_gain(struct r82xx_priv *priv, UINT8 gain_index);
+extern int set_all_gains(struct r82xx_priv *priv, UINT8 gain_index);
+extern int set_vga_gain(struct r82xx_priv *priv, UINT8 gain_index);
 extern uint8_t m_gain_index;
 
 
@@ -119,7 +119,6 @@ CyFxSlFifoApplnUSBSetupCB (
         }
     } else if (bType == CY_U3P_USB_VENDOR_RQT) {
 
-    	outxio_t * pdata;
     	/*
    	    uint8_t * pd = (uint8_t *) &glEp0Buffer[0];
     	uint32_t event =( (VENDOR_RQT<<24) | ( bRequest<<16) | (pd[0]<<8) | pd[1] );
@@ -132,7 +131,7 @@ CyFxSlFifoApplnUSBSetupCB (
 			case GPIOFX3:
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 					{
-						uint16_t mdata = * (uint16_t *) &glEp0Buffer[0];
+						uint32_t mdata = * (uint32_t *) &glEp0Buffer[0];
 						switch(HWconfig)
 						{
 						case BBRF103:
@@ -159,49 +158,15 @@ CyFxSlFifoApplnUSBSetupCB (
 					}
 					break;
 
-			case DAT31FX3:
+			case STARTADC:
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 					{
-						pdata = (outxio_t *) &glEp0Buffer[0];
-						switch(HWconfig)
-						{
-							case HF103:
-							hf103_SetAttenuator(pdata->buffer[0]);
-							isHandled = CyTrue;
-							break;
-							case RX888r2:
-								rx888r2_SetAttenuator(pdata->buffer[0]);
-								isHandled = CyTrue;
-								break;
-						}
-					}
-					break;
-
-			case AD8340FX3:
-					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
-					{
-						pdata = (outxio_t *) &glEp0Buffer[0];
-						switch(HWconfig)
-						{
-							case RX888r2:
-								rx888r2_SetGain(pdata->buffer[0]);
-								isHandled = CyTrue;
-								break;
-						}
-					}
-					break;
-
-			case SI5351A:
-					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
-					{
-						uint32_t fa,fb;
-						fa = *(uint32_t *) &glEp0Buffer[0];
-						fb = *(uint32_t *) &glEp0Buffer[4];
-						Si5351init( fa ,fb );
+						uint32_t freq;
+						freq = *(uint32_t *) &glEp0Buffer[0];
+						si5351aSetFrequencyA(freq);
 						isHandled = CyTrue;
 					}
 					break;
-
 
 			case I2CWFX3:
 					apiRetStatus  = CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL);
@@ -228,52 +193,57 @@ CyFxSlFifoApplnUSBSetupCB (
 					}
 					break;
 
-			case R820T2INIT:
+			case R82XXINIT:
 					{
-						memset(&tuner_config, 0, sizeof(tuner_config));
-						memset(&tuner, 0, sizeof(tuner));
-
-						tuner_config.vco_curr_min = 0xff;
-						tuner_config.vco_curr_max = 0xff;
-						tuner_config.vco_algo = 0;
-
-						// detect the hardware
-						if (HWconfig == RX888 || HWconfig == BBRF103)
+						if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 						{
-							tuner_config.xtal = R820T2_XTAL_FREQ;
-							tuner_config.i2c_addr = R820T_I2C_ADDR;
-							tuner_config.rafael_chip = CHIP_R820T;
+							uint32_t freq;
+							freq = *(uint32_t *) &glEp0Buffer[0];
+
+							memset(&tuner_config, 0, sizeof(tuner_config));
+							memset(&tuner, 0, sizeof(tuner));
+
+							tuner_config.vco_curr_min = 0xff;
+							tuner_config.vco_curr_max = 0xff;
+							tuner_config.vco_algo = 0;
+
+							// detect the hardware
+							if (HWconfig == RX888 || HWconfig == BBRF103)
+							{
+								tuner_config.xtal = freq;
+								tuner_config.i2c_addr = R820T_I2C_ADDR;
+								tuner_config.rafael_chip = CHIP_R820T;
+							}
+							else if (HWconfig == RX888r2)
+							{
+								tuner_config.xtal = freq;
+								tuner_config.i2c_addr = R828D_I2C_ADDR;
+								tuner_config.rafael_chip = CHIP_R828D;
+							}
+							si5351aSetFrequencyB(tuner_config.xtal);
+
+							tuner.cfg = &tuner_config;
+
+							uint32_t bw;
+							r82xx_init(&tuner);
+							r82xx_set_bandwidth(&tuner, 8*1000*1000, 0, &bw, 1);
+
+							vendorRqtCnt++;
+							isHandled = CyTrue;
 						}
-						else if (HWconfig == RX888r2)
-						{
-							tuner_config.xtal = R828D_XTAL_FREQ;
-							tuner_config.i2c_addr = R828D_I2C_ADDR;
-							tuner_config.rafael_chip = CHIP_R828D;
-						}
+					}
+					break;
 
-						tuner.cfg = &tuner_config;
-
-						uint32_t bw;
-						r82xx_init(&tuner);
-						r82xx_set_bandwidth(&tuner, 8*1000*1000, 0, &bw, 1);
-
-						glEp0Buffer[0] = 1;
-						CyU3PUsbSendEP0Data (4, glEp0Buffer);
-						vendorRqtCnt++;
+			case R82XXSTDBY:
+					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
+					{
+						r82xx_standby(&tuner);
+						si5351aSetFrequencyB(0);
 						isHandled = CyTrue;
 					}
 					break;
 
-			case R820T2STDBY:
-					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
-						{
-							r82xx_standby(&tuner);
-							isHandled = CyTrue;
-						}
-					break;
-
-
-			case R820T2TUNE:
+			case R82XXTUNE:
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 					{
 
@@ -286,31 +256,51 @@ CyFxSlFifoApplnUSBSetupCB (
 					}
 					break;
 
-			case R820T2SETATT:
-					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
-					{
-						uint8_t attIdx;
-						attIdx = glEp0Buffer[0];
-						set_all_gains(&tuner, attIdx); // R820T2 set att
-						isHandled = CyTrue;
+			case SETARGFX3:
+				{
+					int rc = -1;
+					CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL);
+					switch(wIndex) {
+						case R82XX_ATTENUATOR:
+							rc = set_all_gains(&tuner, wValue); // R820T2 set att
+							break;
+						case R82XX_VGA:
+							rc = set_vga_gain(&tuner, wValue); // R820T2 set vga
+							break;
+						case R82XX_SIDEBAND:
+							rc = r82xx_set_sideband(&tuner, wValue);
+							break;
+						case R82XX_HARMONIC:
+							// todo
+							break;
+						case DAT31_ATT:
+							switch(HWconfig)
+							{
+								case HF103:
+									hf103_SetAttenuator(wValue);
+									rc = 0;
+									break;
+								case RX888r2:
+									rx888r2_SetAttenuator(wValue);
+									rc = 0;
+									break;
+							}
+							break;
+						case AD8340_VGA:
+							switch(HWconfig)
+							{
+								case RX888r2:
+									rx888r2_SetGain(wValue);
+									rc = 0;
+									break;
+							}
+							break;
 					}
-					break;
-
-			case R820T2SETVGA:
-					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
-					{
-						uint8_t attIdx;
-						attIdx = glEp0Buffer[0];
-						set_vga_gain(&tuner, attIdx); // R820T2 set att
+					vendorRqtCnt++;
+					if (rc == 0)
 						isHandled = CyTrue;
-					}
-					break;
-
-			case R820T2GETATT:
-					glEp0Buffer[0] = m_gain_index;
-					CyU3PUsbSendEP0Data (1, glEp0Buffer);
-					isHandled = CyTrue;
-					break;
+				}
+				break;
 
     	 	case STARTFX3:
     	 		    CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL);

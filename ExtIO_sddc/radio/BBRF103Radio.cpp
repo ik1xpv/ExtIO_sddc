@@ -25,7 +25,8 @@ BBRF103Radio::BBRF103Radio(fx3class* fx3)
 
 void BBRF103Radio::Initialize()
 {
-
+    uint32_t data = (UINT32)CORRECT(ADC_FREQ);
+    Fx3->Control(STARTADC, data);
 }
 
 void BBRF103Radio::getFrequencyRange(int64_t& low, int64_t& high)
@@ -36,35 +37,19 @@ void BBRF103Radio::getFrequencyRange(int64_t& low, int64_t& high)
 
 bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
 {
-    uint32_t data[2];
-    int32_t ret;
-	data[0] = (UINT32)CORRECT(ADC_FREQ);
-
     if (mode == VHFMODE)
     {
         // switch to VHF Attenna
         FX3UnsetGPIO(ATT_SEL0 | ATT_SEL1);
 
-        // Enable Tuner reference clock
-    	data[1] = (int32_t)CORRECT(R820T_FREQ);
-        Fx3->Control(SI5351A, (uint8_t*)&data[0]);
-
         // Initialize Tuner
-        Fx3->Control(R820T2INIT, (uint8_t*)&ret);
-        
-        return (ret == 0);
+        return Fx3->Control(R82XXINIT, (uint32_t)CORRECT(R820T_FREQ));
     }
 
     else if (mode == HFMODE )   // (mode == HFMODE || mode == VLFMODE) no more VLFMODE
     {
-
         // Stop Tuner
-        Fx3->Control(R820T2STDBY, (uint8_t*)&ret);
-
-        // Disable Tuner reference clock
-    	data[1] = 0;
-        Fx3->Control(SI5351A, (uint8_t*)&data[0]);
-
+        Fx3->Control(R82XXSTDBY);
 
         // switch to HF Attenna
         return FX3SetGPIO(ATT_SEL0 | ATT_SEL1);
@@ -94,12 +79,12 @@ bool BBRF103Radio::UpdateattRF(int att)
             gpios &=  ~ATT_SEL0;
             break;
         }
-        return Fx3->Control(GPIOFX3, (UINT8*)&gpios);
+        return Fx3->Control(GPIOFX3, gpios);
     }
     else {
-        int8_t index = att;
+        uint16_t index = att;
         // this is in VHF mode
-        return Fx3->Control(R820T2SETATT, (UINT8*) &index);
+        return Fx3->SetArgument(R82XX_ATTENUATOR, index);
     }
 }
 
@@ -111,7 +96,7 @@ uint64_t BBRF103Radio::TuneLo(uint64_t freq)
     }
     else {
         // this is in VHF mode
-        Fx3->Control(R820T2TUNE, (UINT8*)&freq);
+        Fx3->Control(R82XXTUNE, freq);
         return freq;
     }
 }
@@ -149,7 +134,6 @@ bool BBRF103Radio::UpdateGainIF(int attIndex)
     }
     else {
         // this is in VHF mode
-        Fx3->Control(R820T2SETVGA, (UINT8*)&attIndex);
-        return true;
+        return Fx3->SetArgument(R82XX_VGA, (uint16_t)attIndex);
     }
 }

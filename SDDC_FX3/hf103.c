@@ -11,7 +11,7 @@
 #define GPIO_SHDWN 18
 #define GPIO_DITH 17
 
-void hf103_GpioSet(uint16_t mdata)
+void hf103_GpioSet(uint32_t mdata)
 {
     CyU3PGpioSetValue (GPIO_SHDWN, (mdata & SHDWN) == SHDWN ); 		 // SHDN
     CyU3PGpioSetValue (GPIO_DITH, (mdata & DITH ) == DITH  ); 		 // DITH

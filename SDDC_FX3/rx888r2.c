@@ -14,7 +14,7 @@
 #define GPIO_VHF_EN 35
 #define GPIO_VGA_LE 38
 
-void rx888r2_GpioSet(uint16_t mdata)
+void rx888r2_GpioSet(uint32_t mdata)
 {
     CyU3PGpioSetValue (GPIO_SHDWN, (mdata & SHDWN) == SHDWN ); 		 // SHDN
     CyU3PGpioSetValue (GPIO_DITH, (mdata & DITH ) == DITH  ); 		 // DITH

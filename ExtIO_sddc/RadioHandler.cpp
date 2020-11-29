@@ -215,9 +215,9 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 	{
 		return false;
 	}
-	UINT8 rdata[64];
+	UINT8 rdata[4];
 	RadioModel oldradio = radio;
-	Fx3->Control(TESTFX3, &rdata[0]);
+	Fx3->GetHardwareInfo((UINT32*)rdata);
 
 	radio = HF103;
 	firmware = (rdata[1] << 8) + rdata[2];
