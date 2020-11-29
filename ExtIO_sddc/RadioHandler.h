@@ -69,6 +69,7 @@ private:
     std::condition_variable mutexShowStats;     // unlock to show stats
     RadioHardware* hardware;
 
+    std::mutex fc_mutex;
     float fc;
     shift_limited_unroll_C_sse_data_t stateFineTune;
 };
