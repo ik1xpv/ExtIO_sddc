@@ -1,6 +1,7 @@
 #include "RadioHandler.h"
 
 #define R828D_FREQ (16000000) // R820T reference frequency
+#define R828D_IF_CARRIER (5000000)
 
 #define HIGH_MODE 0x80
 #define LOW_MODE 0x00
@@ -108,13 +109,13 @@ uint64_t RX888R2Radio::TuneLo(uint64_t freq)
     if (!(gpios & VHF_EN))
     {
         // this is in HF mode
-        return ADC_FREQ / 2;
+        return 0;
     }
     else
     {
         // this is in VHF mode
         Fx3->Control(R82XXTUNE, freq);
-        return freq;
+        return freq - R828D_IF_CARRIER;
     }
 }
 

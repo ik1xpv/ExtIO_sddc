@@ -91,6 +91,11 @@ void RadioHandlerClass::AdcSamplesProcess()
 			{
 				if (rd == 1)
 				{
+					if (fc != 0.0f)
+					{
+						shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[idx], EXT_BLOCKLEN, &stateFineTune);
+					}
+
 					pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx]);
 					SamplesXIF += EXT_BLOCKLEN;
 				}
@@ -99,6 +104,10 @@ void RadioHandlerClass::AdcSamplesProcess()
 					odx = (idx + 1) / rd;
 					if ((odx * rd) == (idx + 1))
 					{
+						if (fc != 0.0f)
+						{
+							shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[idx/rd], EXT_BLOCKLEN, &stateFineTune);
+						}
 						pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx / rd]);
 						SamplesXIF += EXT_BLOCKLEN;
 					}
@@ -170,6 +179,7 @@ RadioHandlerClass::RadioHandlerClass() :
 	biasT_VHF(false),
 	modeRF(NOMODE),
 	firmware(0),
+	fc(0.0f),
 	hardware(new DummyRadio())
 {
 	buffers = new PUCHAR[QUEUE_SIZE];
@@ -353,9 +363,20 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 	return true;
 }
 
-uint64_t RadioHandlerClass::TuneLO(uint64_t freq)
+uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 {
-	return hardware->TuneLo(freq);
+	uint64_t actLo = hardware->TuneLo(wishedFreq);
+
+	// we need shift the samples
+	float fc = r2iqCntrl.setFreqOffset(wishedFreq - actLo);
+
+	if (this->fc != fc)
+	{
+		stateFineTune = shift_limited_unroll_C_sse_init(fc, 0.0F);
+		this->fc = fc;
+	}
+
+	return actLo;
 }
 
 bool RadioHandlerClass::UptDither(bool b)
