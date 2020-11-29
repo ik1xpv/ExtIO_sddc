@@ -229,8 +229,8 @@ bool fx3class::SetArgument(UINT16 index, UINT16 value) { // firmware control BBR
 	uint8_t data = 0;
 
 	fx3dev->ControlEndPt->ReqCode = SETARGFX3;
-	fx3dev->ControlEndPt->Value = (USHORT)index;
-	fx3dev->ControlEndPt->Index = (USHORT)value;
+	fx3dev->ControlEndPt->Value = (USHORT)value;
+	fx3dev->ControlEndPt->Index = (USHORT)index;
 	bool r = fx3dev->ControlEndPt->Write((PUCHAR)&data, lgt);
 	DbgPrintf("SetArgument %x .%x (%x, %x)\n", r, SETARGFX3, index, value);
 	if (r == false)
