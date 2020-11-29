@@ -2362,13 +2362,17 @@ UINT8 m_mixergain_index = -1;
 /*
  * Update VGA Gain
  */
-void set_vga_gain(struct r82xx_priv *priv, UINT8 gain_index)
+int set_vga_gain(struct r82xx_priv *priv, UINT8 gain_index)
 {
-  if (m_vgagain_index != gain_index)
-  {
-	  r82xx_write_reg_mask(priv, 0x0c, gain_index, 0x0f);
-      m_vgagain_index = gain_index;
-  }
+	int rc = 0;
+	if (m_vgagain_index != gain_index)
+	{
+		rc = r82xx_write_reg_mask(priv, 0x0c, gain_index, 0x0f);
+		if (rc == 0)
+			m_vgagain_index = gain_index;
+	}
+
+	return rc;
 }
 
 int set_all_gains(struct r82xx_priv *priv, UINT8 gain_index)

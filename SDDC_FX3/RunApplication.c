@@ -23,6 +23,9 @@ extern void ParseCommand(void);
 
 extern CyU3PReturnStatus_t Si5351init();
 
+extern void si5351aSetFrequencyA(UINT32 freq);
+extern void si5351aSetFrequencyB(UINT32 freq2);
+
 // Declare external data
 extern const char* EventName[];
 extern uint32_t glDMACount;
@@ -171,7 +174,10 @@ void ApplicationThread ( uint32_t input)
     if (Status != CY_U3P_SUCCESS)
     	 HWconfig = HF103;
 	else {
-		Si5351init(64000000, 16000000);
+		Status = Si5351init();
+		if (Status != CY_U3P_SUCCESS)
+			DebugPrint(4, "\r\nApplication failed to initialize. Error code: %d.\r\n", Status);
+		si5351aSetFrequencyB(16000000);
 
 		uint8_t identity;
 		if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
@@ -194,7 +200,7 @@ void ApplicationThread ( uint32_t input)
 			HWconfig = 0;
 		}
 
-		Si5351init(64000000, 0);
+		si5351aSetFrequencyB(0);
 	}
 
 	HF103_GpioInit();
