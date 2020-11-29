@@ -70,89 +70,11 @@ int r2iqControlClass::Setdecimate(int dec)
 	return mratio[mdecimation];
 }
 
-void r2iqControlClass::Updt_SR_LO_TUNE(int srate_idx, int64_t* fLO, int64_t* fTune)
+void r2iqControlClass::setFreqOffset(int64_t offset)
 {
-	int64_t LOfreq = *fLO;
-	if (LOfreq < (ADC_FREQ / 2))
-	{
-		Setdecimate(4 - srate_idx); // reverse order 32,16,8,4,2 MHz
-		rf_mode rfm = RadioHandler.GetmodeRF();
-		if (mdecimation == 0) // no decimation
-		{
-			rfm = HFMODE;
-			RadioHandler.UpdatemodeRF(rfm);
-			LOfreq = (int64_t)(((double)ADC_FREQ / 4.0) - 1000000.0);
-			LOfreq = (int)(((double)LOfreq * (adcfixedfreq) / (double)ADC_FREQ)); // frequency correction
-			*fLO = LOfreq;
-			mtunebin = halfFft / 2 -halfFft / 32; // upshift 1 MHz to have LW band in bandpass filter
-		}
-		else if (rfm != VHFMODE)
-		{
-			rfm = HFMODE;
-			RadioHandler.UpdatemodeRF(rfm);
-			LOfreq = (int64_t)(*fTune * (double)ADC_FREQ / (double)adcfixedfreq);
-			// LO lower and upper limits
-			if (LOfreq < 0) LOfreq = 0;
-			if (LOfreq > (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation])
-				LOfreq = (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation];
-			/*
-				int64_t loprecision = (ADC_FREQ / 2) / 256;   // ie 32000000 / 256 = 125 kHz  bin even span
-				LOfreq = LOfreq + loprecision / 2;
-				LOfreq /= loprecision;
-				LOfreq *= loprecision;
-				*/
-			mtunebin = (int)((LOfreq * halfFft) / (ADC_FREQ / 2));// -halfFft / 32;
-			*fLO = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
-		}
-	}
-
-}
-
-int64_t r2iqControlClass::UptTuneFrq(int64_t LOfreq, int64_t tunefreq)
-{
-	int64_t loprecision = 1;
-	if (LOfreq < (ADC_FREQ / 2))
-	{
-		rf_mode rfm = RadioHandler.GetmodeRF();
-
-		if (mdecimation == 0) // no decimation
-		{
-			rfm = HFMODE;
-			RadioHandler.UpdatemodeRF(rfm);
-			LOfreq = (int64_t)((ADC_FREQ / 4.0) - 1000000.0);
-			LOfreq = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
-			loprecision = 1;
-			mtunebin = halfFft / 2 -halfFft / 32; // upshift 1 MHz to have LW band in bandpass filter
-		}
-		else if (rfm != VHFMODE)
-		{
-			rfm = HFMODE;
-			RadioHandler.UpdatemodeRF(rfm);
-			if (LOfreq < 0)  
-				LOfreq = 0;
-			if (LOfreq > (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation])
-				LOfreq = (ADC_FREQ / 2) - (ADC_FREQ / 4) / mratio[mdecimation];
-
-			loprecision = (ADC_FREQ / 2) / 256;   // ie 32000000 / 256 = 125 kHz  bin even span
-			LOfreq = LOfreq + loprecision / 2;
-			LOfreq /= loprecision;
-			LOfreq *= loprecision;
-			mtunebin = (int)((LOfreq * halfFft) / (ADC_FREQ / 2));
-			LOfreq = (int)(((double)LOfreq * adcfixedfreq) / (double)ADC_FREQ); // frequency correction
-		}
-	} else {
-		mtunebin = (int)(((int64_t)R820T2_IF_CARRIER * halfFft) / (ADC_FREQ / 2));
-		loprecision = 1; // 1 Hz
-	}
-	// calculate nearest possible frequency
-	// - emulate receiver which don't have 1 Hz resolution
-	/*
-	LOfreq += loprecision / 2;
-	LOfreq /= loprecision;
-	LOfreq *= loprecision;
-	*/
-
-	return LOfreq;
+	this->mtunebin = int(offset * halfFft * 2 / ADC_FREQ);
+	auto delta = offset - ((int64_t)this->mtunebin * ADC_FREQ / 2 / halfFft);
+	DbgPrintf("tunebin : %lld -> %d delta %lld\n", offset, this->mtunebin, delta);
 }
 
 void r2iqControlClass::TurnOn(int idx) {
@@ -423,7 +345,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
 		fftwf_complex* filter = filterHw[decimate];
 		float scale = this->GainScale * (float)pow(10.0, gdGainCorr_dB / 20.0);
-		int _mtunebin = this->getTunebin();  // Update LO tune is possible during run
+		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 
 		// decimate in frequency plus tuning
 		for (int k = 0; k < fftPerBuf; k++)

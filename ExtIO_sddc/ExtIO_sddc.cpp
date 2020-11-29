@@ -12,7 +12,6 @@
 #include "FX3handler.h"
 #include "uti.h"
 #include "tdialog.h"
-#include "r2iq.h"
 #include "fftw3.h"
 #include "splashwindow.h"
 #include "PScope_uti.h"
@@ -363,15 +362,10 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
 
-	LOfreq = r2iqCntrl.UptTuneFrq(LOfreq, glTunefreq); //update LO freq
+	RadioHandler.TuneLO(LOfreq);
+
 	glLOfreq = LOfreq; 
 
-	if (wishedLO != LOfreq && pfnCallback)  
-	{
-		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
-	}
-   
-	RadioHandler.TuneLO(LOfreq);
 	// 0 The function did complete without errors.
 	// < 0 (a negative number N)
 	//     The specified frequency  is  lower than the minimum that the hardware  is capable to generate.
@@ -414,7 +408,6 @@ long EXTIO_API GetHWLO(void)
 extern "C"
 int64_t EXTIO_API GetHWLO64(void)
 {
-	glLOfreq = r2iqCntrl.UptTuneFrq(glLOfreq, glTunefreq);
 	EnterFunction1((int) glLOfreq);
 	return glLOfreq;
 }
@@ -632,7 +625,7 @@ int  EXTIO_API ExtIoSetSrate(int srate_idx)
 		else
 			giExtSrateIdxHF = srate_idx;
 
-		r2iqCntrl.Updt_SR_LO_TUNE(srate_idx, &glLOfreq, &glTunefreq);
+		//r2iqCntrl.Updt_SR_LO_TUNE(srate_idx, &glLOfreq, &glTunefreq);
 
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);

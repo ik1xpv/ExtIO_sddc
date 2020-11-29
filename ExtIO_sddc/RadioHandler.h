@@ -170,7 +170,7 @@ public:
 
     bool UpdatemodeRF(rf_mode mode) override;
 
-    uint64_t TuneLo(uint64_t freq) override { return ADC_FREQ / 2; }
+    uint64_t TuneLo(uint64_t freq) override { return 0; }
     
     bool UpdateattRF(int attIndex) override;
 

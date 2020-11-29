@@ -353,9 +353,22 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 	return true;
 }
 
-uint64_t RadioHandlerClass::TuneLO(uint64_t freq)
+uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 {
-	return hardware->TuneLo(freq);
+	uint64_t actLo = hardware->TuneLo(wishedFreq);
+
+	if (actLo == wishedFreq)
+	{
+		// no software tune
+		r2iqCntrl.setFreqOffset(0);
+	}
+	else
+	{
+		// we need shift the samples
+		r2iqCntrl.setFreqOffset(wishedFreq - actLo);
+	}
+
+	return actLo;
 }
 
 bool RadioHandlerClass::UptDither(bool b)
