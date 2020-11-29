@@ -1,4 +1,4 @@
-## Copyright Cypress Semiconductor Corporation, 2010-2011,
+## Copyright Cypress Semiconductor Corporation, 2010-2018,
 ## All Rights Reserved
 ## UNPUBLISHED, LICENSED SOFTWARE.
 ##
@@ -15,29 +15,37 @@
 ##
 
 FX3FWROOT?=../SDK
-FX3PFWROOT=$(FX3FWROOT)/u3p_firmware
+CYCONFOPT = fx3_release
+
+#all:compile
+
+include $(FX3FWROOT)/fw_build/fx3_fw/fx3_build_config.mak
 
 MODULE = SDDC_FX3
-CYCONFOPT=fx3_release
 
-all:compile $(MODULE).img
+all:$(MODULE).img
 
-include $(FX3FWROOT)/common/fx3_build_config.mak
+SOURCE= cyfxtx.c		\
+	DebugConsole.c		\
+	i2cmodule.c		\
+	tuner_r82xx.c		\
+	RunApplication.c	\
+	Si5351.c		\
+	StartStopApplication.c	\
+	StartUP.c		\
+	Support.c		\
+	USBdescriptor.c		\
+	USBhandler.c		\
+	hf103.c			\
+	bbrf103.c		\
+	rx888.c			\
+	rx888r2.c
 
-SOURCE +=  DebugConsole.c \
-			i2cmodule.c \
-			tuner_r82xx.c \
-			RunApplication.c \
-			Si5351.c \
-			StartStopApplication.c \
-			StartUP.c \
-			Support.c \
-			USBdescriptor.c \
-			USBhandler.c \
-			hf103.c \
-			bbrf103.c \
-			rx888.c \
-			rx888r2.c
+ifeq ($(CYFXBUILD),arm)
+SOURCE_ASM=cyfx_startup.S
+else
+SOURCE_ASM=cyfx_gcc_startup.S
+endif
 
 C_OBJECT=$(SOURCE:%.c=./%.o)
 A_OBJECT=$(SOURCE_ASM:%.S=./%.o)
@@ -47,25 +55,32 @@ EXES = $(MODULE).$(EXEEXT)
 $(MODULE).$(EXEEXT): $(A_OBJECT) $(C_OBJECT)
 	$(LINK)
 
+cyfxtx.c:
+	cp $(FX3FWROOT)/fw_build/fx3_fw/cyfxtx.c .
+
+cyfx_startup.S:
+	cp $(FX3FWROOT)/fw_build/fx3_fw/cyfx_startup.S .
+
+cyfx_gcc_startup.S:
+	cp $(FX3FWROOT)/fw_build/fx3_fw/cyfx_gcc_startup.S .
+
 $(C_OBJECT) : %.o : %.c
 	$(COMPILE)
 
 $(A_OBJECT) : %.o : %.S
 	$(ASSEMBLE)
 
-./elf2img : $(FX3FWROOT)/util/elf2img.c
-	gcc -o elf2img $<
-
 clean:
-	rm -f ./$(MODULE).$(EXEEXT)
-	rm -f ./elf2img
 	rm -f ./$(MODULE).img
+	rm -f ./$(MODULE).$(EXEEXT)
 	rm -f ./$(MODULE).map
 	rm -f ./*.o
+	rm -f cyfxtx.c cyfx_startup.S cyfx_gcc_startup.S
+
 
 compile: $(C_OBJECT) $(A_OBJECT) $(EXES)
 
-$(MODULE).img : $(MODULE).$(EXEEXT) ./elf2img
-	./elf2img -i $< -o $@
+$(MODULE).img: $(EXES)
+	$(FX3FWROOT)/util/elf2img/elf2img -i $< -o $@ -v
 
 #[]#
