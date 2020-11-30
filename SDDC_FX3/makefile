@@ -66,7 +66,6 @@ clean:
 	rm -f ./$(MODULE).$(EXEEXT)
 	rm -f ./$(MODULE).map
 	rm -f ./*.o
-	rm -f cyfxtx.c cyfx_startup.S cyfx_gcc_startup.S
 
 
 compile: $(C_OBJECT) $(A_OBJECT) $(EXES)
