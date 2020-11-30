@@ -10,7 +10,6 @@
 #include <math.h>
 #include <stdint.h>
 #include "FX3handler.h"
-#include "pf_mixer.h"
 
 class RadioHardware;
 
@@ -72,9 +71,6 @@ private:
 
     std::condition_variable mutexShowStats;     // unlock to show stats
     RadioHardware* hardware;
-
-    float fc;
-    shift_limited_unroll_C_sse_data_t stateFineTune;
 };
 
 extern class RadioHandlerClass RadioHandler;
@@ -178,7 +174,7 @@ public:
 
     bool UpdatemodeRF(rf_mode mode) override;
 
-    uint64_t TuneLo(uint64_t freq) override { return 0; }
+    uint64_t TuneLo(uint64_t freq) override { return ADC_FREQ / 2; }
     
     bool UpdateattRF(int attIndex) override;
 

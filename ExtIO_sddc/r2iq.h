@@ -19,9 +19,10 @@ public:
     ~r2iqControlClass();
 
     int getRatio()  {return mratio [mdecimation];}
-
-    float setFreqOffset(int64_t freq);
+    int getTunebin() {return mtunebin;}
     void updateRand(bool v) {this->randADC = v; }
+    int64_t UptTuneFrq(int64_t freq, int64_t tunefreq);  // Update tunebin and return normalized LO frequency.
+    void Updt_SR_LO_TUNE(int srate_idx, int64_t* oldLO, int64_t* oldTune);
 
     void Init(int downsample, float gain, uint8_t** buffers, float** obuffers);
     void TurnOn(int idx);

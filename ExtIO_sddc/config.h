@@ -57,6 +57,8 @@ inline void null_func(const char *format, ...) { }
 #define FREQCORRECTION (0.0)   // Default xtal frequency correction in ppm
 #define GAIN_ADJ (0.0)          // default gain factor in DB
 
+#define R820T2_IF_CARRIER (5000000)
+
 #define FFTN_R_ADC (2048)       // FFTN used for ADC real stream DDC
 
 // GAINFACTORS to be adjusted with lab reference source measured with HDSDR Smeter rms mode  
