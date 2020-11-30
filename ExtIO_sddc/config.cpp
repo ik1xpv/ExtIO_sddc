@@ -1,8 +1,6 @@
 #include "license.txt" 
 #include "config.h"
 
-const char* radioname[] = { "NORADIO","BBRF103","HF103", "RX888", "RX888r2" };
-
 int Xfreq = 10000;
 char strversion[] = "ExtIO_SDDC.dll v1.01";
 double gdFreqCorr_ppm = FREQCORRECTION;

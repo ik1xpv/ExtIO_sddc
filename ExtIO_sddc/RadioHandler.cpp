@@ -223,6 +223,11 @@ RadioHandlerClass::~RadioHandlerClass()
 	delete[] contexts;
 }
 
+const char *RadioHandlerClass::getName()
+{
+	return hardware->getName();
+}
+
 bool RadioHandlerClass::Init(HMODULE hInst)
 {
 	int r = -1;
@@ -232,53 +237,38 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 		return false;
 	}
 	UINT8 rdata[4];
-	RadioModel oldradio = radio;
 	Fx3->GetHardwareInfo((UINT32*)rdata);
 
-	radio = HF103;
+	radio = (RadioModel)rdata[0];
 	firmware = (rdata[1] << 8) + rdata[2];
 
 	delete hardware; // delete dummy instance
-	switch (rdata[0])
+	switch (radio)
 	{
 	case HF103:
 		hardware = new HF103Radio(Fx3);
-		radio = HF103;
 		break;
 
 	case BBRF103:
 		hardware = new BBRF103Radio(Fx3);
-		radio = BBRF103;
 		break;
 
 	case RX888:
 		hardware = new RX888Radio(Fx3);
-		radio = RX888;
 		break;
 
 	case RX888r2:
 		hardware = new RX888R2Radio(Fx3);
-		radio = RX888r2;
 		break;
 
 	default:
 		hardware = new DummyRadio();
-		radio = NORADIO;
 		DbgPrintf("WARNING no SDR connected\n");
 		break;
 	}
 
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
 	hardware->Initialize();
-
-#ifdef _DEBUG
-	if (oldradio != radio)
-	{
-		char buffer[128];
-		sprintf(buffer, "%s\tnow connected\r\n%s\tprevious radio", radioname[radio], radioname[oldradio]);
-		MessageBox(NULL, buffer, "WARNING settings changed", MB_OK | MB_ICONINFORMATION);
-	}
-#endif
 
 	return true;
 }

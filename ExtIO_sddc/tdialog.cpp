@@ -270,7 +270,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
-				if (radio == HF103)
+				if (RadioHandler.getModel() == HF103)
 					{
 						ShowWindow(hWnd, SW_HIDE);
 						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Stop);

@@ -40,6 +40,9 @@ public:
     bool GetADCsamples() { return  samplesADCflag; }
     UINT16 GetFirmware() { return firmware; }
 
+    const char* getName();
+    RadioModel getModel() { return radio; }
+
     bool GetBiasT_HF() { return biasT_HF; }
     void UpdBiasT_HF(bool flag);
     bool GetBiasT_VHF() { return biasT_VHF; }

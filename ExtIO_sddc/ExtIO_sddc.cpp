@@ -54,7 +54,7 @@ SplashWindow  splashW;
 
 void ADCFrequencyCorrection()
 {
-	switch (radio)
+	switch (RadioHandler.getModel())
 	{
 	case HF103:
 		adcfixedfreq = (double)ADC_FREQ * (1.0 + (gdFreqCorr_ppm * 0.000001));
@@ -208,9 +208,9 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
 		uint8_t hb, lb;
 		hb = fw >> 8;
 		lb = (uint8_t) fw;
-		sprintf(ebuffer, "%s v%0.2f  |  FX3 v%d.%02d  |  %s ",SWNAME, VERSION ,hb,lb, radioname[radio] );
+		sprintf(ebuffer, "%s v%0.2f  |  FX3 v%d.%02d  |  %s ",SWNAME, VERSION ,hb,lb, RadioHandler.getName() );
 		SetWindowText(h_dialog, ebuffer);
-		if (radio == HF103)
+		if (RadioHandler.getModel() == HF103)
 			SetWindowText(GetDlgItem(h_dialog, IDC_RESTART), "Restart");
 		else
 			SetWindowText(GetDlgItem(h_dialog, IDC_RESTART), "Set");
@@ -321,7 +321,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	const int64_t wishedLO = LOfreq;
 	int64_t ret = 0;
 
-	if (radio == HF103) // HF frequency limits
+	if (RadioHandler.getModel() == HF103) // HF frequency limits
 	{
 		if (glTunefreq > HF_HIGH) glTunefreq = HF_HIGH;
 		if (LOfreq > HF_HIGH - 1000000) LOfreq = (HF_HIGH) - 1000000;  
@@ -646,7 +646,7 @@ int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
 	switch (idx)
 	{
 	case 0: strcpy(description, "Identifier");	snprintf(value, 1024, "%s", SETTINGS_IDENTIFIER);	return 0;
-	case 1:	strcpy(description, "RadioHWtype");	snprintf(value, 1024, "%d", radio);			return 0;
+	case 1:	strcpy(description, "RadioHWtype");	snprintf(value, 1024, "%d", RadioHandler.getModel());			return 0;
 	case 2:	strcpy(description, "HF_SampleRateIdx");	snprintf(value, 1024, "%d", giExtSrateIdxHF);			return 0;
 	case 3:	strcpy(description, "HF_AttenuationIdx");	snprintf(value, 1024, "%d", giAttIdxHF);			return 0;
 	case 4:	strcpy(description, "HF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxHF);			return 0;
@@ -689,11 +689,6 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		// settings are version specific ! 
 		break;
 	case 1:
-		tempInt = atoi(value);
-		if ((tempInt >= BBRF103 ) && (tempInt <= RX888))
-		{
-			radio = (RadioModel)(tempInt);
-		}
 		break;
 	case 2:
 		tempInt = atoi(value);
