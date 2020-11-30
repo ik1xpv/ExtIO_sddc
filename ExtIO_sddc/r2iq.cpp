@@ -376,18 +376,10 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			{
 				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 				{
-					if ((_mtunebin + m) < mfft)
-					{
-						th->inFreqTmp[m][0] = (th->ADCinFreq[_mtunebin + m][0] * filter[m][0] +
-							th->ADCinFreq[_mtunebin + m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] = (th->ADCinFreq[_mtunebin + m][1] * filter[m][0] -
-							th->ADCinFreq[_mtunebin + m][0] * filter[m][1]);
-					}
-					else
-					{
-						th->inFreqTmp[m][0] = 0.0;
-						th->inFreqTmp[m][1] = 0.0;
-					}
+					th->inFreqTmp[m][0] = (th->ADCinFreq[_mtunebin + m][0] * filter[m][0] +
+						th->ADCinFreq[_mtunebin + m][1] * filter[m][1]);
+					th->inFreqTmp[m][1] = (th->ADCinFreq[_mtunebin + m][1] * filter[m][0] -
+						th->ADCinFreq[_mtunebin + m][0] * filter[m][1]);
 				}
 
 				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array

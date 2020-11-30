@@ -128,7 +128,7 @@
       <PreprocessorDefinitions>TRACE;WIN32;_DEBUG;EXTIORX103_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\pffft;$(ProjectDir);$(ProjectDir)\radio;$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\radio;$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -167,7 +167,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;EXTIORX103_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\pffft;$(ProjectDir);$(ProjectDir)\radio;$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\radio;$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -196,7 +196,7 @@
       <PreprocessorDefinitions>TRACE;WIN32;NDEBUG;EXTIORX103_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\pffft;$(ProjectDir);$(ProjectDir)\radio;$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\radio;$(ProjectDir)\FFTW3;$(ProjectDir)\CyAPI;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -280,7 +280,6 @@
     <ClInclude Include="uti.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pffft\pf_mixer.cpp" />
     <ClCompile Include="RadioHandler.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="CyAPI\CyAPI.cpp" />
