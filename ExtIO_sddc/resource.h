@@ -77,7 +77,7 @@
 #define IDC_STATIC                      -1
 
 
-#ifndef _DEBUG  // define in processor setup resource !
+#ifdef NDEBUG  // define in processor setup resource !
  #define DIALOGH 95
 #else
  #define DIALOGH 170

@@ -72,11 +72,10 @@ int r2iqControlClass::Setdecimate(int dec)
 
 float r2iqControlClass::setFreqOffset(float offset)
 {
-	this->mtunebin = int(offset * halfFft / mratio[mdecimation] + 0.5);
-	float delta = offset - ((float)this->mtunebin * mratio[mdecimation] / halfFft);
-	float ret = -delta / mratio[mdecimation];
-	DbgPrintf("tunebin : %f -> %d delta %f (%f)\n", offset, this->mtunebin, delta, ret);
-
+	this->mtunebin = int(offset * halfFft/4  +0.5) * 4;  // mtunebin step 4 bin  ? 
+	float delta = offset - ((float)this->mtunebin  / halfFft);
+	float ret = 0.0F -delta / mratio[mdecimation];
+	DbgPrintf("LOfreq %d mtunebin %d delta %f (%f)\n", (int) (offset * ADC_FREQ/2), this->mtunebin, delta, ret);
 	return ret;
 }
 
@@ -385,11 +384,11 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 					}
 					else
 					{
-						th->inFreqTmp[m][0] = 0.0;
-						th->inFreqTmp[m][1] = 0.0;
+						th->inFreqTmp[m][0] = 0;
+						th->inFreqTmp[m][1] = 0;
 					}
-				}
 
+				}
 				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 				{
 
@@ -398,16 +397,17 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 					if (mm >= 0) // corrects off limits
 					{
 						th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
-							th->ADCinFreq[mm][1] * filter[fm][1]);
+							th->ADCinFreq[mm ][1] * filter[fm][1]);
 
 						th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
-							th->ADCinFreq[mm][0] * filter[fm][1]);
+							th->ADCinFreq[mm ][0] * filter[fm][1]);
 					}
 					else
 					{
 						th->inFreqTmp[mfft / 2 + m][0] = 0;
 						th->inFreqTmp[mfft / 2 + m][1] = 0;
 					}
+
 				}
 			}
 
