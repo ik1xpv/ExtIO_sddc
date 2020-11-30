@@ -362,9 +362,12 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
 
-	RadioHandler.TuneLO(LOfreq);
-
-	glLOfreq = LOfreq; 
+	LOfreq = RadioHandler.TuneLO(LOfreq);
+	if (wishedLO != LOfreq && pfnCallback)
+	{
+			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
+	}
+	glLOfreq = LOfreq;
 
 	// 0 The function did complete without errors.
 	// < 0 (a negative number N)
