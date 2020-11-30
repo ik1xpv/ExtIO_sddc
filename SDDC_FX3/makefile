@@ -55,15 +55,6 @@ EXES = $(MODULE).$(EXEEXT)
 $(MODULE).$(EXEEXT): $(A_OBJECT) $(C_OBJECT)
 	$(LINK)
 
-cyfxtx.c:
-	cp $(FX3FWROOT)/fw_build/fx3_fw/cyfxtx.c .
-
-cyfx_startup.S:
-	cp $(FX3FWROOT)/fw_build/fx3_fw/cyfx_startup.S .
-
-cyfx_gcc_startup.S:
-	cp $(FX3FWROOT)/fw_build/fx3_fw/cyfx_gcc_startup.S .
-
 $(C_OBJECT) : %.o : %.c
 	$(COMPILE)
 
