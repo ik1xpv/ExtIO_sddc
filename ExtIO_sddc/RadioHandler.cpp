@@ -392,7 +392,7 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 	actLo = hardware->TuneLo(wishedFreq);
 
 	// we need shift the samples
-	float fc = r2iqCntrl.setFreqOffset(wishedFreq - actLo);
+	float fc = r2iqCntrl.setFreqOffset((wishedFreq - actLo) / (ADC_FREQ / 2.0f));
 
 	if (this->fc != fc)
 	{
