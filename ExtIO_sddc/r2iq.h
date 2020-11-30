@@ -20,7 +20,7 @@ public:
 
     int getRatio()  {return mratio [mdecimation];}
 
-    float setFreqOffset(float offset);
+    float setFreqOffset(int64_t freq);
     void updateRand(bool v) {this->randADC = v; }
 
     void Init(int downsample, float gain, uint8_t** buffers, float** obuffers);

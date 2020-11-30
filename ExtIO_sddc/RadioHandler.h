@@ -48,9 +48,6 @@ public:
     bool GetBiasT_VHF() { return biasT_VHF; }
     void UpdBiasT_VHF(bool flag);
 
-    bool GetFine_LO() { return fine_LO; }
-    void UpdFine_LO(bool flag) {fine_LO = flag; if (!flag) fc = 0.0f; }
-
     uint64_t TuneLO(uint64_t lo);
 
 #ifdef TRACE
@@ -70,9 +67,8 @@ private:
     bool traceflag;
     bool samplesADCflag;
     UINT16 firmware;
-    rf_mode modeRF;
+    rf_mode modeRF;  
     RadioModel radio;
-    bool fine_LO;
 
     std::condition_variable mutexShowStats;     // unlock to show stats
     RadioHardware* hardware;

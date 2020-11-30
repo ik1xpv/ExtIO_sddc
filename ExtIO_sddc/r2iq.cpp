@@ -70,12 +70,12 @@ int r2iqControlClass::Setdecimate(int dec)
 	return mratio[mdecimation];
 }
 
-float r2iqControlClass::setFreqOffset(float offset)
+float r2iqControlClass::setFreqOffset(int64_t offset)
 {
-	this->mtunebin = int(offset * halfFft / mratio[mdecimation] + 0.5);
-	float delta = offset - ((float)this->mtunebin * mratio[mdecimation] / halfFft);
-	float ret = -delta / mratio[mdecimation];
-	DbgPrintf("tunebin : %f -> %d delta %f (%f)\n", offset, this->mtunebin, delta, ret);
+	this->mtunebin = int(offset * halfFft * 2 / ADC_FREQ / mratio[mdecimation]);
+	auto delta = offset - ((int64_t)this->mtunebin * ADC_FREQ * mratio[mdecimation] / 2 / halfFft);
+	float ret = -delta / (ADC_FREQ / 2.0f / mratio[mdecimation]);
+	DbgPrintf("tunebin : %lld -> %d delta %lld (%f)\n", offset, this->mtunebin, delta, ret);
 
 	return ret;
 }

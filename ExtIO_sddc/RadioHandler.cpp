@@ -246,7 +246,7 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 	switch (radio)
 	{
 	case HF103:
-		hardware = new HF103Radio(Fx3);
+		hardware = new HF103Radio(Fx3);	
 		break;
 
 	case BBRF103:
@@ -361,28 +361,10 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 
 uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 {
-	uint64_t actLo;
-
-	// pick the prefered LO
-
-	if (!fine_LO)
-	{
-		// based on freq to pick the right LO
-		if (wishedFreq < ADC_FREQ / 32)
-		{
-			wishedFreq = 0;
-		}
-		else if (wishedFreq < ADC_FREQ / 2)
-		{
-			wishedFreq /= ADC_FREQ / 2 - ADC_FREQ / 4;
-			wishedFreq *= ADC_FREQ / 2 - ADC_FREQ / 4;
-		}
-	}
-
-	actLo = hardware->TuneLo(wishedFreq);
+	uint64_t actLo = hardware->TuneLo(wishedFreq);
 
 	// we need shift the samples
-	float fc = r2iqCntrl.setFreqOffset((wishedFreq - actLo) / (ADC_FREQ / 2.0f));
+	float fc = r2iqCntrl.setFreqOffset(wishedFreq - actLo);
 
 	if (this->fc != fc)
 	{
@@ -391,7 +373,7 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 		this->fc = fc;
 	}
 
-	return wishedFreq;
+	return actLo;
 }
 
 bool RadioHandlerClass::UptDither(bool b)

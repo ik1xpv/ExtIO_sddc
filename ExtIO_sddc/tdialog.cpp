@@ -161,7 +161,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			break;
-		case IDC_BIAS_HF:
+		case IDC_BIAS_HF:   
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
@@ -174,14 +174,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case BN_CLICKED:
 				RadioHandler.UpdBiasT_VHF(!RadioHandler.GetBiasT_VHF());
-				break;
-			}
-			break;
-		case IDC_FINE_LO:
-			switch (HIWORD(wParam))
-			{
-			case BN_CLICKED:
-				RadioHandler.UpdFine_LO(!RadioHandler.GetFine_LO());
 				break;
 			}
 			break;
