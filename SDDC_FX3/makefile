@@ -61,16 +61,22 @@ $(C_OBJECT) : %.o : %.c
 $(A_OBJECT) : %.o : %.S
 	$(ASSEMBLE)
 
+ELF2IMG = ./elf2img
+
 clean:
-	rm -f ./$(MODULE).img
 	rm -f ./$(MODULE).$(EXEEXT)
+	rm -f $(ELF2IMG)
+	rm -f ./$(MODULE).img
 	rm -f ./$(MODULE).map
 	rm -f ./*.o
 
 
 compile: $(C_OBJECT) $(A_OBJECT) $(EXES)
 
-$(MODULE).img: $(EXES)
-	$(FX3FWROOT)/util/elf2img/elf2img -i $< -o $@ -v
+$(ELF2IMG) : $(FX3FWROOT)/util/elf2img/elf2img.c
+	gcc -O -Wall -o $@ $<
+
+$(MODULE).img: $(EXES) $(ELF2IMG)
+	$(ELF2IMG) -i $< -o $@ -v
 
 #[]#
