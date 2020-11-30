@@ -100,11 +100,8 @@ extern bool saveADCsamplesflag;
 
 #define CORRECT(FREQ) ((double) FREQ * (1.0 + (gdFreqCorr_ppm * 0.000001)))
 
-extern const char* radioname[];
-
 extern bool run;
 const int transferSize = 131072;
-extern RadioModel radio;
 
 #endif // _CONFIG_H_
 

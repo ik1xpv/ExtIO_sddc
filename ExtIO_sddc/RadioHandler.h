@@ -40,6 +40,9 @@ public:
     bool GetADCsamples() { return  samplesADCflag; }
     UINT16 GetFirmware() { return firmware; }
 
+    const char* getName();
+    RadioModel getModel() { return radio; }
+
     bool GetBiasT_HF() { return biasT_HF; }
     void UpdBiasT_HF(bool flag);
     bool GetBiasT_VHF() { return biasT_VHF; }
@@ -65,6 +68,7 @@ private:
     bool samplesADCflag;
     UINT16 firmware;
     rf_mode modeRF;  
+    RadioModel radio;
 
     std::condition_variable mutexShowStats;     // unlock to show stats
     RadioHardware* hardware;
