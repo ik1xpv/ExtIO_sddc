@@ -72,9 +72,9 @@ int r2iqControlClass::Setdecimate(int dec)
 
 float r2iqControlClass::setFreqOffset(float offset)
 {
-	this->mtunebin = int(offset * halfFft/4  +0.5) * 4;  // mtunebin step 4 bin  ? 
+	this->mtunebin = int(offset * halfFft/4  + 0.5 ) * 4;  // mtunebin step 4 bin  ? 
 	float delta = offset - ((float)this->mtunebin  / halfFft);
-	float ret = 0.0F -delta / mratio[mdecimation];
+	float ret = - delta * mratio[mdecimation]; // ret increases with higher decimation
 	DbgPrintf("LOfreq %d mtunebin %d delta %f (%f)\n", (int) (offset * ADC_FREQ/2), this->mtunebin, delta, ret);
 	return ret;
 }
