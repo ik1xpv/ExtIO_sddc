@@ -244,7 +244,6 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 	//    DbgPrintf((char *) "r2iqThreadf idx %d pthread_self is %u\n",(int)th->t, pthread_self());
 	//    DbgPrintf((char *) "decimate idx %d  %d  %d \n",r2iqCntrl->getDecidx(),r2iqCntrl->getFftN(),r2iqCntrl->getRatio());
 
-
 	char *buffer;
 	int lastdecimate = -1;
 
