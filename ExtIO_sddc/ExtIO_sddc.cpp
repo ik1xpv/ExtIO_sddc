@@ -31,7 +31,6 @@ int64_t	glLOfreq = 2000000;
 int64_t	glTunefreq = 999000;	// Turin MW broadcast !
 
 bool	gbInitHW = false;
-bool    LWMode = false;
 int		giAttIdxHF = 0;
 int		giAttIdxVHF = 0;
 
