@@ -75,7 +75,7 @@ float r2iqControlClass::setFreqOffset(float offset)
 	this->mtunebin = int(offset * halfFft/4  + 0.5 ) * 4;  // mtunebin step 4 bin  ? 
 	float delta = offset - ((float)this->mtunebin  / halfFft);
 	float ret = - delta * mratio[mdecimation]; // ret increases with higher decimation
-	DbgPrintf("LOfreq %d mtunebin %d delta %f (%f)\n", (int) (offset * ADC_FREQ/2), this->mtunebin, delta, ret);
+	DbgPrintf("offset %f mtunebin %d delta %f (%f)\n", offset, this->mtunebin, delta, ret);
 	return ret;
 }
 
@@ -397,10 +397,10 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 					if (mm >= 0) // corrects off limits
 					{
 						th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
-							th->ADCinFreq[mm ][1] * filter[fm][1]);
+							th->ADCinFreq[mm][1] * filter[fm][1]);
 
 						th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
-							th->ADCinFreq[mm ][0] * filter[fm][1]);
+							th->ADCinFreq[mm][0] * filter[fm][1]);
 					}
 					else
 					{
