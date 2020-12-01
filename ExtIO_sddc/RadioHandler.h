@@ -147,7 +147,7 @@ public:
 class RX888R2Radio : public RadioHardware {
 public:
     RX888R2Radio(fx3class* fx3);
-    const char* getName() override { return "RX888r2"; }
+    const char* getName() override { return "RX888 mkII"; }
     float getGain() override { return RX888_GAINFACTOR; }
     void getFrequencyRange(int64_t& low, int64_t& high) override;
     void Initialize() override;
