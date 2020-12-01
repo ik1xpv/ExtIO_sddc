@@ -7,11 +7,6 @@
 
 #include "Application.h"
 
-CyU3PReturnStatus_t Si5351init(UINT32 freqa, UINT32 freqb);
-
-void si5351aSetFrequency(UINT32 freq, UINT32 freq2);
-void si5351aOutputOff(UINT8 clk);
-
 #define SI_CLK0_CONTROL		16			// Registers
 #define SI_CLK1_CONTROL		17
 #define SI_CLK2_CONTROL		18
@@ -55,17 +50,25 @@ void si5351aOutputOff(UINT8 clk);
 #define SI5351_PLLB_SOURCE              (1<<3)
 #define SI5351_PLLA_SOURCE              (1<<2)
 
-CyU3PReturnStatus_t Si5351init(UINT32 freqa, UINT32 freqb)
+CyU3PReturnStatus_t Si5351init()
 {
-	// DebugPrint(4, "\r\n\r\n -------------- Si5351init()");
-	CyU3PReturnStatus_t status = CY_U3P_SUCCESS;
-	status += I2cTransferW1 ( SI5351_CRYSTAL_LOAD , SI5351_ADDR, 0x52);
-	status += I2cTransferW1 (     SI_CLK0_CONTROL , SI5351_ADDR, 0x80); // clocks off
-	status += I2cTransferW1 (     SI_CLK1_CONTROL , SI5351_ADDR, 0x80); // clocks off
-	status += I2cTransferW1 (     SI_CLK2_CONTROL , SI5351_ADDR, 0x80); // clocks off
+	CyU3PReturnStatus_t status;
+	status = I2cTransferW1 ( SI5351_CRYSTAL_LOAD , SI5351_ADDR, 0x52);
+	if (status != CY_U3P_SUCCESS)
+		return status;
 
-	si5351aSetFrequency(freqa, freqb);
-	DebugPrint(4, "\r\nSi5351init fa %d fb %d", freqa, freqb );
+	status = I2cTransferW1 (     SI_CLK0_CONTROL , SI5351_ADDR, 0x80); // clocks off
+	if (status != CY_U3P_SUCCESS)
+		return status;
+
+	status = I2cTransferW1 (     SI_CLK1_CONTROL , SI5351_ADDR, 0x80); // clocks off
+	if (status != CY_U3P_SUCCESS)
+		return status;
+
+	status = I2cTransferW1 (     SI_CLK2_CONTROL , SI5351_ADDR, 0x80); // clocks off
+	if (status != CY_U3P_SUCCESS)
+		return status;
+
 	return status;
 }
 
@@ -131,16 +134,7 @@ void setupMultisynth(UINT8 synth, UINT32 divider, UINT8 rDiv)
 	I2cTransfer ( synth , SI5351_ADDR, sizeof(data), data, false);
 }
 
-// Switches off Si5351a output
-// Example: si5351aOutputOff(SI_CLK0_CONTROL);
-// will switch off output CLK0
-//
-void si5351aOutputOff(UINT8 clk)
-{
-	I2cTransferW1 ( clk , SI5351_ADDR, 0x80); // clocks off
-}
-
-void si5351aSetFrequency(UINT32 freq, UINT32 freq2)
+void si5351aSetFrequencyA(UINT32 freq)
 {
 	UINT32 frequency;
 	UINT32 pllFreq;
@@ -152,6 +146,12 @@ void si5351aSetFrequency(UINT32 freq, UINT32 freq2)
 	UINT32 denom;
 	UINT32 divider;
 	UINT32 rdiv;
+
+	if (freq == 0)
+	{
+		I2cTransferW1 ( SI_CLK0_CONTROL, SI5351_ADDR, 0x80); // clk1 off
+		return;
+	}
 
 	rdiv = (UINT32)SI_R_DIV_1;
 
@@ -195,56 +195,69 @@ void si5351aSetFrequency(UINT32 freq, UINT32 freq2)
 	// and set the MultiSynth0 input to be PLL A
 	I2cTransferW1 (SI_CLK0_CONTROL, SI5351_ADDR,  0x4F | SI_CLK_SRC_PLL_A);
 
-	if (freq2 > 0)
-	{
-		// calculate clk2
-		frequency = freq2 ;
-		rdiv = SI_R_DIV_1;
-		xtalFreq = SI5351_FREQ;
-		while (frequency <= 1000000)
-		{
-			frequency = frequency * 2;
-			rdiv += SI_R_DIV_2;
-		}
-#ifdef _PLLDEBUG_
-		DbgPrintf((char *) "\nCLK2 frequency %d \n", frequency);
-#endif
-		divider = 900000000UL / frequency;// Calculate the division ratio. 900,000,000 is the maximum internal
-										  // PLL frequency: 900MHz
-		if (divider % 2) divider--;		// Ensure an even integer division ratio
+}
 
-		pllFreq = divider * frequency;	// Calculate the pllFrequency: the divider * desired output frequency
-#ifdef _PLLDEBUG_
-		DbgPrintf((char *) "pllB Freq  %d \n", pllFreq);
-#endif
-		mult = pllFreq / xtalFreq;		// Determine the multiplier to get to the required pllFrequency
-		l = pllFreq % xtalFreq;			// It has three parts:
-		f = (double)l;							// mult is an integer that must be in the range 15..90
-		f *= 1048575;					// num and denom are the fractional parts, the numerator and denominator
-		f /= xtalFreq;					// each is 20 bits (range 0..1048575)
-		num = (UINT32)f;				// the actual multiplier is  mult + num / denom
-		denom = 1048575;				// For simplicity we set the denominator to the maximum 1048575
+void si5351aSetFrequencyB(UINT32 freq2)
+{
+	UINT32 frequency;
+	UINT32 pllFreq;
+	UINT32 xtalFreq = SI5351_FREQ;
+	UINT32 l;
+	double f;
+	UINT8 mult;
+	UINT32 num;
+	UINT32 denom;
+	UINT32 divider;
+	UINT32 rdiv;
 
-										// Set up PLL B with the calculated multiplication ratio
-		setupPLL(SI_SYNTH_PLL_B, mult, num, denom);
-		// Set up MultiSynth divider 0, with the calculated divider.
-		// The final R division stage can divide by a power of two, from 1..128.
-		// represented by constants SI_R_DIV1 to SI_R_DIV128 (see si5351a.h header file)
-		// If you want to output frequencies below 1MHz, you have to use the
-		// final R division stage
-
-		setupMultisynth(SI_SYNTH_MS_2, divider, rdiv);
-		// Reset the PLL. This causes a glitch in the output. For small changes to
-		// the parameters, you don't need to reset the PLL, and there is no glitch
-	    I2cTransferW1 ( SI_PLL_RESET, SI5351_ADDR, 0x80) ; //pllB
-		// Finally switch on the CLK2 output (0x4C)
-		// and set the MultiSynth0 input to be PLL A
-	    I2cTransferW1 ( SI_CLK2_CONTROL, SI5351_ADDR,  0x4C | SI_CLK_SRC_PLL_B);  // select PLLB
-
-	}
-	else
+	if (freq2 == 0)
 	{
 		I2cTransferW1 ( SI_CLK2_CONTROL, SI5351_ADDR, 0x80); // clk2 off
+		return;
 	}
+
+	// calculate clk2
+	frequency = freq2 ;
+	rdiv = SI_R_DIV_1;
+	xtalFreq = SI5351_FREQ;
+	while (frequency <= 1000000)
+	{
+		frequency = frequency * 2;
+		rdiv += SI_R_DIV_2;
+	}
+#ifdef _PLLDEBUG_
+	DbgPrintf((char *) "\nCLK2 frequency %d \n", frequency);
+#endif
+	divider = 900000000UL / frequency;// Calculate the division ratio. 900,000,000 is the maximum internal
+										// PLL frequency: 900MHz
+	if (divider % 2) divider--;		// Ensure an even integer division ratio
+
+	pllFreq = divider * frequency;	// Calculate the pllFrequency: the divider * desired output frequency
+#ifdef _PLLDEBUG_
+	DbgPrintf((char *) "pllB Freq  %d \n", pllFreq);
+#endif
+	mult = pllFreq / xtalFreq;		// Determine the multiplier to get to the required pllFrequency
+	l = pllFreq % xtalFreq;			// It has three parts:
+	f = (double)l;							// mult is an integer that must be in the range 15..90
+	f *= 1048575;					// num and denom are the fractional parts, the numerator and denominator
+	f /= xtalFreq;					// each is 20 bits (range 0..1048575)
+	num = (UINT32)f;				// the actual multiplier is  mult + num / denom
+	denom = 1048575;				// For simplicity we set the denominator to the maximum 1048575
+
+									// Set up PLL B with the calculated multiplication ratio
+	setupPLL(SI_SYNTH_PLL_B, mult, num, denom);
+	// Set up MultiSynth divider 0, with the calculated divider.
+	// The final R division stage can divide by a power of two, from 1..128.
+	// represented by constants SI_R_DIV1 to SI_R_DIV128 (see si5351a.h header file)
+	// If you want to output frequencies below 1MHz, you have to use the
+	// final R division stage
+
+	setupMultisynth(SI_SYNTH_MS_2, divider, rdiv);
+	// Reset the PLL. This causes a glitch in the output. For small changes to
+	// the parameters, you don't need to reset the PLL, and there is no glitch
+	I2cTransferW1 ( SI_PLL_RESET, SI5351_ADDR, 0x80) ; //pllB
+	// Finally switch on the CLK2 output (0x4C)
+	// and set the MultiSynth0 input to be PLL A
+	I2cTransferW1 ( SI_CLK2_CONTROL, SI5351_ADDR,  0x4C | SI_CLK_SRC_PLL_B);  // select PLLB
 
 }

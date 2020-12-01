@@ -14,8 +14,8 @@
 ## installation root directory path.
 ##
 
-FX3FWROOT=../SDK
-FX3PFWROOT=../SDK/u3p_firmware
+FX3FWROOT?=../SDK
+FX3PFWROOT=$(FX3FWROOT)/u3p_firmware
 
 MODULE = SDDC_FX3
 CYCONFOPT=fx3_release
@@ -24,7 +24,20 @@ all:compile $(MODULE).img
 
 include $(FX3FWROOT)/common/fx3_build_config.mak
 
-SOURCE +=  DebugConsole.c  i2cmodule.c  R820T2.c  RunApplication.c  Si5351.c  StartStopApplication.c  StartUP.c  Support.c  USBdescriptor.c  USBhandler.c
+SOURCE +=  DebugConsole.c \
+			i2cmodule.c \
+			tuner_r82xx.c \
+			RunApplication.c \
+			Si5351.c \
+			StartStopApplication.c \
+			StartUP.c \
+			Support.c \
+			USBdescriptor.c \
+			USBhandler.c \
+			hf103.c \
+			bbrf103.c \
+			rx888.c \
+			rx888r2.c
 
 C_OBJECT=$(SOURCE:%.c=./%.o)
 A_OBJECT=$(SOURCE_ASM:%.S=./%.o)

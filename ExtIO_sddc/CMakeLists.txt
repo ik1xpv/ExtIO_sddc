@@ -3,11 +3,11 @@ project(ExtIO_RX888)
 
 set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3")
 
-file(GLOB SRC "*.cpp" "CyAPI/*.cpp" extio.def resource.rc manifest.xml)
+file(GLOB SRC "*.cpp" "radio/*.cpp" "CyAPI/*.cpp" "pffft/*.cpp" extio.def resource.rc manifest.xml)
 
-include_directories("." "CyAPI/" "FFTW3/")
+include_directories("." "CyAPI/" "FFTW3/" "pffft/")
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DTRACE")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 get_filename_component(SDKPATH CMAKE_LINKER DIRECTORY)
 find_program(LIBEXE lib HINTS ${SDKPATH})

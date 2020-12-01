@@ -24,15 +24,19 @@ include $(FX3FWROOT)/../local/fx3_build_linux_config.mak
 
 MODULE = SDDC_FX3
 
-SOURCE= cyfxtx.c               \
+SOURCE= bbrf103.c              \
+	cyfxtx.c               \
 	DebugConsole.c         \
+	hf103.c                \
 	i2cmodule.c            \
-	R820T2.c               \
 	RunApplication.c       \
+	rx888.c                \
+	rx888r2.c              \
 	Si5351.c               \
 	StartStopApplication.c \
 	StartUP.c              \
 	Support.c              \
+	tuner_r82xx.c          \
 	USBdescriptor.c        \
 	USBhandler.c
 

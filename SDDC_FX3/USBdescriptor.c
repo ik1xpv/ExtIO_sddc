@@ -109,7 +109,7 @@ const uint8_t CyFxUSBSSConfigDscr[] __attribute__ ((aligned (32))) =
     0x01,                           /* Configuration number */
     0x00,                           /* Configuration string index */
     0x80,                           /* Config characteristics - Bus powered */
-    0x96,                           /* Max power consumption of device (in 8mA unit) : 1200mA */
+    0x64,                           /* Max power consumption of device (in 8mA unit) : 800mA */
 
     /* Interface association descriptor */
     0x08,                           /* Descriptor size */

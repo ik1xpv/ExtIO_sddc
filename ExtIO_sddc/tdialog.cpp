@@ -161,7 +161,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			break;
-		case IDC_BIAS_HF:   
+		case IDC_BIAS_HF:
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
@@ -174,6 +174,14 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case BN_CLICKED:
 				RadioHandler.UpdBiasT_VHF(!RadioHandler.GetBiasT_VHF());
+				break;
+			}
+			break;
+		case IDC_FINE_LO:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				RadioHandler.UpdFine_LO(!RadioHandler.GetFine_LO());
 				break;
 			}
 			break;
@@ -262,7 +270,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
-				if (radio == HF103)
+				if (RadioHandler.getModel() == HF103)
 					{
 						ShowWindow(hWnd, SW_HIDE);
 						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Stop);
@@ -276,8 +284,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else
 					{
 						RadioHandler.Stop();
-						RadioHandler.UpdSi5351a();
-						RadioHandler.Start();
+						RadioHandler.Start(ExtIoGetActualSrateIdx());
 						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);  // to updt demodulators
 					}
 				break;

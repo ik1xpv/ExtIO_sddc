@@ -9,7 +9,7 @@
 // 
 
 #include "FX3handler.h"
-#include "resource.h"
+#include "resource.h" // for RES_BIN_FIRMWARE
 
 using namespace std;
 
@@ -169,93 +169,93 @@ bool  fx3class::Open(HMODULE hInst) {
 
 using namespace std;
 
-void fx3class::Control(FX3Command command) { // firmware control
+bool fx3class::Control(FX3Command command) { // firmware control
 	long lgt = 1;
 	UINT8 z = 0; // dummy data = 0
 	fx3dev->ControlEndPt->ReqCode = command;
-	fx3dev->ControlEndPt->Write(&z, lgt);
+	bool r = fx3dev->ControlEndPt->Write(&z, lgt);
+	DbgPrintf("FX3FWControl %x .%x\n", r, command);
+	return r;
 }
 
-bool fx3class::Control(FX3Command command, PUINT8 data) { // firmware control BBRF
-	long lgt = 1; // default
-	bool r = false;
+bool fx3class::Control(FX3Command command, UINT8 data) { // firmware control BBRF
+	long lgt = 1;
 
-	switch (command)
-	{
-	case GPIOFX3:
-		fx3dev->ControlEndPt->ReqCode = command;
-		fx3dev->ControlEndPt->Value = (USHORT)0;
-		fx3dev->ControlEndPt->Index = (USHORT)0;
-		lgt = 2;
-		DbgPrintf("->IO  %02x%02x\n", data[1], data[0]);
-		r = fx3dev->ControlEndPt->Write(data, lgt);
-		break;
-	case DAT31FX3:
-		fx3dev->ControlEndPt->ReqCode = command;
-		fx3dev->ControlEndPt->Value = (USHORT)0;
-		fx3dev->ControlEndPt->Index = (USHORT)0;
-		lgt = 2; // GPIO len
-		r = fx3dev->ControlEndPt->Write(data, lgt);
-		break;
-	case TESTFX3:
-		fx3dev->ControlEndPt->ReqCode = command;
-		fx3dev->ControlEndPt->Value = (USHORT)0;
-		fx3dev->ControlEndPt->Index = (USHORT)0;
-		lgt = 4; // TESTFX3 len
-		r = fx3dev->ControlEndPt->Read(data, lgt);
-		break;
-	case SI5351A:
-		fx3dev->ControlEndPt->ReqCode = command;
-		fx3dev->ControlEndPt->Value = (USHORT)0;
-		fx3dev->ControlEndPt->Index = (USHORT)0;
-		lgt = 8; //  SI5351A len   UINT32 freqa, freqb
-		r = fx3dev->ControlEndPt->Write(data, lgt);
-		break;
-	case R820T2INIT:
-		fx3dev->ControlEndPt->ReqCode = command;
-		fx3dev->ControlEndPt->Value = (USHORT)0;
-		fx3dev->ControlEndPt->Index = (USHORT)0;
-		lgt = 4; //  len 4 = UINT32
-		r = fx3dev->ControlEndPt->Read(data, lgt);
-		break;
-	case R820T2STDBY:
-		fx3dev->ControlEndPt->ReqCode = command;
-		fx3dev->ControlEndPt->Value = (USHORT)0;
-		fx3dev->ControlEndPt->Index = (USHORT)0;
-		r = fx3dev->ControlEndPt->Write(data, lgt);
-		break;
-	case R820T2TUNE:
-		fx3dev->ControlEndPt->ReqCode = command;
-		fx3dev->ControlEndPt->Value = (USHORT)0;
-		fx3dev->ControlEndPt->Index = (USHORT)0;
-		lgt = 4; //  len 4 = UINT32
-		r = fx3dev->ControlEndPt->Write(data, lgt);
-		break;
-	case R820T2SETATT:
-		fx3dev->ControlEndPt->ReqCode = command;
-		fx3dev->ControlEndPt->Value = (USHORT)0;
-		fx3dev->ControlEndPt->Index = (USHORT)0;
-		r = fx3dev->ControlEndPt->Write(data, lgt);
-		break;
-	case R820T2GETATT:  // used for debug
-	//	command = TESTFX3;
-		fx3dev->ControlEndPt->ReqCode = command;
-		fx3dev->ControlEndPt->Value = (USHORT)0;
-		fx3dev->ControlEndPt->Index = (USHORT)0;
-		lgt = 1;
-		r = fx3dev->ControlEndPt->Read(data, lgt);
-		break;
-	default:
-		break;
-	}
+	fx3dev->ControlEndPt->ReqCode = command;
+	fx3dev->ControlEndPt->Value = (USHORT)0;
+	fx3dev->ControlEndPt->Index = (USHORT)0;
+	bool r = fx3dev->ControlEndPt->Write(&data, lgt);
+	DbgPrintf("FX3FWControl %x .%x %x\n", r, command, data);
 	if (r == false)
 	{
-		DbgPrintf("WARNING FX3FWControl failed %x .%x %x\n", r, command, *data);
 		Close();
 	}
 	return r;
 }
 
+bool fx3class::Control(FX3Command command, UINT32 data) { // firmware control BBRF
+	long lgt = 4;
+
+	fx3dev->ControlEndPt->ReqCode = command;
+	fx3dev->ControlEndPt->Value = (USHORT)0;
+	fx3dev->ControlEndPt->Index = (USHORT)0;
+	bool r = fx3dev->ControlEndPt->Write((PUCHAR)&data, lgt);
+	DbgPrintf("FX3FWControl %x .%x %x\n", r, command, data);
+	if (r == false)
+	{
+		Close();
+	}
+	return r;
+}
+
+bool fx3class::Control(FX3Command command, UINT64 data) { // firmware control BBRF
+	long lgt = 8;
+
+	fx3dev->ControlEndPt->ReqCode = command;
+	fx3dev->ControlEndPt->Value = (USHORT)0;
+	fx3dev->ControlEndPt->Index = (USHORT)0;
+	bool r = fx3dev->ControlEndPt->Write((PUCHAR)&data, lgt);
+	DbgPrintf("FX3FWControl %x .%x %llx\n", r, command, data);
+	if (r == false)
+	{
+		Close();
+	}
+	return r;
+}
+
+
+bool fx3class::SetArgument(UINT16 index, UINT16 value) { // firmware control BBRF
+	long lgt = 1;
+	uint8_t data = 0;
+
+	fx3dev->ControlEndPt->ReqCode = SETARGFX3;
+	fx3dev->ControlEndPt->Value = (USHORT)value;
+	fx3dev->ControlEndPt->Index = (USHORT)index;
+	bool r = fx3dev->ControlEndPt->Write((PUCHAR)&data, lgt);
+	DbgPrintf("SetArgument %x .%x (%x, %x)\n", r, SETARGFX3, index, value);
+	if (r == false)
+	{
+		Close();
+	}
+	return r;
+}
+
+bool fx3class::GetHardwareInfo(UINT32* data) { // firmware control BBRF
+	long lgt = 4;
+
+	fx3dev->ControlEndPt->ReqCode = TESTFX3;
+	fx3dev->ControlEndPt->Value = (USHORT)0;
+	fx3dev->ControlEndPt->Index = (USHORT)0;
+	lgt = 4; // TESTFX3 len
+	bool r = fx3dev->ControlEndPt->Read((PUCHAR)data, lgt);
+	DbgPrintf("GetHardwareInfo %x .%x %x\n", r, TESTFX3, *data);
+	if (r == false)
+	{
+		Close();
+	}
+	return r;
+
+}
 
 bool fx3class::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
 {
@@ -267,7 +267,7 @@ bool fx3class::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 le
 	Sleep(10);
 	r = fx3dev->ControlEndPt->Write(pdata, lgt);
 	if (r == false)
-		DbgPrintf("\nWARNING fx3FWSendI2cbytes i2caddr 0x%02x regaddr 0x%02x  1data 0x%02x len 0x%02x \n",
+		DbgPrintf("\nfx3FWSendI2cbytes 0x%02x regaddr 0x%02x  1data 0x%02x len 0x%02x \n",
 			i2caddr, regaddr, *pdata, len);
 	return r;
 }
@@ -285,7 +285,7 @@ bool fx3class::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 le
 	fx3dev->ControlEndPt->Index = (USHORT)regaddr;
 	r = fx3dev->ControlEndPt->Read(pdata, lgt);
 	if (r == false)
-		printf("WARNING fx3FWReadI2cbytes failed %x : %02x %02x %02x %02x : %02x\n", r, I2CRFX3, i2caddr, regaddr, len, *pdata);
+		printf("fx3FWReadI2cbytes %x : %02x %02x %02x %02x : %02x\n", r, I2CRFX3, i2caddr, regaddr, len, *pdata);
 	fx3dev->ControlEndPt->Value = saveValue;
 	fx3dev->ControlEndPt->Index = saveIndex;
 	return r;

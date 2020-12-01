@@ -57,6 +57,7 @@
 #define IDC_RADIO25                     40156
 #define IDC_BIAS_VHF                    40157
 #define IDC_BIAS_HF                     40158
+#define IDC_FINE_LO                     40159
 #define IDC_PAGE1_END                   40160
 #define IDC_PAGE2_INIT                  40200
 #define IDC_STATIC31                    40200
@@ -76,7 +77,7 @@
 #define IDC_STATIC                      -1
 
 
-#ifdef NDEBUG  // define in processor setup resource !
+#ifndef _DEBUG  // define in processor setup resource !
  #define DIALOGH 95
 #else
  #define DIALOGH 170

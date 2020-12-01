@@ -3,6 +3,7 @@
 
 #include "license.txt" 
 
+#include "../Interface.h"
 #include <windows.h>   // LARGE_INTEGER
 #include <math.h>      // atan => PI
 #include <thread>
@@ -33,7 +34,7 @@ inline void null_func(const char *format, ...) { }
 #define EnterFunction1(v1) \
   DbgPrintf("==>%s(%d)\n", __FUNCDNAME__, (v1))
 
-#ifdef TRACE
+#ifdef _DEBUG
 #define DbgPrintf (printf)
 #else
 #define DbgPrintf DbgEmpty
@@ -43,7 +44,7 @@ inline void null_func(const char *format, ...) { }
 
 #define HWNAME				"BBRF103"			
 #define HWMODEL				"HF103"
-#define SETTINGS_IDENTIFIER	"sddc_1.01"
+#define SETTINGS_IDENTIFIER	"sddc_1.02"
 #define SWNAME				"ExtIO_sddc.dll"
 
 #define	QUEUE_SIZE 64
@@ -56,10 +57,6 @@ inline void null_func(const char *format, ...) { }
 #define FREQCORRECTION (0.0)   // Default xtal frequency correction in ppm
 #define GAIN_ADJ (0.0)          // default gain factor in DB
 
-#define R820T_FREQ (32000000)	// R820T reference frequency
-#define R820T_ZERO (0)          // freq 0
-#define R820T2_IF_CARRIER (5000000)
-
 #define FFTN_R_ADC (2048)       // FFTN used for ADC real stream DDC
 
 // GAINFACTORS to be adjusted with lab reference source measured with HDSDR Smeter rms mode  
@@ -67,7 +64,7 @@ inline void null_func(const char *format, ...) { }
 #define HF103_GAINFACTOR   (0.0000000114F)      // HF103
 #define RX888_GAINFACTOR   (0.00000000695F)     // RX888
 
-enum rf_mode { HFMODE = 0x1, VLFMODE = 0x2, VHFMODE = 0x3, NOMODE = 4 };
+enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 }; 
 
 #define HF_HIGH (ADC_FREQ/2)    // 32M
 #define MW_HIGH (2000000)
@@ -101,12 +98,10 @@ extern double adcfixedfreq;
 extern double gdGainCorr_dB;
 extern bool saveADCsamplesflag;
 
-enum radiotype { NORADIO = 0, BBRF103 = 1, HF103 = 2, RX888 = 3 };
-extern const char* radioname[4];
+#define CORRECT(FREQ) ((double) FREQ * (1.0 + (gdFreqCorr_ppm * 0.000001)))
 
 extern bool run;
-extern int transferSize;
-extern radiotype radio;
+const int transferSize = 131072;
 
 #endif // _CONFIG_H_
 

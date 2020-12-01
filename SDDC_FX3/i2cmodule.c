@@ -13,9 +13,6 @@
 #include "cyu3i2c.h"
 #include "i2cmodule.h"
 
-extern CyU3PReturnStatus_t Si5351init();
-
-
 CyU3PReturnStatus_t
 I2cInit ()
 {
@@ -34,9 +31,8 @@ I2cInit ()
     i2cConfig.dmaTimeout = 0xFFFF;
     i2cConfig.isDma      = CyFalse;
     status = CyU3PI2cSetConfig (&i2cConfig, NULL);
-    if (status != CY_U3P_SUCCESS)return status;
 
-    return Si5351init(64000000,0);
+    return status;
 }
 
 
