@@ -72,11 +72,10 @@ int r2iqControlClass::Setdecimate(int dec)
 
 float r2iqControlClass::setFreqOffset(float offset)
 {
-	this->mtunebin = int(offset * halfFft / mratio[mdecimation] + 0.5);
-	float delta = offset - ((float)this->mtunebin * mratio[mdecimation] / halfFft);
-	float ret = -delta / mratio[mdecimation];
-	DbgPrintf("tunebin : %f -> %d delta %f (%f)\n", offset, this->mtunebin, delta, ret);
-
+	this->mtunebin = int(offset * halfFft/4  + 0.5 ) * 4;  // mtunebin step 4 bin  ? 
+	float delta = offset - ((float)this->mtunebin  / halfFft);
+	float ret = - delta * mratio[mdecimation]; // ret increases with higher decimation
+	DbgPrintf("offset %f mtunebin %d delta %f (%f)\n", offset, this->mtunebin, delta, ret);
 	return ret;
 }
 
@@ -245,7 +244,6 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 	//    DbgPrintf((char *) "r2iqThreadf idx %d pthread_self is %u\n",(int)th->t, pthread_self());
 	//    DbgPrintf((char *) "decimate idx %d  %d  %d \n",r2iqCntrl->getDecidx(),r2iqCntrl->getFftN(),r2iqCntrl->getRatio());
 
-	bool LWzero = this->LWmode;
 	char *buffer;
 	int lastdecimate = -1;
 
@@ -355,59 +353,34 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		{
 			// FFT first stage time to frequency, real to complex
 			fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime[k], th->ADCinFreq);
-
-			if (LWzero)
-			{
-				th->inFreqTmp[0][0] = th->inFreqTmp[0][1] = 0;  // bin[0] = 0;
-				for (int m = 1; m < mfft / 2; m++) // circular shift tune fs/2 half array
-				{
-					th->inFreqTmp[m][0] = (th->ADCinFreq[m][0] * filter[m][0] +
-						th->ADCinFreq[m][1] * filter[m][1]);
-					th->inFreqTmp[m][1] = (th->ADCinFreq[m][1] * filter[m][0] -
-						th->ADCinFreq[m][0] * filter[m][1]);
-				}
-				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
-				{
-					th->inFreqTmp[mfft / 2 + m][0] = 0;
-					th->inFreqTmp[mfft / 2 + m][1] = 0;
-				}
-			}
-			else
 			{
 				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 				{
-					if ((_mtunebin + m) < mfft)
+					int mm = _mtunebin + m;
+					if ((_mtunebin + m) > mfft-1)
+						mm -=  mfft;
 					{
 						th->inFreqTmp[m][0] = (th->ADCinFreq[_mtunebin + m][0] * filter[m][0] +
 							th->ADCinFreq[_mtunebin + m][1] * filter[m][1]);
+
 						th->inFreqTmp[m][1] = (th->ADCinFreq[_mtunebin + m][1] * filter[m][0] -
 							th->ADCinFreq[_mtunebin + m][0] * filter[m][1]);
 					}
-					else
-					{
-						th->inFreqTmp[m][0] = 0.0;
-						th->inFreqTmp[m][1] = 0.0;
-					}
+
 				}
-
 				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
-				{
-
-					int mm = _mtunebin - mfft / 2 + m;
+				{				
 					int fm = halfFft - mfft / 2 + m;
-					if (mm >= 0) // corrects off limits
-					{
-						th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
-							th->ADCinFreq[mm][1] * filter[fm][1]);
+					int mm = _mtunebin - mfft / 2 + m;
+					if (mm < 0)
+						mm += mfft;
+					
+					th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
+						th->ADCinFreq[mm][1] * filter[fm][1]);
 
-						th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
-							th->ADCinFreq[mm][0] * filter[fm][1]);
-					}
-					else
-					{
-						th->inFreqTmp[mfft / 2 + m][0] = 0;
-						th->inFreqTmp[mfft / 2 + m][1] = 0;
-					}
+					th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
+						th->ADCinFreq[mm][0] * filter[fm][1]);
+					
 				}
 			}
 
