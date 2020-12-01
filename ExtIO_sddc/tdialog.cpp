@@ -17,7 +17,6 @@ HBITMAP bitmap;
 extern float	g_Bps;
 extern float	g_SpsIF;
 
-
 COLORREF clrBtnSel = RGB(24, 160, 244);
 COLORREF clrBtnUnsel = RGB(0, 44, 107);
 COLORREF clrBackground = RGB(158, 188, 188);
