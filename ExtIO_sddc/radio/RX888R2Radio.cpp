@@ -63,8 +63,8 @@ bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
         // switch to VHF Attenna
         FX3SetGPIO(VHF_EN);
 
-        // high gain, 0db
-        uint8_t gain = 75 | 0x80;
+        // high gain, 20db
+        uint8_t gain = 0xff;
         Fx3->SetArgument(AD8340_VGA, gain);
         // Enable Tuner reference clock
         uint32_t ref = R828D_FREQ;
