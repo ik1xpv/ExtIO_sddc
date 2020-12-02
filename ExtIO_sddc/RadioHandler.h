@@ -161,7 +161,7 @@ public:
 
 private:
     static const int  hf_rf_step_size = 64;
-    static const int  hf_if_step_size = 128;
+    static const int  hf_if_step_size = 127;
     static const int vhf_if_step_size = 16;
     static const int vhf_rf_step_size = 29;
 

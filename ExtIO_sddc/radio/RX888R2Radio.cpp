@@ -40,7 +40,7 @@ RX888R2Radio::RX888R2Radio(fx3class *fx3)
 #endif
     for (uint8_t i = 0; i < hf_if_step_size; i++)
     {
-        this->hf_if_steps[i] = -30.0f + ratio * i;
+        this->hf_if_steps[i] = -30.0f + ratio * (i + 1);
     }
 }
 
@@ -153,7 +153,7 @@ bool RX888R2Radio::UpdateGainIF(int gain_index)
     if (!(gpios & VHF_EN))
     {
         // this is in HF mode
-        uint8_t gain = MODE | gain_index;
+        uint8_t gain = MODE | (gain_index + 1);
 
         DbgPrintf("UpdateGainIF %d \n", gain);
 
