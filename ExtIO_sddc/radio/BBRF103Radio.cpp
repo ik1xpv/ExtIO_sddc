@@ -44,7 +44,7 @@ bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
         FX3UnsetGPIO(ATT_SEL0 | ATT_SEL1);
 
         // Initialize Tuner
-        return Fx3->Control(R82XXINIT, (uint32_t)CORRECT(R820T_FREQ));
+        return Fx3->Control(R82XXINIT, (uint32_t)R820T_FREQ);
     }
 
     else if (mode == HFMODE )   // (mode == HFMODE || mode == VLFMODE) no more VLFMODE
