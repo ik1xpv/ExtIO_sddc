@@ -176,14 +176,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			break;
-		case IDC_FINE_LO:
-			switch (HIWORD(wParam))
-			{
-			case BN_CLICKED:
-				RadioHandler.UpdFine_LO(!RadioHandler.GetFine_LO());
-				break;
-			}
-			break;
 		case IDC_GAINP:
 			switch (HIWORD(wParam))
 			{
