@@ -1,8 +1,8 @@
 /*
- ## Cypress USB 3.0 Platform source file (cyfxtx.c)
+ ## Cypress FX3 Firmware Source File (cyfxtx.c)
  ## ===========================
  ##
- ##  Copyright Cypress Semiconductor Corporation, 2010-2011,
+ ##  Copyright Cypress Semiconductor Corporation, 2010-2018,
  ##  All Rights Reserved
  ##  UNPUBLISHED, LICENSED SOFTWARE.
  ##
@@ -20,14 +20,31 @@
  ## ===========================
 */
 
-/* This file defines the porting requied for the ThreadX RTOS.
- * This file shall be provided in source form and must be compiled
- * with the application source code
+/* File: cyfxtx.c
+ *
+ * This file provides the application specific exception handlers and memory allocation routines.
+ * A sample implementation is provided with the FX3 SDK and can be updated where required by the
+ * application.
+ *
+ * Note: Please do not make changes to the signatures of the functions; as the drivers in the SDK
+ * depends on these functions. The implementation can be changed where required.
+ *
+ * This file has been updated with some new features related to memory leak and corruption
+ * detection. These changes are only enabled when compiling with SDK versions 1.3.3 and later.
  */
 
 #include <cyu3os.h>
+#include <cyu3utils.h>
 #include <cyu3error.h>
-extern void  IndicateError(uint16_t ErrorCode);
+#include <cyfxversion.h>
+
+/* Memory error detection is supported in SDK 1.3.3 and later. */
+#if ((CYFX_VERSION_MINOR > 3) || ((CYFX_VERSION_MINOR == 3) && (CYFX_VERSION_PATCH >= 3)))
+#define CYFXTX_ERRORDETECTION   1
+#else
+#undef CYFXTX_ERRORDETECTION
+#endif
+
 #ifdef CYMEM_256K
 
 /*
@@ -39,6 +56,10 @@ extern void  IndicateError(uint16_t ErrorCode);
    Driver heap        Base: 0x40029000 Size: 28  KB
    Buffer area        Base: 0x40030000 Size: 32  KB
    2-stage boot area  Base: 0x40038000 Size: 32  KB
+
+   Note: The 2-stage boot area is optional (only required if the application makes use of a persistent
+   in-memory boot-loader). If this is not being used, the 32 KB reserved for this segment can be merged
+   into the buffer area by changing CY_U3P_SYS_MEM_TOP to 0x40040000.
  */
 
 /*
@@ -46,7 +67,7 @@ extern void  IndicateError(uint16_t ErrorCode);
    area which is used by the application code as well as the drivers to allocate thread
    stacks and other internal data structures.
  */
-#define CY_U3P_MEM_HEAP_BASE         ((uint8_t *)0x40029000)
+#define CY_U3P_MEM_HEAP_BASE         (0x40029000)
 #define CY_U3P_MEM_HEAP_SIZE         (0x7000)
 
 /*
@@ -66,6 +87,10 @@ extern void  IndicateError(uint16_t ErrorCode);
    Driver heap        Base: 0x40038000 Size: 32  KB
    Buffer area        Base: 0x40040000 Size: 224 KB
    2-stage boot area  Base: 0x40078000 Size: 32  KB
+
+   Note: The 2-stage boot area is optional (only required if the application makes use of a persistent
+   in-memory boot-loader). If this is not being used, the 32 KB reserved for this segment can be merged
+   into the buffer area by changing CY_U3P_SYS_MEM_TOP to 0x40080000.
  */
 
 /*
@@ -73,7 +98,7 @@ extern void  IndicateError(uint16_t ErrorCode);
    area which is used by the application code as well as the drivers to allocate thread
    stacks and other internal data structures.
  */
-#define CY_U3P_MEM_HEAP_BASE         ((uint8_t *)0x40038000)
+#define CY_U3P_MEM_HEAP_BASE         (0x40038000)
 #define CY_U3P_MEM_HEAP_SIZE         (0x8000)
 
 /*
@@ -90,57 +115,115 @@ extern void  IndicateError(uint16_t ErrorCode);
    of a reserved area in the SYSTEM RAM and ensures that all allocated DMA buffers
    are aligned to cache lines.
  */
-#define CY_U3P_BUFFER_HEAP_BASE      (((uint32_t)(CY_U3P_MEM_HEAP_BASE) + (CY_U3P_MEM_HEAP_SIZE)))
-#define CY_U3P_BUFFER_HEAP_SIZE      ((CY_U3P_SYS_MEM_TOP) - (CY_U3P_BUFFER_HEAP_BASE))
+#define CY_U3P_BUFFER_HEAP_BASE         (CY_U3P_MEM_HEAP_BASE + CY_U3P_MEM_HEAP_SIZE)
+#define CY_U3P_BUFFER_HEAP_SIZE         ((CY_U3P_SYS_MEM_TOP) - (CY_U3P_BUFFER_HEAP_BASE))
 
-#define CY_U3P_BUFFER_ALLOC_TIMEOUT  (10)
-#define CY_U3P_MEM_ALLOC_TIMEOUT     (10)
+#define CY_U3P_BUFFER_ALLOC_TIMEOUT     (10)
+#define CY_U3P_MEM_ALLOC_TIMEOUT        (10)
 
-#define CY_U3P_MAX(a,b)                 (((a) > (b)) ? (a) : (b))
-#define CY_U3P_MIN(a,b)                 (((a) < (b)) ? (a) : (b))
+#define CY_U3P_MEM_START_SIG            (0x4658334D)
+#define CY_U3P_MEM_END_SIG              (0x454E444D)
 
-CyBool_t         glMemPoolInit = CyFalse;
-CyU3PBytePool    glMemBytePool;
-CyU3PDmaBufMgr_t glBufferManager = {{0}, 0, 0, 0, 0, 0};
+/* Round a given value up to a multiple of n (assuming n is a power of 2). */
+#define ROUND_UP(s, n)                  (((s) + (n) - 1) & (~(n - 1)))
+/* Convert size from BYTE to DWORD. */
+#define BYTE_TO_DWORD(s)                ((s) >> 2)
+/* Cache line size for FX3. */
+#define FX3_CACHE_LINE_SZ               (32)
 
-/* These functions are exception handlers. These are default
- * implementations and the application firmware can have a
- * re-implementation. All these exceptions are not currently
- * handled and are mapped to while (1) */
+static CyBool_t         glMemPoolInit   = CyFalse;              /* Whether the memory allocator has been initialized. */
+static CyU3PBytePool    glMemBytePool;                          /* ThreadX Byte pool used in the CyU3PMem* functions. */
+static CyU3PDmaBufMgr_t glBufferManager = {{0}, 0, 0, 0, 0, 0}; /* Buffer manager used in the buffer alloc functions. */
 
-/* This function is the undefined instruction handler. This
- * occurs when the CPU encounters an undefined instruction. */
+#ifdef CYFXTX_ERRORDETECTION
+
+/*
+   Debug variables used for doing memory leak and corruption checks around buffers allocated through
+   the CyU3PMemAlloc function.
+ */
+static CyBool_t         glMemEnableChecks = CyFalse;            /* Whether checks are enabled. */
+static uint32_t         glMemAllocCnt     = 0;                  /* Number of alloc operations performed. */
+static uint32_t         glMemFreeCnt      = 0;                  /* Number of free operations performed. */
+static MemBlockInfo    *glMemInUseList    = 0;                  /* List of all memory blocks in use. */
+static CyU3PMemCorruptCallback glMemBadCb = 0;                  /* Callback for notification of corrupted memory. */
+
+/*
+   Debug variables used for doing memory leak and corruption checks around buffers allocated through
+   the CyU3PDmaBufferAlloc function.
+ */
+static CyBool_t         glBufMgrEnableChecks = CyFalse;         /* Whether checks are enabled. */
+static uint32_t         glBufAllocCnt        = 0;               /* Number of alloc operations performed. */
+static uint32_t         glBufFreeCnt         = 0;               /* Number of free operations performed. */
+static MemBlockInfo    *glBufInUseList       = 0;               /* List of all memory blocks in use. */
+static CyU3PMemCorruptCallback glBufBadCb    = 0;               /* Callback for notification of corrupted memory. */
+
+#endif
+
+/**********************************************************************
+ *                       ARM Exception Handlers                       *
+ **********************************************************************/
+
+/* These functions are standard ARM9 exception handlers for various memory access errors.
+ * Default implementations which map to a "while (1) {}" are provided here, as it is not
+ * possible to define meaningful error handling in an application agnostic manner.
+ *
+ * These can be replaced with functions that update LEDs/GPIOs, use DebugPrint or even
+ * reset FX3 as required by the application.
+ */
+
+/* Function    : CyU3PUndefinedHandler
+ * Description : Handler for an undefined instruction exceptions. This is only
+ *               expected to be triggered when there is a build settings conflict
+ *               or memory corruption happening on FX3.
+ * Parameters  : None
+ */
 void
 CyU3PUndefinedHandler (
         void)
 {
-	IndicateError(1);	//   for (;;);
+    for (;;);
 }
 
-/* This function is the intruction prefetch error handler. This
- * occurs when the CPU encounters an instruction prefetch error.
- * Since there are no virtual memory use case, this is an unknown
- * memory access error. This is a fatal error. */
+/* Function    : CyU3PPrefetchHandler
+ * Description : Handler for an instruction prefetch error. This is only
+ *               expected to be triggered when there is memory corruption
+ *               happening on FX3, and cannot normally be recovered from
+ *               without a device reset.
+ * Parameters  : None
+ */
 void
 CyU3PPrefetchHandler (
         void)
 {
-	IndicateError(1);	//   for (;;);
+    for (;;);
 }
 
-/* This function is the data abort error handler. This occurs when
- * the CPU encounters an data prefetch error. Since there are no
- * virtual memory use case, this is an unknown memory access error.
- * This is a fatal error. */
+/* Function    : CyU3PAbortHandler
+ * Description : Handler for a data abort error. As virtual memory is not used by
+ *               the SDK, this error can only be triggered when there is memory
+ *               corruption or there is an access to an uninitialized memory pointer.
+ * Parameters  : None
+ */
 void
 CyU3PAbortHandler (
         void)
 {
-	IndicateError(1);	//   for (;;);
+    for (;;);
 }
 
-/* This function is expected to be invoked by the RTOS kernel after
- * initialization. No explicit call to this function must be made.
+/* Function    : tx_application_define
+ * Description : This is a ThreadX RTOS defined function that is called once the RTOS
+ *               scheduler is initialized. This function has to be provided in this
+ *               file and is expected to call CyU3PApplicationDefine() so that the SDK
+ *               internal drivers can be initialized.
+ *
+ *               The CyFxApplicationDefine function will be called once the SDK internal
+ *               drivers have been started up. This function can be used to perform any
+ *               initialization that needs to happen before CyFxApplicationDefine() is
+ *               called.
+ *
+ * Parameters  : Pointer to the first un-initialized memory. This is not expected to be
+ *               used.
  */
 void
 tx_application_define (
@@ -150,30 +233,92 @@ tx_application_define (
     CyU3PApplicationDefine ();
 }
 
-/* This function initializes the custom heap for OS specific dynamic memory allocation.
- * The function should not be explicitly invoked. This function is called from the 
- * API library. Modify this function depending upon the heap requirement of 
- * application code. The minimum required value is specified by the predefined macro.
- * Any value less than specified can cause the drivers to stop functioning.
- * The function creates a global byte pool.
+#ifdef CYFXTX_ERRORDETECTION
+
+/* Function     : CyU3PMemEnableChecks
+ * Description  : Enable memory leak and corruption checks in the driver heap allocator.
+ *                Enabling the checks will cause the memory required for each allocated
+ *                block to increase by 24 bytes; and the allocation operation to take
+ *                additional time.
+ * Parameters   :
+ *                enable : Whether to enable memory leak and corruption checks.
+ *                cb     : Callback function to be called when the allocator detects
+ *                         memory corruption.
+ * Return Value :
+ *                CY_U3P_SUCCESS if the enable/disable is performed correctly.
+ *                CY_U3P_ERROR_ALREADY_STARTED if the CyU3PMemInit function has already been called.
+ */
+CyU3PReturnStatus_t
+CyU3PMemEnableChecks (
+        CyBool_t                enable,
+        CyU3PMemCorruptCallback cb)
+{
+    CyU3PReturnStatus_t stat = CY_U3P_ERROR_ALREADY_STARTED;
+
+    /* We can enable/disable checks only before the CyU3PMemInit function has been called. */
+    if (!glMemPoolInit)
+    {
+        glMemEnableChecks = enable;
+        glMemBadCb        = cb;
+        stat = CY_U3P_SUCCESS;
+    }
+
+    return stat;
+}
+
+#endif
+
+/* Function    : CyU3PMemInit
+ * Description : This function initializes the custom heap for OS specific dynamic
+ *               memory allocation.
+ *               The function should not be explicitly invoked, and is called from the 
+ *               API library. The minimum required size for the heap is 20 KB.
+ *               The default implementation makes use of the Byte Pool services provided
+ *               by ThreadX.
+ * Parameters  : None
  */
 void
 CyU3PMemInit (
         void)
 {
+    /* If the heap is not initialized so far, create the byte pool. */
     if (!glMemPoolInit)
     {
 	glMemPoolInit = CyTrue;
-	CyU3PBytePoolCreate (&glMemBytePool, CY_U3P_MEM_HEAP_BASE, CY_U3P_MEM_HEAP_SIZE);
+	CyU3PBytePoolCreate (&glMemBytePool, (void *)CY_U3P_MEM_HEAP_BASE, CY_U3P_MEM_HEAP_SIZE);
     }
 }
 
+/* Function     : CyU3PMemAlloc
+ * Description  : This function allocates memory required for various OS objects in the
+ *                firmware application. This function is used by the SDK internal drivers
+ *                in addition to the application code itself.
+ *                The default implementation makes use of the ThreadX byte pool services.
+ *                If memory leak and corruption checking is enabled, the implementation
+ *                adds a 20 byte header and a 4 byte footer around the memory block.
+ * Parameters   :
+ *                size : Size of memory required in bytes.
+ * Return Value : Pointer to the allocated memory block.
+ */
 void *
 CyU3PMemAlloc (
         uint32_t size)
 {
-    void     *ret_p;
-    uint32_t status;
+    void         *ret_p;
+    uint32_t      status;
+
+#ifdef CYFXTX_ERRORDETECTION
+    MemBlockInfo *block_p;
+#endif
+
+    /* Round size up to a multiple of 4 bytes. */
+    size = ROUND_UP (size, 4);
+
+#ifdef CYFXTX_ERRORDETECTION
+    /* If memory checks are enabled, add memory for the header and footer. */
+    if (glMemEnableChecks)
+        size += sizeof (MemBlockInfo) + sizeof (uint32_t);
+#endif
 
     /* Cannot wait in interrupt context */
     if (CyU3PThreadIdentify ())
@@ -185,25 +330,187 @@ CyU3PMemAlloc (
         status = CyU3PByteAlloc (&glMemBytePool, (void **)&ret_p, size, CYU3P_NO_WAIT);
     }
 
-    if(status == CY_U3P_SUCCESS)
+    if (status == CY_U3P_SUCCESS)
     {
+#ifdef CYFXTX_ERRORDETECTION
+        if (glMemEnableChecks)
+        {
+            /* Store the header information used for leak and corruption checks. */
+            block_p = (MemBlockInfo *)ret_p;
+            block_p->alloc_id        = glMemAllocCnt++;
+            block_p->alloc_size      = size;
+            block_p->prev_blk        = glMemInUseList;
+            block_p->next_blk        = 0;
+            block_p->start_sig       = CY_U3P_MEM_START_SIG;
+            if (glMemInUseList != 0)
+                glMemInUseList->next_blk = block_p;
+            glMemInUseList           = block_p;
+
+            /* Add the end block signature as a footer. */
+            ((uint32_t *)block_p)[BYTE_TO_DWORD (size) - 1] = CY_U3P_MEM_END_SIG;
+
+            /* Update the return pointer to skip the header created. */
+            ret_p = (void *)((uint8_t *)block_p + sizeof (MemBlockInfo));
+        }
+#endif
+
         return ret_p;
     }
 
     return (NULL);
 }
 
+/* Function    : CyU3PMemFree
+ * Description : This function frees memory previously allocated using CyU3PMemAlloc.
+ * Parameters  :
+ *               size : Pointer to memory block to be freed.
+ */
 void
 CyU3PMemFree (
         void *mem_p)
 {
+#ifdef CYFXTX_ERRORDETECTION
+    MemBlockInfo *block_p;
+    uint32_t     *endsig_p;
+#endif
+
+    /* Validity check for the pointer. */
+    if ((uint32_t)mem_p < CY_U3P_MEM_HEAP_BASE)
+        return;
+
+#ifdef CYFXTX_ERRORDETECTION
+    /* If memory checks are enabled, ensure that the block is valid; and perform
+       the required book-keeping as well. */
+    if (glMemEnableChecks)
+    {
+        block_p  = (MemBlockInfo *)((uint8_t *)mem_p - sizeof (MemBlockInfo));
+        endsig_p = (uint32_t *)((uint8_t *)block_p + block_p->alloc_size - sizeof (uint32_t));
+
+        if ((block_p->start_sig != CY_U3P_MEM_START_SIG) || (*endsig_p != CY_U3P_MEM_END_SIG))
+        {
+            /* Notify the user that memory has been corrupted. */
+            if (glMemBadCb != 0)
+                glMemBadCb (mem_p);
+        }
+
+        glMemFreeCnt++;
+
+        /* Update the in-use linked list to drop the freed-up block. */
+        if (block_p->next_blk != 0)
+            block_p->next_blk->prev_blk = block_p->prev_blk;
+        if (block_p->prev_blk != 0)
+            block_p->prev_blk->next_blk = block_p->next_blk;
+        if (glMemInUseList == block_p)
+        {
+            glMemInUseList = block_p->prev_blk;
+        }
+
+        mem_p = (void *)block_p;
+    }
+#endif
+
     CyU3PByteFree (mem_p);
 }
 
+#ifdef CYFXTX_ERRORDETECTION
+
+/* Function     : CyU3PMemGetCounts
+ * Description  : Get the number of memory alloc and free calls made so far.
+ * Parameters   :
+ *                allocCnt_p : Parameter to be filled with number of CyU3PMemAlloc calls.
+ *                freeCnt_p  : Parameter to be filled with number of CyU3PMemFree calls.
+ * Return Value : None
+ */
+void
+CyU3PMemGetCounts (
+        uint32_t *allocCnt_p,
+        uint32_t *freeCnt_p)
+{
+    if (allocCnt_p != 0)
+        *allocCnt_p = glMemAllocCnt;
+    if (freeCnt_p != 0)
+        *freeCnt_p = glMemFreeCnt;
+}
+
+/* Function     : CyU3PMemGetActiveList
+ * Description  : Get list of current in-use memory blocks. This can be used to
+ *                check for memory leaks leading to allocation failure at runtime.
+ * Parameters   : None
+ * Return Value : Pointer to the currently in-use memory blocks. All of the blocks
+ *                can be identified by traversing the list using the prev_blk
+ *                pointer in the MemBlockInfo structure.
+ * Note         : The active list will contain memory blocks allocated by the FX3
+ *                SDK internal drivers. These can be identified by keeping track
+ *                of head of the list when the CyFxApplicationDefine function is
+ *                called.
+ */
+MemBlockInfo *
+CyU3PMemGetActiveList (
+        void)
+{
+    return glMemInUseList;
+}
+
+/* Function     : CyU3PMemCorruptionCheck
+ * Description  : Check all in-use memory blocks for memory corruption. The
+ *                in-use memory list is traversed; and each block is checked
+ *                for a valid start and end signature. The registered bad memory
+ *                callback function is called if any corruption is detected.
+ * Parameters   : None
+ * Return Value : CY_U3P_SUCCESS or CY_U3P_ERROR_FAILURE depending on whether
+ *                corruption is found or not.
+ */
+CyU3PReturnStatus_t
+CyU3PMemCorruptionCheck (
+        void)
+{
+    MemBlockInfo *block_p;
+    uint32_t     *mem_p;
+
+    /* Run through all in-use memory blocks and send a callback for any blocks that do
+       not match the start and end signatures.
+     */
+    block_p = glMemInUseList;
+    while (block_p != 0)
+    {
+        if (((uint32_t)block_p < CY_U3P_MEM_HEAP_BASE) || ((uint32_t)block_p >= CY_U3P_BUFFER_HEAP_BASE))
+            return CY_U3P_ERROR_FAILURE;
+
+        mem_p = (uint32_t *)((uint8_t *)block_p + block_p->alloc_size - sizeof (uint32_t));
+        if ((block_p->start_sig != CY_U3P_MEM_START_SIG) || (*mem_p != CY_U3P_MEM_END_SIG))
+        {
+            if (glMemBadCb != 0)
+                glMemBadCb ((void *)((uint8_t *)block_p + sizeof (MemBlockInfo)));
+
+            /* Once we find any corruption, we cannot rely on the list pointers any more. */
+            return CY_U3P_ERROR_FAILURE;
+        }
+
+        /* Verify that the next block pointer is valid. */
+        block_p = block_p->prev_blk;
+    }
+
+    return CY_U3P_SUCCESS;
+}
+
+#endif
+
+/* Function     : CyU3PMemSet
+ * Description  : memset equivalent function to initialize a memory block.
+ *                This function assumes that the memory block may not be DWORD
+ *                aligned; and performs a byte-by-byte memset.
+ *                No checks are performed on the parameters because even a NULL-pointer
+ *                is valid on the FX3 device.
+ * Parameters   :
+ *                ptr   : Pointer to memory block to be initialized.
+ *                data  : Value that should be set at each byte.
+ *                count : Size of memory block.
+ * Return Value : None
+ */
 void
 CyU3PMemSet (
         uint8_t *ptr,
-        uint8_t data,
+        uint8_t  data,
         uint32_t count)
 {
     /* Loop unrolling for faster operation */
@@ -229,48 +536,110 @@ CyU3PMemSet (
     }
 }
 
+/* Function     : CyU3PMemCopy
+ * Description  : memcpy equivalent function to copy one memory block to another.
+ *                This function assumes that the memory block may not be DWORD
+ *                aligned; and performs a byte-by-byte copy.
+ *                No checks are performed on the parameters because even a NULL-pointer
+ *                is valid on the FX3 device.
+ * Parameters   :
+ *                dest  : Pointer to destination memory block.
+ *                src   : Pointer to source memory block.
+ *                count : Size of memory block.
+ * Return Value : None
+ */
 void
 CyU3PMemCopy (
-        uint8_t *dest, 
-        uint8_t *src,
-        uint32_t count)
+        uint8_t  *dest, 
+        uint8_t  *src,
+        uint32_t  count)
 {
-    /* Loop unrolling for faster operation */
-    while (count >> 3)
+    if (dest > src)
     {
-        dest[0] = src[0];
-        dest[1] = src[1];
-        dest[2] = src[2];
-        dest[3] = src[3];
-        dest[4] = src[4];
-        dest[5] = src[5];
-        dest[6] = src[6];
-        dest[7] = src[7];
+        /* Destination buffer is above source buffer. Copy from end of the buffer back to the start. */
+        dest += count;
+        src  += count;
 
-        count -= 8;
-        dest += 8;
-        src += 8;
+        /* Loop unrolling for faster operation */
+        while (count >= 8)
+        {
+            dest  -= 8;
+            src   -= 8;
+            count -= 8;
+
+            dest[7] = src[7];
+            dest[6] = src[6];
+            dest[5] = src[5];
+            dest[4] = src[4];
+            dest[3] = src[3];
+            dest[2] = src[2];
+            dest[1] = src[1];
+            dest[0] = src[0];
+        }
+
+        while (count > 0)
+        {
+            dest--;
+            src--;
+            count--;
+
+            *dest = *src;
+        }
     }
-
-    while (count--)
+    else
     {
-        *dest = *src;
-        dest++;
-        src++;
+        /* Destination buffer is below source buffer. Copy from start to end of the buffer. */
+
+        /* Loop unrolling for faster operation */
+        while (count >= 8)
+        {
+            dest[0] = src[0];
+            dest[1] = src[1];
+            dest[2] = src[2];
+            dest[3] = src[3];
+            dest[4] = src[4];
+            dest[5] = src[5];
+            dest[6] = src[6];
+            dest[7] = src[7];
+
+            dest  += 8;
+            src   += 8;
+            count -= 8;
+        }
+
+        while (count > 0)
+        {
+            *dest = *src;
+
+            dest++;
+            src++;
+            count--;
+        }
     }
 }
 
+/* Function     : CyU3PMemCmp
+ * Description  : Compare the contents of two memory blocks.
+ *                This function assumes that the memory block may not be DWORD
+ *                aligned; and performs a byte-by-byte comparison.
+ * Parameters   :
+ *                s1  : Pointer to the first memory block.
+ *                s2  : Pointer to the second memory block.
+ *                n   : Size of the memory block.
+ * Return Value : 0 if the memory blocks are identical.
+ *                Difference between first non-identical byte in case of deviation.
+ */
 int32_t 
 CyU3PMemCmp (
         const void* s1,
         const void* s2, 
         uint32_t n)
 {
-    const uint8_t *ptr1 = s1, *ptr2 = s2;
+    const uint8_t *ptr1 = (const uint8_t *)s1, *ptr2 = (const uint8_t *)s2;
 
-    while(n--)
+    while (n--)
     {
-        if(*ptr1 != *ptr2)
+        if (*ptr1 != *ptr2)
         {
             return *ptr1 - *ptr2;
         }
@@ -278,13 +647,51 @@ CyU3PMemCmp (
         ptr1++;
         ptr2++;
     }  
+
     return 0;
 }
 
-/* This function shall be invoked by the API library 
- * and should not be explicitly invoked.
- * If other buffer sizes are required by the application code, this function must
- * be modified to create other block pools.
+#ifdef CYFXTX_ERRORDETECTION
+
+/* Function     : CyU3PBufEnableChecks
+ * Description  : Enable memory leak and corruption checks in the buffer heap allocator.
+ *                Enabling the checks will cause the memory required for each allocated
+ *                block to increase by 24 bytes; and the allocation operation to take
+ *                additional time.
+ * Parameters   :
+ *                enable : Whether to enable memory leak and corruption checks.
+ *                cb     : Callback function to be called when the allocator detects
+ *                         memory corruption.
+ * Return Value :
+ *                CY_U3P_SUCCESS if the enable/disable is performed correctly.
+ *                CY_U3P_ERROR_ALREADY_STARTED if the CyU3PDmaBufferInit function has already been called.
+ */
+CyU3PReturnStatus_t
+CyU3PBufEnableChecks (
+        CyBool_t                enable,
+        CyU3PMemCorruptCallback cb)
+{
+    CyU3PReturnStatus_t stat = CY_U3P_ERROR_ALREADY_STARTED;
+
+    if (glBufferManager.usedStatus == 0)
+    {
+        glBufMgrEnableChecks = enable;
+        glBufBadCb           = cb;
+        stat = CY_U3P_SUCCESS;
+    }
+
+    return stat;
+}
+
+#endif
+
+/* Function    : CyU3PDmaBufferInit
+ * Description : This function initializes the custom heap used for DMA buffer allocation.
+ *               These functions use a home-grown allocator in order to ensure that all
+ *               DMA buffers allocated are cache line aligned (multiple of 32 bytes).
+ *               The function should not be explicitly invoked, and is called from the 
+ *               API library.
+ * Parameters  : None
  */
 void
 CyU3PDmaBufferInit (
@@ -310,11 +717,11 @@ CyU3PDmaBufferInit (
        get the mutex. */
 
     /* Allocate the memory buffer to be used to track memory status.
-       We need one bit per 32 bytes of memory buffer space. Since a 32
-       bit array is being used, round up to the necessary number of
-       32 bit words. */
-    size = ((CY_U3P_BUFFER_HEAP_SIZE / 32) + 31) / 32;
-    glBufferManager.usedStatus = (uint32_t *)CyU3PMemAlloc (size * 4);
+       We need one bit per cache line of memory buffer space. Since a DWORD
+       array is being used for the status, round up to the necessary number of
+       DWORDs. */
+    size = ROUND_UP ((CY_U3P_BUFFER_HEAP_SIZE / FX3_CACHE_LINE_SZ), 32) / 32;
+    glBufferManager.usedStatus = (uint32_t *)CyU3PMemAlloc (size * sizeof (uint32_t));
     if (glBufferManager.usedStatus == 0)
     {
         CyU3PMutexDestroy (&glBufferManager.lock);
@@ -323,10 +730,10 @@ CyU3PDmaBufferInit (
 
     /* Initially mark all memory as available. If there are any status bits
        beyond the valid memory range, mark these as unavailable. */
-    CyU3PMemSet ((uint8_t *)glBufferManager.usedStatus, 0, (size * 4));
-    if ((CY_U3P_BUFFER_HEAP_SIZE / 32) & 31)
+    CyU3PMemSet ((uint8_t *)glBufferManager.usedStatus, 0, (size * sizeof (uint32_t)));
+    if (((CY_U3P_BUFFER_HEAP_SIZE / FX3_CACHE_LINE_SZ) & 31) != 0)
     {
-        tmp = 32 - ((CY_U3P_BUFFER_HEAP_SIZE / 32) & 31);
+        tmp = 32 - ((CY_U3P_BUFFER_HEAP_SIZE / FX3_CACHE_LINE_SZ) & 31);
         glBufferManager.usedStatus[size - 1] = ~((1 << tmp) - 1);
     }
 
@@ -337,8 +744,11 @@ CyU3PDmaBufferInit (
     glBufferManager.searchPos  = 0;
 }
 
-/* This function shall be invoked by the API library 
- * and should not be explicitly invoked.
+/* Function    : CyU3PDmaBufferDeInit
+ * Description : This function frees up the custom heap used for DMA buffer allocation.
+ *               The function should not be explicitly invoked, and is called from the 
+ *               API library.
+ * Parameters  : None
  */
 void
 CyU3PDmaBufferDeInit (
@@ -368,13 +778,22 @@ CyU3PDmaBufferDeInit (
     glBufferManager.regionSize = 0;
     glBufferManager.statusSize = 0;
 
+#ifdef CYFXTX_ERRORDETECTION
+    /* Clear status tracking variables. */
+    glBufAllocCnt  = 0;
+    glBufFreeCnt   = 0;
+    glBufInUseList = 0;
+#endif
+
     /* Free up and destroy the mutex variable. */
     CyU3PMutexPut (&glBufferManager.lock);
     CyU3PMutexDestroy (&glBufferManager.lock);
 }
 
-/* Helper function for the DMA buffer manager. Used to set/clear
-   a set of status bits from the alloc/free functions. */
+/* Function    : CyU3PDmaBufMgrSetStatus
+ * Description : Helper function for the DMA buffer manager. Used to set/clear
+ *               a set of status bits from the alloc/free functions.
+ */
 static void
 CyU3PDmaBufMgrSetStatus (
         uint32_t startPos,
@@ -420,14 +839,28 @@ CyU3PDmaBufMgrSetStatus (
     }
 }
 
-/* This function shall be invoked from the DMA module for buffer allocation */
+/* Function     : CyU3PDmaBufferAlloc
+ * Description  : This function allocates memory required for DMA buffers required by the
+ *                firmware application. This function is used by the SDK internal drivers
+ *                in addition to the application code itself.
+ *                If memory leak and corruption checking is enabled, the implementation
+ *                adds a 20 byte header and a 4 byte footer around each memory block.
+ * Parameters   :
+ *                size : Size of memory required in bytes.
+ * Return Value : Pointer to the allocated memory block.
+ */
 void *
 CyU3PDmaBufferAlloc (
         uint16_t size)
 {
+#ifdef CYFXTX_ERRORDETECTION
+    MemBlockInfo *block_p;
+#endif
+
     uint32_t tmp;
     uint32_t wordnum, bitnum;
     uint32_t count, start = 0;
+    uint32_t blk_size = (uint32_t)size;
     void *ptr = 0;
 
     /* Get the lock for the buffer manager. */
@@ -452,9 +885,17 @@ CyU3PDmaBufferAlloc (
         return ptr;
     }
 
-    /* Find the number of 32 byte chunks required. The minimum size that can be handled is
-       64 bytes. */
-    size = (size <= 32) ? 2 : (size + 31) / 32;
+#ifdef CYFXTX_ERRORDETECTION
+    if (glBufMgrEnableChecks)
+    {
+        /* Using a 32-bit variable here to allow for addition of header on top of a maximum sized allocation. */
+        blk_size  = ROUND_UP (blk_size, 4);
+        blk_size += sizeof (MemBlockInfo) + sizeof (uint32_t);
+    }
+#endif
+
+    /* Find the number of cache lines required. The minimum size that can be handled is 2 cache lines. */
+    size = (blk_size <= FX3_CACHE_LINE_SZ) ? 2 : ((blk_size + FX3_CACHE_LINE_SZ - 1) / FX3_CACHE_LINE_SZ);
 
     /* Search through the status array to find the first block that fits the need. */
     wordnum = glBufferManager.searchPos;
@@ -472,7 +913,7 @@ CyU3PDmaBufferAlloc (
                 start = (wordnum << 5) + bitnum + 1;
             }
             count++;
-            if (count == (size + 1))
+            if (count == (uint16_t)(size + 1))
             {
                 /* The last bit corresponding to the allocated memory is left as zero.
                    This allows us to identify the end of the allocated block while freeing
@@ -502,25 +943,61 @@ CyU3PDmaBufferAlloc (
         }
     }
 
-    if (count == (size + 1))
+    if (count == (uint16_t)(size + 1))
     {
         /* Mark the memory region identified as occupied and return the pointer. */
         CyU3PDmaBufMgrSetStatus (start, size - 1, CyTrue);
         ptr = (void *)(glBufferManager.startAddr + (start << 5));
+
+#ifdef CYFXTX_ERRORDETECTION
+        if (glBufMgrEnableChecks)
+        {
+            /* Store the header information used for leak and corruption checks. */
+            block_p = (MemBlockInfo *)ptr;
+            block_p->alloc_id        = glBufAllocCnt++;
+            block_p->alloc_size      = blk_size;
+            block_p->prev_blk        = glBufInUseList;
+            block_p->next_blk        = 0;
+            block_p->start_sig       = CY_U3P_MEM_START_SIG;
+            if (glBufInUseList != 0)
+                glBufInUseList->next_blk = block_p;
+            glBufInUseList           = block_p;
+
+            /* Add the end block signature as a footer. */
+            ((uint32_t *)block_p)[BYTE_TO_DWORD (blk_size) - 1] = CY_U3P_MEM_END_SIG;
+
+            /* Update the return pointer to skip the header created. */
+            ptr = (void *)((uint8_t *)block_p + sizeof (MemBlockInfo));
+        }
+#endif
     }
 
     CyU3PMutexPut (&glBufferManager.lock);
     return (ptr);
 }
 
-/* This function shall be invoked from the DMA module for buffer de-allocation */
+/* Function     : CyU3PDmaBufferFree
+ * Description  : This function frees memory previously allocated using CyU3PDmaBufferAlloc.
+ * Parameters   :
+ *                buffer : Pointer to memory block to be freed.
+ * Return Value : 0 if free is successful, non-zero error code in case of mutex failure.
+ */
 int
 CyU3PDmaBufferFree (
         void *buffer)
 {
+#ifdef CYFXTX_ERRORDETECTION
+    MemBlockInfo *block_p;
+    uint32_t     *sig_p;
+#endif
+
     uint32_t status, start, count;
     uint32_t wordnum, bitnum;
     int      retVal = -1;
+
+    /* Validity check for the pointer. */
+    if ((uint32_t)buffer < CY_U3P_BUFFER_HEAP_BASE)
+        return retVal;
 
     /* Get the lock for the buffer manager. */
     if (CyU3PThreadIdentify ())
@@ -536,6 +1013,35 @@ CyU3PDmaBufferFree (
     {
         return retVal;
     }
+
+#ifdef CYFXTX_ERRORDETECTION
+    /* Update the structures used for leak checking. */
+    if (glBufMgrEnableChecks)
+    {
+        block_p = (MemBlockInfo *)((uint8_t *)buffer - sizeof (MemBlockInfo));
+        sig_p   = (uint32_t *)((uint8_t *)block_p + block_p->alloc_size - sizeof (uint32_t));
+        if ((block_p->start_sig != CY_U3P_MEM_START_SIG) || (*sig_p != CY_U3P_MEM_END_SIG))
+        {
+            /* Notify the user that memory has been corrupted. */
+            if (glBufBadCb != 0)
+                glBufBadCb (buffer);
+        }
+
+        glBufFreeCnt++;
+
+        /* Update the in-use linked list to drop the freed-up block. */
+        if (block_p->next_blk != 0)
+            block_p->next_blk->prev_blk = block_p->prev_blk;
+        if (block_p->prev_blk != 0)
+            block_p->prev_blk->next_blk = block_p->next_blk;
+        if (glBufInUseList == block_p)
+        {
+            glBufInUseList = block_p->prev_blk;
+        }
+
+        buffer = (void *)block_p;
+    }
+#endif
 
     /* If the buffer address is within the range specified, count the number of consecutive ones and
        clear them. */
@@ -572,15 +1078,110 @@ CyU3PDmaBufferFree (
     return retVal;
 }
 
+/* Function    : CyU3PFreeHeaps
+ * Description : This function de-initializes both driver and buffer heap allocators.
+ *               This is called from the SDK library and is not expected to be called
+ *               from user code.
+ * Parameters  : None
+ */
 void
 CyU3PFreeHeaps (
 	void)
 {
     /* Free up the mem and buffer heaps. */
     CyU3PDmaBufferDeInit ();
+
     CyU3PBytePoolDestroy (&glMemBytePool);
     glMemPoolInit = CyFalse;
+
+#ifdef CYFXTX_ERRORDETECTION
+    /* Clear status tracking variables. */
+    glMemAllocCnt  = 0;
+    glMemFreeCnt   = 0;
+    glMemInUseList = 0;
+#endif
 }
 
-/* [ ] */
+#ifdef CYFXTX_ERRORDETECTION
+
+/* Function     : CyU3PBufGetCounts
+ * Description  : Get the number of memory alloc and free calls made so far.
+ * Parameters   :
+ *                allocCnt_p : Parameter to be filled with number of CyU3PDmaBufferAlloc calls.
+ *                freeCnt_p  : Parameter to be filled with number of CyU3PDmaBufferFree calls.
+ * Return Value : None
+ */
+void
+CyU3PBufGetCounts (
+        uint32_t *allocCnt_p,
+        uint32_t *freeCnt_p)
+{
+    if (allocCnt_p != 0)
+        *allocCnt_p = glBufAllocCnt;
+    if (freeCnt_p != 0)
+        *freeCnt_p = glBufFreeCnt;
+}
+
+/* Function     : CyU3PBufGetActiveList
+ * Description  : Get list of current in-use memory blocks. This can be used to
+ *                check for memory leaks leading to allocation failure at runtime.
+ * Parameters   : None
+ * Return Value : Pointer to the currently in-use memory blocks. All of the blocks
+ *                can be identified by traversing the list using the prev_blk
+ *                pointer in the MemBlockInfo structure.
+ * Note         : The active list may contain blocks that are allocated by the
+ *                CyU3PDebugInit and CyU3PUsbStart APIs (8 and 2 buffers respectively).
+ */
+MemBlockInfo *
+CyU3PBufGetActiveList (
+        void)
+{
+    return glBufInUseList;
+}
+
+/* Function     : CyU3PBufCorruptionCheck
+ * Description  : Check all in-use memory blocks for memory corruption. The
+ *                in-use memory list is traversed; and each block is checked
+ *                for a valid start and end signature. The registered bad memory
+ *                callback function is called if any corruption is detected.
+ * Parameters   : None
+ * Return Value : CY_U3P_SUCCESS or CY_U3P_ERROR_FAILURE depending on whether
+ *                corruption is found or not.
+ */
+CyU3PReturnStatus_t
+CyU3PBufCorruptionCheck (
+        void)
+{
+    MemBlockInfo *block_p;
+    uint32_t     *mem_p;
+
+    /* Run through all in-use memory blocks and send a callback for any blocks that do
+       not match the start and end signatures.
+     */
+    block_p = glBufInUseList;
+    while (block_p != 0)
+    {
+        if (((uint32_t)block_p < CY_U3P_BUFFER_HEAP_BASE) || ((uint32_t)block_p >= CY_U3P_SYS_MEM_TOP))
+            return CY_U3P_ERROR_FAILURE;
+
+        mem_p = (uint32_t *)((uint8_t *)block_p + block_p->alloc_size - sizeof (uint32_t));
+        if ((block_p->start_sig != CY_U3P_MEM_START_SIG) || (*mem_p != CY_U3P_MEM_END_SIG))
+        {
+            if (glBufBadCb != 0)
+                glBufBadCb ((void *)((uint8_t *)block_p + sizeof (MemBlockInfo)));
+
+            /* Once we find any corruption, we cannot rely on the list pointers any more. */
+            return CY_U3P_ERROR_FAILURE;
+        }
+
+        /* Verify that the next block pointer is valid. */
+        block_p = block_p->prev_blk;
+    }
+
+    return CY_U3P_SUCCESS;
+}
+
+#endif
+
+/*[]*/
 
