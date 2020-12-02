@@ -496,7 +496,6 @@ void EXTIO_API VersionInfo(const char * progname, int ver_major, int ver_minor)
 extern "C"
 int EXTIO_API GetAttenuators(int atten_idx, float* attenuation)
 {
-	
 	// fill in attenuation
 	// use positive attenuation levels if signal is amplified (LNA)
 	// use negative attenuation levels if signal is attenuated
@@ -518,11 +517,19 @@ int EXTIO_API GetAttenuators(int atten_idx, float* attenuation)
 extern "C"
 int EXTIO_API GetActualAttIdx(void)
 {
-	int AttIdx;	
+	int AttIdx;
 	if (RadioHandler.GetmodeRF() == VHFMODE)
 		AttIdx = giAttIdxVHF;
 	else
 		AttIdx = giAttIdxHF;
+
+	const float *steps;
+	int max_step = RadioHandler.GetRFAttSteps(&steps);
+	if (AttIdx >= max_step)
+	{
+		AttIdx = max_step - 1;
+	}
+
 	EnterFunction1(AttIdx);
 	return AttIdx;
 }
@@ -536,7 +543,7 @@ int EXTIO_API SetAttenuator(int atten_idx)
 		giAttIdxVHF = atten_idx;
 	else
 		giAttIdxHF = atten_idx;
-	return 0; 
+	return 0;
 }
 
 //
@@ -561,11 +568,19 @@ extern "C" int EXTIO_API ExtIoGetMGCs(int mgc_idx, float * gain)
 // returns -1 on error
 extern "C" int EXTIO_API ExtIoGetActualMgcIdx(void)
 {
-	int MgcIdx;	
+	int MgcIdx;
 	if (RadioHandler.GetmodeRF() == VHFMODE)
 		MgcIdx = giMgcIdxVHF;
 	else
 		MgcIdx = giMgcIdxHF;
+
+	const float *steps;
+	int max_step = RadioHandler.GetIFGainSteps(&steps);
+	if (MgcIdx >= max_step)
+	{
+		MgcIdx = max_step - 1;
+	}
+
 	EnterFunction1(MgcIdx);
 	return MgcIdx;
 }
@@ -579,7 +594,7 @@ extern "C"  int EXTIO_API ExtIoSetMGC(int mgc_idx)
 		giMgcIdxVHF = mgc_idx;
 	else
 		giMgcIdxHF = mgc_idx;
-	return 0; 
+	return 0;
 }
 
 //---------------------------------------------------------------------------
