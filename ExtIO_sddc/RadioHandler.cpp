@@ -339,12 +339,12 @@ int RadioHandlerClass::UpdateIFGain(int idx)
 	return 0;
 }
 
-int RadioHandlerClass::GetRFAttSteps(const float **steps) 
+int RadioHandlerClass::GetRFAttSteps(const float **steps)
 {
 	return hardware->getRFSteps(steps);
 }
 
-int RadioHandlerClass::GetIFGainSteps(const float **steps) 
+int RadioHandlerClass::GetIFGainSteps(const float **steps)
 {
 	return hardware->getIFSteps(steps);
 }
@@ -362,22 +362,6 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 {
 	uint64_t actLo;
-
-	// pick the prefered LO
-
-	if (!fine_LO)
-	{
-		// based on freq to pick the right LO
-		if (wishedFreq < ADC_FREQ / 32)
-		{
-			wishedFreq = 0;
-		}
-		else if (wishedFreq < ADC_FREQ / 2)
-		{
-			wishedFreq /= ADC_FREQ / 2 - ADC_FREQ / 4;
-			wishedFreq *= ADC_FREQ / 2 - ADC_FREQ / 4;
-		}
-	}
 
 	actLo = hardware->TuneLo(wishedFreq);
 
