@@ -40,7 +40,7 @@ RX888R2Radio::RX888R2Radio(fx3class *fx3)
 #endif
     for (uint8_t i = 0; i < hf_if_step_size; i++)
     {
-        this->hf_if_steps[i] = -30.0f + ratio * i;
+        this->hf_if_steps[i] = -30.0f + ratio * (i + 1);
     }
 }
 
@@ -63,8 +63,8 @@ bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
         // switch to VHF Attenna
         FX3SetGPIO(VHF_EN);
 
-        // high gain, 0db
-        uint8_t gain = 75 | 0x80;
+        // high gain, 20db
+        uint8_t gain = 0xff;
         Fx3->SetArgument(AD8340_VGA, gain);
         // Enable Tuner reference clock
         uint32_t ref = R828D_FREQ;
@@ -153,7 +153,7 @@ bool RX888R2Radio::UpdateGainIF(int gain_index)
     if (!(gpios & VHF_EN))
     {
         // this is in HF mode
-        uint8_t gain = MODE | gain_index;
+        uint8_t gain = MODE | (gain_index + 1);
 
         DbgPrintf("UpdateGainIF %d \n", gain);
 
