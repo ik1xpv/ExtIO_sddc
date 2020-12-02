@@ -354,31 +354,31 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			// FFT first stage time to frequency, real to complex
 			fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime[k], th->ADCinFreq);
 
-				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
-				{
-					int mm = _mtunebin + m;
-					if ((_mtunebin + m) > mfft-1)
-						mm -=  mfft;
+			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
+			{
+				int mm = _mtunebin + m;
+				if ((_mtunebin + m) > mfft-1)
+					mm -=  mfft;
 
 				th->inFreqTmp[m][0] = (th->ADCinFreq[mm][0] * filter[m][0] +
 					th->ADCinFreq[mm][1] * filter[m][1]);
 
 				th->inFreqTmp[m][1] = (th->ADCinFreq[mm][1] * filter[m][0] -
 					th->ADCinFreq[mm][0] * filter[m][1]);
-					}
+			}
 
-				for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
-				{				
-					int fm = halfFft - mfft / 2 + m;
-					int mm = _mtunebin - mfft / 2 + m;
-					if (mm < 0)
-						mm += mfft;
-					
-					th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
-						th->ADCinFreq[mm][1] * filter[fm][1]);
+			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
+			{
+				int fm = halfFft - mfft / 2 + m;
+				int mm = _mtunebin - mfft / 2 + m;
+				if (mm < 0)
+					mm += mfft;
 
-					th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
-						th->ADCinFreq[mm][0] * filter[fm][1]);
+				th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
+					th->ADCinFreq[mm][1] * filter[fm][1]);
+
+				th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
+					th->ADCinFreq[mm][0] * filter[fm][1]);
 			}
 
 			fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
