@@ -237,6 +237,19 @@ void ApplicationThread ( uint32_t input)
 						MsgParsing(Qevent);
 					}
 				}
+
+				{
+					// Check OVFL
+					switch(HWconfig) {
+						case RX888:
+							rx888_poll();
+							break;
+						case RX888r2:
+							rx888r2_poll();
+							break;
+					}
+				}
+
 				if (glDMACount > 7812)
 				{
 					glDMACount -= 7812;

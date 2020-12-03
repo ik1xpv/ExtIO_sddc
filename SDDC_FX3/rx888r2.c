@@ -14,6 +14,8 @@
 #define GPIO_VHF_EN 35
 #define GPIO_VGA_LE 38
 
+#define GPIO_IN_OVFL 25
+
 void rx888r2_GpioSet(uint32_t mdata)
 {
     CyU3PGpioSetValue (GPIO_SHDWN, (mdata & SHDWN) == SHDWN ); 		 // SHDN
@@ -23,7 +25,6 @@ void rx888r2_GpioSet(uint32_t mdata)
     CyU3PGpioSetValue (GPIO_BIAS_VHF, (mdata & BIAS_VHF) == BIAS_VHF);
     CyU3PGpioSetValue (GPIO_LED_RED, (mdata & LED_RED) == LED_RED);
     CyU3PGpioSetValue (GPIO_LED_YELLOW, (mdata & LED_YELLOW) == LED_YELLOW);
-    CyU3PGpioSetValue (GPIO_LED_BLUE, (mdata & LED_BLUE) == LED_BLUE);
     CyU3PGpioSetValue (GPIO_VHF_EN, (mdata & VHF_EN) == VHF_EN ); // VHF_EN
 }
 
@@ -43,6 +44,8 @@ void rx888r2_GpioInitialize()
     ConfGPIOsimpleout (GPIO_ATT_DATA);
     ConfGPIOsimpleout (GPIO_ATT_CLK);
     ConfGPIOsimpleout (GPIO_VGA_LE);
+
+    ConfGPIOsimpleinput (GPIO_IN_OVFL);
 
     rx888r2_GpioSet(LED_RED | LED_YELLOW | LED_BLUE);
 
@@ -96,4 +99,13 @@ void rx888r2_SetGain(uint8_t value)
 	}
 	CyU3PGpioSetValue (GPIO_VGA_LE, 1);    // ATT_LE latched
 	CyU3PGpioSetValue (GPIO_ATT_DATA, 0); // ATT_DATA
+}
+
+void rx888r2_poll()
+{
+    CyBool_t value;
+
+    CyU3PGpioSimpleGetValue(GPIO_IN_OVFL, &value);
+
+    CyU3PGpioSetValue (GPIO_LED_BLUE, value);
 }
