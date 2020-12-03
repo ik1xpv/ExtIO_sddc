@@ -82,8 +82,6 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 {
 //	EnterFunction();  Not yet ready debug console
 	type = gHwType;
-	strcpy(name, HWNAME);
-	strcpy(model, HWMODEL);
 	if (!gbInitHW)
 	{
 		// do initialization
@@ -97,7 +95,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		if (AllocConsole())
 		{
 			freopen("CONOUT$", "wt", stdout);
-			SetConsoleTitle(TEXT("Debug Black Box Console ExtIO_" HWNAME));
+			SetConsoleTitle(TEXT("Debug Black Box Console ExtIO"));
 			Hconsole = GetConsoleWindow();
 			RECT rect;
 			GetWindowRect(GetDesktopWindow(), &rect);
@@ -105,9 +103,9 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			DbgPrintf((char *) "Oscar Steila IK1XPV fecit MMXVIII - MMXX\n");
 			MakeWindowTransparent(Hconsole, 0xC0);
 		}
-#endif	
+#endif
 		EnterFunction();  // now works
-	
+
 		gbInitHW = RadioHandler.Init(hInst); // Check if it there hardware
 		if (!gbInitHW)
 		{
@@ -116,6 +114,9 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 				ExitProcess(0); // exit without saving settings
 			return gbInitHW;
 		}
+
+		strcpy(name, RadioHandler.getName());
+		strcpy(model, RadioHandler.getName());
 
 		fftwf_import_wisdom_from_filename("wisdom");
 
@@ -668,7 +669,7 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 	float  newAtten = 0.0F;
 	int tempInt;
 	unsigned long tempulong;
-	
+
 	// now we know that there's no need to save our settings into some (.ini) file,
 	// what won't be possible without admin rights!!!,
 	// if the program (and ExtIO) is installed in C:\Program files\..
@@ -712,7 +713,7 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 	case 6:
 		tempInt = atoi(value);
 		giMgcIdxVHF = tempInt;
-		break;		
+		break;
 	case 7:
 		if (sscanf(value, "%d", &tempInt) > 0)
 		{
