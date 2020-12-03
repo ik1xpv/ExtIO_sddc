@@ -21,18 +21,23 @@ inline void null_func(const char *format, ...) { }
 // macro to call callback function with just status extHWstatusT
 #define EXTIO_STATUS_CHANGE( CB, STATUS )   \
 	do { \
-	  /*SendMessage(h_dialog, WM_USER + 1, STATUS, 0);*/ \
+	  SendMessage(h_dialog, WM_USER + 1, STATUS, 0); \
 	  if (CB) { \
 		  DbgPrintf("<==CALLBACK: %s\n", #STATUS); \
 		  CB( -1, STATUS, 0, NULL );\
 	  }\
 	}while(0)
 
-#define EnterFunction() \
-  DbgPrintf("==>%s\n", __FUNCDNAME__)
+#ifdef VERBOSE_DEBUG
+	#define EnterFunction() \
+	DbgPrintf("==>%s\n", __FUNCDNAME__)
 
-#define EnterFunction1(v1) \
-  DbgPrintf("==>%s(%d)\n", __FUNCDNAME__, (v1))
+	#define EnterFunction1(v1) \
+	DbgPrintf("==>%s(%d)\n", __FUNCDNAME__, (v1))
+#else
+	#define EnterFunction()
+	#define EnterFunction1(v1)
+#endif
 
 #ifdef _DEBUG
 #define DbgPrintf (printf)
@@ -82,7 +87,6 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 
 #define TIMEOUT (2000)
 
-extern int Xfreq;
 extern char strversion[];
 extern int gdFreqCorr_ppm;
 extern int gdGainCorr_dB;

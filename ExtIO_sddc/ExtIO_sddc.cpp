@@ -322,7 +322,6 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
 			}
-			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
 	if ((LOfreq < 31000000) && (rfmode != HFMODE))
 	{
@@ -338,7 +337,6 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
 			}
-			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
 
 	LOfreq = RadioHandler.TuneLO(LOfreq);
@@ -624,6 +622,7 @@ int  EXTIO_API ExtIoSetSrate(int srate_idx)
 
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
+		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 
 		return 0;
 	}
