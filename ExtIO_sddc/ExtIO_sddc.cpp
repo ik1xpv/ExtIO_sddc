@@ -313,12 +313,10 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			RadioHandler.UpdatemodeRF(VHFMODE);
 			ExtIoSetMGC(giMgcIdxVHF);
 			SetAttenuator(giAttIdxVHF);
-			giExtSrateIdxVHF = 2;
 			if (pfnCallback)
 			{
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
@@ -333,7 +331,6 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			{
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
@@ -612,7 +609,6 @@ int  EXTIO_API ExtIoSetSrate(int srate_idx)
 {
     EnterFunction1(srate_idx);
 	double newSrate = 0.0;
-	if ((RadioHandler.GetmodeRF() == VHFMODE) && (srate_idx>2)) return 1;	// RT820T2 max 2
 
 	if (0 == ExtIoGetSrates(srate_idx, &newSrate))
 	{
