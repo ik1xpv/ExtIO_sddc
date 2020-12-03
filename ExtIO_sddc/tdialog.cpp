@@ -222,15 +222,13 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (sscanf(ebuffer, "%lf", &x) > 0)
 				{
 					x += _xfp;
-					if (x > 200.0) x = 200.0;
-					if (x < -200.0) x = -200.0;
+					if (x > 0.2) x = 0.2;
+					if (x < -0.2) x = -0.2;
 					sprintf( ebuffer, "%3.3f", x);
 					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
 					gdFreqCorr_ppm = x;
 				}
-	
 				ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_SHOW); // activate Restart
-	
 				break;
 			}
 			break;
@@ -244,15 +242,13 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (sscanf(ebuffer, "%lf", &x) > 0)
 				{
 					x -= _xfm;
-					if (x > 200.0) x = 200.0;
-					if (x < -200.0) x = -200.0;
+					if (x > 0.2) x = 0.2;
+					if (x < -0.2) x = -0.2;
 					sprintf(ebuffer, "%3.3f", x);
 					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
 					gdFreqCorr_ppm = x;
 				}
-				
 				ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_SHOW); // activate Restart
-
 				break;
 			}
 			break;
@@ -261,23 +257,9 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
-				if (RadioHandler.getModel() == HF103)
-					{
-						ShowWindow(hWnd, SW_HIDE);
-						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Stop);
-						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);     // this is ok!!
-						// EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES); // ? this does not work ?
-						// patch to exit
-						RadioHandler.Stop();
-						ShellExecute(NULL, ("open"), ("StartHDSDR.CMD"), NULL, NULL, SW_SHOWNORMAL); // run restart cmd
-						SendF4();
-					}
-				else
-					{
-						RadioHandler.Stop();
-						RadioHandler.Start(ExtIoGetActualSrateIdx());
-						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);  // to updt demodulators
-					}
+				RadioHandler.Stop();
+				RadioHandler.Start(ExtIoGetActualSrateIdx());
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);  // to updt demodulators
 				break;
 			}
 			break;
