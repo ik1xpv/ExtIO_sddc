@@ -26,7 +26,7 @@ BBRF103Radio::BBRF103Radio(fx3class* fx3)
 
 void BBRF103Radio::Initialize()
 {
-    uint32_t data = (UINT32)CORRECT(ADC_FREQ);
+    uint32_t data =  (uint32_t)CORRECT(getSampleRate());
     Fx3->Control(STARTADC, data);
 }
 
@@ -44,7 +44,7 @@ bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
         FX3UnsetGPIO(ATT_SEL0 | ATT_SEL1);
 
         // Initialize Tuner
-        return Fx3->Control(R82XXINIT, (uint32_t)CORRECT(R820T_FREQ));
+        return Fx3->Control(R82XXINIT, (uint32_t)R820T_FREQ);
     }
 
     else if (mode == HFMODE )   // (mode == HFMODE || mode == VLFMODE) no more VLFMODE

@@ -1,4 +1,4 @@
-## Copyright Cypress Semiconductor Corporation, 2010-2011,
+## Copyright Cypress Semiconductor Corporation, 2010-2018,
 ## All Rights Reserved
 ## UNPUBLISHED, LICENSED SOFTWARE.
 ##
@@ -15,29 +15,37 @@
 ##
 
 FX3FWROOT?=../SDK
-FX3PFWROOT=$(FX3FWROOT)/u3p_firmware
+CYCONFOPT = fx3_release
+
+#all:compile
+
+include $(FX3FWROOT)/fw_build/fx3_fw/fx3_build_config.mak
 
 MODULE = SDDC_FX3
-CYCONFOPT=fx3_release
 
-all:compile $(MODULE).img
+all:$(MODULE).img
 
-include $(FX3FWROOT)/common/fx3_build_config.mak
+SOURCE= cyfxtx.c		\
+	DebugConsole.c		\
+	i2cmodule.c		\
+	tuner_r82xx.c		\
+	RunApplication.c	\
+	Si5351.c		\
+	StartStopApplication.c	\
+	StartUP.c		\
+	Support.c		\
+	USBdescriptor.c		\
+	USBhandler.c		\
+	hf103.c			\
+	bbrf103.c		\
+	rx888.c			\
+	rx888r2.c
 
-SOURCE +=  DebugConsole.c \
-			i2cmodule.c \
-			tuner_r82xx.c \
-			RunApplication.c \
-			Si5351.c \
-			StartStopApplication.c \
-			StartUP.c \
-			Support.c \
-			USBdescriptor.c \
-			USBhandler.c \
-			hf103.c \
-			bbrf103.c \
-			rx888.c \
-			rx888r2.c
+ifeq ($(CYFXBUILD),arm)
+SOURCE_ASM=cyfx_startup.S
+else
+SOURCE_ASM=cyfx_gcc_startup.S
+endif
 
 C_OBJECT=$(SOURCE:%.c=./%.o)
 A_OBJECT=$(SOURCE_ASM:%.S=./%.o)
@@ -53,19 +61,22 @@ $(C_OBJECT) : %.o : %.c
 $(A_OBJECT) : %.o : %.S
 	$(ASSEMBLE)
 
-./elf2img : $(FX3FWROOT)/util/elf2img.c
-	gcc -o elf2img $<
+ELF2IMG = ./elf2img
 
 clean:
 	rm -f ./$(MODULE).$(EXEEXT)
-	rm -f ./elf2img
+	rm -f $(ELF2IMG)
 	rm -f ./$(MODULE).img
 	rm -f ./$(MODULE).map
 	rm -f ./*.o
 
+
 compile: $(C_OBJECT) $(A_OBJECT) $(EXES)
 
-$(MODULE).img : $(MODULE).$(EXEEXT) ./elf2img
-	./elf2img -i $< -o $@
+$(ELF2IMG) : $(FX3FWROOT)/util/elf2img/elf2img.c
+	gcc -O -Wall -o $@ $<
+
+$(MODULE).img: $(EXES) $(ELF2IMG)
+	$(ELF2IMG) -i $< -o $@ -v
 
 #[]#

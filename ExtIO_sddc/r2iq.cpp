@@ -345,7 +345,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		}
 
 		fftwf_complex* filter = filterHw[decimate];
-		float scale = this->GainScale * (float)pow(10.0, gdGainCorr_dB / 20.0);
+		float scale = this->GainScale * (float)powf(10.0f, gdGainCorr_dB / 20.0f);
 		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 
 		// decimate in frequency plus tuning
@@ -357,8 +357,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 			{
 				int mm = _mtunebin + m;
-				if ((_mtunebin + m) > mfft-1)
-					mm -=  mfft;
+				if (mm > halfFft -1) mm -= halfFft;
 
 				th->inFreqTmp[m][0] = (th->ADCinFreq[mm][0] * filter[m][0] +
 					th->ADCinFreq[mm][1] * filter[m][1]);
@@ -371,8 +370,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			{
 				int fm = halfFft - mfft / 2 + m;
 				int mm = _mtunebin - mfft / 2 + m;
-				if (mm < 0)
-					mm += mfft;
+				if (mm < 0) mm += halfFft;
 
 				th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
 					th->ADCinFreq[mm][1] * filter[fm][1]);

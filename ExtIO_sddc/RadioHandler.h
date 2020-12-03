@@ -40,6 +40,8 @@ public:
     bool GetADCsamples() { return  samplesADCflag; }
     UINT16 GetFirmware() { return firmware; }
 
+    uint32_t getSampleRate();
+
     const char* getName();
     RadioModel getModel() { return radio; }
 
@@ -100,6 +102,8 @@ public:
 
     bool FX3producerOn() { return Fx3->Control(STARTFX3); }
     bool FX3producerOff() { return Fx3->Control(STOPFX3); }
+
+    virtual uint32_t getSampleRate();
 
     bool FX3SetGPIO(uint32_t mask);
     bool FX3UnsetGPIO(uint32_t mask);

@@ -183,12 +183,12 @@ void ApplicationThread ( uint32_t input)
 		if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
 		{
 			// check if BBRF103 or RX888 (RX666 ?)
-			if(GPIOtestInputPulldown(LED_KIT)) {
+			if(GPIOtestInputPulldown(LED_KIT) == CyTrue) {
 				HWconfig = BBRF103;
 			}
 			else
 			{
-					HWconfig = RX888;
+				HWconfig = RX888;
 			}
 		}
 		else if (I2cTransfer(0, R828D_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)

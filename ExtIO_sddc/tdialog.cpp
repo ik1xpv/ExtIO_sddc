@@ -8,6 +8,7 @@
 #include "ExtIO_sddc.h"
 #include "config.h"
 #include "uti.h"
+#include "LC_ExtIO_Types.h"
 
 HWND hTabCtrlMain;
 UINT nSel = 0; //selected tab
@@ -21,8 +22,8 @@ COLORREF clrBtnSel = RGB(24, 160, 244);
 COLORREF clrBtnUnsel = RGB(0, 44, 107);
 COLORREF clrBackground = RGB(158, 188, 188);
 HBRUSH g_hbrBackground = CreateSolidBrush(clrBackground);
-float  _xfp = (float) 0.001;
-float  _xfm = (float) 0.001;
+int  _xfp = 1;
+int  _xfm = 1;
 unsigned int cntime = 0;
 
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -63,12 +64,12 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetFocus(GetDlgItem(hWnd, IDC_USBOUT));
 		ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_HIDE);
 
-		sprintf(ebuffer, "%2d", (int) gdGainCorr_dB);
+		sprintf(ebuffer, "%2d", gdGainCorr_dB);
 		SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
 
-		sprintf(ebuffer, "%3.3f", gdFreqCorr_ppm);
+		sprintf(ebuffer, "%3d", gdFreqCorr_ppm);
 		SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
-		
+
 		SetTimer(hWnd, 0, 100, NULL);
 
 #ifndef TRACE
@@ -77,16 +78,15 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return TRUE;
 
-	
 	case WM_TIMER:
 	{
 		char lbuffer[64];
 		if (cntime-- <= 0)
 		{
 			cntime = 5;
-			sprintf(lbuffer, "%2.9f Msps",  adcfixedfreq / 1000000);
+			sprintf(lbuffer, "%2.9f Msps",  RadioHandler.getSampleRate() / 1000000.0f);
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC13), lbuffer);
-			sprintf(lbuffer, "%6.3f Msps measured", g_Bps * adcfixedfreq / ((double)ADC_FREQ*2.0) );
+			sprintf(lbuffer, "%6.3f Msps measured", g_Bps );
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC14), lbuffer);
 			sprintf(lbuffer, "%6.3f Msps measured", g_SpsIF);
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC16), lbuffer);
@@ -94,18 +94,18 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (GetStateButton(hWnd, IDC_FREQP))
 		{
 			Command(hWnd, IDC_FREQP, BN_CLICKED);
-			if (_xfp < 10.0) _xfp *= (float) 1.2;
+			if (_xfp < 30) _xfp = _xfp * 12 / 10;
 		}
 		else
-			_xfp = (float) 0.001;
+			_xfp = 1;
 
 		if (GetStateButton(hWnd, IDC_FREQM))
 		{
 			Command(hWnd, IDC_FREQM, BN_CLICKED);
-			if (_xfm < 10.0) _xfm *= (float) 1.2;
+			if (_xfm < 30) _xfm = _xfm * 12 / 10;
 		}
 		else
-			_xfm = (float) 0.001;
+			_xfm = 1;
 		break;
 	}
 
@@ -118,6 +118,17 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HDC hDc = (HDC)wParam;
 		SetBkMode(hDc, TRANSPARENT);
 		return (LONG)g_hbrBackground;
+	}
+
+	case WM_USER + 1:
+	{
+		switch(wParam)
+		{
+			case extHw_Changed_SampleRate:
+				RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+		}
+		break;
 	}
 
 	case WM_NOTIFY:
@@ -190,7 +201,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				sprintf(ebuffer, "%2d", x);
 				SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
-				gdGainCorr_dB = (double)x;
+				gdGainCorr_dB = x;
 				break;
 			}
 			break;
@@ -208,7 +219,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				sprintf(ebuffer, "%2d", x);
 				SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
-				gdGainCorr_dB = (double)x;
+				gdGainCorr_dB = x;
 				break;
 			}
 			break;
@@ -218,19 +229,17 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case BN_CLICKED:
 				GetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer, 32);
-				double x = 0;
-				if (sscanf(ebuffer, "%lf", &x) > 0)
+				int x = 0;
+				if (sscanf(ebuffer, "%d", &x) > 0)
 				{
 					x += _xfp;
-					if (x > 200.0) x = 200.0;
-					if (x < -200.0) x = -200.0;
-					sprintf( ebuffer, "%3.3f", x);
+					if (x > 200) x = 200;
+					if (x < -200) x = -200;
+					sprintf( ebuffer, "%3d", x);
 					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
 					gdFreqCorr_ppm = x;
 				}
-	
 				ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_SHOW); // activate Restart
-	
 				break;
 			}
 			break;
@@ -240,19 +249,17 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case BN_CLICKED:
 				GetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer, 32);
-				double x = 0;
-				if (sscanf(ebuffer, "%lf", &x) > 0)
+				int x = 0;
+				if (sscanf(ebuffer, "%d", &x) > 0)
 				{
 					x -= _xfm;
-					if (x > 200.0) x = 200.0;
-					if (x < -200.0) x = -200.0;
-					sprintf(ebuffer, "%3.3f", x);
+					if (x > 200) x = 200;
+					if (x < -200) x = -200;
+					sprintf(ebuffer, "%3d", x);
 					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
 					gdFreqCorr_ppm = x;
 				}
-				
 				ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_SHOW); // activate Restart
-
 				break;
 			}
 			break;
@@ -261,23 +268,8 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
-				if (RadioHandler.getModel() == HF103)
-					{
-						ShowWindow(hWnd, SW_HIDE);
-						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Stop);
-						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);     // this is ok!!
-						// EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES); // ? this does not work ?
-						// patch to exit
-						RadioHandler.Stop();
-						ShellExecute(NULL, ("open"), ("StartHDSDR.CMD"), NULL, NULL, SW_SHOWNORMAL); // run restart cmd
-						SendF4();
-					}
-				else
-					{
-						RadioHandler.Stop();
-						RadioHandler.Start(ExtIoGetActualSrateIdx());
-						EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);  // to updt demodulators
-					}
+				RadioHandler.Stop();
+				RadioHandler.Start(ExtIoGetActualSrateIdx());
 				break;
 			}
 			break;
@@ -309,14 +301,4 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return FALSE;
 
-}
-
-
-void UpdateDialogTitle(HWND hWnd, char dll_version[], char hardware_type[])
-{
-	char str[80];
-	strcpy(str, dll_version);
-	strcat(str, " | ");
-	strcat(str, hardware_type);
-	SetWindowTextA(hWnd, str);
 }

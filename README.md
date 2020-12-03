@@ -47,7 +47,21 @@ VS2015: >cmake .. -G "Visual Studio 14 2015 Win32"
 
 ## Build Instructions for firmware
 
-//TODO
+- download latest Cypress EZ-USB FX3 SDK from here: https://www.cypress.com/documentation/software-and-drivers/ez-usb-fx3-software-development-kit
+- follow the installation instructions in the PDF document 'Getting Started with FX3 SDK'; on Windows the default installation path will be 'C:\Program Files (x86)\Cypress\EZ-USB FX3 SDK\1.3' (see pages 17-18) - on Linux the installation path could be something like '/opt/Cypress/cyfx3sdk'
+- add the following environment variables:
+```
+export FX3FWROOT=<installation path>
+export ARMGCC_INSTALL_PATH=<ARM GCC installation path>
+export ARMGCC_VERSION=4.8.1
+```
+(on Linux you may want to add those variables to your '.bash_profile' or '.profile')
+- all the previous steps need to be done only once (or when you want to upgrade the version of the Cypress EZ-USB FX3 SDK)
+- to compile the firmware run:
+```
+cd SDDC_FX3
+make
+```
 
 ## Directory structure:
 

@@ -51,20 +51,6 @@ SplashWindow  splashW;
 
 #define IDD_SDDC_SETTINGS	100
 
-void ADCFrequencyCorrection()
-{
-	switch (RadioHandler.getModel())
-	{
-	case HF103:
-		adcfixedfreq = (double)ADC_FREQ * (1.0 + (gdFreqCorr_ppm * 0.000001));
-		break;
-	default: //BBRF103, RX888...  exact frequency, tuning made with Si5351a
-		adcfixedfreq = (double)ADC_FREQ; 
-		break;
-	}
-}
-
-
 //---------------------------------------------------------------------------
 
 HMODULE hInst;
@@ -96,8 +82,6 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 {
 //	EnterFunction();  Not yet ready debug console
 	type = gHwType;
-	strcpy(name, HWNAME);
-	strcpy(model, HWMODEL);
 	if (!gbInitHW)
 	{
 		// do initialization
@@ -111,7 +95,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		if (AllocConsole())
 		{
 			freopen("CONOUT$", "wt", stdout);
-			SetConsoleTitle(TEXT("Debug Black Box Console ExtIO_" HWNAME));
+			SetConsoleTitle(TEXT("Debug Black Box Console ExtIO"));
 			Hconsole = GetConsoleWindow();
 			RECT rect;
 			GetWindowRect(GetDesktopWindow(), &rect);
@@ -119,9 +103,9 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			DbgPrintf((char *) "Oscar Steila IK1XPV fecit MMXVIII - MMXX\n");
 			MakeWindowTransparent(Hconsole, 0xC0);
 		}
-#endif	
+#endif
 		EnterFunction();  // now works
-	
+
 		gbInitHW = RadioHandler.Init(hInst); // Check if it there hardware
 		if (!gbInitHW)
 		{
@@ -131,24 +115,25 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			return gbInitHW;
 		}
 
+		strcpy(name, RadioHandler.getName());
+		strcpy(model, RadioHandler.getName());
+
 		fftwf_import_wisdom_from_filename("wisdom");
 
-		ADCFrequencyCorrection();
-
-		DbgPrintf((char*)"Init values \n");
-		DbgPrintf("SDR_settings_valid = %d \n", SDR_settings_valid);  // settings are version specific !
-		DbgPrintf("giExtSrateIdxHF = %d   %f Msps \n", giExtSrateIdxHF, pow(2.0, 1.0 + giExtSrateIdxHF));
-		DbgPrintf("giExtSrateIdxVHF = %d   %f Msps \n", giExtSrateIdxVHF, pow(2.0, 1.0 + giExtSrateIdxVHF));
-		DbgPrintf("giAttIdxHF = %d \n", giAttIdxHF);
-		DbgPrintf("giAttIdxVHF = %d \n", giAttIdxVHF);
-		DbgPrintf("giMgcIdxHF = %d \n", giMgcIdxHF);
-		DbgPrintf("giMgcIdxVHF = %d \n", giMgcIdxVHF);
-		DbgPrintf("gdGainCorr = %2.1f \n", gdGainCorr_dB);
-		DbgPrintf("glTunefreq = %ld \n", (long int)glTunefreq);
+		DbgPrintf("Init Values:\n");
+		DbgPrintf("SDR_settings_valid = %d\n", SDR_settings_valid);  // settings are version specific !
+		DbgPrintf("giExtSrateIdxHF = %d   %f Msps\n", giExtSrateIdxHF, pow(2.0, 1.0 + giExtSrateIdxHF));
+		DbgPrintf("giExtSrateIdxVHF = %d   %f Msps\n", giExtSrateIdxVHF, pow(2.0, 1.0 + giExtSrateIdxVHF));
+		DbgPrintf("giAttIdxHF = %d\n", giAttIdxHF);
+		DbgPrintf("giAttIdxVHF = %d\n", giAttIdxVHF);
+		DbgPrintf("giMgcIdxHF = %d\n", giMgcIdxHF);
+		DbgPrintf("giMgcIdxVHF = %d\n", giMgcIdxVHF);
+		DbgPrintf("gdGainCorr = %2d\n", gdGainCorr_dB);
+		DbgPrintf("glTunefreq = %ld\n", (long int)glTunefreq);
 		DbgPrintf("______________________________________\n");
-		DbgPrintf("freqcorrection = %f \n", gdFreqCorr_ppm);
-		DbgPrintf("adcfixedfreq = %ld \n", (long int)adcfixedfreq);
-		DbgPrintf("adcfixedfr/4 = %ld \n", (long int)(adcfixedfreq / 4.0));
+		DbgPrintf("freqcorrection = %d\n", gdFreqCorr_ppm);
+		DbgPrintf("adcfixedfreq = %ld\n", (long int)RadioHandler.getSampleRate());
+		DbgPrintf("adcfixedfr/4 = %ld\n", (long int)(RadioHandler.getSampleRate() / 4.0));
 		DbgPrintf("______________________________________\n");
 	}
 	return gbInitHW;
@@ -199,7 +184,7 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
 
 	RadioHandler.Start(ExtIoGetActualSrateIdx());
 	SetHWLO64(LOfreq);
-	
+
 	if (RadioHandler.IsReady()) //  HF103 connected
 	{
 		char ebuffer[64];
@@ -209,10 +194,6 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
 		lb = (uint8_t) fw;
 		sprintf(ebuffer, "%s v%0.2f  |  FX3 v%d.%02d  |  %s ",SWNAME, VERSION ,hb,lb, RadioHandler.getName() );
 		SetWindowText(h_dialog, ebuffer);
-		if (RadioHandler.getModel() == HF103)
-			SetWindowText(GetDlgItem(h_dialog, IDC_RESTART), "Restart");
-		else
-			SetWindowText(GetDlgItem(h_dialog, IDC_RESTART), "Set");
 	}
 	else
 	{
@@ -340,7 +321,6 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
 			}
-			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
 	if ((LOfreq < 31000000) && (rfmode != HFMODE))
 	{
@@ -355,7 +335,6 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
 			}
-			RedrawWindow(h_dialog, NULL, NULL, RDW_INVALIDATE);
 	}
 
 	LOfreq = RadioHandler.TuneLO(LOfreq);
@@ -610,9 +589,9 @@ int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 	case 4:		div = 2.0;	break;
 	default:    return -1;
 	}
-	*samplerate = (double)((UINT32)((adcfixedfreq / div)));
+	*samplerate = (double)((UINT32)((RadioHandler.getSampleRate() / div)));
      DbgPrintf("*ExtIoGetSrate idx %d  %e\n", srate_idx, *samplerate);
-	return 0;	
+	return 0;
 }
 
 extern "C"
@@ -638,6 +617,8 @@ int  EXTIO_API ExtIoSetSrate(int srate_idx)
 		else
 			giExtSrateIdxHF = srate_idx;
 
+		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
+		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 
 		return 0;
@@ -661,8 +642,8 @@ int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
 	case 4:	strcpy(description, "HF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxHF);			return 0;
 	case 5:	strcpy(description, "VHF_AttenuationIdx");	snprintf(value, 1024, "%d", giAttIdxVHF);			return 0;
 	case 6:	strcpy(description, "VHF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxVHF);			return 0;
-	case 7:	strcpy(description, "GainCorrection_dB");   snprintf(value, 1024, "%f",gdGainCorr_dB);	return 0;
-	case 8:	strcpy(description, "FreqCorrection_dB");   snprintf(value, 1024, "%f", gdFreqCorr_ppm);	return 0;
+	case 7:	strcpy(description, "GainCorrection_dB");   snprintf(value, 1024, "%d",gdGainCorr_dB);	return 0;
+	case 8:	strcpy(description, "FreqCorrection_ppm");   snprintf(value, 1024, "%d", gdFreqCorr_ppm);	return 0;
 	case 9:	strcpy(description, "HF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
 	case 10: strcpy(description, "VHF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
 	case 11: strcpy(description, "LoFrequencyHz");   snprintf(value, 1024, "%ld",(unsigned long) glLOfreq); return 0;
@@ -683,8 +664,7 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 	float  newAtten = 0.0F;
 	int tempInt;
 	unsigned long tempulong;
-	double tempDouble;
-	
+
 	// now we know that there's no need to save our settings into some (.ini) file,
 	// what won't be possible without admin rights!!!,
 	// if the program (and ExtIO) is installed in C:\Program files\..
@@ -728,19 +708,19 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 	case 6:
 		tempInt = atoi(value);
 		giMgcIdxVHF = tempInt;
-		break;		
+		break;
 	case 7:
-		if (sscanf(value, "%lf", &tempDouble) > 0)
+		if (sscanf(value, "%d", &tempInt) > 0)
 		{
-			if ((tempDouble < 40.0) && (tempDouble > -40.0))    //    if abs< 40dB
-				gdGainCorr_dB = tempDouble;
+			if ((tempInt < 40) && (tempInt > -40))    //    if abs< 40dB
+				gdGainCorr_dB = tempInt;
 		}
 		break;
 	case 8:
-		if (sscanf(value, "%lf", &tempDouble) > 0)
+		if (sscanf(value, "%d", &tempInt) > 0)
 		{
-			if ((tempDouble < 200.0) && (tempDouble > -200.0))    //    if abs< 200 ppm
-				gdFreqCorr_ppm = tempDouble;
+			if ((tempInt < 200) && (tempInt > -200))    //    if abs< 200 ppm
+				gdFreqCorr_ppm = tempInt;
 		}
 		break;
 
