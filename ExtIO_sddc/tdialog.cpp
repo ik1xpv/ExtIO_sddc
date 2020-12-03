@@ -8,6 +8,7 @@
 #include "ExtIO_sddc.h"
 #include "config.h"
 #include "uti.h"
+#include "LC_ExtIO_Types.h"
 
 HWND hTabCtrlMain;
 UINT nSel = 0; //selected tab
@@ -117,6 +118,17 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HDC hDc = (HDC)wParam;
 		SetBkMode(hDc, TRANSPARENT);
 		return (LONG)g_hbrBackground;
+	}
+
+	case WM_USER + 1:
+	{
+		switch(wParam)
+		{
+			case extHw_Changed_SampleRate:
+				RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
+				break;
+		}
+		break;
 	}
 
 	case WM_NOTIFY:
@@ -258,7 +270,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case BN_CLICKED:
 				RadioHandler.Stop();
 				RadioHandler.Start(ExtIoGetActualSrateIdx());
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);  // to updt demodulators
 				break;
 			}
 			break;
@@ -290,14 +301,4 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return FALSE;
 
-}
-
-
-void UpdateDialogTitle(HWND hWnd, char dll_version[], char hardware_type[])
-{
-	char str[80];
-	strcpy(str, dll_version);
-	strcat(str, " | ");
-	strcat(str, hardware_type);
-	SetWindowTextA(hWnd, str);
 }
