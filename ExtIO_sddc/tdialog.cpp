@@ -21,8 +21,8 @@ COLORREF clrBtnSel = RGB(24, 160, 244);
 COLORREF clrBtnUnsel = RGB(0, 44, 107);
 COLORREF clrBackground = RGB(158, 188, 188);
 HBRUSH g_hbrBackground = CreateSolidBrush(clrBackground);
-float  _xfp = (float) 0.001;
-float  _xfm = (float) 0.001;
+int  _xfp = 1;
+int  _xfm = 1;
 unsigned int cntime = 0;
 
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -63,12 +63,12 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetFocus(GetDlgItem(hWnd, IDC_USBOUT));
 		ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_HIDE);
 
-		sprintf(ebuffer, "%2d", (int) gdGainCorr_dB);
+		sprintf(ebuffer, "%2d", gdGainCorr_dB);
 		SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
 
-		sprintf(ebuffer, "%3.3f", gdFreqCorr_ppm);
+		sprintf(ebuffer, "%3d", gdFreqCorr_ppm);
 		SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
-		
+
 		SetTimer(hWnd, 0, 100, NULL);
 
 #ifndef TRACE
@@ -77,7 +77,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return TRUE;
 
-	
 	case WM_TIMER:
 	{
 		char lbuffer[64];
@@ -94,18 +93,18 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (GetStateButton(hWnd, IDC_FREQP))
 		{
 			Command(hWnd, IDC_FREQP, BN_CLICKED);
-			if (_xfp < 10.0) _xfp *= (float) 1.2;
+			if (_xfp < 30) _xfp = _xfp * 12 / 10;
 		}
 		else
-			_xfp = (float) 0.001;
+			_xfp = 1;
 
 		if (GetStateButton(hWnd, IDC_FREQM))
 		{
 			Command(hWnd, IDC_FREQM, BN_CLICKED);
-			if (_xfm < 10.0) _xfm *= (float) 1.2;
+			if (_xfm < 30) _xfm = _xfm * 12 / 10;
 		}
 		else
-			_xfm = (float) 0.001;
+			_xfm = 1;
 		break;
 	}
 
@@ -190,7 +189,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				sprintf(ebuffer, "%2d", x);
 				SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
-				gdGainCorr_dB = (double)x;
+				gdGainCorr_dB = x;
 				break;
 			}
 			break;
@@ -208,7 +207,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				sprintf(ebuffer, "%2d", x);
 				SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
-				gdGainCorr_dB = (double)x;
+				gdGainCorr_dB = x;
 				break;
 			}
 			break;
@@ -218,13 +217,13 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case BN_CLICKED:
 				GetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer, 32);
-				double x = 0;
-				if (sscanf(ebuffer, "%lf", &x) > 0)
+				int x = 0;
+				if (sscanf(ebuffer, "%d", &x) > 0)
 				{
 					x += _xfp;
-					if (x > 0.2) x = 0.2;
-					if (x < -0.2) x = -0.2;
-					sprintf( ebuffer, "%3.3f", x);
+					if (x > 200) x = 200;
+					if (x < -200) x = -200;
+					sprintf( ebuffer, "%3d", x);
 					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
 					gdFreqCorr_ppm = x;
 				}
@@ -238,13 +237,13 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case BN_CLICKED:
 				GetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer, 32);
-				double x = 0;
-				if (sscanf(ebuffer, "%lf", &x) > 0)
+				int x = 0;
+				if (sscanf(ebuffer, "%d", &x) > 0)
 				{
 					x -= _xfm;
-					if (x > 0.2) x = 0.2;
-					if (x < -0.2) x = -0.2;
-					sprintf(ebuffer, "%3.3f", x);
+					if (x > 200) x = 200;
+					if (x < -200) x = -200;
+					sprintf(ebuffer, "%3d", x);
 					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
 					gdFreqCorr_ppm = x;
 				}

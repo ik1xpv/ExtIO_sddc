@@ -345,7 +345,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		}
 
 		fftwf_complex* filter = filterHw[decimate];
-		float scale = this->GainScale * (float)pow(10.0, gdGainCorr_dB / 20.0);
+		float scale = this->GainScale * (float)powf(10.0f, gdGainCorr_dB / 20.0f);
 		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 
 		// decimate in frequency plus tuning

@@ -119,20 +119,20 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 
 		fftwf_import_wisdom_from_filename("wisdom");
 
-		DbgPrintf((char*)"Init values \n");
-		DbgPrintf("SDR_settings_valid = %d \n", SDR_settings_valid);  // settings are version specific !
-		DbgPrintf("giExtSrateIdxHF = %d   %f Msps \n", giExtSrateIdxHF, pow(2.0, 1.0 + giExtSrateIdxHF));
-		DbgPrintf("giExtSrateIdxVHF = %d   %f Msps \n", giExtSrateIdxVHF, pow(2.0, 1.0 + giExtSrateIdxVHF));
-		DbgPrintf("giAttIdxHF = %d \n", giAttIdxHF);
-		DbgPrintf("giAttIdxVHF = %d \n", giAttIdxVHF);
-		DbgPrintf("giMgcIdxHF = %d \n", giMgcIdxHF);
-		DbgPrintf("giMgcIdxVHF = %d \n", giMgcIdxVHF);
-		DbgPrintf("gdGainCorr = %2.1f \n", gdGainCorr_dB);
-		DbgPrintf("glTunefreq = %ld \n", (long int)glTunefreq);
+		DbgPrintf("Init Values:\n");
+		DbgPrintf("SDR_settings_valid = %d\n", SDR_settings_valid);  // settings are version specific !
+		DbgPrintf("giExtSrateIdxHF = %d   %f Msps\n", giExtSrateIdxHF, pow(2.0, 1.0 + giExtSrateIdxHF));
+		DbgPrintf("giExtSrateIdxVHF = %d   %f Msps\n", giExtSrateIdxVHF, pow(2.0, 1.0 + giExtSrateIdxVHF));
+		DbgPrintf("giAttIdxHF = %d\n", giAttIdxHF);
+		DbgPrintf("giAttIdxVHF = %d\n", giAttIdxVHF);
+		DbgPrintf("giMgcIdxHF = %d\n", giMgcIdxHF);
+		DbgPrintf("giMgcIdxVHF = %d\n", giMgcIdxVHF);
+		DbgPrintf("gdGainCorr = %2d\n", gdGainCorr_dB);
+		DbgPrintf("glTunefreq = %ld\n", (long int)glTunefreq);
 		DbgPrintf("______________________________________\n");
-		DbgPrintf("freqcorrection = %f \n", gdFreqCorr_ppm);
-		DbgPrintf("adcfixedfreq = %ld \n", (long int)RadioHandler.getSampleRate());
-		DbgPrintf("adcfixedfr/4 = %ld \n", (long int)(RadioHandler.getSampleRate() / 4.0));
+		DbgPrintf("freqcorrection = %d\n", gdFreqCorr_ppm);
+		DbgPrintf("adcfixedfreq = %ld\n", (long int)RadioHandler.getSampleRate());
+		DbgPrintf("adcfixedfr/4 = %ld\n", (long int)(RadioHandler.getSampleRate() / 4.0));
 		DbgPrintf("______________________________________\n");
 	}
 	return gbInitHW;
@@ -646,8 +646,8 @@ int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
 	case 4:	strcpy(description, "HF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxHF);			return 0;
 	case 5:	strcpy(description, "VHF_AttenuationIdx");	snprintf(value, 1024, "%d", giAttIdxVHF);			return 0;
 	case 6:	strcpy(description, "VHF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxVHF);			return 0;
-	case 7:	strcpy(description, "GainCorrection_dB");   snprintf(value, 1024, "%f",gdGainCorr_dB);	return 0;
-	case 8:	strcpy(description, "FreqCorrection_dB");   snprintf(value, 1024, "%f", gdFreqCorr_ppm);	return 0;
+	case 7:	strcpy(description, "GainCorrection_dB");   snprintf(value, 1024, "%d",gdGainCorr_dB);	return 0;
+	case 8:	strcpy(description, "FreqCorrection_ppm");   snprintf(value, 1024, "%d", gdFreqCorr_ppm);	return 0;
 	case 9:	strcpy(description, "HF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
 	case 10: strcpy(description, "VHF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
 	case 11: strcpy(description, "LoFrequencyHz");   snprintf(value, 1024, "%ld",(unsigned long) glLOfreq); return 0;
@@ -668,7 +668,6 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 	float  newAtten = 0.0F;
 	int tempInt;
 	unsigned long tempulong;
-	double tempDouble;
 	
 	// now we know that there's no need to save our settings into some (.ini) file,
 	// what won't be possible without admin rights!!!,
@@ -715,17 +714,17 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		giMgcIdxVHF = tempInt;
 		break;		
 	case 7:
-		if (sscanf(value, "%lf", &tempDouble) > 0)
+		if (sscanf(value, "%d", &tempInt) > 0)
 		{
-			if ((tempDouble < 40.0) && (tempDouble > -40.0))    //    if abs< 40dB
-				gdGainCorr_dB = tempDouble;
+			if ((tempInt < 40) && (tempInt > -40))    //    if abs< 40dB
+				gdGainCorr_dB = tempInt;
 		}
 		break;
 	case 8:
-		if (sscanf(value, "%lf", &tempDouble) > 0)
+		if (sscanf(value, "%d", &tempInt) > 0)
 		{
-			if ((tempDouble < 200.0) && (tempDouble > -200.0))    //    if abs< 200 ppm
-				gdFreqCorr_ppm = tempDouble;
+			if ((tempInt < 200) && (tempInt > -200))    //    if abs< 200 ppm
+				gdFreqCorr_ppm = tempInt;
 		}
 		break;
 
