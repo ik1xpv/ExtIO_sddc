@@ -44,13 +44,10 @@ inline void null_func(const char *format, ...) { }
 
 #define HWNAME				"BBRF103"			
 #define HWMODEL				"HF103"
-#define SETTINGS_IDENTIFIER	"sddc_1.02"
+#define SETTINGS_IDENTIFIER	"sddc_1.03"
 #define SWNAME				"ExtIO_sddc.dll"
 
 #define	QUEUE_SIZE 64
-
-#define FREQCORRECTION (0.0)   // Default xtal frequency correction in ppm
-#define GAIN_ADJ (0.0)          // default gain factor in DB
 
 #define FFTN_R_ADC (2048)       // FFTN used for ADC real stream DDC
 
@@ -85,14 +82,13 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 
 #define TIMEOUT (2000)
 
-extern double pi;
 extern int Xfreq;
 extern char strversion[];
-extern double gdFreqCorr_ppm;
-extern double gdGainCorr_dB;
+extern int gdFreqCorr_ppm;
+extern int gdGainCorr_dB;
 extern bool saveADCsamplesflag;
 
-#define CORRECT(FREQ) ((double) FREQ * (1.0 + (gdFreqCorr_ppm * 0.001)))
+#define CORRECT(FREQ) ((double) FREQ * (1.0f + (gdFreqCorr_ppm * 0.000001f)))
 
 extern bool run;
 const int transferSize = 131072;
