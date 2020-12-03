@@ -47,8 +47,6 @@ inline void null_func(const char *format, ...) { }
 
 #define VERSION             (1.01)	//	Dll version number x.xx
 
-#define HWNAME				"BBRF103"			
-#define HWMODEL				"HF103"
 #define SETTINGS_IDENTIFIER	"sddc_1.03"
 #define SWNAME				"ExtIO_sddc.dll"
 
