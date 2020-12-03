@@ -169,40 +169,45 @@ void ApplicationThread ( uint32_t input)
 	uint32_t nline;
 
     CyU3PReturnStatus_t Status;
-
-    Status = I2cInit ();
+    HWconfig = 0;
+    Status = I2cInit (); // initialize i2c on FX3014 must be ok.
     if (Status != CY_U3P_SUCCESS)
-    	 HWconfig = HF103;
-	else {
+    	DebugPrint(4, "\r\nI2cInit failed to initialize. Error code: %d.\r\n", Status);
+	else
+	{
 		Status = Si5351init();
 		if (Status != CY_U3P_SUCCESS)
-			DebugPrint(4, "\r\nApplication failed to initialize. Error code: %d.\r\n", Status);
-		si5351aSetFrequencyB(16000000);
-
-		uint8_t identity;
-		if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
 		{
-			// check if BBRF103 or RX888 (RX666 ?)
-			if(GPIOtestInputPulldown(LED_KIT) == CyTrue) {
-				HWconfig = BBRF103;
-			}
-			else
-			{
-				HWconfig = RX888;
-			}
-		}
-		else if (I2cTransfer(0, R828D_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
-		{
-			HWconfig = RX888r2;
+			HWconfig = HF103;
+			DebugPrint(4, "\r\nSi5351init failed to initialize. HF103 detected \r\n");
 		}
 		else
 		{
-			HWconfig = 0;
+			si5351aSetFrequencyB(16000000);
+			uint8_t identity;
+			if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
+			{
+				// check if BBRF103 or RX888 (RX666 ?)
+				if(GPIOtestInputPulldown(LED_KIT) == CyTrue) {
+					HWconfig = BBRF103;
+				}
+				else
+				{
+					HWconfig = RX888;
+				}
+			}
+			else if (I2cTransfer(0, R828D_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
+			{
+				HWconfig = RX888r2;
+			}
+			else
+			{
+				HWconfig = 0;
+			}
+			si5351aSetFrequencyB(0);
 		}
-
-		si5351aSetFrequencyB(0);
 	}
-
+    DebugPrint(4, "\r\nHWconfig: %d.\r\n", HWconfig);
 	HF103_GpioInit();
 
     // Spin up the USB Connection
