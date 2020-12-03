@@ -51,20 +51,6 @@ SplashWindow  splashW;
 
 #define IDD_SDDC_SETTINGS	100
 
-void ADCFrequencyCorrection()
-{
-	switch (RadioHandler.getModel())
-	{
-	case HF103:
-		adcfixedfreq = (double)ADC_FREQ * (1.0 + (gdFreqCorr_ppm * 0.000001));
-		break;
-	default: //BBRF103, RX888...  exact frequency, tuning made with Si5351a
-		adcfixedfreq = (double)ADC_FREQ; 
-		break;
-	}
-}
-
-
 //---------------------------------------------------------------------------
 
 HMODULE hInst;
@@ -133,8 +119,6 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 
 		fftwf_import_wisdom_from_filename("wisdom");
 
-		ADCFrequencyCorrection();
-
 		DbgPrintf((char*)"Init values \n");
 		DbgPrintf("SDR_settings_valid = %d \n", SDR_settings_valid);  // settings are version specific !
 		DbgPrintf("giExtSrateIdxHF = %d   %f Msps \n", giExtSrateIdxHF, pow(2.0, 1.0 + giExtSrateIdxHF));
@@ -147,8 +131,8 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		DbgPrintf("glTunefreq = %ld \n", (long int)glTunefreq);
 		DbgPrintf("______________________________________\n");
 		DbgPrintf("freqcorrection = %f \n", gdFreqCorr_ppm);
-		DbgPrintf("adcfixedfreq = %ld \n", (long int)adcfixedfreq);
-		DbgPrintf("adcfixedfr/4 = %ld \n", (long int)(adcfixedfreq / 4.0));
+		DbgPrintf("adcfixedfreq = %ld \n", (long int)RadioHandler.getSampleRate());
+		DbgPrintf("adcfixedfr/4 = %ld \n", (long int)(RadioHandler.getSampleRate() / 4.0));
 		DbgPrintf("______________________________________\n");
 	}
 	return gbInitHW;
@@ -613,9 +597,9 @@ int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 	case 4:		div = 2.0;	break;
 	default:    return -1;
 	}
-	*samplerate = (double)((UINT32)((adcfixedfreq / div)));
+	*samplerate = (double)((UINT32)((RadioHandler.getSampleRate() / div)));
      DbgPrintf("*ExtIoGetSrate idx %d  %e\n", srate_idx, *samplerate);
-	return 0;	
+	return 0;
 }
 
 extern "C"

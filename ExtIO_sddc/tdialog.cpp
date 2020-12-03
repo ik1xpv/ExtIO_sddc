@@ -84,9 +84,9 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (cntime-- <= 0)
 		{
 			cntime = 5;
-			sprintf(lbuffer, "%2.9f Msps",  adcfixedfreq / 1000000);
+			sprintf(lbuffer, "%2.9f Msps",  RadioHandler.getSampleRate() / 1000000.0f);
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC13), lbuffer);
-			sprintf(lbuffer, "%6.3f Msps measured", g_Bps * adcfixedfreq / ((double)ADC_FREQ*2.0) );
+			sprintf(lbuffer, "%6.3f Msps measured", g_Bps );
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC14), lbuffer);
 			sprintf(lbuffer, "%6.3f Msps measured", g_SpsIF);
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC16), lbuffer);

@@ -46,7 +46,7 @@ RX888R2Radio::RX888R2Radio(fx3class *fx3)
 
 void RX888R2Radio::Initialize()
 {
-    uint32_t data = (UINT32)CORRECT(ADC_FREQ);
+    uint32_t data = getSampleRate();
     Fx3->Control(STARTADC, data);
 }
 
