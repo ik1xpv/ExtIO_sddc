@@ -24,6 +24,9 @@ void hf103_GpioInitialize()
     ConfGPIOsimpleout (GPIO_DITH);
     ConfGPIOsimpleout (GPIO_RANDO);
     ConfGPIOsimpleout (GPIO_LED_KIT);
+    ConfGPIOsimpleout (GPIO_ATT_LE);
+    ConfGPIOsimpleout (GPIO_ATT_CLK);
+    ConfGPIOsimpleout (GPIO_ATT_DATA);
 
     hf103_GpioSet(0);
 
