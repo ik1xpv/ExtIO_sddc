@@ -98,7 +98,7 @@ extern double adcfixedfreq;
 extern double gdGainCorr_dB;
 extern bool saveADCsamplesflag;
 
-#define CORRECT(FREQ) ((double) FREQ * (1.0 + (gdFreqCorr_ppm * 0.000001)))
+#define CORRECT(FREQ) ((double) FREQ * (1.0 + (gdFreqCorr_ppm * 0.001)))
 
 extern bool run;
 const int transferSize = 131072;

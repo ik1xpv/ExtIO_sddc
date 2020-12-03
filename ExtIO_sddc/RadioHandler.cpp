@@ -268,7 +268,6 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 	}
 
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
-	hardware->Initialize();
 
 	return true;
 }
@@ -280,6 +279,9 @@ bool RadioHandlerClass::Start(int srate_idx)
 	kbRead = 0; // zeros the kilobytes counter
 	kSReadIF = 0;
 	run = true;
+
+	hardware->Initialize();
+
 	show_stats_thread = new std::thread([this](void*) {
 		this->CaculateStats();
 	}, nullptr);

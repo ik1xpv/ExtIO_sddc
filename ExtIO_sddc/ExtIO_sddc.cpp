@@ -199,7 +199,7 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
 
 	RadioHandler.Start(ExtIoGetActualSrateIdx());
 	SetHWLO64(LOfreq);
-	
+
 	if (RadioHandler.IsReady()) //  HF103 connected
 	{
 		char ebuffer[64];
@@ -209,10 +209,6 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
 		lb = (uint8_t) fw;
 		sprintf(ebuffer, "%s v%0.2f  |  FX3 v%d.%02d  |  %s ",SWNAME, VERSION ,hb,lb, RadioHandler.getName() );
 		SetWindowText(h_dialog, ebuffer);
-		if (RadioHandler.getModel() == HF103)
-			SetWindowText(GetDlgItem(h_dialog, IDC_RESTART), "Restart");
-		else
-			SetWindowText(GetDlgItem(h_dialog, IDC_RESTART), "Set");
 	}
 	else
 	{
