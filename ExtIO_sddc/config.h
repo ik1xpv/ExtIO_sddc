@@ -49,11 +49,6 @@ inline void null_func(const char *format, ...) { }
 
 #define	QUEUE_SIZE 64
 
-#ifndef ADC_FREQ
-#define ADC_FREQ  (64000000)	// ADC sampling frequency
-#endif
-
-#define HF_UPPER  (ADC_FREQ/2)	   
 #define FREQCORRECTION (0.0)   // Default xtal frequency correction in ppm
 #define GAIN_ADJ (0.0)          // default gain factor in DB
 
@@ -66,8 +61,8 @@ inline void null_func(const char *format, ...) { }
 
 enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 }; 
 
-#define HF_HIGH (ADC_FREQ/2)    // 32M
-#define MW_HIGH (2000000)
+#define HF_HIGH (32000000)    // 32M
+#define MW_HIGH ( 2000000)
 
 #ifdef OFFSET_BINARY
 #define ADCSAMPLE UINT16
@@ -94,7 +89,6 @@ extern double pi;
 extern int Xfreq;
 extern char strversion[];
 extern double gdFreqCorr_ppm;
-extern double adcfixedfreq;
 extern double gdGainCorr_dB;
 extern bool saveADCsamplesflag;
 

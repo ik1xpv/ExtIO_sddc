@@ -128,7 +128,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 				saveADCsamplesflag = false; // do it once
 				short* pi = (short*)&buffers[idx][0];
 				unsigned int numsamples = transferSize / sizeof(short);
-				float samplerate  = (float) adcfixedfreq;
+				float samplerate  = (float) getSampleRate();
 				PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
 					"ADCrealsamples.adc input real ADC 16 bit samples",
 					pi, samplerate, numsamples);
@@ -368,7 +368,7 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 	actLo = hardware->TuneLo(wishedFreq);
 
 	// we need shift the samples
-	float fc = r2iqCntrl.setFreqOffset((wishedFreq - actLo) / (ADC_FREQ / 2.0f));
+	float fc = r2iqCntrl.setFreqOffset((wishedFreq - actLo) / (getSampleRate() / 2.0f));
 
 	if (this->fc != fc)
 	{
@@ -421,7 +421,7 @@ void RadioHandlerClass::CaculateStats()
 
 		duration<double,std::ratio<1,1>> timeElapsed(EndingTime-StartingTime);
 
-		double mBps = (double)kbRead / timeElapsed.count() / 1000;
+		double mBps = (double)kbRead / timeElapsed.count() / 1000 / sizeof(int16_t);
 		double mSpsIF = (double)kSReadIF / timeElapsed.count() / 1000;
 
 		BytesXferred = 0;
@@ -453,3 +453,7 @@ void RadioHandlerClass::UpdBiasT_VHF(bool flag)
 		hardware->FX3UnsetGPIO(BIAS_VHF);
 }
 
+uint32_t RadioHandlerClass::getSampleRate()
+{
+	return hardware->getSampleRate();
+}
