@@ -29,5 +29,5 @@ RadioHardware::~RadioHardware()
 
 uint32_t RadioHardware::getSampleRate()
 {
-    return (uint32_t)CORRECT(DEFAULT_ADC_FREQ);
+    return DEFAULT_ADC_FREQ;
 }
