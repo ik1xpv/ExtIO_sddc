@@ -3,7 +3,7 @@
 #include "license.txt" 
 #define N_R2IQ_THREAD 64
 
-#define NDECIDX 5  //number of srate
+#define NDECIDX 7  //number of srate
 #include "LC_ExtIO_Types.h"
 #include "fftw3.h"
 
@@ -65,11 +65,9 @@ private:
     std::thread* r2iq_thread[N_R2IQ_THREAD]; // thread pointers
 
 protected:
-    int Setdecimate(int dec);
-    int getDecidx() {return mdecimation;}
-    int getFftN()   {return mfftdim [mdecimation];}
-    int getFftN(int x)   {return mfftdim [x];}
-
+    void setDecimate(int dec) { mdecimation = dec; }
+    int getDecimate() {return mdecimation;}
+    int getFftN()   {return mfftdim[mdecimation];}
 };
 
 extern class r2iqControlClass r2iqCntrl;
