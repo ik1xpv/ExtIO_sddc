@@ -64,12 +64,6 @@ r2iqControlClass::~r2iqControlClass()
 	Initialized = false;
 }
 
-int r2iqControlClass::Setdecimate(int dec)
-{
-	mdecimation =  dec;  // 0 , 2 , 4, 8, 16 =>  32, 16, 8, 4, 2 MHz
-	return mratio[mdecimation];
-}
-
 float r2iqControlClass::setFreqOffset(float offset)
 {
 	this->mtunebin = int(offset * halfFft/4  + 0.5 ) * 4;  // mtunebin step 4 bin  ? 
@@ -117,7 +111,7 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 {
 	this->buffers = buffers;    // set to the global exported by main_loop
 	this->obuffers = obuffers;  // set to the global exported by main_loop
-	this->Setdecimate(downsample);  // save downsample index.
+	this->setDecimate(downsample);  // save downsample index.
 
 	this->GainScale = gain;
 
@@ -219,7 +213,7 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 			th->plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, th->ADCinTime[0], th->ADCinFreq, FFTW_MEASURE);
 			for (int d = 0; d < NDECIDX; d++)
 			{
-				th->plans_f2t_c2c[d] = fftwf_plan_dft_1d(r2iqCntrl.getFftN(d), th->inFreqTmp, th->outTimeTmp, FFTW_BACKWARD, FFTW_MEASURE);
+				th->plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], th->inFreqTmp, th->outTimeTmp, FFTW_BACKWARD, FFTW_MEASURE);
 			}
 
 		}
@@ -241,14 +235,11 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 
 void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
-	//    DbgPrintf((char *) "r2iqThreadf idx %d pthread_self is %u\n",(int)th->t, pthread_self());
-	//    DbgPrintf((char *) "decimate idx %d  %d  %d \n",r2iqCntrl->getDecidx(),r2iqCntrl->getFftN(),r2iqCntrl->getRatio());
-
 	char *buffer;
 	int lastdecimate = -1;
 
 	float * pout;
-	int decimate = this->getDecidx();
+	int decimate = this->getDecimate();
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
 	while (run) {
