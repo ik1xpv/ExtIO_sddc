@@ -85,14 +85,12 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 
 #define TIMEOUT (2000)
 
-extern char strversion[];
 extern int gdFreqCorr_ppm;
 extern int gdGainCorr_dB;
 extern bool saveADCsamplesflag;
 
 #define CORRECT(FREQ) ((double) FREQ * (1.0f + (gdFreqCorr_ppm * 0.000001f)))
 
-extern bool run;
 const int transferSize = 131072;
 
 #endif // _CONFIG_H_

@@ -62,6 +62,8 @@ private:
     void AbortXferLoop(int qidx);
     void CaculateStats();
 
+    bool run;
+
     bool dither;
     bool randout;
     bool biasT_HF;

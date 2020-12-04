@@ -242,7 +242,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 	int decimate = this->getDecimate();
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
-	while (run) {
+	while (r2iqOn) {
 		int mfft = this->getFftN();
 		int mratio = this->getRatio();
 		int idx;
@@ -255,11 +255,11 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 				cvADCbufferAvailable.wait(lk, [&wakecnt, this] 
 				{
 					wakecnt++;
-					return this->cntr > 0; 
+					return this->cntr > 0;
 				});
 			}
 
-			if (!run) 
+			if (!r2iqOn)
 				return 0;
 
 			buffer = (char *)this->buffers[this->bufIdx];
