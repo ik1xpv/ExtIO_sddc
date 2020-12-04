@@ -304,7 +304,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	if (RadioHandler.getModel() == HF103) // HF frequency limits
 	{
 		if (glTunefreq > HF_HIGH) glTunefreq = HF_HIGH;
-		if (LOfreq > HF_HIGH - 1000000) LOfreq = (HF_HIGH) - 1000000;  
+		if (LOfreq > HF_HIGH - 1000000) LOfreq = (HF_HIGH) - 1000000;
 	}
 
 	rf_mode rfmode = RadioHandler.GetmodeRF();
@@ -313,34 +313,32 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			RadioHandler.UpdatemodeRF(VHFMODE);
 			ExtIoSetMGC(giMgcIdxVHF);
 			SetAttenuator(giAttIdxVHF);
-			if (pfnCallback)
-			{
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
-			}
+			ExtIoSetSrate(giExtSrateIdxVHF);
+
+			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
+			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
+
+			if (giExtSrateIdxHF != giExtSrateIdxVHF)
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 	}
 	if ((LOfreq < 31000000) && (rfmode != HFMODE))
 	{
 			RadioHandler.UpdatemodeRF(HFMODE);
 			ExtIoSetMGC(giMgcIdxHF);
 			SetAttenuator(giAttIdxHF);
-			if (pfnCallback)
-			{
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGCS);
-				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_AGC);
-			}
+			ExtIoSetSrate(giExtSrateIdxHF);
+
+			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
+			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
+
+			if (giExtSrateIdxHF != giExtSrateIdxVHF)
+				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 	}
 
 	LOfreq = RadioHandler.TuneLO(LOfreq);
-	if (wishedLO != LOfreq && pfnCallback)
+	if (wishedLO != LOfreq)
 	{
-			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
+		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 	}
 	glLOfreq = LOfreq;
 
