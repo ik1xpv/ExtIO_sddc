@@ -110,7 +110,7 @@ CyBool_t GPIOtestInputPulldown( uint8_t gpioid)
 
 
 void
-HF103_GpioInit ()
+GpioInitClock()
 {
 	CyU3PReturnStatus_t Status;
     CyU3PGpioClock_t gpioClock;
@@ -123,22 +123,9 @@ HF103_GpioInit ()
     gpioClock.halfDiv = 0;
     Status = CyU3PGpioInit(&gpioClock,   NULL);
     CheckStatus("CyU3PGpioInit", Status);
-
-	switch(HWconfig) {
-		case HF103:
-			hf103_GpioInitialize();
-			break;
-		case BBRF103:
-			bbrf103_GpioInitialize();
-			break;
-		case RX888:
-			rx888_GpioInitialize();
-			break;
-		case RX888r2:
-			rx888r2_GpioInitialize();
-			break;
-	}
 }
+
+
 
 void MsgParsing(uint32_t qevent)
 {
@@ -170,6 +157,9 @@ void ApplicationThread ( uint32_t input)
 
     CyU3PReturnStatus_t Status;
     HWconfig = 0;
+
+    GpioInitClock();
+
     Status = I2cInit (); // initialize i2c on FX3014 must be ok.
     if (Status != CY_U3P_SUCCESS)
     	DebugPrint(4, "\r\nI2cInit failed to initialize. Error code: %d.\r\n", Status);
@@ -188,7 +178,7 @@ void ApplicationThread ( uint32_t input)
 			if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
 			{
 				// check if BBRF103 or RX888 (RX666 ?)
-				if(GPIOtestInputPulldown(LED_KIT) == CyTrue) {
+				if(GPIOtestInputPulldown(LED_KIT)) {
 					HWconfig = BBRF103;
 				}
 				else
@@ -208,7 +198,21 @@ void ApplicationThread ( uint32_t input)
 		}
 	}
     DebugPrint(4, "\r\nHWconfig: %d.\r\n", HWconfig);
-	HF103_GpioInit();
+
+	switch(HWconfig) {
+		case HF103:
+			hf103_GpioInitialize();
+			break;
+		case BBRF103:
+			bbrf103_GpioInitialize();
+			break;
+		case RX888:
+			rx888_GpioInitialize();
+			break;
+		case RX888r2:
+			rx888r2_GpioInitialize();
+			break;
+	}
 
     // Spin up the USB Connection
 	Status = InitializeUSB();
