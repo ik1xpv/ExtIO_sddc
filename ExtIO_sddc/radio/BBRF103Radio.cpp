@@ -26,7 +26,7 @@ BBRF103Radio::BBRF103Radio(fx3class* fx3)
 
 void BBRF103Radio::Initialize()
 {
-    uint32_t data =  (uint32_t)CORRECT(getSampleRate());
+    uint32_t data =  getSampleRate();
     Fx3->Control(STARTADC, data);
 }
 

@@ -579,17 +579,10 @@ extern "C"
 int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 {
 	EnterFunction1(srate_idx);
-	double div;
-	switch (srate_idx)
-	{
-	case 0:		div = 32.0;	break;
-	case 1:		div = 16.0;	break;
-	case 2:		div = 8.0;	break;
-	case 3:		div = 4.0;	break;
-	case 4:		div = 2.0;	break;
-	default:    return -1;
-	}
-	*samplerate = (double)((UINT32)((RadioHandler.getSampleRate() / div)));
+	double div = pow(2.0, srate_idx);
+	*samplerate = 1000000.0 * (div * 2);
+	if (*samplerate / RadioHandler.getSampleRate() * 2.0 > 1.1)
+		return -1;
      DbgPrintf("*ExtIoGetSrate idx %d  %e\n", srate_idx, *samplerate);
 	return 0;
 }
@@ -617,8 +610,6 @@ int  EXTIO_API ExtIoSetSrate(int srate_idx)
 		else
 			giExtSrateIdxHF = srate_idx;
 
-		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
-		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_TUNE);
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 
 		return 0;

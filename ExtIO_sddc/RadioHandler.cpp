@@ -275,6 +275,10 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 bool RadioHandlerClass::Start(int srate_idx)
 {
 	Stop();
+	double div = pow(2.0, srate_idx);
+	auto samplerate = 1000000.0 * (div * 2);
+	int decimate = (int)log2(RadioHandler.getSampleRate() / (2 * samplerate));
+
 	DbgPrintf("RadioHandlerClass::Start\n");
 	kbRead = 0; // zeros the kilobytes counter
 	kSReadIF = 0;
@@ -286,7 +290,7 @@ bool RadioHandlerClass::Start(int srate_idx)
 		this->CaculateStats();
 	}, nullptr);
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
-	r2iqCntrl.Init( 4 - srate_idx, hardware->getGain(), buffers, obuffers);
+	r2iqCntrl.Init( decimate, hardware->getGain(), buffers, obuffers);
 	adc_samples_thread = new std::thread(
 		[this](void* arg){
 			this->AdcSamplesProcess();
