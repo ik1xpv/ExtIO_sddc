@@ -53,6 +53,8 @@ void RadioHandlerClass::AdcSamplesProcess()
 	DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
 		, transferSize, pktSize, ppx);
 
+	hardware->FX3producerOn();  // FX3 start the producer
+
 	// Queue-up the first batch of transfer requests
 	for (int n = 0; n < QUEUE_SIZE; n++) {
 		contexts[n] = EndPt->BeginDataXfer(buffers[n], transferSize, &inOvLap[n]);
@@ -61,10 +63,9 @@ void RadioHandlerClass::AdcSamplesProcess()
 			return;
 		}
 	}
-	hardware->FX3producerOn();  // FX3 start the producer
-	run = true;		
+	run = true;
 	idx = 0;    // buffer cycle index
-	count = 1;    // absolute index
+	count = 0;    // absolute index
 	StartingTime = high_resolution_clock::now();
 	// The infinite xfer loop.
 	while (run) {
@@ -87,7 +88,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 			BytesXferred += rLen;
 			if (rLen < transferSize) DbgPrintf("rLen = %ld\n", rLen);
 			// submit result to SDR application before processing next packet
-			if (pfnCallback && run && count > QUEUE_SIZE)
+			if (pfnCallback && run && count > QUEUE_SIZE * 2)
 			{
 				if (rd == 1)
 				{
