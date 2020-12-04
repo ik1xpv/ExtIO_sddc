@@ -110,7 +110,7 @@ CyBool_t GPIOtestInputPulldown( uint8_t gpioid)
 
 
 void
-HF103_GpioInit ()
+GpioInitClock()
 {
 	CyU3PReturnStatus_t Status;
     CyU3PGpioClock_t gpioClock;
@@ -158,7 +158,7 @@ void ApplicationThread ( uint32_t input)
     CyU3PReturnStatus_t Status;
     HWconfig = 0;
 
-    HF103_GpioInit();
+    GpioInitClock();
 
     Status = I2cInit (); // initialize i2c on FX3014 must be ok.
     if (Status != CY_U3P_SUCCESS)
