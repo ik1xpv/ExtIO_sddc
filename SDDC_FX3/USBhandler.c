@@ -13,6 +13,7 @@
 #include "Application.h"
 
 #include "tuner_r82xx.h"
+#include "adf4351.h"
 
 // Declare external functions
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
@@ -154,6 +155,10 @@ CyFxSlFifoApplnUSBSetupCB (
 							isHandled = CyTrue;
 							break;
 
+						case RX999:
+							rx999_GpioSet(mdata);
+							isHandled = CyTrue;
+							break;
 						}
 					}
 					break;
@@ -164,6 +169,7 @@ CyFxSlFifoApplnUSBSetupCB (
 						uint32_t freq;
 						freq = *(uint32_t *) &glEp0Buffer[0];
 						si5351aSetFrequencyA(freq);
+						CyU3PThreadSleep(1000);
 						isHandled = CyTrue;
 					}
 					break;
@@ -256,6 +262,19 @@ CyFxSlFifoApplnUSBSetupCB (
 					}
 					break;
 
+			case AD4351TUNE:
+					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
+					{
+
+						uint64_t freq;
+						freq = *(uint64_t *) &glEp0Buffer[0];
+						adf4350_out_altvoltage0_frequency(freq);
+						// AD4351 tune
+						DebugPrint(4, "\r\n\r\nTune AD4351 %d \r\n",freq);
+						isHandled = CyTrue;
+					}
+					break;
+
 			case SETARGFX3:
 				{
 					int rc = -1;
@@ -284,6 +303,10 @@ CyFxSlFifoApplnUSBSetupCB (
 									rx888r2_SetAttenuator(wValue);
 									rc = 0;
 									break;
+								case RX999:
+									rx999_SetAttenuator(wValue);
+									rc = 0;
+									break;
 							}
 							break;
 						case AD8340_VGA:
@@ -293,8 +316,23 @@ CyFxSlFifoApplnUSBSetupCB (
 									rx888r2_SetGain(wValue);
 									rc = 0;
 									break;
+								case RX999:
+									rx999_SetGain(wValue);
+									rc = 0;
+									break;
 							}
 							break;
+						case PRESELECTOR:
+						{
+							switch(HWconfig)
+							{
+								case RX999:
+									rx999_preselect(wValue);
+									rc = 0;
+									break;
+							}
+						}
+						break;
 					}
 					vendorRqtCnt++;
 					if (rc == 0)
@@ -329,7 +367,6 @@ CyFxSlFifoApplnUSBSetupCB (
 					CyU3PThreadSleep(100);
 					CyU3PDeviceReset(CyFalse);
 					break;
-
 
             case TESTFX3:
 					glEp0Buffer[0] =  HWconfig;

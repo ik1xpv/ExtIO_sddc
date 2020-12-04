@@ -58,6 +58,10 @@ enum FX3Command {
     // Stop Tuner
     // WRITE: NONE
 	R82XXSTDBY = 0xB8,
+
+    // Tune 4351 to a frequency
+    // WRITE: UINT64
+    AD4351TUNE = 0xB9,
 };
 
 #define OUTXIO0 (1U << 0) 	// ATT_LE
@@ -100,6 +104,7 @@ enum RadioModel {
     HF103 = 0x02,
     RX888 = 0x03,
     RX888r2 = 0x04,
+    RX999 = 0x05,
 };
 
 enum ArgumentList {
@@ -126,4 +131,8 @@ enum ArgumentList {
     // Set AD8340 chip vga
     // Value: 0-255
     AD8340_VGA = 11,
+
+    // Preselector
+    // Value: 0-2
+    PRESELECTOR = 12,
 };

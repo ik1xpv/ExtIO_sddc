@@ -31,6 +31,7 @@ SOURCE= cyfxtx.c		\
 	tuner_r82xx.c		\
 	RunApplication.c	\
 	Si5351.c		\
+	adf4351.c       \
 	StartStopApplication.c	\
 	StartUP.c		\
 	Support.c		\
@@ -39,6 +40,7 @@ SOURCE= cyfxtx.c		\
 	hf103.c			\
 	bbrf103.c		\
 	rx888.c			\
+	rx999.c         \
 	rx888r2.c
 
 ifeq ($(CYFXBUILD),arm)

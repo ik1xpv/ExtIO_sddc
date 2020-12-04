@@ -255,6 +255,10 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 		hardware = new RX888R2Radio(Fx3);
 		break;
 
+	case RX999:
+		hardware = new RX999Radio(Fx3);
+		break;
+
 	default:
 		hardware = new DummyRadio();
 		DbgPrintf("WARNING no SDR connected\n");
@@ -366,6 +370,7 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 	actLo = hardware->TuneLo(wishedFreq);
 
 	// we need shift the samples
+	DbgPrintf("Offset freq %lld\n", (wishedFreq - actLo));
 	float fc = r2iqCntrl.setFreqOffset((wishedFreq - actLo) / (getSampleRate() / 2.0f));
 
 	if (this->fc != fc)
