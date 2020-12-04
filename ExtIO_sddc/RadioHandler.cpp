@@ -180,6 +180,7 @@ void RadioHandlerClass::AbortXferLoop(int qidx)
 
 
 RadioHandlerClass::RadioHandlerClass() :
+	run(false),
 	dither(false),
 	randout(false),
 	biasT_HF(false),
