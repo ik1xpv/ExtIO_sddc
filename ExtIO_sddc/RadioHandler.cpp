@@ -44,14 +44,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 	Failures = 0;
 	int odx = 0;
-	unsigned int kidx = 0, strd = 0;
 	int rd = r2iqCntrl.getRatio();
-	
-	long pktSize = EndPt->MaxPktSize;
-	EndPt->SetXferSize(transferSize);
-	long ppx = transferSize / pktSize;
-	DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
-		, transferSize, pktSize, ppx);
 
 	hardware->FX3producerOn();  // FX3 start the producer
 
@@ -88,7 +81,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 			BytesXferred += rLen;
 			if (rLen < transferSize) DbgPrintf("rLen = %ld\n", rLen);
 			// submit result to SDR application before processing next packet
-			if (pfnCallback && run && count > QUEUE_SIZE * 2)
+			if (pfnCallback && run && count > QUEUE_SIZE + 1)
 			{
 				if (rd == 1)
 				{
@@ -154,7 +147,6 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 
 	hardware->FX3producerOff();     //FX3 stop the producer
-	Sleep(10);
 	mutexShowStats.notify_one(); //  allows exit of
 	r2iqCntrl.TurnOff();
 
