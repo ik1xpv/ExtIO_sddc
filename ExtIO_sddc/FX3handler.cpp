@@ -162,6 +162,13 @@ bool  fx3class::Open(HMODULE hInst) {
 		DbgPrintf("No Bulk In end point\n");
 		return r;      // init failed
 	}
+
+	long pktSize = EndPt->MaxPktSize;
+	EndPt->SetXferSize(transferSize);
+	long ppx = transferSize / pktSize;
+	DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
+		, transferSize, pktSize, ppx);
+
 	Fx3IsOn = true;
 	return Fx3IsOn;          // init success
 }
