@@ -211,6 +211,9 @@ void ApplicationThread ( uint32_t input)
 		case RX888r2:
 			rx888r2_GpioInitialize();
 			break;
+		case RX999:
+			rx999_GpioInitialize();
+			break;
 	}
 
     // Spin up the USB Connection
