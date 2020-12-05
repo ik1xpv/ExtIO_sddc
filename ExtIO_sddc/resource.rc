@@ -15,63 +15,55 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 // Dialog
 //
 
-IDD_DLG_MAIN DIALOGEX 0, 0, 216, DIALOGH  // dimensions release
-
+IDD_DLG_MAIN DIALOGEX 0, 0, 216, DIALOGH
 STYLE DS_SETFONT | WS_CAPTION | WS_SYSMENU
 CAPTION "ExtIO_sddc.dll ver:1.4"
 FONT 8, "Ms Shell Dlg", 0, 0, 0x0
 BEGIN
-        CONTROL "ANT  BiasT", -1, STATIC, SS_LEFT, 2, 2, 50, 12
-        GROUPBOX "", IDC_STATIC, 6, 10, 12, 2
-        GROUPBOX "", IDC_STATIC, 11, 10, 1, 22
-        GROUPBOX "", IDC_STATIC, 12, 30, 32, 2
-        GROUPBOX "", IDC_STATIC, 44, 6, 34, 48
-        CONTROL "ATT", -1, STATIC, SS_LEFT , 52, 17, 24, 10
-        CONTROL "LPF", -1, STATIC, SS_LEFT , 52, 29, 24, 10
-        CONTROL "LNA", -1, STATIC, SS_LEFT , 52, 41, 24, 10
-   
-        GROUPBOX "", IDC_STATIC,   78, 30, 8, 2 // ---
-        GROUPBOX "", IDC_STATIC, 85, 6, 65, 48 // ADC
-        CONTROL "ADC", -1, STATIC, SS_LEFT, 108, 28, 18, 8
-
-        PUSHBUTTON  "USB", IDC_USBOUT, 188, 27, 24,10, WS_EX_STATICEDGE | WS_TABSTOP
-
-        GROUPBOX "", IDC_STATIC, 6, 68, 74, 22
-        PUSHBUTTON  " 00", IDC_GAINCORR, 7, 72, 16, 16, WS_EX_STATICEDGE
-        PUSHBUTTON  "+", IDC_GAINP, 24, 72, 8, 8, WS_EX_STATICEDGE | WS_TABSTOP
-        PUSHBUTTON  "-", IDC_GAINM, 24, 80, 8, 8, WS_EX_STATICEDGE | WS_TABSTOP
-        CONTROL "dB gain corr.", -1, STATIC, SS_LEFT, 36, 76, 40, 10
-    
-        GROUPBOX "", IDC_STATIC,84, 68, 125, 22
-        PUSHBUTTON  "-000.000", IDC_FREQ, 85, 72, 34, 16, WS_EX_STATICEDGE
-        PUSHBUTTON  "+", IDC_FREQP, 120, 72, 8, 8, WS_EX_STATICEDGE | WS_TABSTOP
-        PUSHBUTTON  "-", IDC_FREQM, 120, 80, 8, 8, WS_EX_STATICEDGE | WS_TABSTOP
-        CONTROL "ppm freq corr.", -1, STATIC, SS_LEFT, 132, 76, 60, 10
-        PUSHBUTTON  "Set", IDC_RESTART, 176, 72, 32, 16, WS_TABSTOP
-
-        GROUPBOX "", IDC_STATIC, 149, 30, 10, 2 // ADC---FX3
-        GROUPBOX "", IDC_STATIC, 159, 6, 24, 48 // FX3
-        CONTROL "FX3", -1, STATIC, SS_LEFT, 165, 28, 16, 8
-        GROUPBOX "", IDC_STATIC, 184, 30, 4, 2  // FX3---
-
-        CONTROL "Dither", IDC_DITHER, "Button", BS_AUTOCHECKBOX | WS_TABSTOP , 88, 40, 30, 10
-        CONTROL "Rand", IDC_RAND, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 120, 40, 28, 10
-
-        CONTROL "VHF", IDC_BIAS_VHF, "Button", BS_AUTOCHECKBOX | WS_TABSTOP,15, 16, 25, 10
-        CONTROL "HF", IDC_BIAS_HF, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 15, 40, 25, 10
-
-        GROUPBOX "DEBUG", IDC_STATIC, 6, 100, 202, 64
-        CONTROL "ADC rate:", -1, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 86, 110, 39, 10
-        CONTROL "measured ", IDC_STATIC13, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 120, 110, 86, 10
-        CONTROL "USB rate:", -1, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 86, 120, 39, 10
-        CONTROL "offline ", IDC_STATIC14, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 120, 120, 86, 10
-        CONTROL "I&&Q rate:", -1, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 86, 130, 42, 10
-        CONTROL "offline  ", IDC_STATIC16, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 120, 130, 86, 10
-
-//      CONTROL "Trace", IDC_TRACE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP,      10, 110, 34, 10
-
-        PUSHBUTTON  "Save ADC samples", IDC_ADCSAMPLES, 10, 144, 64, 10, BS_FLAT
-
+    LTEXT           "ANT  BiasT",IDC_STATIC,2,2,50,12,NOT WS_GROUP
+    GROUPBOX        "",IDC_STATIC,6,10,12,2
+    GROUPBOX        "",IDC_STATIC,11,10,1,22
+    GROUPBOX        "",IDC_STATIC,12,30,32,2
+    GROUPBOX        "",IDC_STATIC,78,6,34,48
+    LTEXT           "Mixer",IDC_STATIC,86,16,24,10,NOT WS_GROUP
+    GROUPBOX        "",IDC_STATIC,148,6,40,48
+    LTEXT           "ADC",IDC_STATIC,161,12,18,8,NOT WS_GROUP
+    GROUPBOX        "",IDC_STATIC,20,67,74,22
+    PUSHBUTTON      "-00",IDC_GAINCORR,21,71,16,16,WS_GROUP
+    PUSHBUTTON      "+",IDC_GAINP,38,71,8,8,WS_GROUP
+    PUSHBUTTON      "-",IDC_GAINM,38,79,8,8,WS_GROUP
+    LTEXT           "dB gain corr.",IDC_STATIC,50,75,42,10,NOT WS_GROUP
+    GROUPBOX        "",IDC_STATIC,106,67,107,22
+    PUSHBUTTON      "-000",IDC_FREQ,111,71,20,16,WS_GROUP
+    PUSHBUTTON      "+",IDC_FREQP,132,71,8,8,WS_GROUP
+    PUSHBUTTON      "-",IDC_FREQM,132,79,8,8,WS_GROUP
+    LTEXT           "ppm freq corr.",IDC_STATIC,144,75,50,10,NOT WS_GROUP
+    GROUPBOX        "",IDC_STATIC,191,6,24,48
+    LTEXT           "FX3",IDC_STATIC,197,28,16,8,NOT WS_GROUP
+    GROUPBOX        "",IDC_STATIC,188,30,4,2
+    CONTROL         "Dither",IDC_DITHER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,152,23,30,10
+    CONTROL         "Rand",IDC_RAND,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,152,40,28,10
+    CONTROL         "VHF",IDC_BIAS_VHF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,16,25,10
+    CONTROL         "HF",IDC_BIAS_HF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,25,10
+    GROUPBOX        "DEBUG",IDC_STATIC,6,100,202,64
+    LTEXT           "ADC rate:",IDC_STATIC,87,107,39,10
+    LTEXT           "measured ",IDC_STATIC13,121,107,86,10
+    LTEXT           "USB rate:",IDC_STATIC,87,117,39,10
+    LTEXT           "offline ",IDC_STATIC14,121,117,86,10
+    LTEXT           "I&&Q rate:",IDC_STATIC,87,127,42,10
+    LTEXT           "offline  ",IDC_STATIC16,121,127,86,10
+    PUSHBUTTON      "Save ADC samples",IDC_ADCSAMPLES,10,144,64,10,BS_FLAT
+    PUSHBUTTON      "-00",IDC_RFGAIN,48,24,16,16,WS_GROUP
+    PUSHBUTTON      "+",IDC_RFGAINP,65,24,8,8,WS_GROUP
+    PUSHBUTTON      "-",IDC_RFGAINM,65,32,8,8,WS_GROUP
+    LTEXT           "dB RF",IDC_STATIC,50,42,22,10,NOT WS_GROUP
+    PUSHBUTTON      "-00",IDC_IFGAIN,117,23,16,16,WS_GROUP
+    PUSHBUTTON      "+",IDC_IFGAINP,134,23,8,8,WS_GROUP
+    PUSHBUTTON      "-",IDC_IFGAINM,134,31,8,8,WS_GROUP
+    LTEXT           "dB IF",IDC_STATIC,122,40,22,10,NOT WS_GROUP
+    PUSHBUTTON      "Apply",IDC_RESTART,176,72,32,16
+    COMBOBOX        IDC_BANDWIDTH,79,26,33,30,CBS_DROPDOWNLIST | CBS_SORT | CBS_UPPERCASE | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "BW",IDC_STATIC,90,40,17,10,NOT WS_GROUP
 END
 
 
@@ -82,11 +74,6 @@ END
 
 1                       RT_MANIFEST             ".\\manifest.xml"
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -101,12 +88,17 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Dialog Info
+// DESIGNINFO
 //
 
-IDD_DLG_MAIN DLGINIT
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DLG_MAIN, DIALOG
 BEGIN
 END
+END
+#endif    // APSTUDIO_INVOKED
 
 #endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
@@ -126,6 +118,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 IDB_BITMAP2             BITMAP                  "CONNECTING.bmp"
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Icon
@@ -135,12 +128,14 @@ IDB_BITMAP2             BITMAP                  "CONNECTING.bmp"
 // remains consistent on all systems.
 IDB_ICON1               ICON                    "ExtIO_sddc.ico"
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
-// Binary of HF103 firmware
+// RCDATA
 //
 
 RES_BIN_FIRMWARE        RCDATA                  "SDDC_FX3.img"
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -176,6 +171,8 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
+
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

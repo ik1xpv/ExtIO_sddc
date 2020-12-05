@@ -10,6 +10,8 @@
 #include "uti.h"
 #include "LC_ExtIO_Types.h"
 
+#include <windowsx.h>
+
 HWND hTabCtrlMain;
 UINT nSel = 0; //selected tab
 
@@ -25,6 +27,29 @@ HBRUSH g_hbrBackground = CreateSolidBrush(clrBackground);
 int  _xfp = 1;
 int  _xfm = 1;
 unsigned int cntime = 0;
+
+void UpdateGain(HWND hControl, int current, const float* gains, int length)
+{
+	char ebuffer[128];
+
+	EnableWindow(hControl, length > 0);
+
+	if (length > 0)
+	{
+		if (current >= length)
+			current = length - 1;
+		if (current < 0)
+			current = 0;
+
+		sprintf(ebuffer, "%+d", (int)gains[current]);
+	}
+	else
+	{
+		sprintf(ebuffer, "NA");
+	}
+
+	SetWindowText(hControl, ebuffer);
+}
 
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -61,7 +86,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 		}
 
-		SetFocus(GetDlgItem(hWnd, IDC_USBOUT));
 		ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_HIDE);
 
 		sprintf(ebuffer, "%2d", gdGainCorr_dB);
@@ -124,7 +148,31 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch(wParam)
 		{
+			case extHw_Changed_RF_IF:
+				const float *gains;
+				int length;
+				length = RadioHandler.GetRFAttSteps(&gains);
+				UpdateGain(GetDlgItem(hWnd, IDC_RFGAIN), GetActualAttIdx(), gains, length);
+
+				length = RadioHandler.GetIFGainSteps(&gains);
+				UpdateGain(GetDlgItem(hWnd, IDC_IFGAIN), ExtIoGetActualMgcIdx(), gains, length);
+				break;
+
+			case extHw_Changed_SRATES:
+				double rate;
+				ComboBox_ResetContent(GetDlgItem(hWnd, IDC_BANDWIDTH));
+				for(int i=0; ; i++) {
+					if (ExtIoGetSrates(i, &rate) == -1)
+						break;
+					sprintf(ebuffer, "%.0fM", rate/1000000);
+					ComboBox_InsertString(GetDlgItem(hWnd, IDC_BANDWIDTH), i, ebuffer);
+				}
+				// fallthrough
 			case extHw_Changed_SampleRate:
+				int index = ExtIoGetActualSrateIdx();
+				ExtIoGetSrates(index, &rate);
+				sprintf(ebuffer, "%.0fM", rate/1000000);
+				ComboBox_SelectItemData(GetDlgItem(hWnd, IDC_BANDWIDTH), -1, ebuffer);
 				RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
 				break;
 		}
@@ -224,6 +272,77 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
+		case IDC_RFGAINP:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				const float *gains;
+				int length;
+				int index = GetActualAttIdx();
+				length = RadioHandler.GetRFAttSteps(&gains);
+
+				index += 1;
+
+				if (index > 0 && index < length)
+					SetAttenuator(index);
+
+				UpdateGain(GetDlgItem(hWnd, IDC_RFGAIN), GetActualAttIdx(), gains, length);
+				break;
+			}
+			break;
+		case IDC_RFGAINM:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				const float *gains;
+				int length;
+				int index = GetActualAttIdx();
+				length = RadioHandler.GetRFAttSteps(&gains);
+
+				index -= 1;
+				if (index > 0 && index < length)
+					SetAttenuator(index);
+
+				UpdateGain(GetDlgItem(hWnd, IDC_RFGAIN), GetActualAttIdx(), gains, length);
+				break;
+			}
+			break;
+
+		case IDC_IFGAINP:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				const float *gains;
+				int length;
+				int index = ExtIoGetActualMgcIdx();
+				length = RadioHandler.GetIFGainSteps(&gains);
+
+				index += 1;
+				if (index > 0 && index < length)
+					ExtIoSetMGC(index);
+
+				UpdateGain(GetDlgItem(hWnd, IDC_IFGAIN), ExtIoGetActualMgcIdx(), gains, length);
+				break;
+			}
+			break;
+		case IDC_IFGAINM:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				const float *gains;
+				int length;
+				int index = ExtIoGetActualMgcIdx();
+				length = RadioHandler.GetIFGainSteps(&gains);
+
+				index -= 1;
+				if (index > 0 && index < length)
+					ExtIoSetMGC(index);
+
+				UpdateGain(GetDlgItem(hWnd, IDC_IFGAIN), ExtIoGetActualMgcIdx(), gains, length);
+				break;
+			}
+			break;
+
 		case IDC_FREQP:
 			switch (HIWORD(wParam))
 			{
@@ -273,6 +392,14 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			break;
+		case IDC_BANDWIDTH:
+			switch(HIWORD(wParam))
+			{
+				case CBN_SELCHANGE:
+				int index = ComboBox_GetCurSel(GetDlgItem(hWnd, IDC_BANDWIDTH));
+				ExtIoSetSrate(index);
+				break;
+			}
 #ifdef TRACE
 		case IDC_TRACE: // trace
 			switch (HIWORD(wParam))
