@@ -27,6 +27,8 @@ static const int	gHwType = exthwUSBfloat32;
 int  giExtSrateIdxVHF = 4;
 int  giExtSrateIdxHF = 4;
 
+bool bSupportDynamicSRate;
+
 int64_t	glLOfreq = 2000000;
 int64_t	glTunefreq = 999000;	// Turin MW broadcast !
 
@@ -136,6 +138,9 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		DbgPrintf("adcfixedfr/4 = %ld\n", (long int)(RadioHandler.getSampleRate() / 4.0));
 		DbgPrintf("______________________________________\n");
 	}
+
+	EXTIO_STATUS_CHANGE(pfnCallback, extHw_READY);
+
 	return gbInitHW;
 }
 
@@ -194,11 +199,13 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
 		lb = (uint8_t) fw;
 		sprintf(ebuffer, "%s v%0.2f  |  FX3 v%d.%02d  |  %s ",SWNAME, VERSION ,hb,lb, RadioHandler.getName() );
 		SetWindowText(h_dialog, ebuffer);
+		EXTIO_STATUS_CHANGE(pfnCallback, extHw_RUNNING);
 	}
 	else
 	{
 		MessageBox(NULL, "HDSDR will exit\r\nPlease verify USB connection\r\nand restart",
 				"WARNING SDR not found", MB_OK | MB_ICONWARNING);
+		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Disconnected);
 		SendF4();
 	}
 	// number of complex elements returned each
@@ -216,7 +223,13 @@ void EXTIO_API StopHW(void)
 	{
 		MessageBox(NULL, "Please close box\r\nand press Start",
 		"WARNING transfer fails", MB_OK | MB_ICONWARNING);
+		EXTIO_STATUS_CHANGE(pfnCallback, extHw_ERROR);
 	}
+	else
+	{
+		EXTIO_STATUS_CHANGE(pfnCallback, extHw_READY);
+	}
+
 	return;
 }
 
@@ -460,10 +473,10 @@ void EXTIO_API VersionInfo(const char * progname, int ver_major, int ver_minor)
 		SDR_ver_major = ver_major;
 		SDR_ver_minor = ver_minor;
 
-		// possibility to check program's capabilities
-		// depending on SDR program name and version,
-		// f.e. if specific extHWstatusT enums are supported
-
+		if (strcmp(SDR_progname, "HDSDR") == 0)
+		  bSupportDynamicSRate = true;
+		else
+		  bSupportDynamicSRate = false;
 	}
 }
 
@@ -517,6 +530,9 @@ int EXTIO_API SetAttenuator(int atten_idx)
 		giAttIdxVHF = atten_idx;
 	else
 		giAttIdxHF = atten_idx;
+
+	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_ATT);
+
 	return 0;
 }
 
@@ -568,6 +584,8 @@ extern "C"  int EXTIO_API ExtIoSetMGC(int mgc_idx)
 		giMgcIdxVHF = mgc_idx;
 	else
 		giMgcIdxHF = mgc_idx;
+
+	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_MGC);
 	return 0;
 }
 

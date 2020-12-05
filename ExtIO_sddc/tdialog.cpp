@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "RadioHandler.h"
+#include <commctrl.h>
 #include "ExtIO_sddc.h"
 #include "config.h"
 #include "uti.h"
@@ -41,7 +42,7 @@ void UpdateGain(HWND hControl, int current, const float* gains, int length)
 		if (current < 0)
 			current = 0;
 
-		sprintf(ebuffer, "%+d", (int)gains[current]);
+		sprintf(ebuffer, "%+d", (int)(gains[current] + 0.5));
 	}
 	else
 	{
@@ -94,7 +95,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		sprintf(ebuffer, "%3d", gdFreqCorr_ppm);
 		SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
 
-		SetTimer(hWnd, 0, 100, NULL);
+		SetTimer(hWnd, 0, 200, NULL);
 
 #ifndef TRACE
 		ShowWindow(GetDlgItem(hWnd, IDC_TRACE),SW_HIDE);
@@ -130,6 +131,38 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else
 			_xfm = 1;
+
+
+		if (GetStateButton(hWnd, IDC_IFGAINP))
+		{
+			Command(hWnd, IDC_IFGAINP, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_IFGAINM))
+		{
+			Command(hWnd, IDC_IFGAINM, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_RFGAINP))
+		{
+			Command(hWnd, IDC_RFGAINP, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_RFGAINM))
+		{
+			Command(hWnd, IDC_RFGAINM, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_GAINP))
+		{
+			Command(hWnd, IDC_GAINP, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_GAINM))
+		{
+			Command(hWnd, IDC_GAINM, BN_CLICKED);
+		}
+
 		break;
 	}
 
@@ -148,6 +181,19 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch(wParam)
 		{
+			case extHw_READY:
+				if (!bSupportDynamicSRate) {
+					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), TRUE);
+				}
+				break;
+			case extHw_RUNNING:
+				if (!bSupportDynamicSRate) {
+					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), FALSE);
+				}
+				break;
+
+			case extHw_Changed_MGC:
+			case extHw_Changed_ATT:
 			case extHw_Changed_RF_IF:
 				const float *gains;
 				int length;

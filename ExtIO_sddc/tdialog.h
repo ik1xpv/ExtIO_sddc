@@ -3,10 +3,11 @@
 
 #include "license.txt" 
 #include "framework.h"
-#include <commctrl.h>
 #include "resource.h"
 #include "config.h"
 #include <stdio.h>
+
+extern bool bSupportDynamicSRate;
 
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
