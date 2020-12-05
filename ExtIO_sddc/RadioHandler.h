@@ -172,6 +172,30 @@ private:
     static const float vhf_if_steps[vhf_if_step_size];
 };
 
+class RX999Radio : public RadioHardware {
+public:
+    RX999Radio(fx3class* fx3);
+    const char* getName() override { return "RX999"; }
+    float getGain() override { return RX888_GAINFACTOR; }
+
+    void getFrequencyRange(int64_t& low, int64_t& high) override;
+    void Initialize() override;
+    bool UpdatemodeRF(rf_mode mode) override;
+    uint64_t TuneLo(uint64_t freq) override;
+    bool UpdateattRF(int attIndex) override;
+    bool UpdateGainIF(int attIndex) override;
+
+    int getRFSteps(const float** steps ) override;
+    int getIFSteps(const float** steps ) override;
+
+    uint32_t getSampleRate() override;
+
+private:
+    static const int if_step_size = 127;
+
+    float  if_steps[if_step_size];
+};
+
 class HF103Radio : public RadioHardware {
 public:
     HF103Radio(fx3class* fx3) : RadioHardware(fx3) {}

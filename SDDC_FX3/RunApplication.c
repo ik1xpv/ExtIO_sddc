@@ -148,7 +148,6 @@ void MsgParsing(uint32_t qevent)
 	}
 }
 
-unsigned long calls = 1;
 void ApplicationThread ( uint32_t input)
 {
 	// input is passed to this routine from CyU3PThreadCreate, useful if the same code is used for multiple threads
@@ -192,7 +191,7 @@ void ApplicationThread ( uint32_t input)
 			}
 			else
 			{
-				HWconfig = 0;
+				HWconfig = RX999;
 			}
 			si5351aSetFrequencyB(0);
 		}
