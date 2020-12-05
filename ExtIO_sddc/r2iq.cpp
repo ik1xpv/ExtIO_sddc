@@ -37,10 +37,7 @@ struct r2iqThreadArg {
 };
 
 r2iqControlClass::r2iqControlClass()
-	
 {
-	bufIdx = 0;
-	cntr = 0;
 	r2iqOn = false;
 	Initialized = false;
 	randADC = false;
@@ -74,7 +71,10 @@ float r2iqControlClass::setFreqOffset(float offset)
 }
 
 void r2iqControlClass::TurnOn(int idx) {
+	this->bufIdx = 0;
+	this->cntr = 0;
 	this->r2iqOn = true;
+
 	for (unsigned t = 0; t < processor_count; t++) {
 		r2iq_thread[t] = new std::thread(
 			[this] (void* arg)
@@ -274,7 +274,6 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			pout = (float *)(this->obuffers[modx] + offset);
 
 		}
-
 
 		ADCSAMPLE *dataADC; // pointer to input data
 		float *inloop;            // pointer to first fft input buffer
