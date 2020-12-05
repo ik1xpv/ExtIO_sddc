@@ -5,10 +5,13 @@
 #include <stdint.h>
 #include <string.h>
 #include "RadioHandler.h"
+#include <commctrl.h>
 #include "ExtIO_sddc.h"
 #include "config.h"
 #include "uti.h"
 #include "LC_ExtIO_Types.h"
+
+#include <windowsx.h>
 
 HWND hTabCtrlMain;
 UINT nSel = 0; //selected tab
@@ -25,6 +28,29 @@ HBRUSH g_hbrBackground = CreateSolidBrush(clrBackground);
 int  _xfp = 1;
 int  _xfm = 1;
 unsigned int cntime = 0;
+
+void UpdateGain(HWND hControl, int current, const float* gains, int length)
+{
+	char ebuffer[128];
+
+	EnableWindow(hControl, length > 0);
+
+	if (length > 0)
+	{
+		if (current >= length)
+			current = length - 1;
+		if (current < 0)
+			current = 0;
+
+		sprintf(ebuffer, "%+d", (int)(gains[current] + 0.5));
+	}
+	else
+	{
+		sprintf(ebuffer, "NA");
+	}
+
+	SetWindowText(hControl, ebuffer);
+}
 
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -61,7 +87,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 		}
 
-		SetFocus(GetDlgItem(hWnd, IDC_USBOUT));
 		ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_HIDE);
 
 		sprintf(ebuffer, "%2d", gdGainCorr_dB);
@@ -70,7 +95,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		sprintf(ebuffer, "%3d", gdFreqCorr_ppm);
 		SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
 
-		SetTimer(hWnd, 0, 100, NULL);
+		SetTimer(hWnd, 0, 200, NULL);
 
 #ifndef TRACE
 		ShowWindow(GetDlgItem(hWnd, IDC_TRACE),SW_HIDE);
@@ -94,18 +119,43 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (GetStateButton(hWnd, IDC_FREQP))
 		{
 			Command(hWnd, IDC_FREQP, BN_CLICKED);
-			if (_xfp < 30) _xfp = _xfp * 12 / 10;
 		}
-		else
-			_xfp = 1;
 
 		if (GetStateButton(hWnd, IDC_FREQM))
 		{
 			Command(hWnd, IDC_FREQM, BN_CLICKED);
-			if (_xfm < 30) _xfm = _xfm * 12 / 10;
 		}
-		else
-			_xfm = 1;
+
+		if (GetStateButton(hWnd, IDC_IFGAINP))
+		{
+			Command(hWnd, IDC_IFGAINP, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_IFGAINM))
+		{
+			Command(hWnd, IDC_IFGAINM, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_RFGAINP))
+		{
+			Command(hWnd, IDC_RFGAINP, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_RFGAINM))
+		{
+			Command(hWnd, IDC_RFGAINM, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_GAINP))
+		{
+			Command(hWnd, IDC_GAINP, BN_CLICKED);
+		}
+
+		if (GetStateButton(hWnd, IDC_GAINM))
+		{
+			Command(hWnd, IDC_GAINM, BN_CLICKED);
+		}
+
 		break;
 	}
 
@@ -124,7 +174,44 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch(wParam)
 		{
+			case extHw_READY:
+				if (!bSupportDynamicSRate) {
+					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), TRUE);
+				}
+				break;
+			case extHw_RUNNING:
+				if (!bSupportDynamicSRate) {
+					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), FALSE);
+				}
+				break;
+
+			case extHw_Changed_MGC:
+			case extHw_Changed_ATT:
+			case extHw_Changed_RF_IF:
+				const float *gains;
+				int length;
+				length = RadioHandler.GetRFAttSteps(&gains);
+				UpdateGain(GetDlgItem(hWnd, IDC_RFGAIN), GetActualAttIdx(), gains, length);
+
+				length = RadioHandler.GetIFGainSteps(&gains);
+				UpdateGain(GetDlgItem(hWnd, IDC_IFGAIN), ExtIoGetActualMgcIdx(), gains, length);
+				break;
+
+			case extHw_Changed_SRATES:
+				double rate;
+				ComboBox_ResetContent(GetDlgItem(hWnd, IDC_BANDWIDTH));
+				for(int i=0; ; i++) {
+					if (ExtIoGetSrates(i, &rate) == -1)
+						break;
+					sprintf(ebuffer, "%.0fM", rate/1000000);
+					ComboBox_InsertString(GetDlgItem(hWnd, IDC_BANDWIDTH), i, ebuffer);
+				}
+				// fallthrough
 			case extHw_Changed_SampleRate:
+				int index = ExtIoGetActualSrateIdx();
+				ExtIoGetSrates(index, &rate);
+				sprintf(ebuffer, "%.0fM", rate/1000000);
+				ComboBox_SelectItemData(GetDlgItem(hWnd, IDC_BANDWIDTH), -1, ebuffer);
 				RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
 				break;
 		}
@@ -224,6 +311,77 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
+		case IDC_RFGAINP:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				const float *gains;
+				int length;
+				int index = GetActualAttIdx();
+				length = RadioHandler.GetRFAttSteps(&gains);
+
+				index += 1;
+
+				if (index > 0 && index < length)
+					SetAttenuator(index);
+
+				UpdateGain(GetDlgItem(hWnd, IDC_RFGAIN), GetActualAttIdx(), gains, length);
+				break;
+			}
+			break;
+		case IDC_RFGAINM:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				const float *gains;
+				int length;
+				int index = GetActualAttIdx();
+				length = RadioHandler.GetRFAttSteps(&gains);
+
+				index -= 1;
+				if (index > 0 && index < length)
+					SetAttenuator(index);
+
+				UpdateGain(GetDlgItem(hWnd, IDC_RFGAIN), GetActualAttIdx(), gains, length);
+				break;
+			}
+			break;
+
+		case IDC_IFGAINP:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				const float *gains;
+				int length;
+				int index = ExtIoGetActualMgcIdx();
+				length = RadioHandler.GetIFGainSteps(&gains);
+
+				index += 1;
+				if (index > 0 && index < length)
+					ExtIoSetMGC(index);
+
+				UpdateGain(GetDlgItem(hWnd, IDC_IFGAIN), ExtIoGetActualMgcIdx(), gains, length);
+				break;
+			}
+			break;
+		case IDC_IFGAINM:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				const float *gains;
+				int length;
+				int index = ExtIoGetActualMgcIdx();
+				length = RadioHandler.GetIFGainSteps(&gains);
+
+				index -= 1;
+				if (index > 0 && index < length)
+					ExtIoSetMGC(index);
+
+				UpdateGain(GetDlgItem(hWnd, IDC_IFGAIN), ExtIoGetActualMgcIdx(), gains, length);
+				break;
+			}
+			break;
+
 		case IDC_FREQP:
 			switch (HIWORD(wParam))
 			{
@@ -273,6 +431,14 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			break;
+		case IDC_BANDWIDTH:
+			switch(HIWORD(wParam))
+			{
+				case CBN_SELCHANGE:
+				int index = ComboBox_GetCurSel(GetDlgItem(hWnd, IDC_BANDWIDTH));
+				ExtIoSetSrate(index);
+				break;
+			}
 #ifdef TRACE
 		case IDC_TRACE: // trace
 			switch (HIWORD(wParam))

@@ -14,13 +14,13 @@
 #define IDC_LNA                         1006
 #define IDC_VGA                         1007
 #define IDC_COMBO1                      1008
-
+#define IDC_BANDWIDTH                   1008
 #define IDC_RAND                        1009
 #define IDC_DITHER                      1010
 #define IDC_CHECK2                      1011
 #define IDC_TRACE                       1012
-#define IDC_RFVIRTUAL					1013
-#define IDC_ADCSAMPLES					1014
+#define IDC_RFVIRTUAL                   1013
+#define IDC_ADCSAMPLES                  1014
 #define RES_BIN_FIRMWARE                2000
 #define IHK_CR                          5001
 #define IDE_EDIT_MAIN                   40002
@@ -33,13 +33,15 @@
 #define IDC_GAINP                       40102
 #define IDC_GAINM                       40103
 #define IDC_FREQ                        40104
-#define IDC_FREQP				        40105
-#define IDC_FREQM				        40106
+#define IDC_FREQP                       40105
+#define IDC_FREQM                       40106
 #define IDC_RESTART                     40107
-#define IDC_USBOUT                      40108
 #define IDC_STATIC09                    40109
+#define IDC_RFGAIN                      40109
 #define IDC_STATIC10                    40110
+#define IDC_RFGAINP                     40110
 #define IDC_STATIC11                    40111
+#define IDC_RFGAINM                     40111
 #define IDC_STATIC12                    40112
 #define IDC_STATIC13                    40113
 #define IDC_STATIC14                    40114
@@ -47,6 +49,9 @@
 #define IDC_STATIC16                    40116
 #define IDC_STATIC17                    40117
 #define IDC_PAGE0_END                   40120
+#define IDC_IFGAIN                      40121
+#define IDC_IFGAINP                     40122
+#define IDC_IFGAINM                     40123
 #define IDC_PAGE1_INIT                  40150
 #define IDC_TRACE_PAGE1                 40150
 #define IDC_RADIO21                     40151
@@ -72,16 +77,15 @@
 #define IDC_STATIC42                    40304
 #define IDC_STATIC43                    40305
 #define IDC_PAGE3_END                   40310
-#define IDC_HARDWARETYPE				40400
+#define IDC_HARDWARETYPE                40400
 #define IDC_STATIC                      -1
-
 
 #ifdef NDEBUG  // define in processor setup resource !
  #define DIALOGH 95
 #else
  #define DIALOGH 170
 #endif
-//
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
