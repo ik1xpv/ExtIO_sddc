@@ -282,11 +282,11 @@ bool RadioHandlerClass::Start(int srate_idx)
 	}, nullptr);
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
 	r2iqCntrl.Init( decimate, hardware->getGain(), buffers, obuffers);
+	r2iqCntrl.TurnOn(0);
 	adc_samples_thread = new std::thread(
 		[this](void* arg){
 			this->AdcSamplesProcess();
 		}, nullptr);
-	r2iqCntrl.TurnOn(0);
 
 	return true;
 }
