@@ -25,12 +25,11 @@ static OVERLAPPED	inOvLap[QUEUE_SIZE];
 static float** obuffers;
 
 // transfer variables
-double kbRead = 0;
-high_resolution_clock::time_point StartingTime;
+float kbRead = 0;
 
 unsigned long BytesXferred = 0;
 unsigned long SamplesXIF = 0;
-double kSReadIF = 0;
+float kSReadIF = 0;
 unsigned long Failures = 0;
 float	g_Bps;
 float	g_SpsIF;
@@ -38,7 +37,6 @@ float	g_SpsIF;
 void RadioHandlerClass::AdcSamplesProcess()
 {
 	DbgPrintf("AdcSamplesProc thread runs\n");
-	int callShowStatsRate = 32 * QUEUE_SIZE;
 	int idx;            // queue index              // export
 	unsigned long count;  // absolute index
 
@@ -59,7 +57,6 @@ void RadioHandlerClass::AdcSamplesProcess()
 	run = true;
 	idx = 0;    // buffer cycle index
 	count = 0;    // absolute index
-	StartingTime = high_resolution_clock::now();
 	// The infinite xfer loop.
 	while (run) {
 		LONG rLen = transferSize;	// Reset this each time through because
@@ -138,16 +135,12 @@ void RadioHandlerClass::AdcSamplesProcess()
 			break;
 		}
 
-		if ((count % callShowStatsRate) == 0) { //Only update the display at the call rate
-			mutexShowStats.notify_one();
-		}
 		idx = (idx + 1) % QUEUE_SIZE;
 		++count;
 	}  // End of the infinite loop
 
 
 	hardware->FX3producerOff();     //FX3 stop the producer
-	mutexShowStats.notify_one(); //  allows exit of
 	r2iqCntrl.TurnOff();
 
 	DbgPrintf("AdcSamplesProc thread_exit\n");
@@ -300,7 +293,6 @@ bool RadioHandlerClass::Stop()
 	if (run)
 	{
 		run = false; // now waits for threads
-		mutexShowStats.notify_all(); //  allows exit of
 		show_stats_thread->join(); //first to be joined
 		DbgPrintf("show_stats_thread join2\n");
 		adc_samples_thread->join();
@@ -353,6 +345,7 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 {
 	if (modeRF != mode){
 		modeRF = mode;
+		DbgPrintf("Switch to mode: %d\n", modeRF);
 
 		hardware->UpdatemodeRF(mode);
 	}
@@ -405,22 +398,18 @@ void RadioHandlerClass::CaculateStats()
 
 	BytesXferred = 0;
 	SamplesXIF = 0;
-	while (run) {
-		std::mutex k;
-		std::unique_lock<std::mutex> lk(k);
-		mutexShowStats.wait(lk);
-		if (run == false)
-			return;
+	auto StartingTime = high_resolution_clock::now();
 
-		kbRead += double(BytesXferred) / 1000.;
-		kSReadIF += double(SamplesXIF) / 1000.;
+	while (run) {
+		kbRead += float(BytesXferred) / 1000.0f;
+		kSReadIF += float(SamplesXIF) / 1000.0f;
 
 		EndingTime = high_resolution_clock::now();
 
-		duration<double,std::ratio<1,1>> timeElapsed(EndingTime-StartingTime);
+		duration<float,std::ratio<1,1>> timeElapsed(EndingTime-StartingTime);
 
-		double mBps = (double)kbRead / timeElapsed.count() / 1000 / sizeof(int16_t);
-		double mSpsIF = (double)kSReadIF / timeElapsed.count() / 1000;
+		float mBps = (float)kbRead / timeElapsed.count() / 1000 / sizeof(int16_t);
+		float mSpsIF = (float)kSReadIF / timeElapsed.count() / 1000;
 
 		BytesXferred = 0;
 		SamplesXIF = 0;
@@ -428,6 +417,7 @@ void RadioHandlerClass::CaculateStats()
 		g_Bps = (float)mBps;
 		g_SpsIF = (float)mSpsIF;
 
+		std::this_thread::sleep_for(0.2s);
 	}
 	return;
 }

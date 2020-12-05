@@ -74,7 +74,6 @@ private:
     rf_mode modeRF;
     RadioModel radio;
 
-    std::condition_variable mutexShowStats;     // unlock to show stats
     RadioHardware* hardware;
 
     std::mutex fc_mutex;
