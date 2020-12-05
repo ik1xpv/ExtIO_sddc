@@ -119,19 +119,12 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (GetStateButton(hWnd, IDC_FREQP))
 		{
 			Command(hWnd, IDC_FREQP, BN_CLICKED);
-			if (_xfp < 30) _xfp = _xfp * 12 / 10;
 		}
-		else
-			_xfp = 1;
 
 		if (GetStateButton(hWnd, IDC_FREQM))
 		{
 			Command(hWnd, IDC_FREQM, BN_CLICKED);
-			if (_xfm < 30) _xfm = _xfm * 12 / 10;
 		}
-		else
-			_xfm = 1;
-
 
 		if (GetStateButton(hWnd, IDC_IFGAINP))
 		{
