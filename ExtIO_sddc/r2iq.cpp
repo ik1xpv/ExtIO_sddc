@@ -324,7 +324,6 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			}
 
 			// all other frames
-			dataADC = dataADC - halfFft / 2;  // halfFft/2 overlap
 			for (; k < fftPerBuf; k++) {
 				inloop = th->ADCinTime[k];
 				for (int m = 0; m < 2 * halfFft; m++) {
