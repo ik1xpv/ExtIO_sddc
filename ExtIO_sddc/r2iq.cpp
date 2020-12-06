@@ -335,8 +335,20 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		}
 
 		fftwf_complex* filter = filterHw[decimate];
-		float scale = this->GainScale * (float)powf(10.0f, gdGainCorr_dB / 20.0f);
+		float iscale = this->GainScale * (float)powf(10.0f, gdGainCorr_dB / 20.0f);
+		float qscale;
 		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
+
+		// TODO: Change this to sideband check
+		if (moderf == VHFMODE) {
+			// Down converter
+			qscale = -iscale;
+		}
+		else
+		{
+			// upconverter or Direct converter
+			qscale = iscale;
+		}
 
 		// decimate in frequency plus tuning
 		for (int k = 0; k < fftPerBuf; k++)
@@ -372,47 +384,22 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
 
 			float * pTimeTmp;
-			// here invert spectrum VHF
-			if (moderf == VHFMODE) // invert spectrum
+			if (k == 0)
 			{
-				if (k == 0)
+				pTimeTmp = th->outTimeTmp[mfft / 4];
+				for (int i = 0; i < mfft / 2; i++)
 				{
-					pTimeTmp = &th->outTimeTmp[mfft / 4][0];
-					for (int i = 0; i < mfft / 2; i++)
-					{
-						*pout++ = scale * (*pTimeTmp++);
-						*pout++ = -scale * (*pTimeTmp++);
-					}
-				}
-				else
-				{
-					pTimeTmp = &th->outTimeTmp[0][0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
-					{
-						*pout++ = scale * (*pTimeTmp++);
-						*pout++ = -scale * (*pTimeTmp++);
-					}
+					*pout++ = iscale * (*pTimeTmp++);
+					*pout++ = qscale * (*pTimeTmp++);
 				}
 			}
-			else // normal
+			else
 			{
-				if (k == 0)
-				{  // first frame is mfft/2 long
-					pTimeTmp = &th->outTimeTmp[mfft / 4][0];
-					for (int i = 0; i < mfft / 2; i++)
-					{
-						*pout++ = scale * (*pTimeTmp++);
-						*pout++ = scale * (*pTimeTmp++);
-					}
-				}
-				else
-				{  // other frames are 3*mfft/4 long
-					pTimeTmp = &th->outTimeTmp[0][0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
-					{
-						*pout++ = scale * (*pTimeTmp++);
-						*pout++ = scale * (*pTimeTmp++);
-					}
+				pTimeTmp = th->outTimeTmp[0];
+				for (int i = 0; i < 3 * mfft / 4; i++)
+				{
+					*pout++ = iscale * (*pTimeTmp++);
+					*pout++ = qscale * (*pTimeTmp++);
 				}
 			}
 		}
