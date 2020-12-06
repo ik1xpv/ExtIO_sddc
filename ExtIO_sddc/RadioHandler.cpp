@@ -78,37 +78,19 @@ void RadioHandlerClass::AdcSamplesProcess()
 			BytesXferred += rLen;
 			if (rLen < transferSize) DbgPrintf("rLen = %ld\n", rLen);
 			// submit result to SDR application before processing next packet
-			if (pfnCallback && run && count > QUEUE_SIZE + 1)
+			if (run &&						// app is running
+				count >= QUEUE_SIZE &&		// skip first batch
+				((idx + 1) % rd == 0))		// if decimate, every *rd* packages
 			{
-				if (rd == 1)
+				int oidx = idx / rd;
+				std::unique_lock<std::mutex> lk(fc_mutex);
+				if (fc != 0.0f)
 				{
-					{
-						std::unique_lock<std::mutex> lk(fc_mutex);
-						if (fc != 0.0f)
-						{
-							shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[idx], EXT_BLOCKLEN, &stateFineTune);
-						}
-					}
+					shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[oidx], EXT_BLOCKLEN, &stateFineTune);
+				}
 
-					pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx]);
-					SamplesXIF += EXT_BLOCKLEN;
-				}
-				else
-				{
-					odx = (idx + 1) / rd;
-					if ((odx * rd) == (idx + 1))
-					{
-						{
-							std::unique_lock<std::mutex> lk(fc_mutex);
-							if (fc != 0.0f)
-							{
-								shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[idx / rd], EXT_BLOCKLEN, &stateFineTune);
-							}
-						}
-						pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[idx / rd]);
-						SamplesXIF += EXT_BLOCKLEN;
-					}
-				}
+				pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[oidx]);
+				SamplesXIF += EXT_BLOCKLEN;
 			}
 
 			r2iqCntrl.DataReady();   // inform r2iq buffer ready
