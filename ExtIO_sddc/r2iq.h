@@ -23,11 +23,12 @@ public:
     float setFreqOffset(float offset);
     void updateRand(bool v) {this->randADC = v; }
 
-    void Init(int downsample, float gain, uint8_t** buffers, float** obuffers);
-    void TurnOn(int idx);
+    void Init(float gain, uint8_t** buffers, float** obuffers);
+    void TurnOn();
     void TurnOff(void);
     bool IsOn(void);
     void DataReady(void);
+    void setDecimate(int dec) { mdecimation = dec; }
 
 private:
     bool r2iqOn;        // r2iq on flag
@@ -36,7 +37,6 @@ private:
     int bufIdx;         // index to next buffer to be processed
     int cntr;           // counter of input buffer to be processed
     bool randADC;       // randomized ADC output
-    bool Initialized;   // r2iq already initialized
     r2iqThreadArg* lastThread;
 
     float GainScale;
@@ -66,7 +66,6 @@ private:
     std::thread* r2iq_thread[N_R2IQ_THREAD]; // thread pointers
 
 protected:
-    void setDecimate(int dec) { mdecimation = dec; }
     int getDecimate() {return mdecimation;}
     int getFftN()   {return mfftdim[mdecimation];}
 };
