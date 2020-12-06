@@ -280,25 +280,25 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		rf_mode  moderf = RadioHandler.GetmodeRF();
 		dataADC = (ADCSAMPLE *)buffer;
 		int blocks = fftPerBuf;
-		int k = 0;
+		int16_t *last; // previous block end ptr
+		if (idx == 0)
+			last = (int16_t*)(this->buffers[QUEUE_SIZE - 1] + transferSize);
+		else
+			last = dataADC;
+		last = last - halfFft;
+
 		if (!this->randADC)        // plain samples no ADC rand set
 		{
-			if (idx == 0) {
+				// first block
 				inloop = th->ADCinTime[0];
-				int16_t *out = (int16_t*)(this->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
 				for (int m = 0; m < halfFft; m++) {
-					*inloop++ = *out++;
+					*inloop++ = *last++;
 				}
 				for (int m = 0; m < halfFft; m++) {
 					*inloop++ = *dataADC++;
 				}
-				k++;
-			} else {
-				// all other frames
-				dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap
-			}
-
-			for (; k < fftPerBuf; k++) {
+			dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap
+			for (int k = 1; k < fftPerBuf; k++) {
 				inloop = th->ADCinTime[k];
 				for (int m = 0; m < 2 * halfFft; m++) {
 					*inloop++ = *dataADC++;
@@ -308,24 +308,18 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		}
 		else
 		{
-			if (idx == 0) {
+				// first block
 				inloop = th->ADCinTime[0];
-				int16_t *out = (int16_t*)(this->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
 				for (int m = 0; m < halfFft; m++) {
-					*inloop++ = (RandTable[(UINT16)*out++]);
+					*inloop++ = (RandTable[(UINT16)*last++]);
 				}
 				for (int m = 0; m < halfFft; m++) {
 					*inloop++ = (RandTable[(UINT16)*dataADC++]);
 				}
-				k++;
-			} else {
-				// all other frames
-				dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap	
-			}
 
+			dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap
 			// all other frames
-			dataADC = dataADC - halfFft / 2;  // halfFft/2 overlap
-			for (; k < fftPerBuf; k++) {
+			for (int k = 1; k < fftPerBuf; k++) {
 				inloop = th->ADCinTime[k];
 				for (int m = 0; m < 2 * halfFft; m++) {
 					*inloop++ = (RandTable[(UINT16)*dataADC++]);
@@ -369,7 +363,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 					th->ADCinFreq[mm][0] * filter[fm][1]);
 			}
 
-			fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
+			fftwf_execute_dft(th->plan_f2t_c2c, th->inFreqTmp, th->outTimeTmp);
 
 			float * pTimeTmp;
 			// here invert spectrum VHF
