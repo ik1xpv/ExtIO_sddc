@@ -63,6 +63,8 @@ r2iqControlClass::~r2iqControlClass()
 
 float r2iqControlClass::setFreqOffset(float offset)
 {
+	std::unique_lock<std::mutex> lk(mutexR2iqControl);
+
 	this->mtunebin = int(offset * halfFft/4  + 0.5 ) * 4;  // mtunebin step 4 bin  ? 
 	float delta = offset - ((float)this->mtunebin  / halfFft);
 	float ret = - delta * mratio[mdecimation]; // ret increases with higher decimation
@@ -236,16 +238,17 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
 	char *buffer;
-	int lastdecimate = -1;
-
 	float * pout;
+	int fft;
+	int ratio;
+	int idx;
+	int tunebin;
+
 	int decimate = this->getDecimate();
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
+	fftwf_complex* filter = filterHw[decimate];
 
 	while (r2iqOn) {
-		int mfft = this->getFftN();
-		int mratio = this->getRatio();
-		int idx;
 
 		{
 			int wakecnt = 0;
@@ -268,11 +271,14 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
 			this->cntr--;
 
-			int modx = this->bufIdx / mratio;
-			int moff = this->bufIdx - modx * mratio;
-			int offset = ((transferSize / 2) / mratio) *moff;
-			pout = (float *)(this->obuffers[modx] + offset);
+			fft = this->getFftN();
+			ratio = this->getRatio();
+			tunebin = this->mtunebin;  // Update LO tune is possible during run
 
+			int modx = this->bufIdx / ratio;
+			int moff = this->bufIdx - modx * ratio;
+			int offset = ((transferSize / 2) / ratio) *moff;
+			pout = (float *)(this->obuffers[modx] + offset);
 		}
 
 		ADCSAMPLE *dataADC; // pointer to input data
@@ -328,9 +334,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			}
 		}
 
-		fftwf_complex* filter = filterHw[decimate];
 		float scale = this->GainScale * (float)powf(10.0f, gdGainCorr_dB / 20.0f);
-		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 
 		// decimate in frequency plus tuning
 		for (int k = 0; k < fftPerBuf; k++)
@@ -338,9 +342,9 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			// FFT first stage time to frequency, real to complex
 			fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime[k], th->ADCinFreq);
 
-			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
+			for (int m = 0; m < fft / 2; m++) // circular shift tune fs/2 half array
 			{
-				int mm = _mtunebin + m;
+				int mm = tunebin + m;
 				if (mm > halfFft -1) mm -= halfFft;
 
 				th->inFreqTmp[m][0] = (th->ADCinFreq[mm][0] * filter[m][0] +
@@ -350,16 +354,16 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 					th->ADCinFreq[mm][0] * filter[m][1]);
 			}
 
-			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
+			for (int m = 0; m < fft / 2; m++) // circular shift tune fs/2 half array
 			{
-				int fm = halfFft - mfft / 2 + m;
-				int mm = _mtunebin - mfft / 2 + m;
+				int fm = halfFft - fft / 2 + m;
+				int mm = tunebin - fft / 2 + m;
 				if (mm < 0) mm += halfFft;
 
-				th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
+				th->inFreqTmp[fft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
 					th->ADCinFreq[mm][1] * filter[fm][1]);
 
-				th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
+				th->inFreqTmp[fft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
 					th->ADCinFreq[mm][0] * filter[fm][1]);
 			}
 
@@ -371,8 +375,8 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			{
 				if (k == 0)
 				{
-					pTimeTmp = &th->outTimeTmp[mfft / 4][0];
-					for (int i = 0; i < mfft / 2; i++)
+					pTimeTmp = &th->outTimeTmp[fft / 4][0];
+					for (int i = 0; i < fft / 2; i++)
 					{
 						*pout++ = scale * (*pTimeTmp++);
 						*pout++ = -scale * (*pTimeTmp++);
@@ -381,7 +385,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 				else
 				{
 					pTimeTmp = &th->outTimeTmp[0][0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
+					for (int i = 0; i < 3 * fft / 4; i++)
 					{
 						*pout++ = scale * (*pTimeTmp++);
 						*pout++ = -scale * (*pTimeTmp++);
@@ -391,18 +395,18 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			else // normal
 			{
 				if (k == 0)
-				{  // first frame is mfft/2 long
-					pTimeTmp = &th->outTimeTmp[mfft / 4][0];
-					for (int i = 0; i < mfft / 2; i++)
+				{  // first frame is fft/2 long
+					pTimeTmp = &th->outTimeTmp[fft / 4][0];
+					for (int i = 0; i < fft / 2; i++)
 					{
 						*pout++ = scale * (*pTimeTmp++);
 						*pout++ = scale * (*pTimeTmp++);
 					}
 				}
 				else
-				{  // other frames are 3*mfft/4 long
+				{  // other frames are 3*fft/4 long
 					pTimeTmp = &th->outTimeTmp[0][0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
+					for (int i = 0; i < 3 * fft / 4; i++)
 					{
 						*pout++ = scale * (*pTimeTmp++);
 						*pout++ = scale * (*pTimeTmp++);
