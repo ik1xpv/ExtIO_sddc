@@ -63,9 +63,10 @@ r2iqControlClass::~r2iqControlClass()
 
 float r2iqControlClass::setFreqOffset(float offset)
 {
-	this->mtunebin = int(offset * halfFft/4  + 0.5 ) * 4;  // mtunebin step 4 bin  ? 
-	float delta = offset - ((float)this->mtunebin  / halfFft);
-	float ret = - delta * mratio[mdecimation]; // ret increases with higher decimation
+	// align to 1/4 of halfft
+	this->mtunebin = int(offset * halfFft / 4) * 4;  // mtunebin step 4 bin  ?
+	float delta = ((float)this->mtunebin  / halfFft) - offset;
+	float ret = delta * mratio[mdecimation]; // ret increases with higher decimation
 	DbgPrintf("offset %f mtunebin %d delta %f (%f)\n", offset, this->mtunebin, delta, ret);
 	return ret;
 }
@@ -350,26 +351,36 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 			{
 				int mm = _mtunebin + m;
-				if (mm > halfFft -1) mm -= halfFft;
+				if (mm > halfFft - 1)
+				{
+					th->inFreqTmp[m][0] = th->inFreqTmp[m][1] = 0.0f;
+				}
+				else
+				{
+					th->inFreqTmp[m][0] = (th->ADCinFreq[mm][0] * filter[m][0] +
+										   th->ADCinFreq[mm][1] * filter[m][1]);
 
-				th->inFreqTmp[m][0] = (th->ADCinFreq[mm][0] * filter[m][0] +
-					th->ADCinFreq[mm][1] * filter[m][1]);
-
-				th->inFreqTmp[m][1] = (th->ADCinFreq[mm][1] * filter[m][0] -
-					th->ADCinFreq[mm][0] * filter[m][1]);
+					th->inFreqTmp[m][1] = (th->ADCinFreq[mm][1] * filter[m][0] -
+										   th->ADCinFreq[mm][0] * filter[m][1]);
+				}
 			}
 
 			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 			{
 				int fm = halfFft - mfft / 2 + m;
 				int mm = _mtunebin - mfft / 2 + m;
-				if (mm < 0) mm += halfFft;
+				if (mm < 0)
+				{
+					th->inFreqTmp[mfft / 2 + m][0] = th->inFreqTmp[mfft / 2 + m][1] = 0.0f;
+				}
+				else
+				{
+					th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
+													  th->ADCinFreq[mm][1] * filter[fm][1]);
 
-				th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
-					th->ADCinFreq[mm][1] * filter[fm][1]);
-
-				th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
-					th->ADCinFreq[mm][0] * filter[fm][1]);
+					th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
+													  th->ADCinFreq[mm][0] * filter[fm][1]);
+				}
 			}
 
 			fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
