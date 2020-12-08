@@ -293,6 +293,7 @@
     <ClCompile Include="radio\RadioHardware.cpp" />
     <ClCompile Include="radio\RX888R2Radio.cpp" />
     <ClCompile Include="radio\RX888Radio.cpp" />
+    <ClCompile Include="radio\RX999Radio.cpp" />
     <ClCompile Include="SplashWindow.cpp" />
     <ClCompile Include="tdialog.cpp" />
     <ClCompile Include="uti.cpp" />
