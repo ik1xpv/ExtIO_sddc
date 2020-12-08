@@ -39,7 +39,6 @@ struct r2iqThreadArg {
 r2iqControlClass::r2iqControlClass()
 {
 	r2iqOn = false;
-	Initialized = false;
 	randADC = false;
 	halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
     fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
@@ -58,8 +57,8 @@ r2iqControlClass::r2iqControlClass()
 
 r2iqControlClass::~r2iqControlClass()
 {
-	Initialized = false;
 }
+
 
 float r2iqControlClass::setFreqOffset(float offset)
 {
@@ -71,10 +70,10 @@ float r2iqControlClass::setFreqOffset(float offset)
 	return ret;
 }
 
-void r2iqControlClass::TurnOn(int idx) {
-	this->bufIdx = 0;
-	this->cntr = 0;
+void r2iqControlClass::TurnOn() {
 	this->r2iqOn = true;
+	this->cntr = 0;
+	this->bufIdx = 0;
 	this->lastThread = threadArgs[0];
 
 	for (unsigned t = 0; t < processor_count; t++) {
@@ -95,7 +94,8 @@ void r2iqControlClass::TurnOff(void) {
 
 bool r2iqControlClass::IsOn(void) { return(this->r2iqOn); }
 
-void r2iqControlClass::DataReady(void) { // signals new sample buffer arrived
+void r2iqControlClass::DataReady()
+{ // signals new sample buffer arrived
 	int pending;
 	if (!this->r2iqOn)
 		return;
@@ -109,11 +109,10 @@ void r2iqControlClass::DataReady(void) { // signals new sample buffer arrived
 		cvADCbufferAvailable.notify_all(); // signal data available
 }
 
-void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float** obuffers)
+void r2iqControlClass::Init(float gain, uint8_t **buffers, float** obuffers)
 {
 	this->buffers = buffers;    // set to the global exported by main_loop
 	this->obuffers = obuffers;  // set to the global exported by main_loop
-	this->setDecimate(downsample);  // save downsample index.
 
 	this->GainScale = gain;
 
@@ -124,8 +123,6 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 	if (processor_count > N_R2IQ_THREAD)
 		processor_count = N_R2IQ_THREAD;
 
-	if (!this->Initialized) // only at init
-	{
 		fftwf_plan filterplan_t2f_c2c; // time to frequency fft
 
 		DbgPrintf((char *) "r2iqCntrl initialization\n");
@@ -219,11 +216,6 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 			}
 
 		}
-	}
-	else
-	{
-		DbgPrintf((char *) "r2iqCntrl initialization skipped\n");
-	}
 
 #if 0
 	{
@@ -231,8 +223,6 @@ void r2iqControlClass::Init(int downsample, float gain, uint8_t	**buffers, float
 		cvADCbufferAvailable.wait(lk);
 	}
 #endif
-
-	r2iqCntrl.Initialized = true;
 }
 
 void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
@@ -242,13 +232,29 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
 	float * pout;
 	int decimate = this->getDecimate();
+	fftwf_complex* filter = filterHw[decimate];
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
 	while (r2iqOn) {
 		int mfft = this->getFftN();
 		int mratio = this->getRatio();
 		int idx;
+		float iscale = this->GainScale * (float)powf(10.0f, gdGainCorr_dB / 20.0f);
+		float qscale;
+		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
+		rf_mode  moderf = RadioHandler.GetmodeRF();
 		float *endloop;           // pointer to end data to be copied to beginning
+
+		// TODO: Change this to sideband check
+		if (moderf == VHFMODE) {
+			// Down converter
+			qscale = -iscale;
+		}
+		else
+		{
+			// upconverter or Direct converter
+			qscale = iscale;
+		}
 
 		{
 			int wakecnt = 0;
@@ -267,6 +273,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
 			buffer = (char *)this->buffers[this->bufIdx];
 			idx = this->bufIdx;
+			this->cntr--;
 
 			int modx = this->bufIdx / mratio;
 			int moff = this->bufIdx - modx * mratio;
@@ -282,7 +289,6 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
 		ADCSAMPLE *dataADC; // pointer to input data
 		float *inloop;            // pointer to first fft input buffer
-		rf_mode  moderf = RadioHandler.GetmodeRF();
 		dataADC = (ADCSAMPLE *)buffer;
 		int blocks = fftPerBuf;
 
@@ -324,22 +330,6 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 				}
 				dataADC = dataADC - halfFft / 2;
 			}
-		}
-
-		fftwf_complex* filter = filterHw[decimate];
-		float iscale = this->GainScale * (float)powf(10.0f, gdGainCorr_dB / 20.0f);
-		float qscale;
-		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
-
-		// TODO: Change this to sideband check
-		if (moderf == VHFMODE) {
-			// Down converter
-			qscale = -iscale;
-		}
-		else
-		{
-			// upconverter or Direct converter
-			qscale = iscale;
 		}
 
 		// decimate in frequency plus tuning
@@ -385,10 +375,9 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
 			fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
 
-			float * pTimeTmp;
 			if (k == 0)
 			{
-				pTimeTmp = th->outTimeTmp[mfft / 4];
+				auto pTimeTmp = th->outTimeTmp[mfft / 4];
 				for (int i = 0; i < mfft / 2; i++)
 				{
 					*pout++ = iscale * (*pTimeTmp++);
@@ -397,7 +386,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			}
 			else
 			{
-				pTimeTmp = th->outTimeTmp[0];
+				auto pTimeTmp = th->outTimeTmp[0];
 				for (int i = 0; i < 3 * mfft / 4; i++)
 				{
 					*pout++ = iscale * (*pTimeTmp++);

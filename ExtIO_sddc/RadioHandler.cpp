@@ -233,6 +233,7 @@ bool RadioHandlerClass::Init(HMODULE hInst)
 	}
 
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
+	r2iqCntrl.Init(hardware->getGain(), buffers, obuffers);
 
 	return true;
 }
@@ -255,8 +256,8 @@ bool RadioHandlerClass::Start(int srate_idx)
 		this->CaculateStats();
 	}, nullptr);
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
-	r2iqCntrl.Init( decimate, hardware->getGain(), buffers, obuffers);
-	r2iqCntrl.TurnOn(0);
+	r2iqCntrl.setDecimate(decimate);
+	r2iqCntrl.TurnOn();
 	adc_samples_thread = new std::thread(
 		[this](void* arg){
 			this->AdcSamplesProcess();
