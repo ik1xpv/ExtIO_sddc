@@ -3,7 +3,6 @@
 
 #include "license.txt" 
 
-#include "framework.h"
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,12 +17,12 @@ class RadioHandlerClass {
 public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
-    bool Init(HMODULE hInst);
+    bool Init(fx3class *Fx3);
     bool Start(int srate_idx);
     bool Stop();
     bool Close();
     bool IsReady(){return true;}
-    
+
     int GetRFAttSteps(const float **steps);
     int UpdateattRF(int attIdx);
 

@@ -189,14 +189,9 @@ const char *RadioHandlerClass::getName()
 	return hardware->getName();
 }
 
-bool RadioHandlerClass::Init(HMODULE hInst)
+bool RadioHandlerClass::Init(fx3class* Fx3)
 {
 	int r = -1;
-	auto Fx3 = new fx3class();
-	if (!Fx3->Open(hInst))
-	{
-		return false;
-	}
 	UINT8 rdata[4];
 	Fx3->GetHardwareInfo((UINT32*)rdata);
 
