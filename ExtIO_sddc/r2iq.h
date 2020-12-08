@@ -37,6 +37,7 @@ private:
     int cntr;           // counter of input buffer to be processed
     bool randADC;       // randomized ADC output
     bool Initialized;   // r2iq already initialized
+    r2iqThreadArg* lastThread;
 
     float GainScale;
     int mdecimation ;   // selected decimation ratio

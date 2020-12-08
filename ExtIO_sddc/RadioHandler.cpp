@@ -161,15 +161,8 @@ RadioHandlerClass::RadioHandlerClass() :
 	contexts = new PUCHAR[QUEUE_SIZE];
 	obuffers = new float* [QUEUE_SIZE];
 
-	// Allocate one big contitues buffer for all buffers in the input queues
-	// Buffer is formated as the following:
-	// [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + [FFTN_R_ADC] + ....
-	//                ^                             ^
-	//                buffer[0]                     buffer[1]
-	// use float to grantee the alignment
-	PUCHAR buffer = (PUCHAR)(new float[(FFTN_R_ADC + transferSize * QUEUE_SIZE) / sizeof(float) ]);
 	for (int i = 0; i < QUEUE_SIZE; i++) {
-		buffers[i] = buffer + FFTN_R_ADC + transferSize * i;
+		buffers[i] = (PUCHAR)new uint16_t[transferSize / sizeof(uint16_t)];
 
 		inOvLap[i].hEvent = CreateEvent(NULL, false, false, NULL);
 
@@ -183,9 +176,8 @@ RadioHandlerClass::~RadioHandlerClass()
 	for (int n = 0; n < QUEUE_SIZE; n++) {
 		CloseHandle(inOvLap[n].hEvent);
 		delete[] obuffers[n];
+		delete[] buffers[n];
 	}
-
-	delete[] (buffers[0] - FFTN_R_ADC);
 
 	delete[] buffers;
 	delete[] obuffers;
