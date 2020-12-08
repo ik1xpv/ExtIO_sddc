@@ -80,7 +80,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 			// submit result to SDR application before processing next packet
 			if (run &&						// app is running
 				count >= QUEUE_SIZE &&		// skip first batch
-				((idx + 1) % rd == 0))		// if decimate, every *rd* packages
+				(idx % rd == 0))		// if decimate, every *rd* packages
 			{
 				int oidx = idx / rd;
 				std::unique_lock<std::mutex> lk(fc_mutex);
