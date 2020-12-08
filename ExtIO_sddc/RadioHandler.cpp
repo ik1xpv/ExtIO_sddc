@@ -268,13 +268,19 @@ bool RadioHandlerClass::Start(int srate_idx)
 
 bool RadioHandlerClass::Stop()
 {
+	std::unique_lock<std::mutex> lk(stop_mutex);
 	DbgPrintf("RadioHandlerClass::Stop %d\n", run);
 	if (run)
 	{
 		run = false; // now waits for threads
 		show_stats_thread->join(); //first to be joined
+		delete show_stats_thread;
+		show_stats_thread = nullptr;
 		DbgPrintf("show_stats_thread join2\n");
+
 		adc_samples_thread->join();
+		delete adc_samples_thread;
+		adc_samples_thread = nullptr;
 		DbgPrintf("adc_samples_thread join1\n");
 	}
 	return true;
