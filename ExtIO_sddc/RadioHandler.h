@@ -77,6 +77,7 @@ private:
     RadioHardware* hardware;
 
     std::mutex fc_mutex;
+    std::mutex stop_mutex;
     float fc;
     shift_limited_unroll_C_sse_data_t stateFineTune;
 };
