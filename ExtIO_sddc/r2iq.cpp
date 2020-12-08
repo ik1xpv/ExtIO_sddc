@@ -279,18 +279,26 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		float *inloop;            // pointer to first fft input buffer
 		rf_mode  moderf = RadioHandler.GetmodeRF();
 		dataADC = (ADCSAMPLE *)buffer;
-		dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap
-
-		if (idx == 1)
-		{
-			memcpy(buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC,
-				buffers[0] - FFTN_R_ADC,
-				FFTN_R_ADC);
-		}
-
+		int blocks = fftPerBuf;
+		int k = 0;
 		if (!this->randADC)        // plain samples no ADC rand set
 		{
-			for (int k =0; k < fftPerBuf; k++) {
+			if (idx == 0) {
+				inloop = th->ADCinTime[0];
+				int16_t *out = (int16_t*)(this->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
+				for (int m = 0; m < halfFft; m++) {
+					*inloop++ = *out++;
+				}
+				for (int m = 0; m < halfFft; m++) {
+					*inloop++ = *dataADC++;
+				}
+				k++;
+			} else {
+				// all other frames
+				dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap
+			}
+
+			for (; k < fftPerBuf; k++) {
 				inloop = th->ADCinTime[k];
 				for (int m = 0; m < 2 * halfFft; m++) {
 					*inloop++ = *dataADC++;
@@ -300,8 +308,23 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		}
 		else
 		{
+			if (idx == 0) {
+				inloop = th->ADCinTime[0];
+				int16_t *out = (int16_t*)(this->buffers[QUEUE_SIZE - 1] + transferSize - FFTN_R_ADC);
+				for (int m = 0; m < halfFft; m++) {
+					*inloop++ = (RandTable[(UINT16)*out++]);
+				}
+				for (int m = 0; m < halfFft; m++) {
+					*inloop++ = (RandTable[(UINT16)*dataADC++]);
+				}
+				k++;
+			} else {
+				// all other frames
+				dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap	
+			}
+
 			// all other frames
-			for (int k = 0; k < fftPerBuf; k++) {
+			for (; k < fftPerBuf; k++) {
 				inloop = th->ADCinTime[k];
 				for (int m = 0; m < 2 * halfFft; m++) {
 					*inloop++ = (RandTable[(UINT16)*dataADC++]);
