@@ -267,13 +267,13 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			buffer = (char *)this->buffers[this->bufIdx];
 			idx = this->bufIdx;
 
-			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
-			this->cntr--;
-
 			int modx = this->bufIdx / mratio;
 			int moff = this->bufIdx - modx * mratio;
 			int offset = ((transferSize / 2) / mratio) *moff;
 			pout = (float *)(this->obuffers[modx] + offset);
+
+			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
+			this->cntr--;
 
 			endloop = lastThread->ADCinTime[fftPerBuf - 1] + halfFft;
 			lastThread = th;
