@@ -46,7 +46,7 @@ public:
 
 	bool SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);
 	bool ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);
-	
+
 private:
 	CCyFX3Device* fx3dev;
 	bool GetFx3Device();
