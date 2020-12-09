@@ -10,6 +10,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 
 struct r2iqThreadArg;
 
@@ -35,7 +36,7 @@ private:
     uint8_t** buffers;    // pointer to input buffers
     float** obuffers;   // pointer to output buffers
     int bufIdx;         // index to next buffer to be processed
-    int cntr;           // counter of input buffer to be processed
+    volatile std::atomic<int> cntr;           // counter of input buffer to be processed
     bool randADC;       // randomized ADC output
     r2iqThreadArg* lastThread;
 
