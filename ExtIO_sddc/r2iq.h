@@ -24,7 +24,7 @@ public:
     float setFreqOffset(float offset);
     void updateRand(bool v) {this->randADC = v; }
 
-    void Init(float gain, uint8_t** buffers, float** obuffers);
+    void Init(float gain, int16_t** buffers, float** obuffers);
     void TurnOn();
     void TurnOff(void);
     bool IsOn(void);
@@ -33,7 +33,7 @@ public:
 
 private:
     bool r2iqOn;        // r2iq on flag
-    uint8_t** buffers;    // pointer to input buffers
+    int16_t** buffers;    // pointer to input buffers
     float** obuffers;   // pointer to output buffers
     int bufIdx;         // index to next buffer to be processed
     volatile std::atomic<int> cntr;           // counter of input buffer to be processed

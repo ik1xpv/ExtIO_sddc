@@ -107,7 +107,7 @@ void r2iqControlClass::DataReady()
 		cvADCbufferAvailable.notify_all(); // signal data available
 }
 
-void r2iqControlClass::Init(float gain, uint8_t **buffers, float** obuffers)
+void r2iqControlClass::Init(float gain, int16_t **buffers, float** obuffers)
 {
 	this->buffers = buffers;    // set to the global exported by main_loop
 	this->obuffers = obuffers;  // set to the global exported by main_loop
@@ -213,7 +213,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
 	while (r2iqOn) {
-		ADCSAMPLE *dataADC; // pointer to input data
+		int16_t *dataADC; // pointer to input data
 		float *endloop;           // pointer to end data to be copied to beginning
 		float * pout;
 
@@ -246,12 +246,12 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			if (!r2iqOn)
 				return 0;
 
-			dataADC = (ADCSAMPLE *)this->buffers[this->bufIdx];
+			dataADC = this->buffers[this->bufIdx];
 			std::atomic_fetch_sub(&this->cntr, 1);
 
 			int modx = this->bufIdx / mratio;
 			int moff = this->bufIdx - modx * mratio;
-			int offset = ((transferSize / sizeof(ADCSAMPLE)) / mratio) * moff;
+			int offset = ((transferSize / sizeof(int16_t)) / mratio) * moff;
 			pout = this->obuffers[modx] + offset;
 
 			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
