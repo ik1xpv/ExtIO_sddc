@@ -60,8 +60,10 @@ private:
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
     void CaculateStats();
+    void OnDataPacket(int idx);
 
     bool run;
+    unsigned long count;    // absolute index
 
     bool dither;
     bool randout;
