@@ -54,10 +54,6 @@ private:
     int fftPerBuf; // number of ffts per buffer with 256|768 overlap
     fftwf_complex *pfilterht;       // time filter ht
     fftwf_complex **filterHw;       // Hw complex to each decimation ratio
-#ifdef _DEBUG
-    fftwf_plan *filterplan_f2t_c2c; // frequency to time fft used for debug
-    fftwf_complex **filterHt;       // Ht time vector used for debug
-#endif
 
     uint32_t processor_count;
     r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
