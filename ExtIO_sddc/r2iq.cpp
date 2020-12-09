@@ -143,17 +143,9 @@ void r2iqControlClass::Init(float gain, uint8_t **buffers, float** obuffers)
 		   // filters
 		pfilterht = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
 		filterHw = (fftwf_complex**)fftwf_malloc(sizeof(fftwf_complex*)*NDECIDX);
-#ifdef _DEBUG
-		filterHt = (fftwf_complex**)fftwf_malloc(sizeof(fftwf_complex*)*NDECIDX);
-		filterplan_f2t_c2c = (fftwf_plan *)malloc(sizeof(fftwf_plan) * NDECIDX);
-#endif
 		for (int d = 0; d < NDECIDX; d++)
 		{
 			filterHw[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
-#ifdef _DEBUG
-			filterHt[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
-			filterplan_f2t_c2c[d] = fftwf_plan_dft_1d(halfFft, filterHw[d], filterHt[d], FFTW_BACKWARD, FFTW_MEASURE); // 0??
-#endif
 		}
 
 		for (int t = 0; t < halfFft; t++)
@@ -216,14 +208,7 @@ void r2iqControlClass::Init(float gain, uint8_t **buffers, float** obuffers)
 			}
 
 		}
-
-#if 0
-	{
-		std::unique_lock<std::mutex> lk(mutexR2iqControl);
-		cvADCbufferAvailable.wait(lk);
 	}
-#endif
-}
 
 void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
