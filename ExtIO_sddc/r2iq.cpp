@@ -30,7 +30,7 @@ struct r2iqThreadArg {
 	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
 	fftwf_plan plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
 	fftwf_plan plans_f2t_c2c[NDECIDX];
-	float **ADCinTime;                // point to each threads input buffers [nftt][n]
+	float *ADCinTime;                // point to each threads input buffers [nftt][n]
 	fftwf_complex *ADCinFreq;         // buffers in frequency
 	fftwf_complex *inFreqTmp;         // tmp decimation output buffers (after tune shift)
 	fftwf_complex *outTimeTmp;        // tmp decimation output buffers baseband time cplx
@@ -41,10 +41,10 @@ r2iqControlClass::r2iqControlClass()
 	r2iqOn = false;
 	randADC = false;
 	halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
-    fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
+	fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 
 	mtunebin = halfFft / 4;
-	mfftdim[0] = halfFft; 
+	mfftdim[0] = halfFft;
 	mratio[0] = 1;  // 1,2,4,8,16
 	for (int i = 1; i < NDECIDX; i++)
 	{
@@ -192,8 +192,6 @@ void r2iqControlClass::Init(float gain, uint8_t **buffers, float** obuffers)
 			}
 
 			fftwf_execute_dft(filterplan_t2f_c2c, pfilterht, filterHw[d]);
-
-
 		}
 		fftwf_destroy_plan(filterplan_t2f_c2c);
 
@@ -201,15 +199,12 @@ void r2iqControlClass::Init(float gain, uint8_t **buffers, float** obuffers)
 			r2iqThreadArg *th = new r2iqThreadArg();
 			threadArgs[t] = th;
 
-			th->ADCinTime = (float**)malloc(sizeof(float*) * fftPerBuf + 1);
-			for (int n = 0; n < fftPerBuf; n++) {
-				th->ADCinTime[n] = (float*)fftwf_malloc(sizeof(float) * 2 * halfFft);                 // 2048
-			}
+			th->ADCinTime = (float*)fftwf_malloc(sizeof(float) * (halfFft + transferSize / 2));                 // 2048
 
 			th->ADCinFreq = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft + 1)); // 1024+1
 			th->inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
 			th->outTimeTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));
-			th->plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, th->ADCinTime[0], th->ADCinFreq, FFTW_MEASURE);
+			th->plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, th->ADCinTime, th->ADCinFreq, FFTW_MEASURE);
 			for (int d = 0; d < NDECIDX; d++)
 			{
 				th->plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], th->inFreqTmp, th->outTimeTmp, FFTW_BACKWARD, FFTW_MEASURE);
@@ -281,8 +276,8 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			pout = (float *)(this->obuffers[modx] + offset);
 
 			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
-	
-			endloop = lastThread->ADCinTime[fftPerBuf - 1] + halfFft;
+
+			endloop = lastThread->ADCinTime + transferSize / sizeof(int16_t);
 			lastThread = th;
 		}
 
@@ -292,42 +287,21 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		int blocks = fftPerBuf;
 
 		// first frame
-		inloop = th->ADCinTime[0];
+		inloop = th->ADCinTime;
 		for (int m = 0; m < halfFft; m++) {
 			*inloop++ = *endloop++;   // duplicate form last frame halfFft samples
 		}
 
 		if (!this->randADC)        // plain samples no ADC rand set
 		{
-			// completes first frame
-			for (int m = 0; m < halfFft; m++) {
+			for (int m = 0; m < transferSize / sizeof(int16_t); m++) {
 				*inloop++ = *dataADC++;
-			}
- 			// all other frames
-			dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap
-			for (int k = 1; k < fftPerBuf; k++) {
-				inloop = th->ADCinTime[k];
-				for (int m = 0; m < 2 * halfFft; m++) {
-					*inloop++ = *dataADC++;
-				}
-				dataADC = dataADC - halfFft / 2;
 			}
 		}
 		else
 		{
-			// completes first frame
-			for (int m = 0; m < halfFft; m++) {
+			for (int m = 0; m < transferSize / sizeof(int16_t); m++) {
 				*inloop++ = (RandTable[(UINT16)*dataADC++]);
-			}
-
- 			// all other frames
-			dataADC = dataADC - halfFft / 2;    // halfFft/2 overlap
-			for (int k = 1; k < fftPerBuf; k++) {
-				inloop = th->ADCinTime[k];
-				for (int m = 0; m < 2 * halfFft; m++) {
-					*inloop++ = (RandTable[(UINT16)*dataADC++]);
-				}
-				dataADC = dataADC - halfFft / 2;
 			}
 		}
 
@@ -335,7 +309,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		for (int k = 0; k < fftPerBuf; k++)
 		{
 			// FFT first stage time to frequency, real to complex
-			fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime[k], th->ADCinFreq);
+			fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
 
 			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
 			{
