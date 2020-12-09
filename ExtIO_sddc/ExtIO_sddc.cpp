@@ -108,7 +108,9 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 #endif
 		EnterFunction();  // now works
 
-		gbInitHW = RadioHandler.Init(hInst); // Check if it there hardware
+		auto Fx3 = new fx3class();
+		gbInitHW = Fx3->Open(hInst) &&
+				   RadioHandler.Init(Fx3); // Check if it there hardware
 		if (!gbInitHW)
 		{
 			MessageBox(NULL, "Is SDR powered on and connected ?\r\n\r\nPlease start HDSDR again",

@@ -96,13 +96,11 @@ bool r2iqControlClass::IsOn(void) { return(this->r2iqOn); }
 
 void r2iqControlClass::DataReady()
 { // signals new sample buffer arrived
-	int pending;
 	if (!this->r2iqOn)
 		return;
-	mutexR2iqControl.lock();
-	pending = this->cntr;
-	this->cntr++;
-	mutexR2iqControl.unlock();
+
+	auto pending = std::atomic_fetch_add(&this->cntr, 1);
+
 	if (pending == 0)
 		cvADCbufferAvailable.notify_one(); // signal data available
 	else
@@ -143,17 +141,9 @@ void r2iqControlClass::Init(float gain, uint8_t **buffers, float** obuffers)
 		   // filters
 		pfilterht = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
 		filterHw = (fftwf_complex**)fftwf_malloc(sizeof(fftwf_complex*)*NDECIDX);
-#ifdef _DEBUG
-		filterHt = (fftwf_complex**)fftwf_malloc(sizeof(fftwf_complex*)*NDECIDX);
-		filterplan_f2t_c2c = (fftwf_plan *)malloc(sizeof(fftwf_plan) * NDECIDX);
-#endif
 		for (int d = 0; d < NDECIDX; d++)
 		{
 			filterHw[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
-#ifdef _DEBUG
-			filterHt[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
-			filterplan_f2t_c2c[d] = fftwf_plan_dft_1d(halfFft, filterHw[d], filterHt[d], FFTW_BACKWARD, FFTW_MEASURE); // 0??
-#endif
 		}
 
 		for (int t = 0; t < halfFft; t++)
@@ -211,34 +201,25 @@ void r2iqControlClass::Init(float gain, uint8_t **buffers, float** obuffers)
 			}
 
 		}
-
-#if 0
-	{
-		std::unique_lock<std::mutex> lk(mutexR2iqControl);
-		cvADCbufferAvailable.wait(lk);
 	}
-#endif
-}
 
 void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 
-	char *buffer;
-	int lastdecimate = -1;
-
-	float * pout;
+	int mfft = this->getFftN();
+	int mratio = this->getRatio();
 	int decimate = this->getDecimate();
 	fftwf_complex* filter = filterHw[decimate];
+	rf_mode moderf = RadioHandler.GetmodeRF();
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
 	while (r2iqOn) {
-		int mfft = this->getFftN();
-		int mratio = this->getRatio();
-		int idx;
+		ADCSAMPLE *dataADC; // pointer to input data
+		float *endloop;           // pointer to end data to be copied to beginning
+		float * pout;
+
 		float iscale = this->GainScale * (float)powf(10.0f, gdGainCorr_dB / 20.0f);
 		float qscale;
 		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
-		rf_mode  moderf = RadioHandler.GetmodeRF();
-		float *endloop;           // pointer to end data to be copied to beginning
 
 		// TODO: Change this to sideband check
 		if (moderf == VHFMODE) {
@@ -256,8 +237,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			std::unique_lock<std::mutex> lk(mutexR2iqControl);
 			while (this->cntr <= 0)
 			{
-				cvADCbufferAvailable.wait(lk, [&wakecnt, this]
-				{
+				cvADCbufferAvailable.wait(lk, [&wakecnt, this] {
 					wakecnt++;
 					return this->cntr > 0;
 				});
@@ -266,14 +246,13 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			if (!r2iqOn)
 				return 0;
 
-			buffer = (char *)this->buffers[this->bufIdx];
-			idx = this->bufIdx;
-			this->cntr--;
+			dataADC = (ADCSAMPLE *)this->buffers[this->bufIdx];
+			std::atomic_fetch_sub(&this->cntr, 1);
 
 			int modx = this->bufIdx / mratio;
 			int moff = this->bufIdx - modx * mratio;
-			int offset = ((transferSize / 2) / mratio) *moff;
-			pout = (float *)(this->obuffers[modx] + offset);
+			int offset = ((transferSize / sizeof(ADCSAMPLE)) / mratio) * moff;
+			pout = this->obuffers[modx] + offset;
 
 			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
 
@@ -281,13 +260,8 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 			lastThread = th;
 		}
 
-		ADCSAMPLE *dataADC; // pointer to input data
-		float *inloop;            // pointer to first fft input buffer
-		dataADC = (ADCSAMPLE *)buffer;
-		int blocks = fftPerBuf;
-
 		// first frame
-		inloop = th->ADCinTime;
+		auto inloop = th->ADCinTime;
 		for (int m = 0; m < halfFft; m++) {
 			*inloop++ = *endloop++;   // duplicate form last frame halfFft samples
 		}

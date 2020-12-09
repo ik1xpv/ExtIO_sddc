@@ -10,6 +10,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 
 struct r2iqThreadArg;
 
@@ -35,7 +36,7 @@ private:
     uint8_t** buffers;    // pointer to input buffers
     float** obuffers;   // pointer to output buffers
     int bufIdx;         // index to next buffer to be processed
-    int cntr;           // counter of input buffer to be processed
+    volatile std::atomic<int> cntr;           // counter of input buffer to be processed
     bool randADC;       // randomized ADC output
     r2iqThreadArg* lastThread;
 
@@ -54,10 +55,6 @@ private:
     int fftPerBuf; // number of ffts per buffer with 256|768 overlap
     fftwf_complex *pfilterht;       // time filter ht
     fftwf_complex **filterHw;       // Hw complex to each decimation ratio
-#ifdef _DEBUG
-    fftwf_plan *filterplan_f2t_c2c; // frequency to time fft used for debug
-    fftwf_complex **filterHt;       // Ht time vector used for debug
-#endif
 
     uint32_t processor_count;
     r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
