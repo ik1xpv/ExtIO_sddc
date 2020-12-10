@@ -9,8 +9,6 @@
 
 #include <chrono>
 
-#define BLOCK_TIMEOUT (80) // block 65.536 ms timeout is 80
-
 using namespace std::chrono;
 
 #define USB_READ_CONCURRENT  4
@@ -22,8 +20,6 @@ std::thread* adc_samples_thread;
 std::thread* show_stats_thread;
 // transfer variables
 static int16_t*		buffers[QUEUE_SIZE];                       // export, main data buffers
-static PUCHAR		contexts[USB_READ_CONCURRENT];
-static OVERLAPPED	inOvLap[USB_READ_CONCURRENT];
 static float*		obuffers[QUEUE_SIZE];
 
 // transfer variables
@@ -63,53 +59,38 @@ void RadioHandlerClass::OnDataPacket(int idx)
 void RadioHandlerClass::AdcSamplesProcess()
 {
 	DbgPrintf("AdcSamplesProc thread runs\n");
-	int idx;            // queue index              // export
+	int buf_idx;            // queue index
+	int read_idx;
+	void*		contexts[USB_READ_CONCURRENT];
 
 	Failures = 0;
 
-	for (int i = 0; i < USB_READ_CONCURRENT; i++) {
-		inOvLap[i].hEvent = CreateEvent(NULL, false, false, NULL);
-	}
+	memset(contexts, 0, sizeof(contexts));
 
 	// Queue-up the first batch of transfer requests
 	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
-		contexts[n] = EndPt->BeginDataXfer((PUCHAR)buffers[n], transferSize, &inOvLap[n]);
-		if (EndPt->NtStatus || EndPt->UsbdStatus) {// BeginDataXfer failed
-			DbgPrintf((char*)"Xfer request rejected. 1 STATUS = %ld %ld\n", EndPt->NtStatus, EndPt->UsbdStatus);
+		if (!fx3->BeginDataXfer((PUCHAR)buffers[n], transferSize, &contexts[n])) {
+			DbgPrintf("Xfer request rejected.\n");
 			return;
 		}
 	}
-	idx = 0;    // buffer cycle index
+
+	read_idx = 0;	// context cycle index
+	buf_idx = 0;	// buffer cycle index
 
 	// The infinite xfer loop.
 	while (run) {
-		LONG rLen = transferSize;	// Reset this each time through because
-		// FinishDataXfer may modify it
-		if (!EndPt->WaitForXfer(&inOvLap[idx % USB_READ_CONCURRENT], BLOCK_TIMEOUT)) { // block on transfer
-			EndPt->Abort(); // abort if timeout
-			DbgPrintf("BUG1001 Count %d idx %d", count, idx);
-			// Re-submit this queue element to keep the queue full
-			contexts[idx % USB_READ_CONCURRENT] = EndPt->BeginDataXfer((PUCHAR)buffers[idx], transferSize, &inOvLap[idx % USB_READ_CONCURRENT]);
-			if (EndPt->NtStatus || EndPt->UsbdStatus) { // BeginDataXfer failed
-				DbgPrintf("Xfer request rejected. NTSTATUS = 0x%08X\n", (UINT)EndPt->NtStatus);
-				AbortXferLoop(idx);
-				break;
-			}
+		if (fx3->FinishDataXfer(&contexts[read_idx])) {
+			BytesXferred += transferSize;
 
-		}
-
-		if (EndPt->FinishDataXfer((PUCHAR)buffers[idx], rLen, &inOvLap[idx % USB_READ_CONCURRENT], contexts[idx % USB_READ_CONCURRENT])) {
-			BytesXferred += rLen;
-			if (rLen < transferSize) DbgPrintf("rLen = %ld\n", rLen);
-
-			OnDataPacket(idx);
+			OnDataPacket(buf_idx);
 
 #ifdef _DEBUG		//PScope buffer screenshot
 			if (saveADCsamplesflag == true)
 			{
 				saveADCsamplesflag = false; // do it once
-				short* pi = (short*)buffers[idx];
-				unsigned int numsamples = transferSize / sizeof(short);
+				auto pi = buffers[buf_idx];
+				unsigned int numsamples = transferSize / sizeof(int16_t);
 				float samplerate  = (float) getSampleRate();
 				PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
 					"ADCrealsamples.adc input real ADC 16 bit samples",
@@ -119,16 +100,18 @@ void RadioHandlerClass::AdcSamplesProcess()
 		}
 
 		// Re-submit this queue element to keep the queue full
-		contexts[idx % USB_READ_CONCURRENT] = EndPt->BeginDataXfer((PUCHAR)buffers[idx], transferSize, &inOvLap[idx % USB_READ_CONCURRENT]);
-		if (EndPt->NtStatus || EndPt->UsbdStatus) { // BeginDataXfer failed
-			DbgPrintf("Xfer request rejected.2 NTSTATUS = 0x%08X\n", (UINT)EndPt->NtStatus);
-			AbortXferLoop(idx);
+		if (!fx3->BeginDataXfer((PUCHAR)buffers[buf_idx], transferSize, &contexts[read_idx])) { // BeginDataXfer failed
+			DbgPrintf("Xfer request rejected.\n");
 			break;
 		}
 
-		idx = (idx + 1) % QUEUE_SIZE;
+		buf_idx = (buf_idx + 1) % QUEUE_SIZE;
+		read_idx = (read_idx + 1) % USB_READ_CONCURRENT;
 	}  // End of the infinite loop
 
+	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
+		fx3->CleanupDataXfer(&contexts[n]);
+	}
 
 	DbgPrintf("AdcSamplesProc thread_exit\n");
 	return;  // void *
@@ -136,17 +119,6 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 void RadioHandlerClass::AbortXferLoop(int qidx)
 {
-	long len = transferSize;
-	bool r = true;
-	EndPt->Abort();
-	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
-		//   if (n< qidx+1)
-		{
-			EndPt->WaitForXfer(&inOvLap[n], TIMEOUT);
-			EndPt->FinishDataXfer((PUCHAR)buffers[n], len, &inOvLap[n], contexts[n]);
-		}
-		DbgPrintf("CloseHandle[%d]  %d\n", n, r);
-	}
 	pfnCallback(-1, extHw_Stop, 0.0F, 0); // Stop realtime see Failures
 }
 
@@ -187,6 +159,7 @@ bool RadioHandlerClass::Init(fx3class* Fx3)
 {
 	int r = -1;
 	UINT8 rdata[4];
+	this->fx3 = Fx3;
 	Fx3->GetHardwareInfo((UINT32*)rdata);
 
 	radio = (RadioModel)rdata[0];

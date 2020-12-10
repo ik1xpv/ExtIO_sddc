@@ -9,11 +9,8 @@
 // 
 
 #include "FX3handler.h"
+#include "CyAPI.h"
 #include "resource.h" // for RES_BIN_FIRMWARE
-
-using namespace std;
-
-CCyUSBEndPoint* EndPt;
 
 fx3class::fx3class():
 	fx3dev (nullptr),
@@ -298,8 +295,6 @@ bool fx3class::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 le
 	return r;
 }
 
-
-
 bool fx3class::Close() {
 	fx3dev->Close();            // close class
 	delete fx3dev;              // destroy class
@@ -307,6 +302,75 @@ bool fx3class::Close() {
 	return true;
 }
 
+#define BLOCK_TIMEOUT (80) // block 65.536 ms timeout is 80
 
+struct ReadContext
+{
+	PUCHAR context;
+	OVERLAPPED overlap;
+	uint8_t* buffer;
+	long size;
+};
 
+bool fx3class::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
+{
+	ReadContext *readContext = (ReadContext *)(*context);
 
+	if (!EndPt)
+		return false;
+
+	if (*context == nullptr)
+	{
+		// first time call, allocate the context structure
+		readContext = new ReadContext;
+		*context = readContext;
+		memset(&readContext->overlap, 0, sizeof(readContext->overlap));
+		readContext->overlap.hEvent = CreateEvent(NULL, false, false, NULL);
+	}
+
+	readContext->buffer = buffer;
+	readContext->size = transferSize;
+
+	readContext->context = EndPt->BeginDataXfer(readContext->buffer, transferSize, &readContext->overlap);
+	if (EndPt->NtStatus || EndPt->UsbdStatus) {// BeginDataXfer failed
+		DbgPrintf((char*)"Xfer request rejected. 1 STATUS = %ld %ld\n", EndPt->NtStatus, EndPt->UsbdStatus);
+		return false;
+	}
+
+	return true;
+}
+
+bool fx3class::FinishDataXfer(void** context)
+{
+	ReadContext *readContext = (ReadContext *)(*context);
+
+	if (!readContext)
+	{
+		return nullptr;
+	}
+
+	if (!EndPt->WaitForXfer(&readContext->overlap, BLOCK_TIMEOUT)) { // block on transfer
+		DbgPrintf("WaitForXfer timeout. NTSTATUS = 0x%08X\n", EndPt->NtStatus);
+		EndPt->Abort(); // abort if timeout
+		return false;
+	}
+
+	auto requested_size = readContext->size;
+	if (!EndPt->FinishDataXfer(readContext->buffer, readContext->size, &readContext->overlap, readContext->context)) {
+		DbgPrintf("FinishDataXfer Failed. NTSTATUS = 0x%08X\n", EndPt->NtStatus);
+		return false;
+	}
+
+	if (readContext->size < requested_size)
+		DbgPrintf("only read %ld but requested %ld\n",  readContext->size, requested_size);
+
+	return true;
+}
+
+void fx3class::CleanupDataXfer(void** context)
+{
+	ReadContext *readContext = (ReadContext *)(*context);
+
+	CloseHandle(readContext->overlap.hEvent);
+	delete (readContext);
+}

@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <time.h>
 #include "synchapi.h"
-#include "CyAPI.h"
 #include "config.h"
 
 #define PUINT8 UINT8*
@@ -28,8 +27,8 @@
 
 #include "../Interface.h"
 
-extern CCyUSBEndPoint* EndPt;
-
+class CCyFX3Device;
+class CCyUSBEndPoint;
 class fx3class
 {
 public:
@@ -44,11 +43,17 @@ public:
 	bool SetArgument(UINT16 index, UINT16 value);
 	bool GetHardwareInfo(UINT32* data);
 
+	bool BeginDataXfer(UINT8 *buffer, long transferSize, void** context);
+	bool FinishDataXfer(void** context);
+	void CleanupDataXfer(void** context);
+
+private:
 	bool SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);
 	bool ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);
 
-private:
 	CCyFX3Device* fx3dev;
+	CCyUSBEndPoint* EndPt;
+
 	bool GetFx3Device();
 	bool GetFx3DeviceStreamer();
 	bool Fx3IsOn;
