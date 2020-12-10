@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+
 set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3")
 
 include_directories("." "../Core")
