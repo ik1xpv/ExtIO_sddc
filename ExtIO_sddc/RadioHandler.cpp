@@ -21,10 +21,10 @@ RadioHandlerClass RadioHandler;
 std::thread* adc_samples_thread;
 std::thread* show_stats_thread;
 // transfer variables
-static PUCHAR 		buffers[QUEUE_SIZE];                       // export, main data buffers
-static PUCHAR 		contexts[USB_READ_CONCURRENT];
+static int16_t*		buffers[QUEUE_SIZE];                       // export, main data buffers
+static PUCHAR		contexts[USB_READ_CONCURRENT];
 static OVERLAPPED	inOvLap[USB_READ_CONCURRENT];
-static float* 		obuffers[QUEUE_SIZE];
+static float*		obuffers[QUEUE_SIZE];
 
 // transfer variables
 float kbRead = 0;
@@ -73,7 +73,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 	// Queue-up the first batch of transfer requests
 	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
-		contexts[n] = EndPt->BeginDataXfer(buffers[n], transferSize, &inOvLap[n]);
+		contexts[n] = EndPt->BeginDataXfer((PUCHAR)buffers[n], transferSize, &inOvLap[n]);
 		if (EndPt->NtStatus || EndPt->UsbdStatus) {// BeginDataXfer failed
 			DbgPrintf((char*)"Xfer request rejected. 1 STATUS = %ld %ld\n", EndPt->NtStatus, EndPt->UsbdStatus);
 			return;
@@ -89,7 +89,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 			EndPt->Abort(); // abort if timeout
 			DbgPrintf("BUG1001 Count %d idx %d", count, idx);
 			// Re-submit this queue element to keep the queue full
-			contexts[idx % USB_READ_CONCURRENT] = EndPt->BeginDataXfer(buffers[idx], transferSize, &inOvLap[idx % USB_READ_CONCURRENT]);
+			contexts[idx % USB_READ_CONCURRENT] = EndPt->BeginDataXfer((PUCHAR)buffers[idx], transferSize, &inOvLap[idx % USB_READ_CONCURRENT]);
 			if (EndPt->NtStatus || EndPt->UsbdStatus) { // BeginDataXfer failed
 				DbgPrintf("Xfer request rejected. NTSTATUS = 0x%08X\n", (UINT)EndPt->NtStatus);
 				AbortXferLoop(idx);
@@ -98,7 +98,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 		}
 
-		if (EndPt->FinishDataXfer(buffers[idx], rLen, &inOvLap[idx % USB_READ_CONCURRENT], contexts[idx % USB_READ_CONCURRENT])) {
+		if (EndPt->FinishDataXfer((PUCHAR)buffers[idx], rLen, &inOvLap[idx % USB_READ_CONCURRENT], contexts[idx % USB_READ_CONCURRENT])) {
 			BytesXferred += rLen;
 			if (rLen < transferSize) DbgPrintf("rLen = %ld\n", rLen);
 
@@ -119,7 +119,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 		}
 
 		// Re-submit this queue element to keep the queue full
-		contexts[idx % USB_READ_CONCURRENT] = EndPt->BeginDataXfer(buffers[idx], transferSize, &inOvLap[idx % USB_READ_CONCURRENT]);
+		contexts[idx % USB_READ_CONCURRENT] = EndPt->BeginDataXfer((PUCHAR)buffers[idx], transferSize, &inOvLap[idx % USB_READ_CONCURRENT]);
 		if (EndPt->NtStatus || EndPt->UsbdStatus) { // BeginDataXfer failed
 			DbgPrintf("Xfer request rejected.2 NTSTATUS = 0x%08X\n", (UINT)EndPt->NtStatus);
 			AbortXferLoop(idx);
@@ -143,7 +143,7 @@ void RadioHandlerClass::AbortXferLoop(int qidx)
 		//   if (n< qidx+1)
 		{
 			EndPt->WaitForXfer(&inOvLap[n], TIMEOUT);
-			EndPt->FinishDataXfer(buffers[n], len, &inOvLap[n], contexts[n]);
+			EndPt->FinishDataXfer((PUCHAR)buffers[n], len, &inOvLap[n], contexts[n]);
 		}
 		DbgPrintf("CloseHandle[%d]  %d\n", n, r);
 	}
@@ -163,7 +163,7 @@ RadioHandlerClass::RadioHandlerClass() :
 	hardware(new DummyRadio())
 {
 	for (int i = 0; i < QUEUE_SIZE; i++) {
-		buffers[i] = (PUCHAR)new uint16_t[transferSize / sizeof(uint16_t)];
+		buffers[i] = new int16_t[transferSize / sizeof(int16_t)];
 
 		// Allocate the buffers for the output queue
 		obuffers[i] = new float[transferSize / 2];
