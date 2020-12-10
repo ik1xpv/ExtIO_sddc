@@ -19,7 +19,7 @@ class RadioHandlerClass {
 public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
-    bool Init(fx3class *Fx3);
+    bool Init(fx3class* Fx3, void (*callback)(float*, uint32_t));
     bool Start(int srate_idx);
     bool Stop();
     bool Close();
@@ -56,6 +56,8 @@ public:
 
     uint64_t TuneLO(uint64_t lo);
 
+    void uptLed(int led, bool on);
+
 #ifdef TRACE
     bool UptTrace( bool trace){ traceflag = trace; return traceflag; }
     bool GetTrace( ){return traceflag; }
@@ -66,6 +68,8 @@ private:
     void AbortXferLoop(int qidx);
     void CaculateStats();
     void OnDataPacket(int idx);
+
+    void (*Callback)(float *data, uint32_t length);
 
     bool run;
     unsigned long count;    // absolute index

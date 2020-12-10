@@ -9,3 +9,4 @@ include_directories("." "CyAPI/" "arch/win32/FFTW3/" "pffft/")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 add_library(SDDC_CORE STATIC ${SRC})
+target_compile_definitions(SDDC_CORE PUBLIC _CRT_SECURE_NO_WARNINGS)

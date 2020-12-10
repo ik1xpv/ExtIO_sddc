@@ -39,7 +39,8 @@ void RadioHandlerClass::OnDataPacket(int idx)
 			shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[oidx], EXT_BLOCKLEN, stateFineTune);
 		}
 
-		pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[oidx]);
+    	Callback(obuffers[oidx], EXT_BLOCKLEN);
+
 		SamplesXIF += EXT_BLOCKLEN;
 	}
 
@@ -107,7 +108,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 	if (Failures)
 	{
-		pfnCallback(-1, extHw_Stop, 0.0F, 0); // Stop realtime see Failures
+		Callback(nullptr, 0);
 	}
 
 	DbgPrintf("AdcSamplesProc thread_exit\n");
@@ -150,11 +151,13 @@ const char *RadioHandlerClass::getName()
 	return hardware->getName();
 }
 
-bool RadioHandlerClass::Init(fx3class* Fx3)
+bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t))
 {
 	int r = -1;
 	uint8_t rdata[4];
 	this->fx3 = Fx3;
+	this->Callback = callback;
+
 	Fx3->GetHardwareInfo((uint32_t*)rdata);
 
 	radio = (RadioModel)rdata[0];
@@ -390,4 +393,28 @@ void RadioHandlerClass::UpdBiasT_VHF(bool flag)
 uint32_t RadioHandlerClass::getSampleRate()
 {
 	return hardware->getSampleRate();
+}
+
+void RadioHandlerClass::uptLed(int led, bool on)
+{
+	int pin;
+	switch(led)
+	{
+		case 0:
+			pin = LED_YELLOW;
+			break;
+		case 1:
+			pin = LED_RED;
+			break;
+		case 2:
+			pin = LED_BLUE;
+			break;
+		default:
+			return;
+	}
+
+	if (on)
+		hardware->FX3SetGPIO(pin);
+	else
+		hardware->FX3UnsetGPIO(pin);
 }

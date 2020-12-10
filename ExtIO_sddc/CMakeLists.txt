@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.13)
-project(ExtIO_SDDC)
 
 set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3")
 
@@ -17,7 +16,7 @@ add_custom_command(
     COMMAND ${LIBEXE} /def:${CMAKE_SOURCE_DIR}\\Core\\arch\\win32\\FFTW3\\libfftw3f-3.def /MACHINE:x86 /OUT:${CMAKE_BINARY_DIR}\\libfftw3f-3.lib
 )
 
-add_library(ExtIO_SDDC SHARED ${SRC}  ${CMAKE_BINARY_DIR}/libfftw3f-3.lib)
+add_library(ExtIO_SDDC SHARED ${SRC} ${CMAKE_BINARY_DIR}/libfftw3f-3.lib)
 
 target_link_libraries(ExtIO_SDDC PUBLIC ${CMAKE_BINARY_DIR}/libfftw3f-3.lib)
 target_link_libraries(ExtIO_SDDC PRIVATE SDDC_CORE)
