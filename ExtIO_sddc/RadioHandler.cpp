@@ -16,21 +16,10 @@ using namespace std::chrono;
 extern pfnExtIOCallback	pfnCallback;
 
 RadioHandlerClass RadioHandler;
-std::thread* adc_samples_thread;
-std::thread* show_stats_thread;
-// transfer variables
-static int16_t*		buffers[QUEUE_SIZE];                       // export, main data buffers
-static float*		obuffers[QUEUE_SIZE];
 
 // transfer variables
-float kbRead = 0;
 
-unsigned long BytesXferred = 0;
-unsigned long SamplesXIF = 0;
-float kSReadIF = 0;
 unsigned long Failures = 0;
-float	g_Bps;
-float	g_SpsIF;
 
 void RadioHandlerClass::OnDataPacket(int idx)
 {
@@ -80,28 +69,30 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 	// The infinite xfer loop.
 	while (run) {
-		if (fx3->FinishDataXfer(&contexts[read_idx])) {
-			BytesXferred += transferSize;
+		if (!fx3->FinishDataXfer(&contexts[read_idx])) {
+		}
 
-			OnDataPacket(buf_idx);
+		BytesXferred += transferSize;
+
+		OnDataPacket(buf_idx);
 
 #ifdef _DEBUG		//PScope buffer screenshot
-			if (saveADCsamplesflag == true)
-			{
-				saveADCsamplesflag = false; // do it once
-				auto pi = buffers[buf_idx];
-				unsigned int numsamples = transferSize / sizeof(int16_t);
-				float samplerate  = (float) getSampleRate();
-				PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
-					"ADCrealsamples.adc input real ADC 16 bit samples",
-					pi, samplerate, numsamples);
-			}
-#endif
+		if (saveADCsamplesflag == true)
+		{
+			saveADCsamplesflag = false; // do it once
+			auto pi = buffers[buf_idx];
+			unsigned int numsamples = transferSize / sizeof(int16_t);
+			float samplerate  = (float) getSampleRate();
+			PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
+				"ADCrealsamples.adc input real ADC 16 bit samples",
+				pi, samplerate, numsamples);
 		}
+#endif
 
 		// Re-submit this queue element to keep the queue full
 		if (!fx3->BeginDataXfer((PUCHAR)buffers[buf_idx], transferSize, &contexts[read_idx])) { // BeginDataXfer failed
 			DbgPrintf("Xfer request rejected.\n");
+			Failures++;
 			break;
 		}
 
@@ -113,15 +104,14 @@ void RadioHandlerClass::AdcSamplesProcess()
 		fx3->CleanupDataXfer(&contexts[n]);
 	}
 
+	if (Failures)
+	{
+		pfnCallback(-1, extHw_Stop, 0.0F, 0); // Stop realtime see Failures
+	}
+
 	DbgPrintf("AdcSamplesProc thread_exit\n");
 	return;  // void *
 }
-
-void RadioHandlerClass::AbortXferLoop(int qidx)
-{
-	pfnCallback(-1, extHw_Stop, 0.0F, 0); // Stop realtime see Failures
-}
-
 
 RadioHandlerClass::RadioHandlerClass() :
 	run(false),
@@ -208,8 +198,6 @@ bool RadioHandlerClass::Start(int srate_idx)
 	int decimate = (int)log2(RadioHandler.getSampleRate() / (2 * samplerate));
 
 	DbgPrintf("RadioHandlerClass::Start\n");
-	kbRead = 0; // zeros the kilobytes counter
-	kSReadIF = 0;
 	run = true;
 	count = 0;
 
@@ -219,12 +207,12 @@ bool RadioHandlerClass::Start(int srate_idx)
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
 	r2iqCntrl.setDecimate(decimate);
 	r2iqCntrl.TurnOn();
-	adc_samples_thread = new std::thread(
+	adc_samples_thread = std::thread(
 		[this](void* arg){
 			this->AdcSamplesProcess();
 		}, nullptr);
 
-	show_stats_thread = new std::thread([this](void*) {
+	show_stats_thread = std::thread([this](void*) {
 		this->CaculateStats();
 	}, nullptr);
 
@@ -240,14 +228,10 @@ bool RadioHandlerClass::Stop()
 		r2iqCntrl.TurnOff();
 
 		run = false; // now waits for threads
-		show_stats_thread->join(); //first to be joined
-		delete show_stats_thread;
-		show_stats_thread = nullptr;
+		show_stats_thread.join(); //first to be joined
 		DbgPrintf("show_stats_thread join2\n");
 
-		adc_samples_thread->join();
-		delete adc_samples_thread;
-		adc_samples_thread = nullptr;
+		adc_samples_thread.join();
 		DbgPrintf("adc_samples_thread join1\n");
 
 		hardware->FX3producerOff();     //FX3 stop the producer
@@ -350,6 +334,11 @@ bool RadioHandlerClass::UptRand(bool b)
 void RadioHandlerClass::CaculateStats()
 {
 	high_resolution_clock::time_point EndingTime;
+	float kbRead = 0;
+	float kSReadIF = 0;
+
+	kbRead = 0; // zeros the kilobytes counter
+	kSReadIF = 0;
 
 	BytesXferred = 0;
 	SamplesXIF = 0;
@@ -363,14 +352,11 @@ void RadioHandlerClass::CaculateStats()
 
 		duration<float,std::ratio<1,1>> timeElapsed(EndingTime-StartingTime);
 
-		float mBps = (float)kbRead / timeElapsed.count() / 1000 / sizeof(int16_t);
-		float mSpsIF = (float)kSReadIF / timeElapsed.count() / 1000;
+		mBps = (float)kbRead / timeElapsed.count() / 1000 / sizeof(int16_t);
+		mSpsIF = (float)kSReadIF / timeElapsed.count() / 1000;
 
 		BytesXferred = 0;
 		SamplesXIF = 0;
-
-		g_Bps = (float)mBps;
-		g_SpsIF = (float)mSpsIF;
 
 		std::this_thread::sleep_for(0.2s);
 	}

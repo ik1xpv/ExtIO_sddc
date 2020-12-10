@@ -41,6 +41,9 @@ public:
 
     uint32_t getSampleRate();
 
+    float getBps() const { return mBps; }
+    float getSpsIF() const {return mSpsIF; }
+
     const char* getName();
     RadioModel getModel() { return radio; }
 
@@ -74,6 +77,20 @@ private:
     UINT16 firmware;
     rf_mode modeRF;
     RadioModel radio;
+
+    // transfer variables
+    int16_t* buffers[QUEUE_SIZE];
+    float* obuffers[QUEUE_SIZE];
+
+    // threads
+    std::thread adc_samples_thread;
+    std::thread show_stats_thread;
+
+    // stats
+    unsigned long BytesXferred;
+    unsigned long SamplesXIF;
+    float	mBps;
+    float	mSpsIF;
 
     fx3class *fx3;
     RadioHardware* hardware;

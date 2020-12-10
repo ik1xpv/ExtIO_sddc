@@ -15,11 +15,9 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <stdio.h>
+#include <stdint.h>
 #include <time.h>
-#include "synchapi.h"
 #include "config.h"
-
-#define PUINT8 UINT8*
 
 #define	VENDOR_ID     (0x04B4)
 #define	STREAMER_ID   (0x00F1)
@@ -37,19 +35,19 @@ public:
 	bool Open(HMODULE hInst);
 	bool IsOn() { return Fx3IsOn; }
 	bool Control(FX3Command command);
-	bool Control(FX3Command command, UINT8 data);
-	bool Control(FX3Command command, UINT32 data);
-	bool Control(FX3Command command, UINT64 data);
-	bool SetArgument(UINT16 index, UINT16 value);
-	bool GetHardwareInfo(UINT32* data);
+	bool Control(FX3Command command, uint8_t data);
+	bool Control(FX3Command command, uint32_t data);
+	bool Control(FX3Command command, uint64_t data);
+	bool SetArgument(uint16_t index, uint16_t value);
+	bool GetHardwareInfo(uint32_t* data);
 
-	bool BeginDataXfer(UINT8 *buffer, long transferSize, void** context);
+	bool BeginDataXfer(uint8_t *buffer, long transferSize, void** context);
 	bool FinishDataXfer(void** context);
 	void CleanupDataXfer(void** context);
 
 private:
-	bool SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);
-	bool ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len);
+	bool SendI2cbytes(uint8_t i2caddr, uint8_t regaddr, uint8_t* pdata, uint8_t len);
+	bool ReadI2cbytes(uint8_t i2caddr, uint8_t regaddr, uint8_t* pdata, uint8_t len);
 
 	CCyFX3Device* fx3dev;
 	CCyUSBEndPoint* EndPt;
