@@ -39,7 +39,7 @@ public:
     bool GetRand () {return randout;}
     bool UptsamplesADC(bool flag) { samplesADCflag = flag; return  samplesADCflag; }
     bool GetADCsamples() { return  samplesADCflag; }
-    UINT16 GetFirmware() { return firmware; }
+    uint16_t GetFirmware() { return firmware; }
 
     uint32_t getSampleRate();
 
@@ -76,7 +76,7 @@ private:
     bool biasT_VHF;
     bool traceflag;
     bool samplesADCflag;
-    UINT16 firmware;
+    uint16_t firmware;
     rf_mode modeRF;
     RadioModel radio;
 

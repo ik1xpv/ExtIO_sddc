@@ -17,7 +17,6 @@
 
 #define   snprintf	_snprintf
 
-
 static bool SDR_settings_valid = false;		// assume settings are for some other ExtIO
 static char SDR_progname[32 + 1] = "\0";
 static int  SDR_ver_major = -1;
@@ -107,8 +106,28 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 #endif
 		EnterFunction();  // now works
 
+		// open the data
+		unsigned char* res_data;
+		uint32_t res_size;
+
+		FILE *fp = fopen("SDDC_FX3.img", "rb");
+		if (fp != nullptr)
+		{
+			fseek(fp, 0, SEEK_END);
+			res_size = ftell(fp);
+			res_data = (unsigned char*)malloc(res_size);
+			fread(res_data, 1, res_size, fp);
+		}
+		else
+		{
+			HRSRC res = FindResource(hInst, MAKEINTRESOURCE(RES_BIN_FIRMWARE), RT_RCDATA);
+			HGLOBAL res_handle = LoadResource(hInst, res);
+			res_data = (unsigned char*)LockResource(res_handle);
+			res_size = SizeofResource(hInst, res);
+		}
+
 		auto Fx3 = new fx3class();
-		gbInitHW = Fx3->Open(hInst) &&
+		gbInitHW = Fx3->Open(res_data, res_size) &&
 				   RadioHandler.Init(Fx3); // Check if it there hardware
 		if (!gbInitHW)
 		{

@@ -7,7 +7,7 @@
 // booyasdr@gmail.com, http://booyasdr.sf.net
 // modified 2017 11 30 ik1xpv@gmail.com, http://www.steila.com/blog
 // 
-
+#include <windows.h>
 #include "FX3handler.h"
 #include "./CyAPI/CyAPI.h"
 #define RES_BIN_FIRMWARE                2000
@@ -73,15 +73,13 @@ bool fx3class::GetFx3DeviceStreamer(void) {   // open class
 	return r;
 }
 
-bool  fx3class::Open(HMODULE hInst) {
+bool  fx3class::Open(uint8_t* fw_data, uint32_t fw_size) {
 	bool r = false;
 	fx3dev = new CCyFX3Device;              // instantiate the device
 	if (fx3dev == nullptr) return r;        // return if failed
 	int n = fx3dev->DeviceCount();          
 	if (n == 0) return r;					// return if no devices connected
 	if (!GetFx3Device()) return r;          // NO FX3 device connected
-	char fwname[] = "SDDC_FX3.img";        // firmware file
-	const char* fw_source = "external file";
 
 	if (!fx3dev->IsBootLoaderRunning()) {   // if not bootloader device
 		Control(RESETFX3);                  // reset the fx3 firmware via CyU3PDeviceReset(false)
@@ -93,37 +91,16 @@ bool  fx3class::Open(HMODULE hInst) {
 		GetFx3Device();						// open class
 	}
 	FX3_FWDWNLOAD_ERROR_CODE dlf = FAILED;
-	while (fx3dev->IsBootLoaderRunning())
+	if (fx3dev->IsBootLoaderRunning())
 	{
-		dlf = fx3dev->DownloadFw(fwname, RAM);
-		if (dlf == INVALID_FILE)
-		{
-			HRSRC res = FindResource(hInst, MAKEINTRESOURCE(RES_BIN_FIRMWARE), RT_RCDATA);
-			if (!res)
-				break;
-			HGLOBAL res_handle = LoadResource(hInst, res);
-			if (!res_handle)
-				break;
-			const unsigned char* res_data = (const unsigned char*)LockResource(res_handle);
-			DWORD res_size = SizeofResource(hInst, res);
-			if (!res_data || res_size <= 0)
-				break;
-			dlf = fx3dev->DownloadFwToRam(res_data, res_size);
-			fw_source = "internal resource";
-		}
-		break;
-	}
-	if (dlf == 0) {
+		dlf = fx3dev->DownloadFwToRam(fw_data, fw_size);
 		Sleep(500); // wait for download to finish
-		struct stat stbuf;
-		stat(fwname, &stbuf);
-		char* timestr;
-		timestr = ctime(&stbuf.st_mtime);
-		DbgPrintf("Loaded NEW FIRMWARE %s from %s at %s", fwname, fw_source, timestr);
 	}
-	else if (dlf != 0)
+
+	if (dlf != 0)
 	{
 		DbgPrintf("MISSING/OLD FIRMWARE\n");
+		return false;
 	}
 	int x = 0;
 	int maxretry = 30;

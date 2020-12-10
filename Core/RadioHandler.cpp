@@ -59,7 +59,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 	// Queue-up the first batch of transfer requests
 	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
-		if (!fx3->BeginDataXfer((PUCHAR)buffers[n], transferSize, &contexts[n])) {
+		if (!fx3->BeginDataXfer((uint8_t*)buffers[n], transferSize, &contexts[n])) {
 			DbgPrintf("Xfer request rejected.\n");
 			return;
 		}
@@ -91,7 +91,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 #endif
 
 		// Re-submit this queue element to keep the queue full
-		if (!fx3->BeginDataXfer((PUCHAR)buffers[buf_idx], transferSize, &contexts[read_idx])) { // BeginDataXfer failed
+		if (!fx3->BeginDataXfer((uint8_t*)buffers[buf_idx], transferSize, &contexts[read_idx])) { // BeginDataXfer failed
 			DbgPrintf("Xfer request rejected.\n");
 			Failures++;
 			break;
@@ -153,9 +153,9 @@ const char *RadioHandlerClass::getName()
 bool RadioHandlerClass::Init(fx3class* Fx3)
 {
 	int r = -1;
-	UINT8 rdata[4];
+	uint8_t rdata[4];
 	this->fx3 = Fx3;
-	Fx3->GetHardwareInfo((UINT32*)rdata);
+	Fx3->GetHardwareInfo((uint32_t*)rdata);
 
 	radio = (RadioModel)rdata[0];
 	firmware = (rdata[1] << 8) + rdata[2];

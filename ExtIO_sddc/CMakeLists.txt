@@ -24,4 +24,3 @@ target_link_libraries(ExtIO_SDDC PRIVATE SDDC_CORE)
 target_link_libraries(ExtIO_SDDC PUBLIC Setupapi.lib)
 set_target_properties(ExtIO_SDDC PROPERTIES PREFIX "")
 target_compile_definitions(ExtIO_SDDC PUBLIC _CRT_SECURE_NO_WARNINGS)
-

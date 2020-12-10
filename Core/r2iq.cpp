@@ -278,7 +278,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		else
 		{
 			for (int m = 0; m < transferSize / sizeof(int16_t); m++) {
-				*inloop++ = (RandTable[(UINT16)*dataADC++]);
+				*inloop++ = (RandTable[(uint16_t)*dataADC++]);
 			}
 		}
 

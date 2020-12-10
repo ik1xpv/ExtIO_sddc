@@ -11,7 +11,6 @@
 // modified 2017 11 30 ik1xpv@gmail.com, http://www.steila.com/blog
 // 
 
-#include "framework.h"
 #include <sys/stat.h>
 #include <iostream>
 #include <stdio.h>
@@ -27,12 +26,13 @@
 
 class CCyFX3Device;
 class CCyUSBEndPoint;
+
 class fx3class
 {
 public:
 	fx3class();
 	~fx3class(void);
-	bool Open(HMODULE hInst);
+	bool Open(uint8_t* fw_data, uint32_t fw_size);
 	bool IsOn() { return Fx3IsOn; }
 	bool Control(FX3Command command);
 	bool Control(FX3Command command, uint8_t data);
