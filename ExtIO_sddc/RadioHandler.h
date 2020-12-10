@@ -75,6 +75,7 @@ private:
     rf_mode modeRF;
     RadioModel radio;
 
+    fx3class *fx3;
     RadioHardware* hardware;
 
     std::mutex fc_mutex;
