@@ -128,6 +128,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			fseek(fp, 0, SEEK_END);
 			res_size = ftell(fp);
 			res_data = (unsigned char*)malloc(res_size);
+			fseek(fp, 0, SEEK_SET);
 			fread(res_data, 1, res_size, fp);
 		}
 		else

@@ -23,7 +23,9 @@ int sddc_get_device_info(struct sddc_device_info **sddc_device_infos)
     ret->product = todo;
     ret->serial_number = todo;
 
-    return 0;
+    *sddc_device_infos = ret;
+
+    return 1;
 }
 
 int sddc_free_device_info(struct sddc_device_info *sddc_device_infos)
@@ -54,6 +56,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
     fseek(fp, 0, SEEK_END);
     res_size = ftell(fp);
     res_data = (unsigned char*)malloc(res_size);
+    fseek(fp, 0, SEEK_SET);
     fread(res_data, 1, res_size, fp);
 
     fx3->Open(res_data, res_size);
@@ -137,9 +140,9 @@ int sddc_led_on(sddc_t *t, uint8_t led_pattern)
     if (led_pattern & YELLOW_LED)
         t->handler->uptLed(0, true);
     if (led_pattern & RED_LED)
-        t->handler->uptLed(0, true);
+        t->handler->uptLed(1, true);
     if (led_pattern & BLUE_LED)
-        t->handler->uptLed(0, true);
+        t->handler->uptLed(2, true);
 
     t->led |= led_pattern;
 
@@ -151,9 +154,9 @@ int sddc_led_off(sddc_t *t, uint8_t led_pattern)
     if (led_pattern & YELLOW_LED)
         t->handler->uptLed(0, false);
     if (led_pattern & RED_LED)
-        t->handler->uptLed(0, false);
+        t->handler->uptLed(1, false);
     if (led_pattern & BLUE_LED)
-        t->handler->uptLed(0, false);
+        t->handler->uptLed(2, false);
 
     t->led &= ~led_pattern;
 
@@ -166,9 +169,9 @@ int sddc_led_toggle(sddc_t *t, uint8_t led_pattern)
     if (t->led & YELLOW_LED)
         t->handler->uptLed(0, false);
     if (t->led & RED_LED)
-        t->handler->uptLed(0, false);
+        t->handler->uptLed(1, false);
     if (t->led & BLUE_LED)
-        t->handler->uptLed(0, false);
+        t->handler->uptLed(2, false);
 
     return 0;
 }
