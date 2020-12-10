@@ -12,7 +12,6 @@
 #include "FX3handler.h"
 #include "uti.h"
 #include "tdialog.h"
-#include "fftw3.h"
 #include "splashwindow.h"
 #include "PScope_uti.h"
 
@@ -121,8 +120,6 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 
 		strcpy(name, RadioHandler.getName());
 		strcpy(model, RadioHandler.getName());
-
-		fftwf_import_wisdom_from_filename("wisdom");
 
 		DbgPrintf("Init Values:\n");
 		DbgPrintf("SDR_settings_valid = %d\n", SDR_settings_valid);  // settings are version specific !
@@ -248,7 +245,6 @@ void EXTIO_API CloseHW(void)
 		RadioHandler.Close();
 	}
 	gbInitHW = false;
-	fftwf_export_wisdom_to_filename("wisdom");
 }
 
 /*

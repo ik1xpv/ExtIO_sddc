@@ -9,8 +9,8 @@
 // 
 
 #include "FX3handler.h"
-#include "CyAPI.h"
-#include "resource.h" // for RES_BIN_FIRMWARE
+#include "./CyAPI/CyAPI.h"
+#define RES_BIN_FIRMWARE                2000
 
 fx3class::fx3class():
 	fx3dev (nullptr),

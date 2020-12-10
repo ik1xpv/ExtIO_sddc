@@ -9,9 +9,11 @@
 #include <math.h>
 #include <stdint.h>
 #include "FX3handler.h"
-#include "pf_mixer.h"
 
 class RadioHardware;
+
+struct shift_limited_unroll_C_sse_data_s;
+typedef struct shift_limited_unroll_C_sse_data_s shift_limited_unroll_C_sse_data_t;
 
 class RadioHandlerClass {
 public:
@@ -98,7 +100,7 @@ private:
     std::mutex fc_mutex;
     std::mutex stop_mutex;
     float fc;
-    shift_limited_unroll_C_sse_data_t stateFineTune;
+    shift_limited_unroll_C_sse_data_t* stateFineTune;
 };
 
 extern class RadioHandlerClass RadioHandler;

@@ -1,6 +1,7 @@
 #include "license.txt" 
 
 #include <stdio.h>
+#include "pf_mixer.h"
 #include "RadioHandler.h"
 #include "config.h"
 #include "r2iq.h"
@@ -35,7 +36,7 @@ void RadioHandlerClass::OnDataPacket(int idx)
 		std::unique_lock<std::mutex> lk(fc_mutex);
 		if (fc != 0.0f)
 		{
-			shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[oidx], EXT_BLOCKLEN, &stateFineTune);
+			shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[oidx], EXT_BLOCKLEN, stateFineTune);
 		}
 
 		pfnCallback(EXT_BLOCKLEN, 0, 0.0F, obuffers[oidx]);
@@ -130,6 +131,8 @@ RadioHandlerClass::RadioHandlerClass() :
 		// Allocate the buffers for the output queue
 		obuffers[i] = new float[transferSize / 2];
 	}
+
+	stateFineTune = new shift_limited_unroll_C_sse_data_t();
 }
 
 RadioHandlerClass::~RadioHandlerClass()
@@ -138,6 +141,8 @@ RadioHandlerClass::~RadioHandlerClass()
 		delete[] obuffers[n];
 		delete[] buffers[n];
 	}
+
+	delete stateFineTune;
 }
 
 const char *RadioHandlerClass::getName()
@@ -303,7 +308,7 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 	if (this->fc != fc)
 	{
 		std::unique_lock<std::mutex> lk(fc_mutex);
-		stateFineTune = shift_limited_unroll_C_sse_init(fc, 0.0F);
+		*stateFineTune = shift_limited_unroll_C_sse_init(fc, 0.0F);
 		this->fc = fc;
 	}
 

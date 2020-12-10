@@ -57,6 +57,7 @@ r2iqControlClass::r2iqControlClass()
 
 r2iqControlClass::~r2iqControlClass()
 {
+	fftwf_export_wisdom_to_filename("wisdom");
 }
 
 
@@ -113,6 +114,8 @@ void r2iqControlClass::Init(float gain, int16_t **buffers, float** obuffers)
 	this->obuffers = obuffers;  // set to the global exported by main_loop
 
 	this->GainScale = gain;
+
+	fftwf_import_wisdom_from_filename("wisdom");
 
 	// Get the processor count
 	processor_count = std::thread::hardware_concurrency() - 1;
