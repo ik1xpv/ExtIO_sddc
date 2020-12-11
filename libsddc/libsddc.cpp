@@ -297,7 +297,10 @@ int sddc_set_sample_rate(sddc_t *t, double sample_rate)
 
 int sddc_set_async_params(sddc_t *t, uint32_t frame_size, 
                           uint32_t num_frames, sddc_read_async_cb_t callback,
-                          void *callback_context);
+                          void *callback_context)
+{
+    return 0;
+}
 
 int sddc_start_streaming(sddc_t *t)
 {

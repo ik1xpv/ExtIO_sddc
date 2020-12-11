@@ -30,6 +30,9 @@ set_target_properties(sddc PROPERTIES SOVERSION 0)
 add_executable(sddc_test sddc_test.c)
 target_link_libraries(sddc_test PRIVATE sddc)
 
+add_executable(sddc_stream_test sddc_stream_test.c wavewrite.c)
+target_link_libraries(sddc_stream_test sddc)
+
 # install
 install(TARGETS sddc
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
