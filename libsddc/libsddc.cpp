@@ -7,8 +7,23 @@ struct sddc
     SDDCStatus status;
     RadioHandlerClass* handler;
     uint8_t led;
+    int samplerate;
     double freq;
+
+    sddc_read_async_cb_t callback;
+    void *callback_context;
 };
+
+sddc_t *current_running;
+
+static void Callback(float* data, uint32_t len)
+{
+    if (current_running != nullptr)
+    {
+        current_running->callback(len * sizeof(float), (uint8_t*)data, current_running->callback_context);
+    }
+}
+
 
 int sddc_get_device_count()
 {
@@ -32,10 +47,6 @@ int sddc_free_device_info(struct sddc_device_info *sddc_device_infos)
 {
     delete sddc_device_infos;
     return 0;
-}
-
-static void Callback(float* data, uint32_t len)
-{
 }
 
 sddc_t *sddc_open(int index, const char* imagefile)
@@ -67,6 +78,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
     if (ret_val->handler->Init(fx3, Callback))
     {
         ret_val->status = SDDC_STATUS_READY;
+        ret_val->samplerate = 1;
     }
 
     return ret_val;
@@ -272,18 +284,14 @@ int sddc_set_tuner_if_attenuation(sddc_t *t, double attenuation)
 
 int sddc_get_vhf_bias(sddc_t *t)
 {
-    return 0;
+    return t->handler->GetBiasT_VHF();
 }
 
 int sddc_set_vhf_bias(sddc_t *t, int bias)
 {
+    t->handler->UpdBiasT_VHF(bias != 0);
     return 0;
 }
-
-
-/* streaming functions */
-typedef void (*sddc_read_async_cb_t)(uint32_t data_size, uint8_t *data,
-                                      void *context);
 
 double sddc_get_sample_rate(sddc_t *t)
 {
@@ -292,6 +300,7 @@ double sddc_get_sample_rate(sddc_t *t)
 
 int sddc_set_sample_rate(sddc_t *t, double sample_rate)
 {
+    t->samplerate = 1;
     return 0;
 }
 
@@ -299,11 +308,16 @@ int sddc_set_async_params(sddc_t *t, uint32_t frame_size,
                           uint32_t num_frames, sddc_read_async_cb_t callback,
                           void *callback_context)
 {
+    // TODO: ignore frame_size, num_frames
+    t->callback = callback;
+    t->callback_context = callback_context;
     return 0;
 }
 
 int sddc_start_streaming(sddc_t *t)
 {
+    current_running = t;
+    t->handler->Start(t->samplerate);
     return 0;
 }
 
@@ -314,6 +328,8 @@ int sddc_handle_events(sddc_t *t)
 
 int sddc_stop_streaming(sddc_t *t)
 {
+    t->handler->Stop();
+    current_running = nullptr;
     return 0;
 }
 
