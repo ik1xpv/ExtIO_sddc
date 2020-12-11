@@ -24,6 +24,11 @@
 #include "libsddc.h"
 
 
+#if _WIN32
+#include <windows.h>
+#define sleep(x) Sleep(x*1000)
+#endif
+
 static void blink_led(sddc_t *sddc, uint8_t color);
 
 
@@ -86,13 +91,13 @@ static void blink_led(sddc_t *sddc, uint8_t color)
       fprintf(stderr, "ERROR - sddc_led_on(%02x) failed\n", color);
       return;
     }
-    //sleep(1);
+    sleep(1);
     ret = sddc_led_off(sddc, color);
     if (ret < 0) {
       fprintf(stderr, "ERROR - sddc_led_off(%02x) failed\n", color);
       return;
     }
-    //sleep(1);
+    sleep(1);
   }
   return;
 }
