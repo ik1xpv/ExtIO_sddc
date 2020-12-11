@@ -33,6 +33,9 @@ target_link_libraries(sddc_test PRIVATE sddc)
 add_executable(sddc_stream_test sddc_stream_test.c wavewrite.c)
 target_link_libraries(sddc_stream_test sddc)
 
+add_executable(sddc_vhf_stream_test sddc_vhf_stream_test.c wavewrite.c)
+target_link_libraries(sddc_vhf_stream_test sddc)
+
 # install
 install(TARGETS sddc
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

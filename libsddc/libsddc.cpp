@@ -145,6 +145,17 @@ enum RFMode sddc_get_rf_mode(sddc_t *t)
 
 int sddc_set_rf_mode(sddc_t *t, enum RFMode rf_mode)
 {
+    switch (rf_mode)
+    {
+    case VHF_MODE:
+        t->handler->UpdatemodeRF(VHFMODE);
+        break;
+    case HF_MODE:
+        t->handler->UpdatemodeRF(HFMODE);
+    default:
+        return -1;
+    }
+
     return 0;
 }
 
@@ -262,7 +273,8 @@ double sddc_get_tuner_rf_attenuation(sddc_t *t)
 
 int sddc_set_tuner_rf_attenuation(sddc_t *t, double attenuation)
 {
-    // TODO
+    //TODO, convert double to index
+    t->handler->UpdateattRF(5);
     return 0;
 }
 
