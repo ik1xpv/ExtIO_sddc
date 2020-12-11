@@ -26,6 +26,8 @@ int  _xfp = 1;
 int  _xfm = 1;
 unsigned int cntime = 0;
 
+extern RadioHandlerClass RadioHandler;
+
 void UpdateGain(HWND hControl, int current, const float* gains, int length)
 {
 	char ebuffer[128];

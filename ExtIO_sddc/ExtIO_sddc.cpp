@@ -42,6 +42,7 @@ HWND Hconsole;
 
 static bool gshdwn;
 
+RadioHandlerClass RadioHandler;
 
 // Dialog callback
 

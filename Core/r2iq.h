@@ -24,6 +24,9 @@ public:
     float setFreqOffset(float offset);
     void updateRand(bool v) {this->randADC = v; }
 
+    void setSideband(bool lsb) { this->sideband = lsb; }
+    bool getSideband() const { return this->sideband; }
+
     void Init(float gain, int16_t** buffers, float** obuffers);
     void TurnOn();
     void TurnOff(void);
@@ -39,6 +42,7 @@ private:
     volatile std::atomic<int> cntr;           // counter of input buffer to be processed
     bool randADC;       // randomized ADC output
     r2iqThreadArg* lastThread;
+    bool sideband;
 
     float GainScale;
     int mdecimation ;   // selected decimation ratio

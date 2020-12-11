@@ -107,7 +107,6 @@ private:
     shift_limited_unroll_C_sse_data_t* stateFineTune;
 };
 
-extern class RadioHandlerClass RadioHandler;
 extern unsigned long Failures;
 
 class RadioHardware {

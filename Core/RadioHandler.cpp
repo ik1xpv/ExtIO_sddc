@@ -14,10 +14,6 @@ using namespace std::chrono;
 
 #define USB_READ_CONCURRENT  4
 
-extern pfnExtIOCallback	pfnCallback;
-
-RadioHandlerClass RadioHandler;
-
 // transfer variables
 
 unsigned long Failures = 0;
@@ -203,7 +199,7 @@ bool RadioHandlerClass::Start(int srate_idx)
 	Stop();
 	double div = pow(2.0, srate_idx);
 	auto samplerate = 1000000.0 * (div * 2);
-	int decimate = (int)log2(RadioHandler.getSampleRate() / (2 * samplerate));
+	int decimate = (int)log2(getSampleRate() / (2 * samplerate));
 
 	DbgPrintf("RadioHandlerClass::Start\n");
 	run = true;
@@ -294,6 +290,11 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 		DbgPrintf("Switch to mode: %d\n", modeRF);
 
 		hardware->UpdatemodeRF(mode);
+
+		if (mode == VHFMODE)
+			r2iqCntrl.setSideband(true);
+		else
+			r2iqCntrl.setSideband(false);
 	}
 	return true;
 }

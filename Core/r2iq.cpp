@@ -40,6 +40,7 @@ r2iqControlClass::r2iqControlClass()
 {
 	r2iqOn = false;
 	randADC = false;
+	sideband = false;
 	halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
 	fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 
@@ -212,7 +213,7 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 	int mratio = this->getRatio();
 	int decimate = this->getDecimate();
 	fftwf_complex* filter = filterHw[decimate];
-	rf_mode moderf = RadioHandler.GetmodeRF();
+	bool lsb = this->getSideband();
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
 	while (r2iqOn) {
@@ -225,12 +226,13 @@ void * r2iqControlClass::r2iqThreadf(r2iqThreadArg *th) {
 		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 
 		// TODO: Change this to sideband check
-		if (moderf == VHFMODE) {
-			// Down converter
+		if (lsb) {
+			// Low sideband
 			qscale = -iscale;
 		}
 		else
 		{
+			// Upper sideband
 			// upconverter or Direct converter
 			qscale = iscale;
 		}

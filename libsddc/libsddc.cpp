@@ -40,7 +40,8 @@ static void Callback(float* data, uint32_t len)
 
 sddc_t *sddc_open(int index, const char* imagefile)
 {
-    sddc_t *ret_val = nullptr;
+    auto ret_val = new sddc_t();
+
     fx3class *fx3 = new fx3class();
 
     // open the firmware
@@ -61,12 +62,11 @@ sddc_t *sddc_open(int index, const char* imagefile)
 
     fx3->Open(res_data, res_size);
 
-    if (RadioHandler.Init(fx3, Callback))
-    {
-        ret_val = new sddc_t();
+    ret_val->handler = new RadioHandlerClass();
 
+    if (ret_val->handler->Init(fx3, Callback))
+    {
         ret_val->status = SDDC_STATUS_READY;
-        ret_val->handler = &RadioHandler;
     }
 
     return ret_val;
@@ -74,6 +74,8 @@ sddc_t *sddc_open(int index, const char* imagefile)
 
 void sddc_close(sddc_t *that)
 {
+    if (that->handler)
+        delete that->handler;
     delete that;
 }
 
