@@ -9,7 +9,7 @@
 #include "config.h"
 #include "ExtIO_sddc.h"
 #include "RadioHandler.h"
-#include "FX3handler.h"
+#include "FX3class.h"
 #include "uti.h"
 #include "tdialog.h"
 #include "splashwindow.h"
@@ -140,7 +140,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			res_size = SizeofResource(hInst, res);
 		}
 
-		auto Fx3 = new fx3class();
+		auto Fx3 = CreateUsbHandler();
 		gbInitHW = Fx3->Open(res_data, res_size) &&
 				   RadioHandler.Init(Fx3, Callback); // Check if it there hardware
 		if (!gbInitHW)

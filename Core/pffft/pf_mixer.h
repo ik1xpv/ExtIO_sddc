@@ -280,4 +280,4 @@ void shift_recursive_osc_sse_inp_c(complexf* in_out, int N_cplx, const shift_rec
 }
 #endif
 
-#endif _PF_MIXER_H_
+#endif

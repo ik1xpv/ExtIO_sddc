@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
 
-set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3")
-
 file(GLOB SRC "*.cpp" extio.def resource.rc manifest.xml)
 
 include_directories("." "../Core")

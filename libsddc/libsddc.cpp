@@ -53,7 +53,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
 {
     auto ret_val = new sddc_t();
 
-    fx3class *fx3 = new fx3class();
+    fx3class *fx3 = CreateUsbHandler();
 
     // open the firmware
     unsigned char* res_data;

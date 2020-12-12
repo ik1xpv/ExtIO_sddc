@@ -4,7 +4,6 @@
 #define N_R2IQ_THREAD 64
 
 #define NDECIDX 7  //number of srate
-#include "LC_ExtIO_Types.h"
 #include "fftw3.h"
 
 #include <thread>

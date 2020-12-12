@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
-#include "FX3handler.h"
+#include "FX3Class.h"
 
 class RadioHardware;
 
@@ -257,4 +257,4 @@ public:
     uint64_t TuneLo(uint64_t freq) override { return freq; }
 };
 
-#endif  RADIOHANDLER_H
+#endif

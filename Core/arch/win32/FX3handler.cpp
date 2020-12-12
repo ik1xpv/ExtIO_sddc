@@ -12,7 +12,13 @@
 #include "./CyAPI/CyAPI.h"
 #define RES_BIN_FIRMWARE                2000
 
-fx3class::fx3class():
+
+fx3class* CreateUsbHandler()
+{
+	return new fx3handler();
+}
+
+fx3handler::fx3handler():
 	fx3dev (nullptr),
 	Fx3IsOn (false)
 {
@@ -20,14 +26,14 @@ fx3class::fx3class():
 }
 
 
-fx3class::~fx3class() // reset USB device and exit
+fx3handler::~fx3handler() // reset USB device and exit
 {
 	Control(RESETFX3);
-	DbgPrintf("\r\n~fx3class\r\n");
+	DbgPrintf("\r\n~fx3handler\r\n");
 	Close();
 }
 
-bool fx3class::GetFx3Device() { 
+bool fx3handler::GetFx3Device() { 
 	bool r = false;
 	if (fx3dev == nullptr) return r; // no device
 	int n = fx3dev->DeviceCount();
@@ -53,7 +59,7 @@ bool fx3class::GetFx3Device() {
 	return r;
 }
 
-bool fx3class::GetFx3DeviceStreamer(void) {   // open class 
+bool fx3handler::GetFx3DeviceStreamer(void) {   // open class 
 	bool r = false;
 	if (fx3dev == NULL) return r;
 	int n = fx3dev->DeviceCount();
@@ -73,7 +79,7 @@ bool fx3class::GetFx3DeviceStreamer(void) {   // open class
 	return r;
 }
 
-bool  fx3class::Open(uint8_t* fw_data, uint32_t fw_size) {
+bool  fx3handler::Open(uint8_t* fw_data, uint32_t fw_size) {
 	bool r = false;
 	fx3dev = new CCyFX3Device;              // instantiate the device
 	if (fx3dev == nullptr) return r;        // return if failed
@@ -150,16 +156,7 @@ bool  fx3class::Open(uint8_t* fw_data, uint32_t fw_size) {
 
 using namespace std;
 
-bool fx3class::Control(FX3Command command) { // firmware control
-	long lgt = 1;
-	UINT8 z = 0; // dummy data = 0
-	fx3dev->ControlEndPt->ReqCode = command;
-	bool r = fx3dev->ControlEndPt->Write(&z, lgt);
-	DbgPrintf("FX3FWControl %x .%x\n", r, command);
-	return r;
-}
-
-bool fx3class::Control(FX3Command command, UINT8 data) { // firmware control BBRF
+bool fx3handler::Control(FX3Command command, UINT8 data) { // firmware control BBRF
 	long lgt = 1;
 
 	fx3dev->ControlEndPt->ReqCode = command;
@@ -174,7 +171,7 @@ bool fx3class::Control(FX3Command command, UINT8 data) { // firmware control BBR
 	return r;
 }
 
-bool fx3class::Control(FX3Command command, UINT32 data) { // firmware control BBRF
+bool fx3handler::Control(FX3Command command, UINT32 data) { // firmware control BBRF
 	long lgt = 4;
 
 	fx3dev->ControlEndPt->ReqCode = command;
@@ -189,7 +186,7 @@ bool fx3class::Control(FX3Command command, UINT32 data) { // firmware control BB
 	return r;
 }
 
-bool fx3class::Control(FX3Command command, UINT64 data) { // firmware control BBRF
+bool fx3handler::Control(FX3Command command, UINT64 data) { // firmware control BBRF
 	long lgt = 8;
 
 	fx3dev->ControlEndPt->ReqCode = command;
@@ -205,7 +202,7 @@ bool fx3class::Control(FX3Command command, UINT64 data) { // firmware control BB
 }
 
 
-bool fx3class::SetArgument(UINT16 index, UINT16 value) { // firmware control BBRF
+bool fx3handler::SetArgument(UINT16 index, UINT16 value) { // firmware control BBRF
 	long lgt = 1;
 	uint8_t data = 0;
 
@@ -221,7 +218,7 @@ bool fx3class::SetArgument(UINT16 index, UINT16 value) { // firmware control BBR
 	return r;
 }
 
-bool fx3class::GetHardwareInfo(UINT32* data) { // firmware control BBRF
+bool fx3handler::GetHardwareInfo(UINT32* data) { // firmware control BBRF
 	long lgt = 4;
 
 	fx3dev->ControlEndPt->ReqCode = TESTFX3;
@@ -238,7 +235,7 @@ bool fx3class::GetHardwareInfo(UINT32* data) { // firmware control BBRF
 
 }
 
-bool fx3class::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
+bool fx3handler::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
 {
 	bool r = false;
 	LONG lgt = len;
@@ -253,7 +250,7 @@ bool fx3class::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 le
 	return r;
 }
 
-bool fx3class::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
+bool fx3handler::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
 {
 	bool r = false;
 	LONG lgt = len;
@@ -272,7 +269,7 @@ bool fx3class::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 le
 	return r;
 }
 
-bool fx3class::Close() {
+bool fx3handler::Close() {
 	fx3dev->Close();            // close class
 	delete fx3dev;              // destroy class
 	Fx3IsOn = false;
@@ -289,7 +286,7 @@ struct ReadContext
 	long size;
 };
 
-bool fx3class::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
+bool fx3handler::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
 {
 	ReadContext *readContext = (ReadContext *)(*context);
 
@@ -317,7 +314,7 @@ bool fx3class::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
 	return true;
 }
 
-bool fx3class::FinishDataXfer(void** context)
+bool fx3handler::FinishDataXfer(void** context)
 {
 	ReadContext *readContext = (ReadContext *)(*context);
 
@@ -344,7 +341,7 @@ bool fx3class::FinishDataXfer(void** context)
 	return true;
 }
 
-void fx3class::CleanupDataXfer(void** context)
+void fx3handler::CleanupDataXfer(void** context)
 {
 	ReadContext *readContext = (ReadContext *)(*context);
 

@@ -22,20 +22,19 @@
 #define	STREAMER_ID   (0x00F1)
 #define	BOOTLOADER_ID (0x00F3)
 
-#include "../Interface.h"
+#include "FX3Class.h"
 
 class CCyFX3Device;
 class CCyUSBEndPoint;
 
-class fx3class
+class fx3handler : public fx3class
 {
 public:
-	fx3class();
-	~fx3class(void);
+	fx3handler();
+	virtual ~fx3handler(void);
 	bool Open(uint8_t* fw_data, uint32_t fw_size);
 	bool IsOn() { return Fx3IsOn; }
-	bool Control(FX3Command command);
-	bool Control(FX3Command command, uint8_t data);
+	bool Control(FX3Command command, uint8_t data = 0);
 	bool Control(FX3Command command, uint32_t data);
 	bool Control(FX3Command command, uint64_t data);
 	bool SetArgument(uint16_t index, uint16_t value);

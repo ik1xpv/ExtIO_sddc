@@ -1,6 +1,7 @@
 #include "license.txt" 
 
 #include <stdio.h>
+#include <string.h>
 #include "pf_mixer.h"
 #include "RadioHandler.h"
 #include "config.h"
