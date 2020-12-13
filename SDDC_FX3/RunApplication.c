@@ -23,7 +23,7 @@ extern void ParseCommand(void);
 
 extern CyU3PReturnStatus_t Si5351init();
 
-extern void si5351aSetFrequencyA(UINT32 freq);
+//extern void si5351aSetFrequencyA(UINT32 freq);
 extern void si5351aSetFrequencyB(UINT32 freq2);
 
 // Declare external data
@@ -40,6 +40,12 @@ void *StackPtr[APP_THREADS];				// Stack allocated to each thread
 
 uint8_t HWconfig = NORADIO;       // Hardware config type BBRF103
 uint16_t FWconfig = 0x0102;    // Firmware rc1 ver 1.02
+
+#define BBRF103_PD 50  // BBRF103 pull down GPIO
+/* Timer used to OFA pulse stretching. */
+static CyU3PTimer        OFATimer;              /* Timer used to calculate frame transfer time. */
+/* OFA stretched pulse time in milli-seconds. */
+#define OFA_PERIOD  (1000)
 
 CyU3PReturnStatus_t
 ConfGPIOsimpleout( uint8_t gpioid)
@@ -61,6 +67,7 @@ ConfGPIOsimpleout( uint8_t gpioid)
 	 return apiRetStatus;
 }
 
+
 CyU3PReturnStatus_t
 ConfGPIOsimpleinput( uint8_t gpioid)
 {
@@ -69,7 +76,7 @@ ConfGPIOsimpleinput( uint8_t gpioid)
 
 	  apiRetStatus = CyU3PDeviceGpioOverride (gpioid, CyTrue);
 	  CheckStatusSilent("CyU3PDeviceGpioOverride", apiRetStatus);
-	    /* Configure GPIO gpioid as output */
+	    /* Configure GPIO gpioid as input */
 	      gpioConfig.outValue = CyFalse;
 	      gpioConfig.driveLowEn = CyFalse;
 	      gpioConfig.driveHighEn = CyFalse;
@@ -77,36 +84,97 @@ ConfGPIOsimpleinput( uint8_t gpioid)
 	      gpioConfig.intrMode = CY_U3P_GPIO_NO_INTR;
 	      apiRetStatus = CyU3PGpioSetSimpleConfig(gpioid , &gpioConfig);
 	      CheckStatusSilent("CyU3PGpioSetSimpleConfig", apiRetStatus);
-	      /* Adding internal pull-up resistor to GPIO 53 */
 	      CyU3PGpioSetIoMode(gpioid, CY_U3P_GPIO_IO_MODE_NONE);
+
 	 return apiRetStatus;
 }
+
+void GpioIntrCb (uint8_t gpioId) // Indicates the pin that triggered the interrupt
+{
+	switch(HWconfig) {
+		case HF103:
+		     if (hf103_OFA_Id(gpioId))
+			 {
+				 hf103_GpioSetOFA(true);
+				 CyU3PTimerModify (&OFATimer, OFA_PERIOD, 0);
+				 CyU3PTimerStart (&OFATimer);
+			 }
+			break;
+		case BBRF103:
+		     if (bbrf103_OFA_Id(gpioId))
+			 {
+				 bbrf103_GpioSetOFA(true);
+				 CyU3PTimerModify (&OFATimer, OFA_PERIOD, 0);
+				 CyU3PTimerStart (&OFATimer);
+			 }
+			break;
+		case RX888:
+		     if (rx888_OFA_Id(gpioId))
+			 {
+				 rx888_GpioSetOFA(true);
+				 CyU3PTimerModify (&OFATimer, OFA_PERIOD, 0);
+				 CyU3PTimerStart (&OFATimer);
+			 }
+			break;
+		case RX888r2:
+			break;
+		case RX999:
+			break;
+	}
+}
+
+void OFAendCb () // callback function called on timer expiration.
+{
+	switch(HWconfig) {
+		case HF103:
+			hf103_GpioSetOFA(false);
+			break;
+		case BBRF103:
+		    bbrf103_GpioSetOFA(false);
+			break;
+		case RX888:
+			rx888_GpioSetOFA(false);
+			break;
+		case RX888r2:
+			break;
+		case RX999:
+			break;
+	}
+}
+
+
+CyU3PReturnStatus_t
+ConfGPIOpulseinput( uint8_t gpioid)
+{
+	 CyU3PReturnStatus_t apiRetStatus = CY_U3P_SUCCESS;
+	 CyU3PGpioSimpleConfig_t gpioConfig;
+	 apiRetStatus = CyU3PDeviceGpioOverride (gpioid, CyTrue);
+	 CheckStatusSilent("CyU3PDeviceGpioOverride", apiRetStatus);
+	    /* Configure GPIO gpioid as output */
+	      gpioConfig.outValue = CyFalse;
+	      gpioConfig.driveLowEn = CyFalse;
+	      gpioConfig.driveHighEn = CyFalse;
+	      gpioConfig.inputEn = CyTrue;
+	      gpioConfig.intrMode = CY_U3P_GPIO_INTR_BOTH_EDGE;
+	      apiRetStatus = CyU3PGpioSetSimpleConfig(gpioid , &gpioConfig);
+	      CheckStatusSilent("CyU3PGpioSetSimpleConfig", apiRetStatus);
+	      CyU3PGpioSetIoMode(gpioid, CY_U3P_GPIO_IO_MODE_NONE); // no pull up
+	      CyU3PTimerCreate (&OFATimer, OFAendCb, 0x00, OFA_PERIOD, 0, CYU3P_NO_ACTIVATE);
+	 return apiRetStatus;
+}
+
+
 
 // tentative to recognize LED and pull up at pin gpioid
 CyBool_t GPIOtestInputPulldown( uint8_t gpioid)
 {
-	CyU3PGpioSimpleConfig_t gpioConfig;
+	ConfGPIOsimpleinput(gpioid);
 	CyBool_t measure;
-	CyU3PDeviceGpioOverride (gpioid, CyTrue);
-	/* Configure GPIO gpioid as output */
-	gpioConfig.outValue = CyFalse;
-	gpioConfig.driveLowEn = CyTrue;
-	gpioConfig.driveHighEn = CyTrue;
-	gpioConfig.inputEn = CyFalse;
-	gpioConfig.intrMode = CY_U3P_GPIO_NO_INTR;
-	CyU3PGpioSetSimpleConfig(gpioid , &gpioConfig); // GPIO is output
-	CyU3PGpioSetValue (gpioid, 1); // up to discharge led capacitance
-	gpioConfig.driveLowEn = CyFalse;
-	gpioConfig.driveHighEn = CyFalse;
-	gpioConfig.inputEn = CyTrue;
-	CyU3PGpioSetSimpleConfig(gpioid , &gpioConfig); // GPIO is output
-	/* Adding internal pull-down resistor to GPIO */
-	CyU3PGpioSetIoMode(gpioid, CY_U3P_GPIO_IO_MODE_WPD); // activate pull down
-	CyU3PGpioSimpleGetValue ( gpioid, &measure); //measure 1 if external pull up or LED to vdd
-	CyU3PGpioSetIoMode(gpioid, CY_U3P_GPIO_IO_MODE_NONE);
+	/* Adding internal weak pull-up resistor to GPIO */
+	CyU3PGpioSetIoMode(gpioid, CY_U3P_GPIO_IO_MODE_WPU);
+	CyU3PGpioSimpleGetValue ( gpioid, &measure); //measure 0 if external pull down
 	return measure;
 }
-
 
 
 void
@@ -121,7 +189,7 @@ GpioInitClock()
     gpioClock.simpleDiv = CY_U3P_GPIO_SIMPLE_DIV_BY_2;
     gpioClock.clkSrc = CY_U3P_SYS_CLK;
     gpioClock.halfDiv = 0;
-    Status = CyU3PGpioInit(&gpioClock,   NULL);
+    Status = CyU3PGpioInit(&gpioClock, GpioIntrCb);
     CheckStatus("CyU3PGpioInit", Status);
 }
 
@@ -177,7 +245,7 @@ void ApplicationThread ( uint32_t input)
 			if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
 			{
 				// check if BBRF103 or RX888 (RX666 ?)
-				if(GPIOtestInputPulldown(LED_KIT)) {
+				if(!GPIOtestInputPulldown(BBRF103_PD)) {
 					HWconfig = BBRF103;
 				}
 				else
