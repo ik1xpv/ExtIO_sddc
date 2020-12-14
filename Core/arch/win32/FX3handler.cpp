@@ -7,12 +7,18 @@
 // booyasdr@gmail.com, http://booyasdr.sf.net
 // modified 2017 11 30 ik1xpv@gmail.com, http://www.steila.com/blog
 // 
-
+#include <windows.h>
 #include "FX3handler.h"
-#include "CyAPI.h"
-#include "resource.h" // for RES_BIN_FIRMWARE
+#include "./CyAPI/CyAPI.h"
+#define RES_BIN_FIRMWARE                2000
 
-fx3class::fx3class():
+
+fx3class* CreateUsbHandler()
+{
+	return new fx3handler();
+}
+
+fx3handler::fx3handler():
 	fx3dev (nullptr),
 	Fx3IsOn (false)
 {
@@ -20,14 +26,14 @@ fx3class::fx3class():
 }
 
 
-fx3class::~fx3class() // reset USB device and exit
+fx3handler::~fx3handler() // reset USB device and exit
 {
 	Control(RESETFX3);
-	DbgPrintf("\r\n~fx3class\r\n");
+	DbgPrintf("\r\n~fx3handler\r\n");
 	Close();
 }
 
-bool fx3class::GetFx3Device() { 
+bool fx3handler::GetFx3Device() { 
 	bool r = false;
 	if (fx3dev == nullptr) return r; // no device
 	int n = fx3dev->DeviceCount();
@@ -53,7 +59,7 @@ bool fx3class::GetFx3Device() {
 	return r;
 }
 
-bool fx3class::GetFx3DeviceStreamer(void) {   // open class 
+bool fx3handler::GetFx3DeviceStreamer(void) {   // open class 
 	bool r = false;
 	if (fx3dev == NULL) return r;
 	int n = fx3dev->DeviceCount();
@@ -73,15 +79,13 @@ bool fx3class::GetFx3DeviceStreamer(void) {   // open class
 	return r;
 }
 
-bool  fx3class::Open(HMODULE hInst) {
+bool  fx3handler::Open(uint8_t* fw_data, uint32_t fw_size) {
 	bool r = false;
 	fx3dev = new CCyFX3Device;              // instantiate the device
 	if (fx3dev == nullptr) return r;        // return if failed
 	int n = fx3dev->DeviceCount();          
 	if (n == 0) return r;					// return if no devices connected
 	if (!GetFx3Device()) return r;          // NO FX3 device connected
-	char fwname[] = "SDDC_FX3.img";        // firmware file
-	const char* fw_source = "external file";
 
 	if (!fx3dev->IsBootLoaderRunning()) {   // if not bootloader device
 		Control(RESETFX3);                  // reset the fx3 firmware via CyU3PDeviceReset(false)
@@ -93,37 +97,16 @@ bool  fx3class::Open(HMODULE hInst) {
 		GetFx3Device();						// open class
 	}
 	FX3_FWDWNLOAD_ERROR_CODE dlf = FAILED;
-	while (fx3dev->IsBootLoaderRunning())
+	if (fx3dev->IsBootLoaderRunning())
 	{
-		dlf = fx3dev->DownloadFw(fwname, RAM);
-		if (dlf == INVALID_FILE)
-		{
-			HRSRC res = FindResource(hInst, MAKEINTRESOURCE(RES_BIN_FIRMWARE), RT_RCDATA);
-			if (!res)
-				break;
-			HGLOBAL res_handle = LoadResource(hInst, res);
-			if (!res_handle)
-				break;
-			const unsigned char* res_data = (const unsigned char*)LockResource(res_handle);
-			DWORD res_size = SizeofResource(hInst, res);
-			if (!res_data || res_size <= 0)
-				break;
-			dlf = fx3dev->DownloadFwToRam(res_data, res_size);
-			fw_source = "internal resource";
-		}
-		break;
-	}
-	if (dlf == 0) {
+		dlf = fx3dev->DownloadFwToRam(fw_data, fw_size);
 		Sleep(500); // wait for download to finish
-		struct stat stbuf;
-		stat(fwname, &stbuf);
-		char* timestr;
-		timestr = ctime(&stbuf.st_mtime);
-		DbgPrintf("Loaded NEW FIRMWARE %s from %s at %s", fwname, fw_source, timestr);
 	}
-	else if (dlf != 0)
+
+	if (dlf != 0)
 	{
 		DbgPrintf("MISSING/OLD FIRMWARE\n");
+		return false;
 	}
 	int x = 0;
 	int maxretry = 30;
@@ -173,16 +156,7 @@ bool  fx3class::Open(HMODULE hInst) {
 
 using namespace std;
 
-bool fx3class::Control(FX3Command command) { // firmware control
-	long lgt = 1;
-	UINT8 z = 0; // dummy data = 0
-	fx3dev->ControlEndPt->ReqCode = command;
-	bool r = fx3dev->ControlEndPt->Write(&z, lgt);
-	DbgPrintf("FX3FWControl %x .%x\n", r, command);
-	return r;
-}
-
-bool fx3class::Control(FX3Command command, UINT8 data) { // firmware control BBRF
+bool fx3handler::Control(FX3Command command, UINT8 data) { // firmware control BBRF
 	long lgt = 1;
 
 	fx3dev->ControlEndPt->ReqCode = command;
@@ -197,7 +171,7 @@ bool fx3class::Control(FX3Command command, UINT8 data) { // firmware control BBR
 	return r;
 }
 
-bool fx3class::Control(FX3Command command, UINT32 data) { // firmware control BBRF
+bool fx3handler::Control(FX3Command command, UINT32 data) { // firmware control BBRF
 	long lgt = 4;
 
 	fx3dev->ControlEndPt->ReqCode = command;
@@ -212,7 +186,7 @@ bool fx3class::Control(FX3Command command, UINT32 data) { // firmware control BB
 	return r;
 }
 
-bool fx3class::Control(FX3Command command, UINT64 data) { // firmware control BBRF
+bool fx3handler::Control(FX3Command command, UINT64 data) { // firmware control BBRF
 	long lgt = 8;
 
 	fx3dev->ControlEndPt->ReqCode = command;
@@ -228,7 +202,7 @@ bool fx3class::Control(FX3Command command, UINT64 data) { // firmware control BB
 }
 
 
-bool fx3class::SetArgument(UINT16 index, UINT16 value) { // firmware control BBRF
+bool fx3handler::SetArgument(UINT16 index, UINT16 value) { // firmware control BBRF
 	long lgt = 1;
 	uint8_t data = 0;
 
@@ -244,7 +218,7 @@ bool fx3class::SetArgument(UINT16 index, UINT16 value) { // firmware control BBR
 	return r;
 }
 
-bool fx3class::GetHardwareInfo(UINT32* data) { // firmware control BBRF
+bool fx3handler::GetHardwareInfo(UINT32* data) { // firmware control BBRF
 	long lgt = 4;
 
 	fx3dev->ControlEndPt->ReqCode = TESTFX3;
@@ -261,7 +235,7 @@ bool fx3class::GetHardwareInfo(UINT32* data) { // firmware control BBRF
 
 }
 
-bool fx3class::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
+bool fx3handler::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
 {
 	bool r = false;
 	LONG lgt = len;
@@ -276,7 +250,7 @@ bool fx3class::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 le
 	return r;
 }
 
-bool fx3class::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
+bool fx3handler::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
 {
 	bool r = false;
 	LONG lgt = len;
@@ -295,7 +269,7 @@ bool fx3class::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 le
 	return r;
 }
 
-bool fx3class::Close() {
+bool fx3handler::Close() {
 	fx3dev->Close();            // close class
 	delete fx3dev;              // destroy class
 	Fx3IsOn = false;
@@ -312,7 +286,7 @@ struct ReadContext
 	long size;
 };
 
-bool fx3class::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
+bool fx3handler::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
 {
 	ReadContext *readContext = (ReadContext *)(*context);
 
@@ -340,7 +314,7 @@ bool fx3class::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
 	return true;
 }
 
-bool fx3class::FinishDataXfer(void** context)
+bool fx3handler::FinishDataXfer(void** context)
 {
 	ReadContext *readContext = (ReadContext *)(*context);
 
@@ -367,7 +341,7 @@ bool fx3class::FinishDataXfer(void** context)
 	return true;
 }
 
-void fx3class::CleanupDataXfer(void** context)
+void fx3handler::CleanupDataXfer(void** context)
 {
 	ReadContext *readContext = (ReadContext *)(*context);
 

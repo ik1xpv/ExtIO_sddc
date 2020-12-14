@@ -9,15 +9,13 @@
 #include "config.h"
 #include "ExtIO_sddc.h"
 #include "RadioHandler.h"
-#include "FX3handler.h"
+#include "FX3class.h"
 #include "uti.h"
 #include "tdialog.h"
-#include "fftw3.h"
 #include "splashwindow.h"
 #include "PScope_uti.h"
 
 #define   snprintf	_snprintf
-
 
 static bool SDR_settings_valid = false;		// assume settings are for some other ExtIO
 static char SDR_progname[32 + 1] = "\0";
@@ -44,6 +42,7 @@ HWND Hconsole;
 
 static bool gshdwn;
 
+RadioHandlerClass RadioHandler;
 
 // Dialog callback
 
@@ -78,6 +77,18 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
+static void Callback(float* data, uint32_t len)
+{
+	if (data)
+	{
+		pfnCallback(len, 0, 0.0F, data);
+	}
+	else
+	{
+		pfnCallback(-1, extHw_Stop, 0.0F, 0); // Stop realtime see Failures
+	}
+}
+
 //---------------------------------------------------------------------------
 extern "C"
 bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
@@ -108,9 +119,30 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 #endif
 		EnterFunction();  // now works
 
-		auto Fx3 = new fx3class();
-		gbInitHW = Fx3->Open(hInst) &&
-				   RadioHandler.Init(Fx3); // Check if it there hardware
+		// open the data
+		unsigned char* res_data;
+		uint32_t res_size;
+
+		FILE *fp = fopen("SDDC_FX3.img", "rb");
+		if (fp != nullptr)
+		{
+			fseek(fp, 0, SEEK_END);
+			res_size = ftell(fp);
+			res_data = (unsigned char*)malloc(res_size);
+			fseek(fp, 0, SEEK_SET);
+			fread(res_data, 1, res_size, fp);
+		}
+		else
+		{
+			HRSRC res = FindResource(hInst, MAKEINTRESOURCE(RES_BIN_FIRMWARE), RT_RCDATA);
+			HGLOBAL res_handle = LoadResource(hInst, res);
+			res_data = (unsigned char*)LockResource(res_handle);
+			res_size = SizeofResource(hInst, res);
+		}
+
+		auto Fx3 = CreateUsbHandler();
+		gbInitHW = Fx3->Open(res_data, res_size) &&
+				   RadioHandler.Init(Fx3, Callback); // Check if it there hardware
 		if (!gbInitHW)
 		{
 			MessageBox(NULL, "Is SDR powered on and connected ?\r\n\r\nPlease start HDSDR again",
@@ -121,8 +153,6 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 
 		strcpy(name, RadioHandler.getName());
 		strcpy(model, RadioHandler.getName());
-
-		fftwf_import_wisdom_from_filename("wisdom");
 
 		DbgPrintf("Init Values:\n");
 		DbgPrintf("SDR_settings_valid = %d\n", SDR_settings_valid);  // settings are version specific !
@@ -248,7 +278,6 @@ void EXTIO_API CloseHW(void)
 		RadioHandler.Close();
 	}
 	gbInitHW = false;
-	fftwf_export_wisdom_to_filename("wisdom");
 }
 
 /*

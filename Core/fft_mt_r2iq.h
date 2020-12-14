@@ -1,59 +1,38 @@
-#ifndef R2IQ_H
-#define R2IQ_H
-#include "license.txt" 
+#pragma once
+
+#include "r2iq.h"
+#include "fftw3.h"
 #define N_R2IQ_THREAD 64
 
-#define NDECIDX 7  //number of srate
-#include "LC_ExtIO_Types.h"
-#include "fftw3.h"
-
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <atomic>
-
-struct r2iqThreadArg;
-
-class r2iqControlClass {
+class fft_mt_r2iq : public r2iqControlClass
+{
 public:
-    r2iqControlClass();
-    ~r2iqControlClass();
-
-    int getRatio()  {return mratio [mdecimation];}
+    fft_mt_r2iq();
+    virtual ~fft_mt_r2iq();
 
     float setFreqOffset(float offset);
-    void updateRand(bool v) {this->randADC = v; }
 
     void Init(float gain, int16_t** buffers, float** obuffers);
     void TurnOn();
     void TurnOff(void);
     bool IsOn(void);
     void DataReady(void);
-    void setDecimate(int dec) { mdecimation = dec; }
 
 private:
-    bool r2iqOn;        // r2iq on flag
     int16_t** buffers;    // pointer to input buffers
     float** obuffers;   // pointer to output buffers
     int bufIdx;         // index to next buffer to be processed
     volatile std::atomic<int> cntr;           // counter of input buffer to be processed
-    bool randADC;       // randomized ADC output
     r2iqThreadArg* lastThread;
 
     float GainScale;
-    int mdecimation ;   // selected decimation ratio
-                        // 0 => 32Msps, 1=> 16Msps, 2 = 8Msps, 3 = 4Msps, 5 = 2Msps
     int mfftdim [NDECIDX]; // FFT N dimensions
-    int mratio [NDECIDX];  // ratio
     int mtunebin;
-
-    int16_t RandTable[65536];  // ADC RANDomize table used to whitening EMI from ADC data bus.
 
     void *r2iqThreadf(r2iqThreadArg *th);   // thread function
 
     int halfFft;    // half the size of the first fft at ADC 64Msps real rate (2048)
     int fftPerBuf; // number of ffts per buffer with 256|768 overlap
-    fftwf_complex *pfilterht;       // time filter ht
     fftwf_complex **filterHw;       // Hw complex to each decimation ratio
 
     uint32_t processor_count;
@@ -66,7 +45,3 @@ protected:
     int getDecimate() {return mdecimation;}
     int getFftN()   {return mfftdim[mdecimation];}
 };
-
-extern class r2iqControlClass r2iqCntrl;
-
-#endif

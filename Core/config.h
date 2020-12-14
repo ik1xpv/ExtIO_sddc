@@ -4,7 +4,6 @@
 #include "license.txt" 
 
 #include "../Interface.h"
-#include <windows.h>   // LARGE_INTEGER
 #include <math.h>      // atan => PI
 #include <thread>
 #include <mutex>

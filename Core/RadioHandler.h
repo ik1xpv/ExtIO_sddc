@@ -8,16 +8,19 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
-#include "FX3handler.h"
-#include "pf_mixer.h"
+#include "FX3Class.h"
 
 class RadioHardware;
+class r2iqControlClass;
+
+struct shift_limited_unroll_C_sse_data_s;
+typedef struct shift_limited_unroll_C_sse_data_s shift_limited_unroll_C_sse_data_t;
 
 class RadioHandlerClass {
 public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
-    bool Init(fx3class *Fx3);
+    bool Init(fx3class* Fx3, void (*callback)(float*, uint32_t), r2iqControlClass *r2iqCntrl = nullptr);
     bool Start(int srate_idx);
     bool Stop();
     bool Close();
@@ -37,9 +40,12 @@ public:
     bool GetRand () {return randout;}
     bool UptsamplesADC(bool flag) { samplesADCflag = flag; return  samplesADCflag; }
     bool GetADCsamples() { return  samplesADCflag; }
-    UINT16 GetFirmware() { return firmware; }
+    uint16_t GetFirmware() { return firmware; }
 
     uint32_t getSampleRate();
+
+    float getBps() const { return mBps; }
+    float getSpsIF() const {return mSpsIF; }
 
     const char* getName();
     RadioModel getModel() { return radio; }
@@ -51,6 +57,8 @@ public:
 
     uint64_t TuneLO(uint64_t lo);
 
+    void uptLed(int led, bool on);
+
 #ifdef TRACE
     bool UptTrace( bool trace){ traceflag = trace; return traceflag; }
     bool GetTrace( ){return traceflag; }
@@ -61,6 +69,9 @@ private:
     void AbortXferLoop(int qidx);
     void CaculateStats();
     void OnDataPacket(int idx);
+    r2iqControlClass* r2iqCntrl;
+
+    void (*Callback)(float *data, uint32_t length);
 
     bool run;
     unsigned long count;    // absolute index
@@ -71,9 +82,23 @@ private:
     bool biasT_VHF;
     bool traceflag;
     bool samplesADCflag;
-    UINT16 firmware;
+    uint16_t firmware;
     rf_mode modeRF;
     RadioModel radio;
+
+    // transfer variables
+    int16_t* buffers[QUEUE_SIZE];
+    float* obuffers[QUEUE_SIZE];
+
+    // threads
+    std::thread adc_samples_thread;
+    std::thread show_stats_thread;
+
+    // stats
+    unsigned long BytesXferred;
+    unsigned long SamplesXIF;
+    float	mBps;
+    float	mSpsIF;
 
     fx3class *fx3;
     RadioHardware* hardware;
@@ -81,10 +106,9 @@ private:
     std::mutex fc_mutex;
     std::mutex stop_mutex;
     float fc;
-    shift_limited_unroll_C_sse_data_t stateFineTune;
+    shift_limited_unroll_C_sse_data_t* stateFineTune;
 };
 
-extern class RadioHandlerClass RadioHandler;
 extern unsigned long Failures;
 
 class RadioHardware {
@@ -235,4 +259,4 @@ public:
     uint64_t TuneLo(uint64_t freq) override { return freq; }
 };
 
-#endif  RADIOHANDLER_H
+#endif

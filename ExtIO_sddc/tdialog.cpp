@@ -18,9 +18,6 @@ UINT nSel = 0; //selected tab
 
 HBITMAP bitmap;
 
-extern float	g_Bps;
-extern float	g_SpsIF;
-
 COLORREF clrBtnSel = RGB(24, 160, 244);
 COLORREF clrBtnUnsel = RGB(0, 44, 107);
 COLORREF clrBackground = RGB(158, 188, 188);
@@ -28,6 +25,8 @@ HBRUSH g_hbrBackground = CreateSolidBrush(clrBackground);
 int  _xfp = 1;
 int  _xfm = 1;
 unsigned int cntime = 0;
+
+extern RadioHandlerClass RadioHandler;
 
 void UpdateGain(HWND hControl, int current, const float* gains, int length)
 {
@@ -111,9 +110,9 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			cntime = 5;
 			sprintf(lbuffer, "%2.9f Msps",  RadioHandler.getSampleRate() / 1000000.0f);
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC13), lbuffer);
-			sprintf(lbuffer, "%6.3f Msps measured", g_Bps );
+			sprintf(lbuffer, "%6.3f Msps measured", RadioHandler.getBps());
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC14), lbuffer);
-			sprintf(lbuffer, "%6.3f Msps measured", g_SpsIF);
+			sprintf(lbuffer, "%6.3f Msps measured", RadioHandler.getSpsIF());
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC16), lbuffer);
 		}
 		if (GetStateButton(hWnd, IDC_FREQP))
