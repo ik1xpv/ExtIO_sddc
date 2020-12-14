@@ -9,7 +9,7 @@ include_directories("." "CyAPI/" "FFTW3/" "pffft/")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
-get_filename_component(SDKPATH ${CMAKE_LINKER} DIRECTORY)
+get_filename_component(SDKPATH CMAKE_LINKER DIRECTORY)
 find_program(LIBEXE lib HINTS ${SDKPATH})
 message(${LIBEXE})
 
