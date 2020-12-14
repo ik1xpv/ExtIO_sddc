@@ -462,82 +462,14 @@ FAIL0:
 int load_image(libusb_device_handle *dev_handle, const char *image, uint32_t image_size)
 {
   int ret_val = -1;
-#if 0
+
   const int fx_type = FX_TYPE_FX3;
   const int img_type = IMG_TYPE_IMG;
   const int stage = 0;
   verbose = 1;
-  ret_val = ezusb_load_ram(dev_handle, imagefile, fx_type, img_type, stage);
+
+  ret_val = fx3_load_ram(dev_handle, image);
   return ret_val;
-#endif
-  if (validate_image(image, image_size) < 0) {
-    fprintf(stderr, "ERROR - validate_image() failed\n");
-    goto FAILA;
-  }
-
-  if (transfer_image(image, dev_handle) < 0) {
-    fprintf(stderr, "ERROR - transfer_image() failed\n");
-    goto FAILA;
-  }
-
-  ret_val = 0;
-
-FAILA:
-  return ret_val;
-}
-
-
-static int validate_image(const uint8_t *image, const size_t size)
-{
-  if (size < 10240) {
-    fprintf(stderr, "ERROR - image file is too small\n");
-    return -1;
-  }
-  if (!(image[0] == 'C' && image[1] == 'Y')) {
-    fprintf(stderr, "ERROR - image header does not start with 'CY'\n");
-    return -1;
-  }
-  if (!(image[2] == 0x1c)) {
-    fprintf(stderr, "ERROR - I2C config is not set to 0x1C\n");
-    return -1;
-  }
-  if (!(image[3] == 0xb0)) {
-    fprintf(stderr, "ERROR - image type is not binary (0x01)\n");
-    return -1;
-  }
-
-  uint32_t checksum = 0;
-  uint32_t *current = (uint32_t *) image + 1;
-  uint32_t *end = (uint32_t *) (image + size);
-
-  while (1) {
-    uint32_t loadSz = *current++;
-    //printf("\tloadSz: %u\n", loadSz);
-    if (loadSz == 0) {
-      break;
-    }
-    uint32_t secStart __attribute__((unused)) = *current++;
-    //printf("\tsecStart: 0x%08x\n", secStart);
-    if (current + loadSz >= end - 2) {
-      fprintf(stderr, "ERROR - loadSz is too big - loadSz=%u\n", loadSz);
-      return -1;
-    }
-    while (loadSz--) {
-      checksum += *current++;
-    }
-  }
-  uint32_t entryAddr __attribute__((unused)) = *current++;
-  //printf("entryAddr: 0x%08x\n", entryAddr);
-  uint32_t expected_checksum = *current++;
-  if (!(current == end)) {
-    fprintf(stderr, "WARNING - image file longer than expected\n");
-  }
-  if (!(checksum == expected_checksum)) {
-      fprintf(stderr, "ERROR - checksum does not match - actual=0x%08x expected=0x%08x\n",
-              checksum, expected_checksum);
-      return -1;
-  }
-  return 0;
 }
 
 

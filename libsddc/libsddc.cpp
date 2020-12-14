@@ -79,7 +79,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
     unsigned char* res_data;
     uint32_t res_size;
 
-    FILE *fp = fopen("SDDC_FX3.img", "rb");
+    FILE *fp = fopen(imagefile, "rb");
     if (fp == nullptr)
     {
         return nullptr;

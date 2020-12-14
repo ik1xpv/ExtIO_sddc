@@ -23,10 +23,11 @@
 
 #include "libsddc.h"
 
-
 #if _WIN32
 #include <windows.h>
 #define sleep(x) Sleep(x*1000)
+#else
+#include <unistd.h>
 #endif
 
 static void blink_led(sddc_t *sddc, uint8_t color);

@@ -88,6 +88,8 @@ typedef struct {
 extern int ezusb_load_ram(libusb_device_handle *device,
 	const char *path, int fx_type, int img_type, int stage);
 
+extern int fx3_load_ram(libusb_device_handle *device, const char *image);
+
 /*
  * This function uploads the firmware from the given file into EEPROM.
  * This uses the right CPUCS address to terminate the EEPROM load with

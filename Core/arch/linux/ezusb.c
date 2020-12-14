@@ -577,28 +577,17 @@ static int ram_poke(void *context, uint32_t addr, bool external,
  * Load a Cypress Image file into target RAM.
  * See http://www.cypress.com/?docID=41351 (AN76405 PDF) for more info.
  */
-static int fx3_load_ram(libusb_device_handle *device, const char *path)
+int fx3_load_ram(libusb_device_handle *device, const char *image)
 {
 	uint32_t dCheckSum, dExpectedCheckSum, dAddress, i, dLen, dLength;
 	uint32_t* dImageBuf;
-	unsigned char *bBuf, hBuf[4], blBuf[4], rBuf[4096];
-	FILE *image;
+	const unsigned char *bBuf, *hBuf;
+	unsigned char blBuf[4], rBuf[4096];
 	int ret = 0;
+	int offset = 0;
 
-	image = fopen(path, "rb");
-	if (image == NULL) {
-		logerror("unable to open '%s' for input\n", path);
-		return -2;
-	} else if (verbose)
-		logerror("open firmware image %s for RAM upload\n", path);
-
-	// Read header
-	if (fread(hBuf, sizeof(char), sizeof(hBuf), image) != sizeof(hBuf)) {
-		logerror("could not read image header");
-		ret = -3;
-		goto exit;
-	}
-
+	hBuf = image;
+	offset += 4;
 	// check "CY" signature byte and format
 	if ((hBuf[0] != 'C') || (hBuf[1] != 'Y')) {
 		logerror("image doesn't have a CYpress signature\n");
@@ -640,30 +629,15 @@ static int fx3_load_ram(libusb_device_handle *device, const char *path)
 	if (verbose)
 		logerror("writing image...\n");
 	while (1) {
-		if ((fread(&dLength, sizeof(uint32_t), 1, image) != 1) ||  // read dLength
-			(fread(&dAddress, sizeof(uint32_t), 1, image) != 1)) { // read dAddress
-			logerror("could not read image");
-			ret = -3;
-			goto exit;
-		}
+		dLength = *(uint32_t*)(image+offset); offset += sizeof(uint32_t);
+		dAddress = *(uint32_t*)(image+offset); offset += sizeof(uint32_t);
+
 		if (dLength == 0)
 			break; // done
 
-		// coverity[tainted_data]
-		dImageBuf = (uint32_t*)calloc(dLength, sizeof(uint32_t));
-		if (dImageBuf == NULL) {
-			logerror("could not allocate buffer for image chunk\n");
-			ret = -4;
-			goto exit;
-		}
-
 		// read sections
-		if (fread(dImageBuf, sizeof(uint32_t), dLength, image) != dLength) {
-			logerror("could not read image");
-			free(dImageBuf);
-			ret = -3;
-			goto exit;
-		}
+		dImageBuf = (uint32_t*)(image+offset); offset += sizeof(uint32_t) * dLength;
+
 		for (i = 0; i < dLength; i++)
 			dCheckSum += dImageBuf[i];
 		dLength <<= 2; // convert to Byte length
@@ -676,7 +650,6 @@ static int fx3_load_ram(libusb_device_handle *device, const char *path)
 			if ((ezusb_write(device, "write firmware", RW_INTERNAL, dAddress, bBuf, dLen) < 0) ||
 				(ezusb_read(device, "read firmware", RW_INTERNAL, dAddress, rBuf, dLen) < 0)) {
 				logerror("R/W error\n");
-				free(dImageBuf);
 				ret = -5;
 				goto exit;
 			}
@@ -684,7 +657,6 @@ static int fx3_load_ram(libusb_device_handle *device, const char *path)
 			for (i = 0; i < dLen; i++) {
 				if (rBuf[i] != bBuf[i]) {
 					logerror("verify error");
-					free(dImageBuf);
 					ret = -6;
 					goto exit;
 				}
@@ -694,12 +666,11 @@ static int fx3_load_ram(libusb_device_handle *device, const char *path)
 			bBuf += dLen;
 			dAddress += dLen;
 		}
-		free(dImageBuf);
 	}
 
 	// read pre-computed checksum data
-	if ((fread(&dExpectedCheckSum, sizeof(uint32_t), 1, image) != 1) ||
-		(dCheckSum != dExpectedCheckSum)) {
+	dExpectedCheckSum = *(uint32_t*)(image + offset); offset += sizeof(uint32_t);
+	if (dCheckSum != dExpectedCheckSum) {
 		logerror("checksum error\n");
 		ret = -7;
 		goto exit;
@@ -711,7 +682,6 @@ static int fx3_load_ram(libusb_device_handle *device, const char *path)
 	}
 
 exit:
-	fclose(image);
 	return ret;
 }
 
