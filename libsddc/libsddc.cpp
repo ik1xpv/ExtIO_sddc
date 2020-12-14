@@ -1,5 +1,6 @@
 #include "libsddc.h"
 #include "config.h"
+#include "r2iq.h"
 #include "RadioHandler.h"
 
 struct sddc
@@ -18,12 +19,31 @@ sddc_t *current_running;
 
 static void Callback(float* data, uint32_t len)
 {
-    if (current_running != nullptr)
-    {
-        current_running->callback(len * sizeof(float), (uint8_t*)data, current_running->callback_context);
-    }
 }
 
+class rawdata : public r2iqControlClass {
+    void Init(float gain, int16_t** buffers, float** obuffers) override
+    {
+        this->buffers = buffers;
+        idx = 0;
+    }
+
+    virtual void TurnOn()
+    {
+        this->r2iqOn = true;
+        idx = 0;
+    }
+
+    void DataReady(void) override
+    {
+        current_running->callback(transferSize, (uint8_t*)buffers[idx], current_running->callback_context);
+        idx++;
+    }
+
+private:
+    int16_t **buffers;
+    int idx;
+};
 
 int sddc_get_device_count()
 {
@@ -75,7 +95,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
 
     ret_val->handler = new RadioHandlerClass();
 
-    if (ret_val->handler->Init(fx3, Callback))
+    if (ret_val->handler->Init(fx3, Callback, new rawdata()))
     {
         ret_val->status = SDDC_STATUS_READY;
         ret_val->samplerate = 1;

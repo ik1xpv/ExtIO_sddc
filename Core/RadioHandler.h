@@ -11,6 +11,7 @@
 #include "FX3Class.h"
 
 class RadioHardware;
+class r2iqControlClass;
 
 struct shift_limited_unroll_C_sse_data_s;
 typedef struct shift_limited_unroll_C_sse_data_s shift_limited_unroll_C_sse_data_t;
@@ -19,7 +20,7 @@ class RadioHandlerClass {
 public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
-    bool Init(fx3class* Fx3, void (*callback)(float*, uint32_t));
+    bool Init(fx3class* Fx3, void (*callback)(float*, uint32_t), r2iqControlClass *r2iqCntrl = nullptr);
     bool Start(int srate_idx);
     bool Stop();
     bool Close();
@@ -68,6 +69,7 @@ private:
     void AbortXferLoop(int qidx);
     void CaculateStats();
     void OnDataPacket(int idx);
+    r2iqControlClass* r2iqCntrl;
 
     void (*Callback)(float *data, uint32_t length);
 
