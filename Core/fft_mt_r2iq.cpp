@@ -39,6 +39,7 @@ r2iqControlClass::r2iqControlClass()
 	r2iqOn = false;
 	randADC = false;
 	sideband = false;
+	mdecimation = 0;
 	mratio[0] = 1;  // 1,2,4,8,16
 	for (int i = 1; i < NDECIDX; i++)
 	{
