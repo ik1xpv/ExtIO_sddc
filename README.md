@@ -26,10 +26,9 @@ Initial version
 
 1. Install Visual Studio 2019 with Visual C++ support. You can use the free community version, which can be downloaded from: https://visualstudio.microsoft.com/downloads/
 1. Install CMake 3.19+, https://cmake.org/download/
-1. Running the following commands in your cloned repro:
+1. Running the following commands in the root folder of the cloned repro:
 
 ```bash
-> cd ExtIO_sddc
 > mkdir build
 > cd build
 > cmake ..
@@ -64,13 +63,15 @@ make
 ```
 
 ## Directory structure:
-
-    \ExtIO_sddc\ 		> ExtIO_sddc sources,
+    \Core\           > Core logic of the component
         r2iq.cpp			> The logic to demodulize IQ from ADC real samples
         FX3handler.cpp		> Interface with firmware
         RadioHandler.cpp    > The abstraction of different radios
+        Radio\*.cpp         > Hardware specific logic
+    \ExtIO_sddc\ 		> ExtIO_sddc sources,
+        extio_sddc.cpp     > The implementation of EXTIO contract 
         tdialog.cpp			> The Configuration GUI Dialog
-    
+    \libsddc\        > libsddc lib
     \SDDC_FX3\          > Firmware sources
 
 
