@@ -22,8 +22,6 @@ RadioHardware::~RadioHardware()
         FX3SetGPIO(SHDWN);
 
         Fx3->Control(RESETFX3);
-
-        delete Fx3;
     }
 }
 
