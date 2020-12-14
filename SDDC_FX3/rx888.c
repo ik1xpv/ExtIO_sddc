@@ -10,6 +10,7 @@
 #define GPIO_ATT_SEL1 27
 #define GPIO_SHDWN 28
 #define GPIO_DITH 29
+#define GPIO_OFA 25
 
 void rx888_GpioSet(uint32_t mdata)
 {
@@ -22,7 +23,6 @@ void rx888_GpioSet(uint32_t mdata)
     CyU3PGpioSetValue (GPIO_BIAS_VHF, (mdata & BIAS_VHF) == BIAS_VHF);
     CyU3PGpioSetValue (GPIO_LED_RED, (mdata & LED_RED) == LED_RED);
     CyU3PGpioSetValue (GPIO_LED_YELLOW, (mdata & LED_YELLOW) == LED_YELLOW);
-    CyU3PGpioSetValue (GPIO_LED_BLUE, (mdata & LED_BLUE) == LED_BLUE);
 }
 
 void rx888_GpioInitialize()
@@ -37,6 +37,17 @@ void rx888_GpioInitialize()
     ConfGPIOsimpleout (GPIO_LED_RED);
     ConfGPIOsimpleout (GPIO_LED_YELLOW);
     ConfGPIOsimpleout (GPIO_LED_BLUE);
-
-    rx888_GpioSet(LED_RED | LED_YELLOW | LED_BLUE);
+    ConfGPIOpulseinput(GPIO_OFA);
+    rx888_GpioSet(LED_RED | LED_YELLOW);
 }
+
+void rx888_GpioSetOFA(CyBool_t ofa)
+{
+	CyU3PGpioSetValue (GPIO_LED_BLUE, ofa);
+}
+
+CyBool_t rx888_OFA_Id(uint8_t gpioId)
+{
+	return (gpioId == GPIO_OFA);
+}
+

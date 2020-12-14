@@ -183,7 +183,8 @@ int32_t adf4350_write(uint32_t data)
 	DebugPrint(4, " ADF4351 Register (one of the five) Updated\n");
 
 	// Send all 32 bits
-	for (uint16_t i = 0; i <32; i++)
+	uint16_t i ;
+	for (i = 0; i <32; i++)
 	{
 		// Test left-most bit
 

@@ -38,4 +38,8 @@ The value is high enough to not disturb use of GPIOs for other purpose after det
 */
 
 
-// TODO
+// switch definitions
+
+#define BBRF103_PD 50  // BBRF103 pull down GPIO (add 1k resistor between pin 37-39 of P1 on BBRF103 pcb)
+
+

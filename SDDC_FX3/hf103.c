@@ -1,15 +1,15 @@
 #include "Application.h"
 
-#define LED_OVERLOAD  (21)
-
-#define GPIO_ATT_LE    (21)
-#define GPIO_ATT_CLK   (22)
-#define GPIO_ATT_DATA  (23)
-#define GPIO_LED_KIT   (54)
-
-#define GPIO_RANDO 29
-#define GPIO_SHDWN 18
-#define GPIO_DITH 17
+#define GPIO_ATT_LE		21
+#define GPIO_ATT_CLK	22
+#define GPIO_ATT_DATA	23
+#define GPIO_LED_KIT  	54
+#define GPIO_RANDO 		29
+#define GPIO_SHDWN 		18
+#define GPIO_DITH 		17
+#define GPIO_OFA 		28
+#define GPIO_LED_BLUE   27
+#define GPIO_LED_RED    26
 
 void hf103_GpioSet(uint32_t mdata)
 {
@@ -27,7 +27,8 @@ void hf103_GpioInitialize()
     ConfGPIOsimpleout (GPIO_ATT_LE);
     ConfGPIOsimpleout (GPIO_ATT_CLK);
     ConfGPIOsimpleout (GPIO_ATT_DATA);
-
+    ConfGPIOsimpleout (GPIO_LED_BLUE);
+    ConfGPIOpulseinput(GPIO_OFA);
     hf103_GpioSet(0);
 
     CyU3PGpioSetValue (GPIO_LED_KIT, 0);
@@ -60,3 +61,12 @@ void hf103_SetAttenuator(uint8_t value)
 	CyU3PGpioSetValue (GPIO_ATT_LE, 0);    // ATT_LE latched
 }
 
+void hf103_GpioSetOFA(CyBool_t ofa)
+{
+	CyU3PGpioSetValue (GPIO_LED_BLUE, ofa);
+}
+
+CyBool_t hf103_OFA_Id(uint8_t gpioId)
+{
+	return (gpioId == GPIO_OFA);
+}

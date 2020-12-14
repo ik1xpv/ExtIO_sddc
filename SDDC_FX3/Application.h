@@ -75,24 +75,31 @@ typedef struct outxio_t
 } outxio_t;
 
 #include "../Interface.h"
-
+#include "../HWSDRtable.h"
 
 #include "cyu3externcend.h"
 
 CyU3PReturnStatus_t ConfGPIOsimpleout( uint8_t gpioid);
+CyU3PReturnStatus_t ConfGPIOpulseinput( uint8_t gpioid);
 
 // bbrf103
 void bbrf103_GpioSet(uint32_t mdata);
 void bbrf103_GpioInitialize();
+void bbrf103_GpioSetOFA(CyBool_t ofa);
+CyBool_t bbrf103_OFA_Id(uint8_t gpioId);
 
 // hf103
 void hf103_GpioSet(uint32_t mdata);
 void hf103_GpioInitialize();
 void hf103_SetAttenuator(uint8_t value);
+void hf103_GpioSetOFA(CyBool_t ofa);
+CyBool_t hf103_OFA_Id(uint8_t gpioId);
 
 // rx888
 void rx888_GpioSet(uint32_t mdata);
 void rx888_GpioInitialize();
+void rx888_GpioSetOFA(CyBool_t ofa);
+CyBool_t rx888_OFA_Id(uint8_t gpioId);
 
 // rx888r2
 void rx888r2_GpioSet(uint32_t mdata);
