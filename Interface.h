@@ -62,6 +62,10 @@ enum FX3Command {
     // Tune 4351 to a frequency
     // WRITE: UINT64
     AD4351TUNE = 0xB9,
+
+    // GET OFA n pulses in last 1000mS
+    // READ: UINT16
+    OFAPULSES = 0xBA,
 };
 
 #define OUTXIO0 (1U << 0) 	// ATT_LE

@@ -42,11 +42,11 @@ void *StackPtr[APP_THREADS];				// Stack allocated to each thread
 uint8_t HWconfig = NORADIO;       // Hardware config type BBRF103
 uint16_t FWconfig = 0x0102;    // Firmware rc1 ver 1.02
 
-#define BBRF103_PD 50  // BBRF103 pull down GPIO
-/* Timer used to OFA pulse stretching. */
-static CyU3PTimer        OFATimer;              /* Timer used to calculate frame transfer time. */
-/* OFA stretched pulse time in milli-seconds. */
-#define OFA_PERIOD  (1000)
+static CyU3PTimer   OFATimer;   // Timer used to OFA pulse stretching.
+#define OFA_PERIOD  (1000) 		// OFA stretched pulse time in milli-seconds.
+static uint8_t OFAcnt;			// counts the OFA flag pulses
+static uint8_t OFAboxcar[10];   // boxcar on 10 *100ms = 1 sec
+int16_t OFAboxcarFilter; // boxcar output
 
 CyU3PReturnStatus_t
 ConfGPIOsimpleout( uint8_t gpioid)
@@ -110,6 +110,7 @@ void GpioIntrCb (uint8_t gpioId) // Indicates the pin that triggered the interru
 	}
 	CyU3PTimerModify (&OFATimer, OFA_PERIOD, 0);
     CyU3PTimerStart (&OFATimer);
+    OFAcnt++;
 }
 
 void OFAendCb () // callback function called on timer expiration.
@@ -125,6 +126,7 @@ void OFAendCb () // callback function called on timer expiration.
 			rx888_GpioSetOFA(false);
 			break;
 	}
+	OFAcnt = 0;
 }
 
 
@@ -288,19 +290,28 @@ void ApplicationThread ( uint32_t input)
 
 	    	// Now run forever
 			DebugPrint(4, "\r\nMAIN now running forever: ");
+			uint8_t BoxcarIdx = 0;
+			for (BoxcarIdx = 0; BoxcarIdx < sizeof(OFAboxcar); BoxcarIdx++ )
+			OFAboxcarFilter = 0; // filter sum ouput
 			while(1)
 			{
-				//for (Count = 0; Count<10; Count++)
+				// box car filter update OFAboxcarFilter is the average mean * sizeof (OFAboxcar)
+				if ( ++BoxcarIdx >= sizeof (OFAboxcar)) BoxcarIdx = 0;
+				OFAboxcarFilter -= OFAboxcar[BoxcarIdx];
+				OFAboxcar[BoxcarIdx] = OFAcnt;  // number of OFA in 100ms
+				OFAcnt = 0; 				  		// reset counter for next 100 ms
+				OFAboxcarFilter += OFAboxcar[BoxcarIdx];
+
+				// Check for User Commands (and other CallBack Events) every 100msec
+				CyU3PThreadSleep(100);
+
+				nline =0;
+				while( CyU3PQueueReceive(&EventAvailable, &Qevent, CYU3P_NO_WAIT)== 0)
 				{
-					// Check for User Commands (and other CallBack Events) every 100msec
-					CyU3PThreadSleep(100);
-					nline =0;
-					while( CyU3PQueueReceive(&EventAvailable, &Qevent, CYU3P_NO_WAIT)== 0)
-					{
-						if (nline++ == 0) DebugPrint(4, "\r\n"); //first line
-						MsgParsing(Qevent);
-					}
+					if (nline++ == 0) DebugPrint(4, "\r\n"); //first line
+					MsgParsing(Qevent);
 				}
+
 				if (glDMACount > 7812)
 				{
 					glDMACount -= 7812;

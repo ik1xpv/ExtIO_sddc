@@ -31,6 +31,8 @@ extern CyBool_t glIsApplnActive;				// Set true once device is enumerated
 extern uint8_t  HWconfig;       			    // Hardware config
 extern uint16_t  FWconfig;       			    // Firmware config hb.lb
 
+extern int16_t OFAboxcarFilter; 				// OFA boxcar output
+
 // r820xx data
 struct r82xx_priv tuner;
 struct r82xx_config tuner_config;
@@ -375,6 +377,13 @@ CyFxSlFifoApplnUSBSetupCB (
 					glEp0Buffer[3] = vendorRqtCnt;
 					CyU3PUsbSendEP0Data (4, glEp0Buffer);
 					vendorRqtCnt++;
+					isHandled = CyTrue;
+					break;
+
+            case OFAPULSES:
+					glEp0Buffer[0] = (uint8_t) (OFAboxcarFilter >> 8);
+					glEp0Buffer[1] = (uint8_t) OFAboxcarFilter;
+					CyU3PUsbSendEP0Data (2, glEp0Buffer);
 					isHandled = CyTrue;
 					break;
 
