@@ -74,9 +74,14 @@ uint64_t RX999Radio::TuneLo(uint64_t freq)
     {
         int sel;
         // set preselector
-        if (freq < 500ll*1000*1000) sel = 4;
-        else if (freq < 1000ll*1000*1000) sel = 2;
-        else sel = 1;
+        if (freq <= 120*1000*1000) sel = 0b111;
+        else if (freq <= 250*1000*1000) sel = 0b101;
+        else if (freq <= 300*1000*1000) sel = 0b110;
+        else if (freq <= 380*1000*1000) sel = 0b100;
+        else if (freq <= 500*1000*1000) sel = 0b000;
+        else if (freq <= 1000ll*1000*1000) sel = 0b010;
+        else if (freq <= 2000ll*1000*1000) sel = 0b001;
+        else sel = 0b011;
 
         Fx3->Control(AD4351TUNE, freq + IF_FREQ);
 
