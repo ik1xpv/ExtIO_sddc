@@ -99,6 +99,7 @@ private:
     unsigned long SamplesXIF;
     float	mBps;
     float	mSpsIF;
+    int     rateOFA;
 
     fx3class *fx3;
     RadioHardware* hardware;
@@ -132,6 +133,7 @@ public:
     bool FX3producerOff() { return Fx3->Control(STOPFX3); }
 
     virtual uint32_t getSampleRate();
+    virtual uint16_t GetOFArate();
 
     bool FX3SetGPIO(uint32_t mask);
     bool FX3UnsetGPIO(uint32_t mask);

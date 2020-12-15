@@ -235,6 +235,24 @@ bool fx3handler::GetHardwareInfo(UINT32* data) { // firmware control BBRF
 
 }
 
+bool fx3handler::GetOFArate(UINT16* data) { // firmware control BBRF
+	long lgt = 4;
+
+	fx3dev->ControlEndPt->ReqCode = OFAPULSES;
+	fx3dev->ControlEndPt->Value = (USHORT)0;
+	fx3dev->ControlEndPt->Index = (USHORT)0;
+	lgt = 2; //  OFAPULSES len
+	bool r = fx3dev->ControlEndPt->Read((PUCHAR)data, lgt);
+	DbgPrintf("GetOFArate %x .%x %x\n", r, OFAPULSES, *data);
+	if (r == false)
+	{
+		Close();
+	}
+	return r;
+
+}
+
+
 bool fx3handler::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
 {
 	bool r = false;

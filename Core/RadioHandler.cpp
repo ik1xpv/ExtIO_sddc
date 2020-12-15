@@ -372,6 +372,8 @@ void RadioHandlerClass::CaculateStats()
 		BytesXferred = 0;
 		SamplesXIF = 0;
 
+		rateOFA = hardware->GetOFArate();
+
 		std::this_thread::sleep_for(0.2s);
 	}
 	return;

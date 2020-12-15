@@ -381,8 +381,8 @@ CyFxSlFifoApplnUSBSetupCB (
 					break;
 
             case OFAPULSES:
-					glEp0Buffer[0] = (uint8_t) (OFAboxcarFilter >> 8);
-					glEp0Buffer[1] = (uint8_t) OFAboxcarFilter;
+					glEp0Buffer[0] = (uint8_t) OFAboxcarFilter;
+					glEp0Buffer[1] = (uint8_t) (OFAboxcarFilter >> 8);
 					CyU3PUsbSendEP0Data (2, glEp0Buffer);
 					isHandled = CyTrue;
 					break;

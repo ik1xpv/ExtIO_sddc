@@ -29,3 +29,12 @@ uint32_t RadioHardware::getSampleRate()
 {
     return (uint32_t)CORRECT(DEFAULT_ADC_FREQ);
 }
+
+uint16_t RadioHardware::GetOFArate()
+{
+    uint16_t rate = 0;
+    if (Fx3) {
+        Fx3->GetOFArate(&rate);
+    }
+    return rate;
+}

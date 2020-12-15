@@ -301,7 +301,6 @@ void ApplicationThread ( uint32_t input)
 				OFAboxcar[BoxcarIdx] = OFAcnt;  // number of OFA in 100ms
 				OFAcnt = 0; 				  		// reset counter for next 100 ms
 				OFAboxcarFilter += OFAboxcar[BoxcarIdx];
-
 				// Check for User Commands (and other CallBack Events) every 100msec
 				CyU3PThreadSleep(100);
 

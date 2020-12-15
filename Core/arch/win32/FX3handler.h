@@ -39,6 +39,7 @@ public:
 	bool Control(FX3Command command, uint64_t data);
 	bool SetArgument(uint16_t index, uint16_t value);
 	bool GetHardwareInfo(uint32_t* data);
+	bool GetOFArate(UINT16* data);
 
 	bool BeginDataXfer(uint8_t *buffer, long transferSize, void** context);
 	bool FinishDataXfer(void** context);

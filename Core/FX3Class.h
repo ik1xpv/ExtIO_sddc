@@ -24,6 +24,7 @@ public:
 	virtual bool Control(FX3Command command, uint64_t data) = 0;
 	virtual bool SetArgument(uint16_t index, uint16_t value) = 0;
 	virtual bool GetHardwareInfo(uint32_t* data) = 0;
+	virtual bool GetOFArate(uint16_t* data) = 0;
 
 	virtual bool BeginDataXfer(uint8_t *buffer, long transferSize, void** context) = 0;
 	virtual bool FinishDataXfer(void** context) = 0;
