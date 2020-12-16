@@ -192,6 +192,7 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 		break;
 	}
 
+	hardware->Initialize();
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
 	this->r2iqCntrl = r2iqCntrl;
 	r2iqCntrl->Init(hardware->getGain(), buffers, obuffers);
@@ -210,7 +211,6 @@ bool RadioHandlerClass::Start(int srate_idx)
 	run = true;
 	count = 0;
 
-	hardware->Initialize();
 	hardware->FX3producerOn();  // FX3 start the producer
 
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
