@@ -6,6 +6,10 @@
 #define HIGH_MODE 0x80
 #define LOW_MODE 0x00
 
+#define GAIN_SWEET_POINT 18
+#define HIGH_GAIN_RATIO (0.409f)
+#define LOW_GAIN_RATIO (0.059f)
+
 #define MODE HIGH_MODE
 
 const float RX888R2Radio::vhf_rf_steps[RX888R2Radio::vhf_rf_step_size] = {
@@ -31,16 +35,12 @@ RX888R2Radio::RX888R2Radio(fx3class *fx3)
             ((i & 0x020) != 0) * 16.0f);
     }
 
-    // high mode gain = 0.409, start=-30
-    // low mode gain = 0.059, start = -30
-#if (MODE == HIGH_MODE)
-    float ratio = 0.409f;
-#else
-    float ratio = 0.059f;
-#endif
     for (uint8_t i = 0; i < hf_if_step_size; i++)
     {
-        this->hf_if_steps[i] = -30.0f + ratio * (i + 1);
+        if (i > GAIN_SWEET_POINT)
+            this->hf_if_steps[i] = 20.0f * log10f(HIGH_GAIN_RATIO * (i - GAIN_SWEET_POINT + 3));
+        else
+            this->hf_if_steps[i] = 20.0f * log10f(LOW_GAIN_RATIO * (i + 1));
     }
 }
 
@@ -63,8 +63,8 @@ bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
         // switch to VHF Attenna
         FX3SetGPIO(VHF_EN);
 
-        // high gain, 20db
-        uint8_t gain = 0xff;
+        // high gain, 0db
+        uint8_t gain = 0x80 | 3;
         Fx3->SetArgument(AD8340_VGA, gain);
         // Enable Tuner reference clock
         uint32_t ref = R828D_FREQ;
@@ -153,7 +153,11 @@ bool RX888R2Radio::UpdateGainIF(int gain_index)
     if (!(gpios & VHF_EN))
     {
         // this is in HF mode
-        uint8_t gain = MODE | (gain_index + 1);
+        uint8_t gain;
+        if (gain_index > GAIN_SWEET_POINT)
+            gain = HIGH_MODE | (gain_index - GAIN_SWEET_POINT + 3);
+        else
+            gain = LOW_MODE | (gain_index + 1);
 
         DbgPrintf("UpdateGainIF %d \n", gain);
 
