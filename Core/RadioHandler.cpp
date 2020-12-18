@@ -211,7 +211,7 @@ bool RadioHandlerClass::Start(int srate_idx)
 	run = true;
 	count = 0;
 
-	hardware->Initialize();     // the new freq must be programmed   
+	hardware->Initialize();     // the new freq must be programmed alfter apply button  
 	hardware->FX3producerOn();  // FX3 start the producer
 
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
