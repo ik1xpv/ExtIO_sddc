@@ -205,13 +205,13 @@ bool RadioHandlerClass::Start(int srate_idx)
 	Stop();
 	double div = pow(2.0, srate_idx);
 	auto samplerate = 1000000.0 * (div * 2);
-	int decimate = (int)log2(getSampleRate() / (2 * samplerate));
+	int decimate = (int)log2(((float)getSampleRate() * 1.1F) / (2 * samplerate));  // 1.1F expansion for negative freq adjust
 
 	DbgPrintf("RadioHandlerClass::Start\n");
 	run = true;
 	count = 0;
 
-	hardware->Initialize();     // the new freq must be programmed alfter apply button  
+	hardware->Initialize();     // the new freq must be programmed after apply button  
 	hardware->FX3producerOn();  // FX3 start the producer
 
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
