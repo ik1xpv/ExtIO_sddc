@@ -163,12 +163,6 @@ int sddc_reset_status(sddc_t *t);
 
 int sddc_read_sync(sddc_t *t, uint8_t *data, int length, int *transferred);
 
-
-/* Misc functions */
-double sddc_get_frequency_correction(sddc_t *t);
-
-int sddc_set_frequency_correction(sddc_t *t, double correction);
-
 #ifdef __cplusplus
 }
 #endif
