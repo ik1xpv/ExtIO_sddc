@@ -374,17 +374,3 @@ int sddc_read_sync(sddc_t *t, uint8_t *data, int length, int *transferred)
 {
     return 0;
 }
-
-
-/* Misc functions */
-double sddc_get_frequency_correction(sddc_t *t)
-{
-    return gdFreqCorr_ppm / 0.000001;
-}
-
-int sddc_set_frequency_correction(sddc_t *t, double correction)
-{
-    gdFreqCorr_ppm = correction * 1000000;
-
-    return 0;
-}
