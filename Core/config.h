@@ -46,7 +46,7 @@ inline void null_func(const char *format, ...) { }
 
 #define VERSION             (1.01)	//	Dll version number x.xx
 
-#define SETTINGS_IDENTIFIER	"sddc_1.03"
+#define SETTINGS_IDENTIFIER	"sddc_1.04"
 #define SWNAME				"ExtIO_sddc.dll"
 
 #define	QUEUE_SIZE 64
@@ -74,13 +74,7 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 #define URL_HDSR            "http://www.hdsdr.de/"
 #define URL_HDSDRA          "<a>http://www.hdsdr.de/</a>"
 
-#define TIMEOUT (2000)
-
-extern int gdFreqCorr_ppm;
-extern int gdGainCorr_dB;
 extern bool saveADCsamplesflag;
-
-#define CORRECT(FREQ) ((double) FREQ * (1.0f + (gdFreqCorr_ppm * 0.000001f)))
 
 const int transferSize = 131072;
 

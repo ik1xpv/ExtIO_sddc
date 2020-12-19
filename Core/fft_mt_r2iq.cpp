@@ -232,7 +232,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		float *endloop;           // pointer to end data to be copied to beginning
 		float * pout;
 
-		float iscale = this->GainScale * (float)powf(10.0f, gdGainCorr_dB / 20.0f);
+		float iscale = this->GainScale;
 		float qscale;
 		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 

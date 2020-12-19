@@ -29,13 +29,6 @@
 #define IDB_BTN_MAIN_A                  40005
 #define IDT_TAB_CTRL_MAIN               40006
 #define IDC_PAGE0_INIT                  40101
-#define IDC_GAINCORR                    40101
-#define IDC_GAINP                       40102
-#define IDC_GAINM                       40103
-#define IDC_FREQ                        40104
-#define IDC_FREQP                       40105
-#define IDC_FREQM                       40106
-#define IDC_RESTART                     40107
 #define IDC_STATIC09                    40109
 #define IDC_RFGAIN                      40109
 #define IDC_STATIC10                    40110

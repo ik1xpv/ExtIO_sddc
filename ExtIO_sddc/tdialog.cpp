@@ -86,14 +86,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 		}
 
-		ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_HIDE);
-
-		sprintf(ebuffer, "%2d", gdGainCorr_dB);
-		SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
-
-		sprintf(ebuffer, "%3d", gdFreqCorr_ppm);
-		SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
-
 		SetTimer(hWnd, 0, 200, NULL);
 
 #ifndef TRACE
@@ -115,15 +107,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprintf(lbuffer, "%6.3f Msps measured", RadioHandler.getSpsIF());
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC16), lbuffer);
 		}
-		if (GetStateButton(hWnd, IDC_FREQP))
-		{
-			Command(hWnd, IDC_FREQP, BN_CLICKED);
-		}
-
-		if (GetStateButton(hWnd, IDC_FREQM))
-		{
-			Command(hWnd, IDC_FREQM, BN_CLICKED);
-		}
 
 		if (GetStateButton(hWnd, IDC_IFGAINP))
 		{
@@ -143,16 +126,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (GetStateButton(hWnd, IDC_RFGAINM))
 		{
 			Command(hWnd, IDC_RFGAINM, BN_CLICKED);
-		}
-
-		if (GetStateButton(hWnd, IDC_GAINP))
-		{
-			Command(hWnd, IDC_GAINP, BN_CLICKED);
-		}
-
-		if (GetStateButton(hWnd, IDC_GAINM))
-		{
-			Command(hWnd, IDC_GAINM, BN_CLICKED);
 		}
 
 		break;
@@ -273,43 +246,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			break;
-		case IDC_GAINP:
-			switch (HIWORD(wParam))
-			{
-			case BN_CLICKED:
-				GetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer, 16);
-				int x = 0;
-				if (sscanf(ebuffer, "%d", &x) > 0)
-				{
-					x++;
-					if (x > 20) x = 20;
-					if (x < -20) x = -20;
-				}
-				sprintf(ebuffer, "%2d", x);
-				SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
-				gdGainCorr_dB = x;
-				break;
-			}
-			break;
-		case IDC_GAINM:
-			switch (HIWORD(wParam))
-			{
-			case BN_CLICKED:
-				GetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer, 16);
-				int x = 0;
-				if (sscanf(ebuffer, "%d", &x) > 0)
-				{
-					x--;
-					if (x > 20) x = 20;
-					if (x < -20) x = -20;
-				}
-				sprintf(ebuffer, "%2d", x);
-				SetWindowText(GetDlgItem(hWnd, IDC_GAINCORR), ebuffer);
-				gdGainCorr_dB = x;
-				break;
-			}
-			break;
-
 		case IDC_RFGAINP:
 			switch (HIWORD(wParam))
 			{
@@ -377,56 +313,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					ExtIoSetMGC(index);
 
 				UpdateGain(GetDlgItem(hWnd, IDC_IFGAIN), ExtIoGetActualMgcIdx(), gains, length);
-				break;
-			}
-			break;
-
-		case IDC_FREQP:
-			switch (HIWORD(wParam))
-			{
-			case BN_CLICKED:
-				GetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer, 32);
-				int x = 0;
-				if (sscanf(ebuffer, "%d", &x) > 0)
-				{
-					x += _xfp;
-					if (x > 200) x = 200;
-					if (x < -200) x = -200;
-					sprintf( ebuffer, "%3d", x);
-					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
-					gdFreqCorr_ppm = x;
-				}
-				ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_SHOW); // activate Restart
-				break;
-			}
-			break;
-
-		case IDC_FREQM:
-			switch (HIWORD(wParam))
-			{
-			case BN_CLICKED:
-				GetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer, 32);
-				int x = 0;
-				if (sscanf(ebuffer, "%d", &x) > 0)
-				{
-					x -= _xfm;
-					if (x > 200) x = 200;
-					if (x < -200) x = -200;
-					sprintf(ebuffer, "%3d", x);
-					SetWindowText(GetDlgItem(hWnd, IDC_FREQ), ebuffer);
-					gdFreqCorr_ppm = x;
-				}
-				ShowWindow(GetDlgItem(hWnd, IDC_RESTART), SW_SHOW); // activate Restart
-				break;
-			}
-			break;
-
-		case IDC_RESTART:
-			switch (HIWORD(wParam))
-			{
-			case BN_CLICKED:
-				RadioHandler.Stop();
-				RadioHandler.Start(ExtIoGetActualSrateIdx());
 				break;
 			}
 			break;
