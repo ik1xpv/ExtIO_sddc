@@ -78,5 +78,7 @@ extern bool saveADCsamplesflag;
 
 const int transferSize = 131072;
 
+const uint32_t DEFAULT_ADC_FREQ = 64000000;	// ADC sampling frequency
+
 #endif // _CONFIG_H_
 

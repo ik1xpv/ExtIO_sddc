@@ -662,6 +662,29 @@ int  EXTIO_API ExtIoSetSrate(int srate_idx)
 	return 1;	// ERROR
 }
 
+extern "C"
+int SetOverclock(uint32_t adcfreq)
+{
+	RadioHandler.UpdateSampleRate(adcfreq);
+
+	int index = ExtIoGetActualSrateIdx();
+	double rate;
+	while (ExtIoGetSrates(index, &rate) == -1)
+	{
+		index--;
+	}
+	ExtIoSetSrate(index);
+
+	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
+	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
+	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
+
+	RadioHandler.Start(ExtIoGetActualSrateIdx());
+	RadioHandler.TuneLO(glLOfreq);
+
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 // will be called (at least) before exiting application
 extern "C"

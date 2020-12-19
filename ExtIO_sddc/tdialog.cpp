@@ -27,6 +27,7 @@ int  _xfm = 1;
 unsigned int cntime = 0;
 
 extern RadioHandlerClass RadioHandler;
+extern "C" int SetOverclock(uint32_t adcfreq);
 
 void UpdateGain(HWND hControl, int current, const float* gains, int length)
 {
@@ -68,12 +69,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ShowWindow(hWnd, SW_HIDE);
 		return TRUE;
 
-	case WM_PAINT:
-	{
-		return FALSE;
-	}
-	break;
-
 	case WM_INITDIALOG:
 	{
 		//       RegisterHotKey( hWnd, IHK_CR, 0, 0x0D); // no sound on CR
@@ -86,6 +81,10 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 		}
 
+#ifndef _DEBUG
+		ShowWindow(GetDlgItem(hWnd, IDC_ADCSAMPLES), FALSE);
+#endif
+
 		SetTimer(hWnd, 0, 200, NULL);
 	}
 	return TRUE;
@@ -96,11 +95,11 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (cntime-- <= 0)
 		{
 			cntime = 5;
-			sprintf(lbuffer, "%2.9f Msps",  RadioHandler.getSampleRate() / 1000000.0f);
+			sprintf(lbuffer, "%3.1fMsps",  RadioHandler.getSampleRate() / 1000000.0f);
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC13), lbuffer);
-			sprintf(lbuffer, "%6.3f Msps measured", RadioHandler.getBps());
+			sprintf(lbuffer, "%3.1fMsps", RadioHandler.getBps());
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC14), lbuffer);
-			sprintf(lbuffer, "%6.3f Msps measured", RadioHandler.getSpsIF());
+			sprintf(lbuffer, "%3.1fMsps", RadioHandler.getSpsIF());
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC16), lbuffer);
 		}
 
@@ -145,11 +144,13 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case extHw_READY:
 				if (!bSupportDynamicSRate) {
 					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), TRUE);
+					EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), TRUE);
 				}
 				break;
 			case extHw_RUNNING:
 				if (!bSupportDynamicSRate) {
 					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), FALSE);
+					EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), FALSE);
 				}
 				break;
 
@@ -320,6 +321,22 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				ExtIoSetSrate(index);
 				break;
 			}
+		case IDC_OVERCLOCK: // ADC in stream screenshot
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				if (Button_GetCheck(GetDlgItem(hWnd, IDC_OVERCLOCK)) == BST_CHECKED)
+				{
+					SetOverclock(DEFAULT_ADC_FREQ * 2);
+				}
+				else
+				{
+					SetOverclock(DEFAULT_ADC_FREQ);
+				}
+				break;
+			}
+			break;
+
 		case IDC_ADCSAMPLES: // ADC in stream screenshot
 			switch (HIWORD(wParam))
 			{

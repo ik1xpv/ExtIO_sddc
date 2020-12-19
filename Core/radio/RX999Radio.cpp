@@ -24,9 +24,9 @@ RX999Radio::RX999Radio(fx3class *fx3)
     }
 }
 
-void RX999Radio::Initialize()
+void RX999Radio::Initialize(uint32_t adc_rate)
 {
-    uint32_t data = ADC_FREQ;
+    uint32_t data = adc_rate;
     Fx3->Control(STARTADC, data);
 }
 
@@ -104,9 +104,4 @@ bool RX999Radio::UpdateGainIF(int gain_index)
     DbgPrintf("UpdateGainIF %d \n", gain);
 
     return Fx3->SetArgument(AD8340_VGA, gain);
-}
-
-uint32_t RX999Radio::getSampleRate()
-{
-    return ADC_FREQ;
 }
