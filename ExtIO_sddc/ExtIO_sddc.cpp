@@ -162,10 +162,8 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		DbgPrintf("giAttIdxVHF = %d\n", giAttIdxVHF);
 		DbgPrintf("giMgcIdxHF = %d\n", giMgcIdxHF);
 		DbgPrintf("giMgcIdxVHF = %d\n", giMgcIdxVHF);
-		DbgPrintf("gdGainCorr = %2d\n", gdGainCorr_dB);
 		DbgPrintf("glTunefreq = %ld\n", (long int)glTunefreq);
 		DbgPrintf("______________________________________\n");
-		DbgPrintf("freqcorrection = %d\n", gdFreqCorr_ppm);
 		DbgPrintf("adcfixedfreq = %ld\n", (long int)RadioHandler.getSampleRate());
 		DbgPrintf("adcfixedfr/4 = %ld\n", (long int)(RadioHandler.getSampleRate() / 4.0));
 		DbgPrintf("______________________________________\n");
@@ -676,17 +674,15 @@ int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
 	case 0: strcpy(description, "Identifier");	snprintf(value, 1024, "%s", SETTINGS_IDENTIFIER);	return 0;
 	case 1:	strcpy(description, "RadioHWtype");	snprintf(value, 1024, "%d", RadioHandler.getModel());			return 0;
 	case 2:	strcpy(description, "HF_SampleRateIdx");	snprintf(value, 1024, "%d", giExtSrateIdxHF);			return 0;
-	case 3:	strcpy(description, "HF_AttenuationIdx");	snprintf(value, 1024, "%d", giAttIdxHF);			return 0;
-	case 4:	strcpy(description, "HF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxHF);			return 0;
-	case 5:	strcpy(description, "VHF_AttenuationIdx");	snprintf(value, 1024, "%d", giAttIdxVHF);			return 0;
-	case 6:	strcpy(description, "VHF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxVHF);			return 0;
-	case 7:	strcpy(description, "GainCorrection_dB");   snprintf(value, 1024, "%d",gdGainCorr_dB);	return 0;
-	case 8:	strcpy(description, "FreqCorrection_ppm");   snprintf(value, 1024, "%d", gdFreqCorr_ppm);	return 0;
-	case 9:	strcpy(description, "HF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
-	case 10: strcpy(description, "VHF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
-	case 11: strcpy(description, "LoFrequencyHz");   snprintf(value, 1024, "%ld",(unsigned long) glLOfreq); return 0;
-	case 12: strcpy(description, "TuneFrequencyHz");   snprintf(value, 1024, "%ld", (unsigned long) glTunefreq); return 0;
-	case 13:	strcpy(description, "VHF_SampleRateIdx");	snprintf(value, 1024, "%d", giExtSrateIdxVHF);			return 0;
+	case 3: strcpy(description, "VHF_SampleRateIdx");	snprintf(value, 1024, "%d", giExtSrateIdxVHF);			return 0;
+	case 4:	strcpy(description, "HF_AttenuationIdx");	snprintf(value, 1024, "%d", giAttIdxHF);			return 0;
+	case 5:	strcpy(description, "HF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxHF);			return 0;
+	case 6:	strcpy(description, "VHF_AttenuationIdx");	snprintf(value, 1024, "%d", giAttIdxVHF);			return 0;
+	case 7:	strcpy(description, "VHF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxVHF);			return 0;
+	case 8:	strcpy(description, "HF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
+	case 9: strcpy(description, "VHF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
+	case 10: strcpy(description, "LoFrequencyHz");   snprintf(value, 1024, "%ld",(unsigned long) glLOfreq); return 0;
+	case 11: strcpy(description, "TuneFrequencyHz");   snprintf(value, 1024, "%ld", (unsigned long) glTunefreq); return 0;
 	default: return -1;	// ERROR
 	}
 	return -1;	// ERROR
@@ -724,45 +720,30 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 			giExtSrateIdxHF = tempInt;
 		}
 		break;
-	case 13:
+	case 3:
 		tempInt = atoi(value);
 		if (0 == ExtIoGetSrates(tempInt, &newSrate))
 		{
 			giExtSrateIdxVHF = tempInt;
 		}
 		break;
-	case 3:
+	case 4:
 		tempInt = atoi(value);
 		giAttIdxHF = tempInt;
 		break;
-	case 4:
+	case 5:
 		tempInt = atoi(value);
 		giMgcIdxHF = tempInt;
 		break;
-	case 5:
+	case 6:
 		tempInt = atoi(value);
 		giAttIdxVHF = tempInt;
 		break;
-	case 6:
+	case 7:
 		tempInt = atoi(value);
 		giMgcIdxVHF = tempInt;
 		break;
-	case 7:
-		if (sscanf(value, "%d", &tempInt) > 0)
-		{
-			if ((tempInt < 40) && (tempInt > -40))    //    if abs< 40dB
-				gdGainCorr_dB = tempInt;
-		}
-		break;
-	case 8:
-		if (sscanf(value, "%d", &tempInt) > 0)
-		{
-			if ((tempInt < 200) && (tempInt > -200))    //    if abs< 200 ppm
-				gdFreqCorr_ppm = tempInt;
-		}
-		break;
-
-	case 11:
+	case 10:
 		if (sscanf(value, "%ld", &tempulong) > 0)
 		{
 			glLOfreq = (int64_t) tempulong;
@@ -770,8 +751,7 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		else
 			glLOfreq = 2000000;
 		break;
-
-	case 12:
+	case 11:
 		if (sscanf(value, "%ld", &tempulong) > 0)
 		{
 			glTunefreq = (int64_t)tempulong;
