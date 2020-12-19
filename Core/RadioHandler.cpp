@@ -121,6 +121,7 @@ RadioHandlerClass::RadioHandlerClass() :
 	modeRF(NOMODE),
 	firmware(0),
 	fc(0.0f),
+	adcrate(DEFAULT_ADC_FREQ),
 	hardware(new DummyRadio())
 {
 	for (int i = 0; i < QUEUE_SIZE; i++) {
@@ -192,7 +193,7 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 		break;
 	}
 
-	hardware->Initialize();
+	hardware->Initialize(adcrate);
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
 	this->r2iqCntrl = r2iqCntrl;
 	r2iqCntrl->Init(hardware->getGain(), buffers, obuffers);
@@ -255,6 +256,15 @@ bool RadioHandlerClass::Close()
 	hardware = nullptr;
 
 	return true;
+}
+
+bool RadioHandlerClass::UpdateSampleRate(uint32_t samplefreq)
+{
+	hardware->Initialize(samplefreq);
+
+	this->adcrate = samplefreq;
+
+	return 0;
 }
 
 // attenuator RF used in HF
@@ -394,11 +404,6 @@ void RadioHandlerClass::UpdBiasT_VHF(bool flag)
 		hardware->FX3SetGPIO(BIAS_VHF);
 	else
 		hardware->FX3UnsetGPIO(BIAS_VHF);
-}
-
-uint32_t RadioHandlerClass::getSampleRate()
-{
-	return hardware->getSampleRate();
 }
 
 void RadioHandlerClass::uptLed(int led, bool on)

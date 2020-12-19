@@ -24,9 +24,9 @@ BBRF103Radio::BBRF103Radio(fx3class* fx3)
     
 }
 
-void BBRF103Radio::Initialize()
+void BBRF103Radio::Initialize(uint32_t adc_rate)
 {
-    uint32_t data =  getSampleRate();
+    uint32_t data = adc_rate;
     Fx3->Control(STARTADC, data);
 }
 

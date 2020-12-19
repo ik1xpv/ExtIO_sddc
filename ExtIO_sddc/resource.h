@@ -7,6 +7,7 @@
 #define IDB_ICON1                       104
 #define IDB_BITMAP1                     105
 #define IDB_BITMAP2                     106
+#define DIALOGH                         80
 #define IDC_LW                          1001
 #define IDC_HF                          1002
 #define IDC_VHF                         1003
@@ -17,7 +18,7 @@
 #define IDC_BANDWIDTH                   1008
 #define IDC_RAND                        1009
 #define IDC_DITHER                      1010
-#define IDC_CHECK2                      1011
+#define IDC_OVERCLOCK                   1011
 #define IDC_TRACE                       1012
 #define IDC_RFVIRTUAL                   1013
 #define IDC_ADCSAMPLES                  1014
@@ -72,12 +73,6 @@
 #define IDC_PAGE3_END                   40310
 #define IDC_HARDWARETYPE                40400
 #define IDC_STATIC                      -1
-
-#ifdef NDEBUG  // define in processor setup resource !
- #define DIALOGH 95
-#else
- #define DIALOGH 170
-#endif
 
 // Next default values for new objects
 // 

@@ -1,7 +1,5 @@
 #include "RadioHandler.h"
 
-#define DEFAULT_ADC_FREQ  (64000000)	// ADC sampling frequency
-
 bool RadioHardware::FX3SetGPIO(uint32_t mask)
 {
     gpios |= mask;
@@ -23,9 +21,4 @@ RadioHardware::~RadioHardware()
 
         Fx3->Control(RESETFX3);
     }
-}
-
-uint32_t RadioHardware::getSampleRate()
-{
-    return (uint32_t)DEFAULT_ADC_FREQ;
 }

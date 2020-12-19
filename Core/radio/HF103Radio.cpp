@@ -1,6 +1,7 @@
 #include "RadioHandler.h"
 
-void HF103Radio::Initialize()
+HF103Radio::HF103Radio(fx3class* fx3)
+    : RadioHardware(fx3)
 {
     // initialize steps
     for (uint8_t i = 0 ; i < step_size; i++) {
