@@ -18,7 +18,6 @@
 #define IDC_RAND                        1009
 #define IDC_DITHER                      1010
 #define IDC_CHECK2                      1011
-#define IDC_TRACE                       1012
 #define IDC_RFVIRTUAL                   1013
 #define IDC_ADCSAMPLES                  1014
 #define RES_BIN_FIRMWARE                2000

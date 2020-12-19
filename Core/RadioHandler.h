@@ -38,8 +38,6 @@ public:
     bool GetDither () {return dither;}
     bool UptRand (bool b);
     bool GetRand () {return randout;}
-    bool UptsamplesADC(bool flag) { samplesADCflag = flag; return  samplesADCflag; }
-    bool GetADCsamples() { return  samplesADCflag; }
     uint16_t GetFirmware() { return firmware; }
 
     uint32_t getSampleRate();
@@ -59,11 +57,6 @@ public:
 
     void uptLed(int led, bool on);
 
-#ifdef TRACE
-    bool UptTrace( bool trace){ traceflag = trace; return traceflag; }
-    bool GetTrace( ){return traceflag; }
-#endif
-
 private:
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
@@ -80,8 +73,6 @@ private:
     bool randout;
     bool biasT_HF;
     bool biasT_VHF;
-    bool traceflag;
-    bool samplesADCflag;
     uint16_t firmware;
     rf_mode modeRF;
     RadioModel radio;

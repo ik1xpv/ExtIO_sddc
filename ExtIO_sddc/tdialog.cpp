@@ -87,10 +87,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 
 		SetTimer(hWnd, 0, 200, NULL);
-
-#ifndef TRACE
-		ShowWindow(GetDlgItem(hWnd, IDC_TRACE),SW_HIDE);
-#endif
 	}
 	return TRUE;
 
@@ -324,16 +320,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				ExtIoSetSrate(index);
 				break;
 			}
-#ifdef TRACE
-		case IDC_TRACE: // trace
-			switch (HIWORD(wParam))
-			{
-			case BN_CLICKED:
-				RadioHandler.UptTrace(!RadioHandler.GetTrace());
-				break;
-			}
-			break;
-#endif
 		case IDC_ADCSAMPLES: // ADC in stream screenshot
 			switch (HIWORD(wParam))
 			{
