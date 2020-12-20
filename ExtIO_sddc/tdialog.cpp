@@ -52,6 +52,15 @@ void UpdateGain(HWND hControl, int current, const float* gains, int length)
 	SetWindowText(hControl, ebuffer);
 }
 
+bool Support128M()
+{
+	auto model = RadioHandler.getModel();
+
+	return model == RX888 ||
+		model == RX888r2 ||
+		model == RX999;
+}
+
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	HICON hIcon = NULL;
@@ -81,6 +90,8 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 		}
 
+		if (!Support128M())
+			EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), FALSE);
 #ifndef _DEBUG
 		ShowWindow(GetDlgItem(hWnd, IDC_ADCSAMPLES), FALSE);
 #endif
@@ -144,13 +155,15 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case extHw_READY:
 				if (!bSupportDynamicSRate) {
 					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), TRUE);
-					EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), TRUE);
+					if (Support128M())
+						EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), TRUE);
 				}
 				break;
 			case extHw_RUNNING:
 				if (!bSupportDynamicSRate) {
 					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), FALSE);
-					EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), FALSE);
+					if (Support128M())
+						EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), FALSE);
 				}
 				break;
 
