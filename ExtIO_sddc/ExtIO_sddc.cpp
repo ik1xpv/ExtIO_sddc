@@ -390,7 +390,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	}
 
 	rf_mode rfmode = RadioHandler.GetmodeRF();
-	if ((LOfreq > 32000000) && (rfmode != VHFMODE))
+	if ((LOfreq > RadioHandler.getSampleRate()) && (rfmode != VHFMODE))
 	{
 			RadioHandler.UpdatemodeRF(VHFMODE);
 			ExtIoSetMGC(giMgcIdxVHF);
@@ -403,7 +403,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			if (giExtSrateIdxHF != giExtSrateIdxVHF)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 	}
-	if ((LOfreq < 31000000) && (rfmode != HFMODE))
+	else if ((LOfreq <= RadioHandler.getSampleRate()) && (rfmode != HFMODE))
 	{
 			RadioHandler.UpdatemodeRF(HFMODE);
 			ExtIoSetMGC(giMgcIdxHF);
