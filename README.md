@@ -1,5 +1,19 @@
 ## ExtIO_sddc.dll (software digital down converter) - Oscar Steila, ik1xpv
 
+### tag  v1.1RC1 Version "V1.1 RC1" date 20/12/2020
+- Supports 128M ADC sampling rate selectable via the dialog GUI ( Justin Peng and Howard Su )
+- Use of libsddc allows development of Linux support and Soapy integration ( Franco Venturi https://github.com/fventuri/libsdd) 
+- Tune the LO with a 1Hz step everywhere (Hayati Ayguen https://github.com/hayguen/pffft).
+- Move multi thread r2iq to a multithreaded pipeline model to better leverage multi cores. Remove callback in USB (adcsample) thread to HDSDR to make sure we can reach 128Msps.
+- Continuous tuning LW,MW,HF and VHF.
+- Dialog GUI has samplerates and gains settings for use with other SDR applications than HDSDR.
+- Test harmonic R820T tuning is there (Hayati Ayguen https://github.com/librtlsdr/librtlsdr/tree/development)
+- the gain correction is made via  HDSDR -> Options -> Calibration Settings ->S-Meter Calibration.
+
+ So far the known issues:
+- The reference frequency correction via HDSDR -> Options -> Calibration Settings ->LO Frequency Calibration doesn't work correctly. This problem will be addressed in the next release.
+- The 128M adc rate is experimental and must be activated manually in the ExtIO dialog GUI. It works with RX888 hardware that have 60 MHz LPF and requires a quite fast PC.
+
 ### tag  v1.01 Version "V1.01 RC1" date 06/11/2020
 - SDDC_FX3 directory contains ARM sources and GPIFII project to compile sddc_fx3.img
 - Detects the HW type: BBRF103, BBRF103, RX888 at runtime.

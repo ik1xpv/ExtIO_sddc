@@ -267,7 +267,7 @@ int64_t EXTIO_API StartHW64(int64_t LOfreq)
 		uint8_t hb, lb;
 		hb = fw >> 8;
 		lb = (uint8_t) fw;
-		sprintf(ebuffer, "%s v%0.2f  |  FX3 v%d.%02d  |  %s ",SWNAME, VERSION ,hb,lb, RadioHandler.getName() );
+		sprintf(ebuffer, "%s v%0.1f RC1 |  FX3 v%d.%02d  |  %s ",SWNAME, VERSION ,hb,lb, RadioHandler.getName() );
 		SetWindowText(h_dialog, ebuffer);
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_RUNNING);
 	}
