@@ -42,7 +42,10 @@ void UpdateGain(HWND hControl, int current, const float* gains, int length)
 		if (current < 0)
 			current = 0;
 
-		sprintf(ebuffer, "%+d", (int)(gains[current] + 0.5));
+		if (gains[current] >= 0)
+			sprintf(ebuffer, "%+d", (int)(gains[current] + 0.5));
+		else
+			sprintf(ebuffer, "%+d", (int)(gains[current] - 0.5));
 	}
 	else
 	{
@@ -267,7 +270,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 				index += 1;
 
-				if (index > 0 && index < length)
+				if (index >= 0 && index < length)
 					SetAttenuator(index);
 
 				UpdateGain(GetDlgItem(hWnd, IDC_RFGAIN), GetActualAttIdx(), gains, length);
@@ -284,7 +287,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				length = RadioHandler.GetRFAttSteps(&gains);
 
 				index -= 1;
-				if (index > 0 && index < length)
+				if (index >= 0 && index < length)
 					SetAttenuator(index);
 
 				UpdateGain(GetDlgItem(hWnd, IDC_RFGAIN), GetActualAttIdx(), gains, length);
@@ -302,7 +305,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				length = RadioHandler.GetIFGainSteps(&gains);
 
 				index += 1;
-				if (index > 0 && index < length)
+				if (index >= 0 && index < length)
 					ExtIoSetMGC(index);
 
 				UpdateGain(GetDlgItem(hWnd, IDC_IFGAIN), ExtIoGetActualMgcIdx(), gains, length);
@@ -319,7 +322,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				length = RadioHandler.GetIFGainSteps(&gains);
 
 				index -= 1;
-				if (index > 0 && index < length)
+				if (index >= 0 && index < length)
 					ExtIoSetMGC(index);
 
 				UpdateGain(GetDlgItem(hWnd, IDC_IFGAIN), ExtIoGetActualMgcIdx(), gains, length);
