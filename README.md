@@ -47,6 +47,8 @@ Initial version
 > cd build
 > cmake ..
 > cmake --build .
+or
+> cmake --build . --config Release
 ```
 
 * You need to download **32bit version** of fftw library from fftw website http://www.fftw.org/install/windows.html. Copy libfftw3f-3.dll from the downloaded zip package to the same folder of extio DLL.
