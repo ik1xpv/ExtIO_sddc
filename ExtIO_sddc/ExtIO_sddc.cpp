@@ -52,6 +52,9 @@ SplashWindow  splashW;
 
 #define IDD_SDDC_SETTINGS	100
 
+static int SetSrateInternal(int srate_idx, bool internal_call = true);
+
+
 //---------------------------------------------------------------------------
 
 HMODULE hInst;
@@ -390,12 +393,12 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 	}
 
 	rf_mode rfmode = RadioHandler.GetmodeRF();
-	if ((LOfreq > RadioHandler.getSampleRate()) && (rfmode != VHFMODE))
+	if ((LOfreq > RadioHandler.getSampleRate()/2) && (rfmode != VHFMODE))
 	{
 			RadioHandler.UpdatemodeRF(VHFMODE);
 			ExtIoSetMGC(giMgcIdxVHF);
 			SetAttenuator(giAttIdxVHF);
-			ExtIoSetSrate(giExtSrateIdxVHF);
+			SetSrateInternal(giExtSrateIdxVHF);
 
 			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
 			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
@@ -403,12 +406,12 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			if (giExtSrateIdxHF != giExtSrateIdxVHF)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 	}
-	else if ((LOfreq <= RadioHandler.getSampleRate()) && (rfmode != HFMODE))
+	else if ((LOfreq <= RadioHandler.getSampleRate()/2) && (rfmode != HFMODE))
 	{
 			RadioHandler.UpdatemodeRF(HFMODE);
 			ExtIoSetMGC(giMgcIdxHF);
 			SetAttenuator(giAttIdxHF);
-			ExtIoSetSrate(giExtSrateIdxHF);
+			SetSrateInternal(giExtSrateIdxHF);
 
 			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
 			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
@@ -668,24 +671,23 @@ int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 	*samplerate = 1000000.0 * (div * 2);
 	if (*samplerate / RadioHandler.getSampleRate() * 2.0 > 1.1)
 		return -1;
-     DbgPrintf("*ExtIoGetSrate idx %d  %e\n", srate_idx, *samplerate);
+	DbgPrintf("*ExtIoGetSrate idx %d  %e\n", srate_idx, *samplerate);
 	return 0;
 }
 
 extern "C"
 int  EXTIO_API ExtIoGetActualSrateIdx(void)
 {
-    EnterFunction();
+	EnterFunction();
 	if (RadioHandler.GetmodeRF() == VHFMODE)
 		return giExtSrateIdxVHF;
 	else
 		return giExtSrateIdxHF;
 }
 
-extern "C"
-int  EXTIO_API ExtIoSetSrate(int srate_idx)
+static int SetSrateInternal(int srate_idx, bool internal_call)
 {
-    EnterFunction1(srate_idx);
+	EnterFunction1(srate_idx);
 	double newSrate = 0.0;
 
 	if (0 == ExtIoGetSrates(srate_idx, &newSrate))
@@ -695,11 +697,20 @@ int  EXTIO_API ExtIoSetSrate(int srate_idx)
 		else
 			giExtSrateIdxHF = srate_idx;
 
-		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
+		if (!internal_call)
+			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 
 		return 0;
 	}
 	return 1;	// ERROR
+}
+
+
+extern "C"
+int EXTIO_API ExtIoSetSrate(int srate_idx)
+{
+	EnterFunction1(srate_idx);
+	return SetSrateInternal(srate_idx, false);
 }
 
 extern "C"
@@ -713,7 +724,7 @@ int SetOverclock(uint32_t adcfreq)
 	{
 		index--;
 	}
-	ExtIoSetSrate(index);
+	SetSrateInternal(index);
 
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
