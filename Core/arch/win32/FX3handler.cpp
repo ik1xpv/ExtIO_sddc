@@ -10,6 +10,7 @@
 #include <windows.h>
 #include "FX3handler.h"
 #include "./CyAPI/CyAPI.h"
+#include "./CyAPI/cyioctl.h"
 #define RES_BIN_FIRMWARE                2000
 
 
@@ -282,6 +283,7 @@ struct ReadContext
 {
 	PUCHAR context;
 	OVERLAPPED overlap;
+	SINGLE_TRANSFER transfer;
 	uint8_t* buffer;
 	long size;
 };

@@ -2043,7 +2043,7 @@ bool CCyUSBEndPoint::FinishDataXfer(PUCHAR buf, LONG &bufLen, OVERLAPPED *ov, PU
         memcpy(pktInfos, pktPtr, pTransfer->IsoPacketLength);
     }
 
-    delete[] pXmitBuf;     // [] Changed in 1.5.1.3
+//    delete[] pXmitBuf;     // [] Changed in 1.5.1.3
 
     return rResult && (UsbdStatus == 0) && (NtStatus == 0);
 }
@@ -2094,7 +2094,7 @@ PUCHAR CCyUSBEndPoint::BeginDirectXfer(PUCHAR buf, LONG bufLen, OVERLAPPED *ov)
     if ( hDevice == INVALID_HANDLE_VALUE ) return NULL;
 
     int iXmitBufSize = sizeof (SINGLE_TRANSFER);
-    PUCHAR pXmitBuf = new UCHAR[iXmitBufSize];
+    PUCHAR pXmitBuf = (PUCHAR)ov + sizeof(OVERLAPPED);
     ZeroMemory (pXmitBuf, iXmitBufSize);
 
     PSINGLE_TRANSFER pTransfer = (PSINGLE_TRANSFER) pXmitBuf;
