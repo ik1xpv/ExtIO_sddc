@@ -78,6 +78,27 @@ fft_mt_r2iq::fft_mt_r2iq() :
 fft_mt_r2iq::~fft_mt_r2iq()
 {
 	fftwf_export_wisdom_to_filename("wisdom");
+
+	for (int d = 0; d < NDECIDX; d++)
+	{
+		fftwf_free(filterHw[d]);     // 1024
+	}
+	fftwf_free(filterHw);
+
+	for (unsigned t = 0; t < processor_count; t++) {
+		auto th = threadArgs[t];
+		fftwf_free(th->ADCinTime);
+		fftwf_free(th->ADCinFreq);
+		fftwf_free(th->inFreqTmp);
+		fftwf_free(th->outTimeTmp);
+		fftwf_destroy_plan(th->plan_t2f_r2c);
+		for (int d = 0; d < NDECIDX; d++)
+		{
+			fftwf_destroy_plan(th->plans_f2t_c2c[d]);
+		}
+
+		delete threadArgs[t];
+	}
 }
 
 
