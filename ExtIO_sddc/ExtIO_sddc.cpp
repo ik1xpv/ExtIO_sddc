@@ -80,45 +80,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
-std::mutex readyMutex;
-std::condition_variable readyCV;
-std::thread readyThread;
-
-#define READY_QUEUE_SIZE 128
-float* dataQueue[READY_QUEUE_SIZE];
-int read_index;
-int write_index;
-
-void* callbackthread()
-{
-	for(;;)
-	{
-		int index;
-		if (read_index == write_index) {
-			std::unique_lock<std::mutex> lk(readyMutex);
-			readyCV.wait(lk, [] {
-					return read_index != write_index;
-				});
-		}
-
-		index = read_index;
-		read_index++;
-		read_index = read_index % READY_QUEUE_SIZE;
-
-		pfnCallback(EXT_BLOCKLEN, 0, 0.0F, dataQueue[index]);
-	}
-}
-
 static void Callback(float* data, uint32_t len)
 {
 	if (data)
 	{
-		std::unique_lock<std::mutex> lk(readyMutex);
-		dataQueue[write_index] = data;
-		write_index++;
-		write_index = write_index % READY_QUEUE_SIZE;
-
-		readyCV.notify_one();
+		pfnCallback(len, 0, 0.0F, data);
 	}
 	else
 	{
@@ -204,12 +170,6 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		DbgPrintf("adcfixedfreq = %ld\n", (long int)RadioHandler.getSampleRate());
 		DbgPrintf("adcfixedfr/4 = %ld\n", (long int)(RadioHandler.getSampleRate() / 4.0));
 		DbgPrintf("______________________________________\n");
-
-		read_index = write_index = 0;
-		readyThread = std::thread(
-			[](void *){
-				return callbackthread();
-			}, nullptr);
 	}
 
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_READY);
