@@ -1,5 +1,8 @@
 #pragma once
 
+#define FIRMWARE_VER_MAJOR 1
+#define FIRMWARE_VER_MINOR 2
+
 // HF103 commands !!!
 enum FX3Command {
     // Start GPII engine and stream the data from ADC

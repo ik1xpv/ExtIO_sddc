@@ -18,7 +18,5 @@ RadioHardware::~RadioHardware()
 {
     if (Fx3) {
         FX3SetGPIO(SHDWN);
-
-        Fx3->Control(RESETFX3);
     }
 }

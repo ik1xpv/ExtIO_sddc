@@ -39,7 +39,7 @@ CyU3PThread ThreadHandle[APP_THREADS];		// Handles to my Application Threads
 void *StackPtr[APP_THREADS];				// Stack allocated to each thread
 
 uint8_t HWconfig = NORADIO;       // Hardware config type BBRF103
-uint16_t FWconfig = 0x0102;    // Firmware rc1 ver 1.02
+uint16_t FWconfig = FIRMWARE_VER_MAJOR << 16 | FIRMWARE_VER_MINOR;    // Firmware rc1 ver 1.02
 
 CyU3PReturnStatus_t
 ConfGPIOsimpleout( uint8_t gpioid)
