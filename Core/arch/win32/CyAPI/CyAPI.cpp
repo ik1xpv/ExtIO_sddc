@@ -2038,7 +2038,7 @@ bool CCyUSBEndPoint::FinishDataXfer(PUCHAR buf, LONG &bufLen, OVERLAPPED *ov, PU
 
     // If a buffer was provided, pass-back the Isoc packet info records
     if (pktInfos && (bufLen > 0)) {
-        ZeroMemory(pktInfos, pTransfer->IsoPacketLength);
+        //ZeroMemory(pktInfos, pTransfer->IsoPacketLength);
         PUCHAR pktPtr = pXmitBuf + pTransfer->IsoPacketOffset;
         memcpy(pktInfos, pktPtr, pTransfer->IsoPacketLength);
     }
@@ -2056,7 +2056,7 @@ PUCHAR CCyUSBEndPoint::BeginBufferedXfer(PUCHAR buf, LONG bufLen, OVERLAPPED *ov
 
     int iXmitBufSize = sizeof (SINGLE_TRANSFER) + bufLen;
     PUCHAR pXmitBuf = new UCHAR[iXmitBufSize];
-    ZeroMemory (pXmitBuf, iXmitBufSize);
+    ZeroMemory (pXmitBuf, sizeof(SINGLE_TRANSFER));
 
     PSINGLE_TRANSFER pTransfer = (PSINGLE_TRANSFER) pXmitBuf;
     pTransfer->ucEndpointAddress = Address;
@@ -2065,7 +2065,7 @@ PUCHAR CCyUSBEndPoint::BeginBufferedXfer(PUCHAR buf, LONG bufLen, OVERLAPPED *ov
     pTransfer->BufferLength = bufLen;
 
     // Copy buf into pXmitBuf
-    UCHAR *ptr = (PUCHAR) pTransfer + pTransfer->BufferOffset;
+    UCHAR *ptr = (PUCHAR)pXmitBuf + sizeof(SINGLE_TRANSFER);
     memcpy (ptr, buf, bufLen);
 
     DWORD dwReturnBytes;
@@ -2333,7 +2333,7 @@ PUCHAR CCyControlEndPoint::BeginDataXfer(PUCHAR buf, LONG bufLen, OVERLAPPED *ov
 
     int iXmitBufSize = sizeof (SINGLE_TRANSFER) + bufLen;
     UCHAR *pXmitBuf = new UCHAR[iXmitBufSize];
-    ZeroMemory (pXmitBuf, iXmitBufSize);
+    ZeroMemory (pXmitBuf, sizeof(SINGLE_TRANSFER));
 
     // The Control Endpoint has a 1 sec resolution on its timeout
     // But, TimeOut is in milliseconds.
@@ -2411,14 +2411,14 @@ PUCHAR CCyIsocEndPoint::BeginBufferedXfer(PUCHAR buf, LONG bufLen, OVERLAPPED *o
 {
     if ( hDevice == INVALID_HANDLE_VALUE ) return NULL;
 
-	int pkts;
-	if(MaxPktSize)
-		pkts = bufLen / MaxPktSize;       // Number of packets implied by bufLen & pktSize
-	else
-	{
-		pkts = 0;
-		return NULL;
-	}
+    int pkts;
+    if(MaxPktSize)
+        pkts = bufLen / MaxPktSize;       // Number of packets implied by bufLen & pktSize
+    else
+    {
+        pkts = 0;
+        return NULL;
+    }
 
     if (bufLen % MaxPktSize) pkts++;
 
@@ -2426,7 +2426,7 @@ PUCHAR CCyIsocEndPoint::BeginBufferedXfer(PUCHAR buf, LONG bufLen, OVERLAPPED *o
 
     int iXmitBufSize = sizeof (SINGLE_TRANSFER) + (pkts * sizeof(ISO_PACKET_INFO)) + bufLen;
     UCHAR *pXmitBuf = new UCHAR[iXmitBufSize];
-    ZeroMemory (pXmitBuf, iXmitBufSize);
+    ZeroMemory (pXmitBuf, sizeof(SINGLE_TRANSFER) + (pkts * sizeof(ISO_PACKET_INFO)));
 
     PSINGLE_TRANSFER pTransfer = (PSINGLE_TRANSFER) pXmitBuf;
     pTransfer->ucEndpointAddress = Address;
@@ -2466,14 +2466,14 @@ PUCHAR CCyIsocEndPoint::BeginDirectXfer(PUCHAR buf, LONG bufLen, OVERLAPPED *ov)
 {
     if ( hDevice == INVALID_HANDLE_VALUE ) return NULL;
 
-	int pkts;
-	if(MaxPktSize)
-		pkts = bufLen / MaxPktSize;       // Number of packets implied by bufLen & pktSize
-	else
-	{
-		pkts = 0;
-		return NULL;
-	}
+    int pkts;
+    if(MaxPktSize)
+        pkts = bufLen / MaxPktSize;       // Number of packets implied by bufLen & pktSize
+    else
+    {
+        pkts = 0;
+        return NULL;
+    }
 
     if (bufLen % MaxPktSize) pkts++;
 
