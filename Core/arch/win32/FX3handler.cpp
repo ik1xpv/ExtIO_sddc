@@ -29,7 +29,6 @@ fx3handler::fx3handler():
 
 fx3handler::~fx3handler() // reset USB device and exit
 {
-	Control(RESETFX3);
 	DbgPrintf("\r\n~fx3handler\r\n");
 	Close();
 }
@@ -88,16 +87,7 @@ bool  fx3handler::Open(uint8_t* fw_data, uint32_t fw_size) {
 	if (n == 0) return r;					// return if no devices connected
 	if (!GetFx3Device()) return r;          // NO FX3 device connected
 
-	if (!fx3dev->IsBootLoaderRunning()) {   // if not bootloader device
-		Control(RESETFX3);                  // reset the fx3 firmware via CyU3PDeviceReset(false)
-		Sleep(300);							// wait restart
-		fx3dev->Close();					// close fx3dev
-		delete fx3dev;						// delete class
-		Sleep(300);
-		fx3dev = new CCyFX3Device;			// create new fx3dev
-		GetFx3Device();						// open class
-	}
-	FX3_FWDWNLOAD_ERROR_CODE dlf = FAILED;
+	FX3_FWDWNLOAD_ERROR_CODE dlf = SUCCESS;
 	if (fx3dev->IsBootLoaderRunning())
 	{
 		dlf = fx3dev->DownloadFwToRam(fw_data, fw_size);
@@ -149,6 +139,17 @@ bool  fx3handler::Open(uint8_t* fw_data, uint32_t fw_size) {
 	long ppx = transferSize / pktSize;
 	DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
 		, transferSize, pktSize, ppx);
+
+	uint8_t data[4];
+	GetHardwareInfo((uint32_t*)&data);
+
+	if (data[1] != FIRMWARE_VER_MAJOR ||
+		data[2] != FIRMWARE_VER_MINOR)
+	{
+		DbgPrintf("Firmware version mismatch\n");
+		Control(RESETFX3);
+		return false;
+	}
 
 	Fx3IsOn = true;
 	return Fx3IsOn;          // init success
