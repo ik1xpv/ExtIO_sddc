@@ -1,6 +1,6 @@
 ## ExtIO_sddc.dll (software digital down converter) - Oscar Steila, ik1xpv
 
-### tag  v1.1 Version "V1.1" date 29/12/2020
+### tag  v1.1.0 Version "V1.1.0" date 29/12/2020
 - Fix the round of rf/if gains in the UI #109
 - Fix sounds like clipping, on strong stations #120
 - Fix reboot of FX3 #119
