@@ -1,5 +1,13 @@
 ## ExtIO_sddc.dll (software digital down converter) - Oscar Steila, ik1xpv
 
+### tag  v1.1.0 Version "V1.1.0" date 29/12/2020
+- Fix the round of rf/if gains in the UI #109
+- Fix sounds like clipping, on strong stations #120
+- Fix reboot of FX3 #119
+
+ So far the known issues:
+- The reference frequency correction via HDSDR -> Options -> Calibration Settings ->LO Frequency Calibration doesn't work correctly. This problem will be addressed in the next release.
+
 ### tag  v1.1RC1 Version "V1.1 RC1" date 20/12/2020
 - Supports 128M ADC sampling rate selectable via the dialog GUI ( Justin Peng and Howard Su )
 - Use of libsddc allows development of Linux support and Soapy integration ( Franco Venturi https://github.com/fventuri/libsdd) 
