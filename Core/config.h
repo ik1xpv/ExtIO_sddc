@@ -45,14 +45,17 @@ inline void null_func(const char *format, ...) { }
 #endif
 
 #define VERSION             (1.1)	//	Dll version number x.xx
-#define SWVERSION           "1.1.0"	 
+#define SWVERSION           "1.1.1 alfa1"	  
 #define SETTINGS_IDENTIFIER	"sddc_1.04"
 #define SWNAME				"ExtIO_sddc.dll"
 
 #define	QUEUE_SIZE 64
-
-#define FFTN_R_ADC (2048)       // FFTN used for ADC real stream DDC
-
+#define WIDEFFTN  // test FFTN 8192 
+#ifdef WIDEFFTN
+	#define FFTN_R_ADC (8192)       // FFTN used for ADC real stream DDC
+#else
+	#define FFTN_R_ADC (2048)       // FFTN used for ADC real stream DDC
+#endif
 // GAINFACTORS to be adjusted with lab reference source measured with HDSDR Smeter rms mode  
 #define BBRF103_GAINFACTOR (0.000000078F)       // BBRF103
 #define HF103_GAINFACTOR   (0.0000000114F)      // HF103
