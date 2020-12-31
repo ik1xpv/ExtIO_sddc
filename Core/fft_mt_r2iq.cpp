@@ -16,12 +16,22 @@ The name r2iq as Real 2 I+Q stream
 #include "config.h"
 #include "fftw3.h"
 #include "RadioHandler.h"
+
+#ifdef WIDEFFTN
+#include "ht_FIR0.h"
+#include "ht_FIR1.h"
+#include "ht_FIR2.h"
+#include "ht_FIR3.h"
+#include "ht_FIR4.h"
+#include "ht_FIR5.h"
+#else
 #include "ht257_0_0.h"
 #include "ht257_0_7M.h"
 #include "ht257_1_7M.h"
 #include "ht257_3_6M.h"
 #include "ht257_7_5M.h"
-#include "ht257_15_4M.h"
+#include "ht257_15_4M.h" 
+#endif
 
 struct r2iqThreadArg {
 
@@ -81,7 +91,7 @@ fft_mt_r2iq::~fft_mt_r2iq()
 
 	for (int d = 0; d < NDECIDX; d++)
 	{
-		fftwf_free(filterHw[d]);     // 1024
+		fftwf_free(filterHw[d]);     // 4096
 	}
 	fftwf_free(filterHw);
 
@@ -174,11 +184,11 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 
 		   // filters
 		fftwf_complex *pfilterht;       // time filter ht
-		pfilterht = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
+		pfilterht = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // halfFft
 		filterHw = (fftwf_complex**)fftwf_malloc(sizeof(fftwf_complex*)*NDECIDX);
 		for (int d = 0; d < NDECIDX; d++)
 		{
-			filterHw[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // 1024
+			filterHw[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // halfFft
 		}
 
 		for (int t = 0; t < halfFft; t++)
@@ -193,6 +203,9 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 			float* pht;
 			switch (d)
 			{
+			case 5:
+				pht = FIR5;
+				break;
 			case 4:
 				pht = FIR4;
 				break;
@@ -210,10 +223,13 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 				pht = FIR0;
 				break;
 			}
-			for (int t = 0; t < 257; t++)
+			for (int t = 0; t < (halfFft/4+1); t++)
 			{
-				// pfilterht[t][0] = pht[t]/sqrt(2.0);
-				pfilterht[t][0] = pfilterht[t][1] = pht[t] / sqrtf(2.0f);
+#ifdef WIDEFFTN
+				pfilterht[t][0] = pfilterht[t][1] = ( pht[t] / sqrtf(2.0f) ) / 4.0f ;  // gain adj 
+#else
+				pfilterht[t][0] = pfilterht[t][1] = pht[t] / sqrtf(2.0f);  
+#endif
 			}
 
 			fftwf_execute_dft(filterplan_t2f_c2c, pfilterht, filterHw[d]);
