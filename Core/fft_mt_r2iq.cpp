@@ -33,6 +33,8 @@ The name r2iq as Real 2 I+Q stream
 #include "ht257_15_4M.h" 
 #endif
 
+#include <algorithm>
+
 struct r2iqThreadArg {
 
 	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
@@ -333,45 +335,42 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		}
 
 		// decimate in frequency plus tuning
+
+		// Caculate the parameters for the first half
+		auto count = std::min(mfft/2, halfFft - _mtunebin);
+		auto source = &th->ADCinFreq[_mtunebin];
+
+		// Caculate the parameters for the second half
+		auto start = std::max(0, mfft / 2 - _mtunebin);
+		auto source2 = &th->ADCinFreq[_mtunebin - mfft / 2];
+		auto filter2 = &filter[halfFft - mfft / 2];
+		auto dest = &th->inFreqTmp[mfft / 2];
 		for (int k = 0; k < fftPerBuf; k++)
 		{
 			// FFT first stage time to frequency, real to complex
 			fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
 
-			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
+			for (int m = 0; m < count; m++) // circular shift tune fs/2 first half array
 			{
-				int mm = _mtunebin + m;
-				if (mm > halfFft - 1)
-				{
-					th->inFreqTmp[m][0] = th->inFreqTmp[m][1] = 0.0f;
-				}
-				else
-				{
-					th->inFreqTmp[m][0] = (th->ADCinFreq[mm][0] * filter[m][0] +
-										   th->ADCinFreq[mm][1] * filter[m][1]);
+				th->inFreqTmp[m][0] = (source[m][0] * filter[m][0] +
+										source[m][1] * filter[m][1]);
 
-					th->inFreqTmp[m][1] = (th->ADCinFreq[mm][1] * filter[m][0] -
-										   th->ADCinFreq[mm][0] * filter[m][1]);
+				th->inFreqTmp[m][1] = (source[m][1] * filter[m][0] -
+										source[m][0] * filter[m][1]);
 				}
-			}
+			if (mfft/2 != count)
+					memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft/2 - count));
 
-			for (int m = 0; m < mfft / 2; m++) // circular shift tune fs/2 half array
+			for (int m = start; m < mfft / 2; m++) // circular shift tune fs/2 second half array
 			{
-				int fm = halfFft - mfft / 2 + m;
-				int mm = _mtunebin - mfft / 2 + m;
-				if (mm < 0)
-				{
-					th->inFreqTmp[mfft / 2 + m][0] = th->inFreqTmp[mfft / 2 + m][1] = 0.0f;
-				}
-				else
-				{
-					th->inFreqTmp[mfft / 2 + m][0] = (th->ADCinFreq[mm][0] * filter[fm][0] +
-													  th->ADCinFreq[mm][1] * filter[fm][1]);
+				dest[m][0] = (source2[m][0] * filter2[m][0] +
+								source2[m][1] * filter2[m][1]);
 
-					th->inFreqTmp[mfft / 2 + m][1] = (th->ADCinFreq[mm][1] * filter[fm][0] -
-													  th->ADCinFreq[mm][0] * filter[fm][1]);
+				dest[m][1] = (source2[m][1] * filter2[m][0] -
+								source2[m][0] * filter2[m][1]);
 				}
-			}
+			if (start != 0)
+				memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 
 			fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
 
