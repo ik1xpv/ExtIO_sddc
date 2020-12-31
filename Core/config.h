@@ -57,9 +57,10 @@ inline void null_func(const char *format, ...) { }
 	#define FFTN_R_ADC (2048)       // FFTN used for ADC real stream DDC
 #endif
 // GAINFACTORS to be adjusted with lab reference source measured with HDSDR Smeter rms mode  
-#define BBRF103_GAINFACTOR (0.000000078F)       // BBRF103
-#define HF103_GAINFACTOR   (0.0000000114F)      // HF103
-#define RX888_GAINFACTOR   (0.00000000695F)     // RX888
+#define BBRF103_GAINFACTOR 	(7.8e-8f)       // BBRF103
+#define HF103_GAINFACTOR   	(1.14e-8f)      // HF103
+#define RX888_GAINFACTOR   	(0.695e-8f)     // RX888
+#define RX888mk2_GAINFACTOR (1.08e-8f)      // RX888mk2
 
 enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 }; 
 
