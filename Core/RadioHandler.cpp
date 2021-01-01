@@ -369,8 +369,8 @@ void RadioHandlerClass::CaculateStats()
 	auto StartingTime = high_resolution_clock::now();
 
 	while (run) {
-		kbRead += float(BytesXferred) / 1000.0f;
-		kSReadIF += float(SamplesXIF) / 1000.0f;
+		kbRead = float(BytesXferred) / 1000.0f;
+		kSReadIF = float(SamplesXIF) / 1000.0f;
 
 		EndingTime = high_resolution_clock::now();
 
@@ -382,7 +382,8 @@ void RadioHandlerClass::CaculateStats()
 		BytesXferred = 0;
 		SamplesXIF = 0;
 
-		std::this_thread::sleep_for(0.2s);
+		StartingTime = high_resolution_clock::now();
+		std::this_thread::sleep_for(0.5s);
 	}
 	return;
 }
