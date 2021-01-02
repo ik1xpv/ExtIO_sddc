@@ -17,21 +17,7 @@ The name r2iq as Real 2 I+Q stream
 #include "fftw3.h"
 #include "RadioHandler.h"
 
-#ifdef WIDEFFTN
-#include "ht_FIR0.h"
-#include "ht_FIR1.h"
-#include "ht_FIR2.h"
-#include "ht_FIR3.h"
-#include "ht_FIR4.h"
-#include "ht_FIR5.h"
-#else
-#include "ht257_0_0.h"
-#include "ht257_0_7M.h"
-#include "ht257_1_7M.h"
-#include "ht257_3_6M.h"
-#include "ht257_7_5M.h"
-#include "ht257_15_4M.h" 
-#endif
+#include "fir.h"
 
 #include <algorithm>
 
@@ -200,42 +186,44 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 		}
 
 		filterplan_t2f_c2c = fftwf_plan_dft_1d(halfFft, pfilterht, filterHw[0], FFTW_FORWARD, FFTW_MEASURE);
+		float *pht = new float[halfFft / 4 + 1];
 		for (int d = 0; d < NDECIDX; d++)
 		{
-			float* pht;
+			const float stopdb = 120.0f;
 			switch (d)
 			{
 			case 5:
-				pht = FIR5;
+				KaiserWindow(halfFft / 4 + 1, stopdb, 0.8f/64.0f, 1.0f/64.0f, pht);
 				break;
 			case 4:
-				pht = FIR4;
+				KaiserWindow(halfFft / 4 + 1, stopdb, 1.8f/64.0f, 2.0f/64.0f, pht);
 				break;
 			case 3:
-				pht = FIR3;
+				KaiserWindow(halfFft / 4 + 1, stopdb, 3.8f/64.0f, 4.0f/64.0f, pht);
 				break;
 			case 2:
-				pht = FIR2;
+				KaiserWindow(halfFft / 4 + 1, stopdb, 7.8f/64.0f, 8.0f/64.0f, pht);
 				break;
 			case 1:
-				pht = FIR1;
+				KaiserWindow(halfFft / 4 + 1, stopdb, 15.75f/64.0f, 16.0f/64.0f, pht);
 				break;
 			case 0:
 			default:
-				pht = FIR0;
+				KaiserWindow(halfFft / 4 + 1, stopdb, 30.5f/64.0f, 32.0f/64.0f, pht);
 				break;
 			}
 			for (int t = 0; t < (halfFft/4+1); t++)
 			{
 #ifdef WIDEFFTN
-				pfilterht[t][0] = pfilterht[t][1] = ( pht[t] / sqrtf(2.0f) ) / 4.0f ;  // gain adj 
+				pfilterht[t][0] = pfilterht[t][1] = ( pht[t] / sqrtf(2.0f) ) / 4.0f ;  // gain adj
 #else
-				pfilterht[t][0] = pfilterht[t][1] = pht[t] / sqrtf(2.0f);  
+				pfilterht[t][0] = pfilterht[t][1] = pht[t] / sqrtf(2.0f);
 #endif
 			}
 
 			fftwf_execute_dft(filterplan_t2f_c2c, pfilterht, filterHw[d]);
 		}
+		delete[] pht;
 		fftwf_destroy_plan(filterplan_t2f_c2c);
 		fftwf_free(pfilterht);
 
