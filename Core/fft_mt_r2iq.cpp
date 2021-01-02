@@ -186,30 +186,30 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 		}
 
 		filterplan_t2f_c2c = fftwf_plan_dft_1d(halfFft, pfilterht, filterHw[0], FFTW_FORWARD, FFTW_MEASURE);
-		float *pht = new float[halfFft / 2 + 1];
+		float *pht = new float[halfFft / 4 + 1];
 		for (int d = 0; d < NDECIDX; d++)
 		{
 			const float stopdb = 120.0f;
 			switch (d)
 			{
 			case 5:
-				KaiserWindow(halfFft / 2 + 1, stopdb, 0.8f/32.0f, 1.0f/32.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, stopdb, 0.8f/64.0f, 1.0f/64.0f, pht);
 				break;
 			case 4:
-				KaiserWindow(halfFft / 2 + 1, stopdb, 1.8f/32.0f, 2.0f/32.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, stopdb, 1.8f/64.0f, 2.0f/64.0f, pht);
 				break;
 			case 3:
-				KaiserWindow(halfFft / 2 + 1, stopdb, 3.8f/32.0f, 4.0f/32.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, stopdb, 3.8f/64.0f, 4.0f/64.0f, pht);
 				break;
 			case 2:
-				KaiserWindow(halfFft / 2 + 1, stopdb, 7.8f/32.0f, 8.0f/32.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, stopdb, 7.8f/64.0f, 8.0f/64.0f, pht);
 				break;
 			case 1:
-				KaiserWindow(halfFft / 2 + 1, stopdb, 15.75f/32.0f, 16.0f/32.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, stopdb, 15.75f/64.0f, 16.0f/64.0f, pht);
 				break;
 			case 0:
 			default:
-				KaiserWindow(halfFft / 2 + 1, stopdb, 30.5f/32.0f, 32.0f/32.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, stopdb, 30.5f/64.0f, 32.0f/64.0f, pht);
 				break;
 			}
 			for (int t = 0; t < (halfFft/4+1); t++)
