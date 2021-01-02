@@ -51,11 +51,9 @@ inline void null_func(const char *format, ...) { }
 
 #define	QUEUE_SIZE 64
 #define WIDEFFTN  // test FFTN 8192 
-#ifdef WIDEFFTN
-	#define FFTN_R_ADC (8192)       // FFTN used for ADC real stream DDC
-#else
-	#define FFTN_R_ADC (2048)       // FFTN used for ADC real stream DDC
-#endif
+
+#define FFTN_R_ADC (8192)       // FFTN used for ADC real stream DDC  tested at  2048, 8192, 32768, 131072
+
 // GAINFACTORS to be adjusted with lab reference source measured with HDSDR Smeter rms mode  
 #define BBRF103_GAINFACTOR 	(7.8e-8f)       // BBRF103
 #define HF103_GAINFACTOR   	(1.14e-8f)      // HF103
