@@ -189,36 +189,34 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 		float *pht = new float[halfFft / 4 + 1];
 		for (int d = 0; d < NDECIDX; d++)
 		{
-			const float stopdb = 120.0f;
 			switch (d)
 			{
 			case 5:
-				KaiserWindow(halfFft / 4 + 1, stopdb, 0.8f/64.0f, 1.0f/64.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, 80.0f, 0.7f/64.0f, 1.0f/64.0f, pht);
 				break;
 			case 4:
-				KaiserWindow(halfFft / 4 + 1, stopdb, 1.8f/64.0f, 2.0f/64.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, 90.0f, 1.6f/64.0f, 2.0f/64.0f, pht);
 				break;
 			case 3:
-				KaiserWindow(halfFft / 4 + 1, stopdb, 3.8f/64.0f, 4.0f/64.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, 100.0f, 3.6f/64.0f, 4.0f/64.0f, pht);
 				break;
 			case 2:
-				KaiserWindow(halfFft / 4 + 1, stopdb, 7.8f/64.0f, 8.0f/64.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, 110.0f, 7.6f/64.0f, 8.0f/64.0f, pht);
 				break;
 			case 1:
-				KaiserWindow(halfFft / 4 + 1, stopdb, 15.75f/64.0f, 16.0f/64.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, 120.0f, 15.7f/64.0f, 16.0f/64.0f, pht);
 				break;
 			case 0:
 			default:
-				KaiserWindow(halfFft / 4 + 1, stopdb, 30.5f/64.0f, 32.0f/64.0f, pht);
+				KaiserWindow(halfFft / 4 + 1, 120.0f, 30.5f/64.0f, 32.0f/64.0f, pht);
 				break;
 			}
+
+			float gainadj = gain  / sqrtf(2.0f) * 2048.0f / (float)FFTN_R_ADC; // reference is FFTN_R_ADC == 2048
+
 			for (int t = 0; t < (halfFft/4+1); t++)
 			{
-#ifdef WIDEFFTN
-				pfilterht[t][0] = pfilterht[t][1] = ( pht[t] / sqrtf(2.0f) ) / 4.0f ;  // gain adj
-#else
-				pfilterht[t][0] = pfilterht[t][1] = pht[t] / sqrtf(2.0f);
-#endif
+				pfilterht[t][0] = pfilterht[t][1] = gainadj * pht[t];  
 			}
 
 			fftwf_execute_dft(filterplan_t2f_c2c, pfilterht, filterHw[d]);
@@ -259,21 +257,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		float *endloop;           // pointer to end data to be copied to beginning
 		float * pout;
 
-		float iscale = this->GainScale;
-		float qscale;
 		int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
-
-		// TODO: Change this to sideband check
-		if (lsb) {
-			// Low sideband
-			qscale = -iscale;
-		}
-		else
-		{
-			// Upper sideband
-			// upconverter or Direct converter
-			qscale = iscale;
-		}
 
 		{
 			int wakecnt = 0;
@@ -362,22 +346,46 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 			fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
 
-			if (k == 0)
+			if (lsb) // lower sideband
 			{
-				auto pTimeTmp = th->outTimeTmp[mfft / 4];
-				for (int i = 0; i < mfft / 2; i++)
+				if (k == 0)
 				{
-					*pout++ = iscale * (*pTimeTmp++);
-					*pout++ = qscale * (*pTimeTmp++);
+					auto pTimeTmp = th->outTimeTmp[mfft / 4];
+					for (int i = 0; i < mfft / 2; i++)
+					{
+						*pout++ = *pTimeTmp++;
+						*pout++ = -*pTimeTmp++;
+					}
+				}
+				else
+				{
+					auto pTimeTmp = th->outTimeTmp[0];
+					for (int i = 0; i < 3 * mfft / 4; i++)
+					{
+						*pout++ = *pTimeTmp++;
+						*pout++ = -*pTimeTmp++;
+					}
 				}
 			}
-			else
+			else // upper sideband
 			{
-				auto pTimeTmp = th->outTimeTmp[0];
-				for (int i = 0; i < 3 * mfft / 4; i++)
+				if (k == 0)
 				{
-					*pout++ = iscale * (*pTimeTmp++);
-					*pout++ = qscale * (*pTimeTmp++);
+					auto pTimeTmp = th->outTimeTmp[mfft / 4];
+					for (int i = 0; i < mfft / 2; i++)
+					{
+						*pout++ = *pTimeTmp++;
+						*pout++ = *pTimeTmp++;
+					}
+				}
+				else
+				{
+					auto pTimeTmp = th->outTimeTmp[0];
+					for (int i = 0; i < 3 * mfft / 4; i++)
+					{
+						*pout++ = *pTimeTmp++;
+						*pout++ = *pTimeTmp++;
+					}
 				}
 			}
 		}
