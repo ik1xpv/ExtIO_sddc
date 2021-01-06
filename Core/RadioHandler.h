@@ -207,8 +207,10 @@ public:
     int getIFSteps(const float** steps ) override;
 
 private:
-    static const int if_step_size = 127;
+    static const int  rf_step_size = 64;
+    static const int  if_step_size = 127;
 
+    float  rf_steps[rf_step_size];
     float  if_steps[if_step_size];
 };
 

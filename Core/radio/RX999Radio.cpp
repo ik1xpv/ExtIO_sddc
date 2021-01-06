@@ -6,21 +6,30 @@
 #define HIGH_MODE 0x80
 #define LOW_MODE 0x00
 
-#define MODE HIGH_MODE
+#define GAIN_SWEET_POINT 18
+#define HIGH_GAIN_RATIO (0.409f)
+#define LOW_GAIN_RATIO (0.059f)
 
 RX999Radio::RX999Radio(fx3class *fx3)
     : RadioHardware(fx3)
 {
-    // high mode gain = 0.409, start=-30
-    // low mode gain = 0.059, start = -30
-#if (MODE == HIGH_MODE)
-    float ratio = 0.409f;
-#else
-    float ratio = 0.059f;
-#endif
+    for (uint8_t i = 0; i < rf_step_size; i++)
+    {
+        this->rf_steps[rf_step_size - i - 1] = -(
+            ((i & 0x01) != 0) * 0.5f +
+            ((i & 0x02) != 0) * 1.0f +
+            ((i & 0x04) != 0) * 2.0f +
+            ((i & 0x08) != 0) * 4.0f +
+            ((i & 0x010) != 0) * 8.0f +
+            ((i & 0x020) != 0) * 16.0f);
+    }
+
     for (uint8_t i = 0; i < if_step_size; i++)
     {
-        this->if_steps[i] = -30.0f + ratio * (i + 1);
+        if (i > GAIN_SWEET_POINT)
+            this->if_steps[i] = 20.0f * log10f(HIGH_GAIN_RATIO * (i - GAIN_SWEET_POINT + 3));
+        else
+            this->if_steps[i] = 20.0f * log10f(LOW_GAIN_RATIO * (i + 1));
     }
 }
 
@@ -60,7 +69,16 @@ bool RX999Radio::UpdatemodeRF(rf_mode mode)
 
 bool RX999Radio::UpdateattRF(int att)
 {
-    return false;
+    // hf mode
+    if (att > rf_step_size - 1)
+        att = rf_step_size - 1;
+    if (att < 0)
+        att = 0;
+    uint8_t d = rf_step_size - att - 1;
+
+    DbgPrintf("UpdateattRF %f \n", this->rf_steps[att]);
+
+    return Fx3->SetArgument(DAT31_ATT, d);
 }
 
 uint64_t RX999Radio::TuneLo(uint64_t freq)
@@ -93,7 +111,8 @@ uint64_t RX999Radio::TuneLo(uint64_t freq)
 
 int RX999Radio::getRFSteps(const float **steps)
 {
-    return 0;
+    *steps = this->rf_steps;
+    return rf_step_size;
 }
 
 int RX999Radio::getIFSteps(const float **steps)
@@ -104,7 +123,12 @@ int RX999Radio::getIFSteps(const float **steps)
 
 bool RX999Radio::UpdateGainIF(int gain_index)
 {
-    uint8_t gain = MODE | (gain_index + 1);
+    // this is in HF mode
+    uint8_t gain;
+    if (gain_index > GAIN_SWEET_POINT)
+        gain = HIGH_MODE | (gain_index - GAIN_SWEET_POINT + 3);
+    else
+        gain = LOW_MODE | (gain_index + 1);
 
     DbgPrintf("UpdateGainIF %d \n", gain);
 
