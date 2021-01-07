@@ -40,7 +40,7 @@ TEST_CASE(FreqConverterFixture, BasicTest)
 
 TEST_CASE(FreqConverterFixture, ThreadsTest)
 {
-    auto input = ringbuffer<float>(12);
+    auto input = ringbuffer<float>(24);
 
     FreqConverter r2c(&input);
     auto c2c = FreqBackConverter(r2c.getOutput());
@@ -50,7 +50,7 @@ TEST_CASE(FreqConverterFixture, ThreadsTest)
     c2c.start();
 
     const int wcount = 2;
-    const int rcount = 1 * (transferSize / 2 / FFTN_R_ADC / 4);
+    const int rcount = 2 * (transferSize / 2 / FFTN_R_ADC / 4);
 
     auto thread1 = std::thread([&input, wcount] {
         for (int i = 0; i < wcount; i++) {
