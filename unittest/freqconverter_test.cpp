@@ -60,7 +60,7 @@ TEST_CASE(FreqConverterFixture, ThreadsTest)
         }
     });
 
-    auto timeoutput = r2c.getOutput();
+    auto timeoutput = c2c.getOutput();
     auto thread2 = std::thread([&timeoutput, rcount, this] {
         for (int j = 0; j < rcount ; j++) {
             auto *ptr = timeoutput->getReadPtr();

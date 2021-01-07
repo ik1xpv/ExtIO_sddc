@@ -71,3 +71,51 @@ TEST_CASE(FreqShifterFixture, End2EndTest)
     printf("buffer3 write:%d full:%d empty:%d\n", shiftoutput->getWriteCount(), shiftoutput->getFullCount(), shiftoutput->getEmptyCount());
     printf("buffer4 write:%d full:%d empty:%d\n", timeoutput->getWriteCount(), timeoutput->getFullCount(), timeoutput->getEmptyCount());
 }
+
+TEST_CASE(FreqShifterFixture, StopTest)
+{
+    bool run = true;
+    auto input = ringbuffer<int16_t>(8);
+
+    converter conv(&input);
+    FreqConverter r2c(conv.getOutput());
+    FreqShifter shifter(r2c.getOutput());
+    FreqBackConverter c2c(shifter.getOutput());
+
+    input.setBlockSize(transferSize / sizeof(int16_t));
+
+    conv.start();
+    r2c.start();
+    shifter.start();
+    c2c.start();
+
+    int count = 5 * 1024;
+    auto thread1 = std::thread([&input, &run, count] {
+        while(run) {
+            auto *ptr = input.getWritePtr();
+            ptr[0] = 0x55;
+            input.WriteDone();
+            std::this_thread::sleep_for(15ms);
+        }
+    });
+
+    auto timeoutput = c2c.getOutput();
+    auto thread2 = std::thread([&timeoutput, &run, count, this] {
+        while(run) {
+            auto *ptr = timeoutput->getReadPtr();
+            timeoutput->ReadDone();
+        }
+    });
+
+    std::this_thread::sleep_for(1s);
+
+    run = false;
+
+    c2c.stop();
+    shifter.stop();
+    r2c.stop();
+    conv.stop();
+
+    thread1.join();
+    thread2.join();
+}
