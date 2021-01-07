@@ -2,28 +2,40 @@ LIBRARY
 
 EXPORTS
 	InitHW
-	StartHW64
-	OpenHW
+
 	StartHW
+	StartHW64
+	StartHWdbl
+
+	OpenHW
 	StopHW
 	CloseHW
 	SwitchGUI
 	ShowGUI
 	HideGUI
+
 	SetHWLO
 	SetHWLO64
+	SetHWLOdbl
+
 	GetStatus
 	SetCallback
 
 	GetHWLO
 	GetHWLO64
+	GetHWLOdbl
+
 	GetHWSR
+	GetHWSRdbl
 
-	GetTune
+	;GetTune
+	;GetTune64
+	;GetTunedbl
 
-	TuneChanged
-	TuneChanged64
-	GetTune64
+	;TuneChanged
+	;TuneChanged64
+	;TuneChangeddbl
+
 	VersionInfo
 
 	GetAttenuators
@@ -31,6 +43,7 @@ EXPORTS
 	SetAttenuator
 
 	ExtIoGetSrates
+	ExtIoSrateSelText
 	ExtIoGetActualSrateIdx
 	ExtIoSetSrate
 

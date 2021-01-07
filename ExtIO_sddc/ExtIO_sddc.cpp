@@ -17,6 +17,8 @@
 
 #define   snprintf	_snprintf
 
+#define DEFAULT_TUNE_FREQ	999000.0	/* Turin MW broadcast ! */
+
 static bool SDR_settings_valid = false;		// assume settings are for some other ExtIO
 static char SDR_progname[32 + 1] = "\0";
 static int  SDR_ver_major = -1;
@@ -27,8 +29,11 @@ int  giExtSrateIdxHF = 4;
 
 bool bSupportDynamicSRate;
 
-int64_t	glLOfreq = 2000000;
-int64_t	glTunefreq = 999000;	// Turin MW broadcast !
+double	gfLOfreq = 2000000.0;
+#if EXPORT_EXTIO_TUNE_FUNCTIONS
+double	gfTunefreq = DEFAULT_TUNE_FREQ;
+#endif
+double	gfFreqCorrectionPpm = 0.0;
 
 bool	gbInitHW = false;
 int		giAttIdxHF = 0;
@@ -53,6 +58,12 @@ SplashWindow  splashW;
 #define IDD_SDDC_SETTINGS	100
 
 static int SetSrateInternal(int srate_idx, bool internal_call = true);
+
+static inline
+double FreqCorrectionFactor()
+{
+	return 1.0 + gfFreqCorrectionPpm / 1E6;
+}
 
 
 //---------------------------------------------------------------------------
@@ -165,7 +176,9 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		DbgPrintf("giAttIdxVHF = %d\n", giAttIdxVHF);
 		DbgPrintf("giMgcIdxHF = %d\n", giMgcIdxHF);
 		DbgPrintf("giMgcIdxVHF = %d\n", giMgcIdxVHF);
-		DbgPrintf("glTunefreq = %ld\n", (long int)glTunefreq);
+#if EXPORT_EXTIO_TUNE_FUNCTIONS
+		DbgPrintf("gfTunefreq = %lf\n", gfTunefreq);
+#endif
 		DbgPrintf("______________________________________\n");
 		DbgPrintf("adcfixedfreq = %ld\n", (long int)RadioHandler.getSampleRate());
 		DbgPrintf("adcfixedfr/4 = %ld\n", (long int)(RadioHandler.getSampleRate() / 4.0));
@@ -207,21 +220,30 @@ bool EXTIO_API OpenHW(void)
 extern "C"
 int  EXTIO_API StartHW(long LOfreq)
 {
-    EnterFunction();
-	int64_t ret = StartHW64((int64_t)LOfreq);
-	return (int)ret;
+	EnterFunction();
+	int ret = StartHWdbl((double)LOfreq);
+	return ret;
 }
 
 //---------------------------------------------------------------------------
 extern "C"
-int64_t EXTIO_API StartHW64(int64_t LOfreq)
+int EXTIO_API StartHW64(int64_t LOfreq)
+{
+	EnterFunction();
+	int ret = StartHWdbl((double)LOfreq);
+	return ret;
+}
+
+//---------------------------------------------------------------------------
+extern "C"
+int EXTIO_API StartHWdbl(double LOfreq)
 {
 	EnterFunction1((int) LOfreq);
 	if (!gbInitHW)
 		return 0;
 
 	RadioHandler.Start(ExtIoGetActualSrateIdx());
-	SetHWLO64(LOfreq);
+	SetHWLOdbl(LOfreq);
 
 	if (RadioHandler.IsReady()) //  HF103 connected
 	{
@@ -333,22 +355,34 @@ extern "C"
 int  EXTIO_API SetHWLO(long LOfreq)
 {
 	EnterFunction();
-	int64_t ret = SetHWLO64((int64_t)LOfreq);
+	double retDbl = SetHWLOdbl((double)LOfreq);
+	int64_t ret = (int64_t)retDbl;
 	return (ret & 0xFFFFFFFF);
 }
 
 extern "C"
 int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 {
+	EnterFunction();
+	double retDbl = SetHWLOdbl((double)LOfreq);
+	int64_t ret = (int64_t)retDbl;
+	return (ret & 0xFFFFFFFF);
+}
+
+extern "C"
+double EXTIO_API SetHWLOdbl(double LOfreq)
+{
 	EnterFunction1((int) LOfreq );
 	// ..... set here the LO frequency in the controlled hardware
 	// Set here the frequency of the controlled hardware to LOfreq
-	const int64_t wishedLO = LOfreq;
-	int64_t ret = 0;
+	const double wishedLO = LOfreq;
+	double ret = 0;
 
 	if (RadioHandler.getModel() == HF103) // HF frequency limits
 	{
-		if (glTunefreq > HF_HIGH) glTunefreq = HF_HIGH;
+#if EXPORT_EXTIO_TUNE_FUNCTIONS
+		if (gfTunefreq > HF_HIGH) gfTunefreq = HF_HIGH;
+#endif
 		if (LOfreq > HF_HIGH - 1000000) LOfreq = (HF_HIGH) - 1000000;
 	}
 
@@ -358,7 +392,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			RadioHandler.UpdatemodeRF(VHFMODE);
 			ExtIoSetMGC(giMgcIdxVHF);
 			SetAttenuator(giAttIdxVHF);
-			SetSrateInternal(giExtSrateIdxVHF);
+			SetSrateInternal(giExtSrateIdxVHF, false);
 
 			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
 			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
@@ -371,7 +405,7 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 			RadioHandler.UpdatemodeRF(HFMODE);
 			ExtIoSetMGC(giMgcIdxHF);
 			SetAttenuator(giAttIdxHF);
-			SetSrateInternal(giExtSrateIdxHF);
+			SetSrateInternal(giExtSrateIdxHF, false);
 
 			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
 			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_RF_IF);
@@ -380,12 +414,13 @@ int64_t EXTIO_API SetHWLO64(int64_t LOfreq)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 	}
 
-	LOfreq = RadioHandler.TuneLO(LOfreq);
+	double internal_LOfreq = LOfreq / FreqCorrectionFactor();
+	internal_LOfreq = RadioHandler.TuneLO(internal_LOfreq);
+	gfLOfreq = LOfreq = internal_LOfreq * FreqCorrectionFactor();
 	if (wishedLO != LOfreq)
 	{
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_LO);
 	}
-	glLOfreq = LOfreq;
 
 	// 0 The function did complete without errors.
 	// < 0 (a negative number N)
@@ -421,72 +456,106 @@ void EXTIO_API SetCallback(pfnExtIOCallback funcptr)
 extern "C"
 long EXTIO_API GetHWLO(void)
 {
-    EnterFunction();
-
-	return (long)(glLOfreq & 0xFFFFFFFF);
+	EnterFunction();
+	int64_t ret = (int64_t)gfLOfreq;
+	return (long)(ret & 0xFFFFFFFF);
 }
 
 extern "C"
 int64_t EXTIO_API GetHWLO64(void)
 {
-	EnterFunction1((int) glLOfreq);
-	return glLOfreq;
+	int64_t ret = (int64_t)gfLOfreq;
+	EnterFunction1((int) ret);
+	return ret;
+}
+
+extern "C"
+double EXTIO_API GetHWLOdbl(void)
+{
+	double ret = gfLOfreq;
+	EnterFunction1((int)ret);
+	return gfLOfreq;
 }
 
 //---------------------------------------------------------------------------
 extern "C"
 long EXTIO_API GetHWSR(void)
 {
-    EnterFunction();
-
-	double newSrate;
-	int srate;
-	long sampleRate;
-	if (RadioHandler.GetmodeRF() == VHFMODE)
-		srate = giExtSrateIdxVHF;
-	else
-		srate = giExtSrateIdxHF;
-
-	if (0 == ExtIoGetSrates(srate, &newSrate))
-	{
-		sampleRate = (unsigned)(newSrate + 0.5);
-	}
-	return sampleRate;
-
+	double srate = GetHWSRdbl();
+	return (long)srate;
 }
 
+extern "C"
+double EXTIO_API GetHWSRdbl(void)
+{
+	EnterFunction();
+	double newSrate = 1E6;
+	int srateIdx;
+	if (RadioHandler.GetmodeRF() == VHFMODE)
+		srateIdx = giExtSrateIdxVHF;
+	else
+		srateIdx = giExtSrateIdxHF;
+
+	if (0 != ExtIoGetSrates(srateIdx, &newSrate))
+		newSrate = 2E6;  // fallback
+	return newSrate;
+}
 
 //---------------------------------------------------------------------------
-extern "C" 
+
+#if EXPORT_EXTIO_TUNE_FUNCTIONS
+
+extern "C"
 long EXTIO_API GetTune(void)
 {
-	return  (long) GetTune64();
+	int64_t ret = (int64_t)gfTunefreq;
+	return (long)(ret & 0xFFFFFFFF);
 }
 
-// extern "C" void EXTIO_API GetFilters(int& loCut, int& hiCut, int& pitch);
-// extern "C" char EXTIO_API GetMode(void);
-// extern "C" void EXTIO_API ModeChanged(char mode);
-// extern "C" void EXTIO_API IFLimitsChanged(long low, long high);
-extern "C" 
+extern "C"
+int64_t EXTIO_API GetTune64(void)
+{
+	int64_t ret = (int64_t)gfTunefreq;
+	return ret;
+}
+
+extern "C"
+double EXTIO_API GetTunedbl(void)
+{
+	int64_t ret = (int64_t)gfTunefreq;
+	EnterFunction1((int)ret);
+	return gfTunefreq;
+}
+
+extern "C"
 void    EXTIO_API TuneChanged(long freq)
 { 
 	TuneChanged64(freq);
 }
-extern "C" 
+
+extern "C"
 void    EXTIO_API TuneChanged64(int64_t freq)
 {
 	EnterFunction1((int)freq);
-	glTunefreq = freq;
+	gfTunefreq = (double)freq;
 }
-extern "C" int64_t EXTIO_API GetTune64(void)
+
+extern "C"
+void    EXTIO_API TuneChangeddbl(double freq)
 {
-    EnterFunction1((int) glTunefreq);
-	return glTunefreq;
+	int64_t t = (int64_t)freq;
+	EnterFunction1((int)t);
+	gfTunefreq = freq;
 }
-// extern "C" void    EXTIO_API IFLimitsChanged64(int64_t low, int64_t high);
+
+#endif
 
 //---------------------------------------------------------------------------
-
+// extern "C" void EXTIO_API GetFilters(int& loCut, int& hiCut, int& pitch);
+// extern "C" char EXTIO_API GetMode(void);
+// extern "C" void EXTIO_API ModeChanged(char mode);
+// extern "C" void EXTIO_API IFLimitsChanged(long low, long high);
+// extern "C" void    EXTIO_API IFLimitsChanged64(int64_t low, int64_t high);
 // extern "C" void EXTIO_API RawDataReady(long samplerate, int *Ldata, int *Rdata, int numsamples)
 
 //---------------------------------------------------------------------------
@@ -628,11 +697,25 @@ int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 {
 	EnterFunction1(srate_idx);
 	double div = pow(2.0, srate_idx);
-	*samplerate = 1000000.0 * (div * 2);
-	if (*samplerate / RadioHandler.getSampleRate() * 2.0 > 1.1)
+	double srate = 1000000.0 * (div * 2.0);
+	if (srate / RadioHandler.getSampleRate() * 2.0 > 1.1)
 		return -1;
+	*samplerate = srate * FreqCorrectionFactor();
 	DbgPrintf("*ExtIoGetSrate idx %d  %e\n", srate_idx, *samplerate);
 	return 0;
+}
+
+extern "C"
+int EXTIO_API ExtIoSrateSelText(int srate_idx, char* text)
+{
+	EnterFunction1(srate_idx);
+	double div = pow(2.0, srate_idx);
+	double srateM = div * 2.0;
+	double srate = 1000000.0 * srateM;
+	if (srate / RadioHandler.getSampleRate() * 2.0 > 1.1)
+		return -1;
+	snprintf(text, 15, "%.0lf MHz", srateM);
+	return 0;	// return != 0 on error
 }
 
 extern "C"
@@ -657,7 +740,7 @@ static int SetSrateInternal(int srate_idx, bool internal_call)
 		else
 			giExtSrateIdxHF = srate_idx;
 
-		if (!internal_call)
+		if (internal_call)
 			EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 
 		return 0;
@@ -691,8 +774,8 @@ int SetOverclock(uint32_t adcfreq)
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
 
 	RadioHandler.Start(ExtIoGetActualSrateIdx());
-	RadioHandler.TuneLO(glLOfreq);
-
+	double internal_LOfreq = gfLOfreq / FreqCorrectionFactor();
+	RadioHandler.TuneLO(internal_LOfreq);
 	return 0;
 }
 
@@ -715,8 +798,13 @@ int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
 	case 7:	strcpy(description, "VHF_VGAIdx");	snprintf(value, 1024, "%d", giMgcIdxVHF);			return 0;
 	case 8:	strcpy(description, "HF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
 	case 9: strcpy(description, "VHF_Bias");   snprintf(value, 1024, "%d", 0);		return 0;
-	case 10: strcpy(description, "LoFrequencyHz");   snprintf(value, 1024, "%ld",(unsigned long) glLOfreq); return 0;
-	case 11: strcpy(description, "TuneFrequencyHz");   snprintf(value, 1024, "%ld", (unsigned long) glTunefreq); return 0;
+	case 10: strcpy(description, "LoFrequencyHz");   snprintf(value, 1024, "%lf", gfLOfreq); return 0;
+#if EXPORT_EXTIO_TUNE_FUNCTIONS
+	case 11: strcpy(description, "TuneFrequencyHz");   snprintf(value, 1024, "%lf", gfTunefreq); return 0;
+#else
+	case 11: strcpy(description, "TuneFrequencyHz");   snprintf(value, 1024, "%lf", DEFAULT_TUNE_FREQ); return 0;
+#endif
+	case 12: strcpy(description, "Correction_ppm");   snprintf(value, 1024, "%lf", gfFreqCorrectionPpm); return 0;
 	default: return -1;	// ERROR
 	}
 	return -1;	// ERROR
@@ -729,9 +817,9 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
     EnterFunction();
 
 	double newSrate;
+	double tempDbl;
 	float  newAtten = 0.0F;
 	int tempInt;
-	unsigned long tempulong;
 
 	// now we know that there's no need to save our settings into some (.ini) file,
 	// what won't be possible without admin rights!!!,
@@ -778,23 +866,24 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		giMgcIdxVHF = tempInt;
 		break;
 	case 10:
-		if (sscanf(value, "%ld", &tempulong) > 0)
-		{
-			glLOfreq = (int64_t) tempulong;
-		}
-		else
-			glLOfreq = 2000000;
+		gfLOfreq = 2000000.0;
+		if (sscanf(value, "%lf", &tempDbl) > 0)
+			gfLOfreq = tempDbl;
 		break;
 	case 11:
-		if (sscanf(value, "%ld", &tempulong) > 0)
-		{
-			glTunefreq = (int64_t)tempulong;
-		}
-		else
-			glTunefreq = 999000; //default
+#if EXPORT_EXTIO_TUNE_FUNCTIONS
+		gfTunefreq = 999000.0; // default
+		if (sscanf(value, "%lf", &tempDbl) > 0)
+			gfTunefreq = tempDbl;
+#endif
 		break;
-
-	  break;
+	case 12:
+		gfFreqCorrectionPpm = 0.0;
+		if (sscanf(value, "%lf", &tempDbl) > 0)
+			gfFreqCorrectionPpm = tempDbl;
+		break;
+	default:
+		break;
 	}
 
 }
