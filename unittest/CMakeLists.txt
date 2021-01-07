@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
 
-include(CTest)
-
 file(GLOB UNITTESTS "./*.cpp")
 
 add_executable(unittest ${UNITTESTS})
