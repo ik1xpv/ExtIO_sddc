@@ -89,8 +89,7 @@ TEST_CASE(FreqShifterFixture, StopTest)
     shifter.start();
     c2c.start();
 
-    int count = 5 * 1024;
-    auto thread1 = std::thread([&input, &run, count] {
+    auto thread1 = std::thread([&input, &run] {
         while(run) {
             auto *ptr = input.getWritePtr();
             ptr[0] = 0x55;
@@ -100,14 +99,14 @@ TEST_CASE(FreqShifterFixture, StopTest)
     });
 
     auto timeoutput = c2c.getOutput();
-    auto thread2 = std::thread([&timeoutput, &run, count, this] {
+    auto thread2 = std::thread([&timeoutput, &run, this] {
         while(run) {
             auto *ptr = timeoutput->getReadPtr();
             timeoutput->ReadDone();
         }
     });
 
-    std::this_thread::sleep_for(1s);
+    std::this_thread::sleep_for(3s);
 
     run = false;
 

@@ -31,6 +31,8 @@ public:
     void stop() {
         run = false;
         input->Stop();
+        if (output)
+            output->Stop();
         thread.join();
     }
 
