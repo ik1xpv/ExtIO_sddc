@@ -71,7 +71,7 @@ typedef struct streaming {
 
 
 static const uint32_t DEFAULT_SAMPLE_RATE = 64000000;   /* 64Msps */
-static const uint32_t DEFAULT_FRAME_SIZE = (2 * DEFAULT_SAMPLE_RATE / 1000);  /* ~ 1 ms */
+static const uint32_t DEFAULT_FRAME_SIZE = (2 * 64000000 / 1000);  /* ~ 1 ms */
 static const uint32_t DEFAULT_NUM_FRAMES = 96;  /* we should not exceed 120 ms in total! */
 const unsigned int BULK_XFER_TIMEOUT = 5000; // timeout (in ms) for each bulk transfer
 

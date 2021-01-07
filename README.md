@@ -1,5 +1,7 @@
 ## ExtIO_sddc.dll (software digital down converter) - Oscar Steila, ik1xpv
 
+![CMake](https://github.com/ik1xpv/ExtIO_sddc/workflows/CMake/badge.svg)
+
 ### tag  v1.1.0 Version "V1.1.0" date 29/12/2020
 - Fix the round of rf/if gains in the UI #109
 - Fix sounds like clipping, on strong stations #120

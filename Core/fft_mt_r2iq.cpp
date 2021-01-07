@@ -19,6 +19,7 @@ The name r2iq as Real 2 I+Q stream
 
 #include "fir.h"
 
+#include <string.h>
 #include <algorithm>
 
 struct r2iqThreadArg {
