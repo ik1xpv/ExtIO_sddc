@@ -31,7 +31,6 @@ protected:
     {
         auto src0 = input->getReadPtr();
         int inputsize = input->getBlockSize();
-        int offset = 0;
 
         // first block
         // copy src0

@@ -89,7 +89,8 @@ sddc_t *sddc_open(int index, const char* imagefile)
     res_size = ftell(fp);
     res_data = (unsigned char*)malloc(res_size);
     fseek(fp, 0, SEEK_SET);
-    fread(res_data, 1, res_size, fp);
+    if (fread(res_data, 1, res_size, fp) != res_size)
+        return nullptr;
 
     fx3->Open(res_data, res_size);
 
@@ -130,9 +131,9 @@ enum SDDCHWModel sddc_get_hw_model(sddc_t *t)
             return HW_RX888R2;
         case RadioModel::RX999:
             return HW_RX999;
+        default:    
+            return HW_NORADIO;
     }
-
-    return HW_NORADIO;
 }
 
 const char *sddc_get_hw_model_name(sddc_t *t)
@@ -158,9 +159,9 @@ enum RFMode sddc_get_rf_mode(sddc_t *t)
             return RFMode::HF_MODE;
         case VHFMODE:
             return RFMode::VHF_MODE;
+        default:
+            return RFMode::NO_RF_MODE;
     }
-
-    return RFMode::NO_RF_MODE;
 }
 
 int sddc_set_rf_mode(sddc_t *t, enum RFMode rf_mode)

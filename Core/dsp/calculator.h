@@ -58,6 +58,8 @@ protected:
         output = new ringbuffer<TOUTPUT>();
     }
 
+    virtual ~calculator() {}
+
     virtual void process() = 0;
 
     ringbuffer<TINPUT> *input;

@@ -28,6 +28,7 @@ TEST_CASE(FreqConverterFixture, BasicTest)
     auto timeoutput = c2c.getOutput();
     for (int j = 0; j < count; j++) {
         auto *ptr = timeoutput->getReadPtr();
+        REQUIRE_NOT_NULL(ptr);
         timeoutput->ReadDone();
     }
 
@@ -64,6 +65,7 @@ TEST_CASE(FreqConverterFixture, ThreadsTest)
     auto thread2 = std::thread([&timeoutput, rcount, this] {
         for (int j = 0; j < rcount ; j++) {
             auto *ptr = timeoutput->getReadPtr();
+            REQUIRE_NOT_NULL(ptr);
             timeoutput->ReadDone();
         }
     });

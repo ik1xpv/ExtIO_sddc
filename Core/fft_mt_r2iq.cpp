@@ -164,6 +164,7 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 	if (processor_count > N_R2IQ_THREAD)
 		processor_count = N_R2IQ_THREAD;
 
+	{
 		fftwf_plan filterplan_t2f_c2c; // time to frequency fft
 
 		DbgPrintf((char *) "r2iqCntrl initialization\n");
@@ -243,6 +244,7 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 
 		}
 	}
+}
 
 void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
@@ -296,13 +298,13 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 		if (!this->getRand())        // plain samples no ADC rand set
 		{
-			for (int m = 0; m < transferSize / sizeof(int16_t); m++) {
+			for (unsigned m = 0; m < transferSize / sizeof(int16_t); m++) {
 				*inloop++ = *dataADC++;
 			}
 		}
 		else
 		{
-			for (int m = 0; m < transferSize / sizeof(int16_t); m++) {
+			for (unsigned m = 0; m < transferSize / sizeof(int16_t); m++) {
 				*inloop++ = (RandTable[(uint16_t)*dataADC++]);
 			}
 		}

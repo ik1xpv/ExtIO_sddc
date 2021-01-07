@@ -13,8 +13,8 @@ public:
         max_count(count),
         read_index(0),
         write_index(0),
-        fullCount(0),
         emptyCount(0),
+        fullCount(0),
         writeCount(0)
     {
     }

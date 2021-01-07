@@ -50,6 +50,7 @@ TEST_CASE(FreqShifterFixture, End2EndTest)
     auto thread2 = std::thread([&timeoutput, count, this] {
         for (int j = 0; j < count * 8; j++) {
             auto *ptr = timeoutput->getReadPtr();
+            REQUIRE_NOT_NULL(ptr);
             timeoutput->ReadDone();
         }
     });
@@ -102,6 +103,7 @@ TEST_CASE(FreqShifterFixture, StopTest)
     auto thread2 = std::thread([&timeoutput, &run, this] {
         while(run) {
             auto *ptr = timeoutput->getReadPtr();
+            REQUIRE_NOT_NULL(ptr);
             timeoutput->ReadDone();
         }
     });

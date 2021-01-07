@@ -8,7 +8,7 @@ namespace {
 
 TEST_CASE(SignalFixture, BasicTest)
 {
-    auto *signal = new SignalParameters();
+    auto signal = new SignalParameters();
     delete signal;
 }
 

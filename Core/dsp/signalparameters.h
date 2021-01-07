@@ -23,6 +23,10 @@ public:
         setDecimate(1);
     }
 
+    virtual ~SignalParameters()
+    {
+    }
+
     virtual void setFreqOffset(float offset)
     {
         // align to 1/4 of halfft
