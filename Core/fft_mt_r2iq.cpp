@@ -288,25 +288,6 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			lastThread = th;
 		}
 
-		// first frame
-		auto inloop = th->ADCinTime;
-		for (int m = 0; m < halfFft; m++) {
-			*inloop++ = *endloop++;   // duplicate form last frame halfFft samples
-		}
-
-		if (!this->getRand())        // plain samples no ADC rand set
-		{
-			for (int m = 0; m < transferSize / sizeof(int16_t); m++) {
-				*inloop++ = *dataADC++;
-			}
-		}
-		else
-		{
-			for (int m = 0; m < transferSize / sizeof(int16_t); m++) {
-				*inloop++ = (RandTable[(uint16_t)*dataADC++]);
-			}
-		}
-
 		// decimate in frequency plus tuning
 
 		// Caculate the parameters for the first half
@@ -320,13 +301,44 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		auto dest = &th->inFreqTmp[mfft / 2];
 		for (int k = 0; k < fftPerBuf; k++)
 		{
+			auto inloop = th->ADCinTime;
+			if (k == 0)
+			{
+				// first frame
+				for (int m = 0; m < halfFft; m++) {
+					inloop[m] = endloop[m];   // duplicate form last frame halfFft samples
+				}
+				inloop += halfFft;
+
+				for (int m = 0; m < halfFft; m++) {
+					inloop[m] = dataADC[m];
+				}
+			}
+			else
+			{
+				inloop += (3 * halfFft / 2) * k + halfFft / 2;
+				int16_t* adcsrc = dataADC + halfFft + (3 * halfFft / 2) * (k - 1);
+				for (int m = 0; m < 3 * halfFft / 2; m++) {
+					inloop[m] = adcsrc[m];
+				}
+			}
+
 			// FFT first stage time to frequency, real to complex
 			fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
 
-			for (int m = 0; m < count; m++) // circular shift tune fs/2 first half array
+			if (decimate == 0)
 			{
-				th->inFreqTmp[m][0] = (source[m][0] * filter[m][0] +
-										source[m][1] * filter[m][1]);
+				for (int m = 0; m < count; m++) // circular shift tune fs/2 first half array
+				{
+					th->inFreqTmp[m][0] = source[m][0] * GainScale;
+					th->inFreqTmp[m][1] = source[m][1] * GainScale;
+				}
+			}
+			else{
+				for (int m = 0; m < count; m++) // circular shift tune fs/2 first half array
+				{
+					th->inFreqTmp[m][0] = (source[m][0] * filter[m][0] +
+											source[m][1] * filter[m][1]);
 
 				th->inFreqTmp[m][1] = (source[m][1] * filter[m][0] -
 										source[m][0] * filter[m][1]);
@@ -334,10 +346,20 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			if (mfft/2 != count)
 					memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft/2 - count));
 
-			for (int m = start; m < mfft / 2; m++) // circular shift tune fs/2 second half array
+			if (decimate == 0)
 			{
-				dest[m][0] = (source2[m][0] * filter2[m][0] +
-								source2[m][1] * filter2[m][1]);
+				for (int m = start; m < mfft / 2; m++) // circular shift tune fs/2 second half array
+				{
+					dest[m][0] = source2[m][0] * GainScale;
+					dest[m][1] = source2[m][1] * GainScale;
+				}
+			}
+			else
+			{
+				for (int m = start; m < mfft / 2; m++) // circular shift tune fs/2 second half array
+				{
+					dest[m][0] = (source2[m][0] * filter2[m][0] +
+									source2[m][1] * filter2[m][1]);
 
 				dest[m][1] = (source2[m][1] * filter2[m][0] -
 								source2[m][0] * filter2[m][1]);
@@ -351,20 +373,22 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			{
 				if (k == 0)
 				{
+					auto pout0 = pout;
 					auto pTimeTmp = th->outTimeTmp[mfft / 4];
-					for (int i = 0; i < mfft / 2; i++)
+					for (int i = 0; i < mfft; i+= 2)
 					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = -*pTimeTmp++;
+						pout0[i] = pTimeTmp[i];
+						pout0[i + 1] = -pTimeTmp[i + 1];
 					}
 				}
 				else
 				{
+					auto pout0 = pout + mfft + (3 * mfft / 2) * (k - 1);
 					auto pTimeTmp = th->outTimeTmp[0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
+					for (int i = 0; i < 3 * mfft / 2; i += 2)
 					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = -*pTimeTmp++;
+						pout0[i] = pTimeTmp[i];
+						pout0[i + 1] = -pTimeTmp[i + 1];
 					}
 				}
 			}
@@ -372,20 +396,20 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			{
 				if (k == 0)
 				{
+					auto pout0 = pout;
 					auto pTimeTmp = th->outTimeTmp[mfft / 4];
-					for (int i = 0; i < mfft / 2; i++)
+					for (int i = 0; i < mfft; i++)
 					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = *pTimeTmp++;
+						pout0[i] = pTimeTmp[i];
 					}
 				}
 				else
 				{
+					auto pout0 = pout + mfft + (3 * mfft / 2) * (k - 1);
 					auto pTimeTmp = th->outTimeTmp[0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
+					for (int i = 0; i < 3 * mfft / 2; i++)
 					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = *pTimeTmp++;
+						pout0[i] = pTimeTmp[i];
 					}
 				}
 			}

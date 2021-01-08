@@ -10,7 +10,7 @@ message(STATUS "Build type: " ${CMAKE_BUILD_TYPE} " - Version: " ${VERSION} " / 
 
 if (MSVC)
     add_subdirectory(ExtIO_sddc)
-    set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3")
+    set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3 /fp:fast /Qpar /Qvec-report:2 /arch:AVX2")
 else()
     set(CMAKE_CXX_FLAGS "-O3 -std=c++17 -Wall")
     #add_compile_options(-Wall -Wextra -pedantic)
