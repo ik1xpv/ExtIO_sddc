@@ -167,8 +167,8 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 	processor_count = std::thread::hardware_concurrency() - 1;
 	if (processor_count == 0)
 		processor_count = 1;
-	if (processor_count > N_R2IQ_THREAD)
-		processor_count = N_R2IQ_THREAD;
+	if (processor_count > N_MAX_R2IQ_THREADS)
+		processor_count = N_MAX_R2IQ_THREADS;
 
 		fftwf_plan filterplan_t2f_c2c; // time to frequency fft
 

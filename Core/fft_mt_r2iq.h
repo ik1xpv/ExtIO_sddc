@@ -3,8 +3,8 @@
 #include "r2iq.h"
 #include "fftw3.h"
 
-// use up to this many threads - really that many? (HA)
-#define N_R2IQ_THREAD 64
+// use up to this many threads
+#define N_MAX_R2IQ_THREADS 4
 
 class fft_mt_r2iq : public r2iqControlClass
 {
@@ -38,8 +38,8 @@ private:
     fftwf_complex **filterHw;       // Hw complex to each decimation ratio
 
     uint32_t processor_count;
-    r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
+    r2iqThreadArg* threadArgs[N_MAX_R2IQ_THREADS];
     std::condition_variable cvADCbufferAvailable;  // unlock when a sample buffer is ready
     std::mutex mutexR2iqControl;                   // r2iq control lock
-    std::thread* r2iq_thread[N_R2IQ_THREAD]; // thread pointers
+    std::thread* r2iq_thread[N_MAX_R2IQ_THREADS]; // thread pointers
 };
