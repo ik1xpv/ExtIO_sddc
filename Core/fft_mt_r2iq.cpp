@@ -343,6 +343,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 				th->inFreqTmp[m][1] = (source[m][1] * filter[m][0] -
 										source[m][0] * filter[m][1]);
 				}
+			}
 			if (mfft/2 != count)
 					memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft/2 - count));
 
@@ -364,6 +365,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 				dest[m][1] = (source2[m][1] * filter2[m][0] -
 								source2[m][0] * filter2[m][1]);
 				}
+			}
 			if (start != 0)
 				memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 
