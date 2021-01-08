@@ -77,8 +77,8 @@ fft_mt_r2iq::fft_mt_r2iq() :
 #ifndef NDEBUG
 	int mratio = 1;  // 1,2,4,8,16,..
 	const float Astop = 120.0f;
-	const float relPass = 0.75f;  // 85% of Nyquist should be usable
-	const float relStop = 1.2f;   // 'some' alias back into transition band is OK
+	const float relPass = 0.85f;  // 85% of Nyquist should be usable
+	const float relStop = 1.1f;   // 'some' alias back into transition band is OK
 	printf("\n***************************************************************************\n");
 	printf("Filter tap estimation, Astop = %.1f dB, relPass = %.2f, relStop = %.2f\n", Astop, relPass, relStop);
 	for (int d = 0; d < NDECIDX; d++)
@@ -204,11 +204,16 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 
 		filterplan_t2f_c2c = fftwf_plan_dft_1d(halfFft, pfilterht, filterHw[0], FFTW_FORWARD, FFTW_MEASURE);
 		float *pht = new float[halfFft / 4 + 1];
+		const float Astop = 120.0f;
+		const float relPass = 0.85f;  // 85% of Nyquist should be usable
+		const float relStop = 1.1f;   // 'some' alias back into transition band is OK
 		for (int d = 0; d < NDECIDX; d++)	// @todo when increasing NDECIDX
 		{
 			// @todo: have dynamic bandpass filter size - depending on decimation
 			//   to allow same stopband-attenuation for all decimations
-			KaiserWindow(halfFft / 4 + 1, 120.0f, 61.0f/mratio[d]/128.0f, 64.0f/mratio[d]/128.0f, pht);
+			float Bw = 64.0f / mratio[d];
+			// Bw *= 0.8f;  // easily visualize Kaiser filter's response
+			KaiserWindow(halfFft / 4 + 1, Astop, relPass * Bw / 128.0f, relStop * Bw / 128.0f, pht);
 
 			float gainadj = gain  / sqrtf(2.0f) * 2048.0f / (float)FFTN_R_ADC; // reference is FFTN_R_ADC == 2048
 
