@@ -35,6 +35,10 @@ private:
     int fftPerBuf; // number of ffts per buffer with 256|768 overlap
     fftwf_complex **filterHw;       // Hw complex to each decimation ratio
 
+	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
+	fftwf_plan *plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
+	fftwf_plan plans_f2t_c2c[NDECIDX];
+
     uint32_t processor_count;
     r2iqThreadArg* threadArgs[N_R2IQ_THREAD];
     std::condition_variable cvADCbufferAvailable;  // unlock when a sample buffer is ready

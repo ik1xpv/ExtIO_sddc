@@ -23,10 +23,6 @@ The name r2iq as Real 2 I+Q stream
 #include <algorithm>
 
 struct r2iqThreadArg {
-
-	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
-	fftwf_plan plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
-	fftwf_plan plans_f2t_c2c[NDECIDX];
 	float *ADCinTime;                // point to each threads input buffers [nftt][n]
 	fftwf_complex *ADCinFreq;         // buffers in frequency
 	fftwf_complex *inFreqTmp;         // tmp decimation output buffers (after tune shift)
@@ -84,17 +80,18 @@ fft_mt_r2iq::~fft_mt_r2iq()
 	}
 	fftwf_free(filterHw);
 
+	fftwf_destroy_plan(plan_t2f_r2c);
+	for (int d = 0; d < NDECIDX; d++)
+	{
+		fftwf_destroy_plan(plans_f2t_c2c[d]);
+	}
+
 	for (unsigned t = 0; t < processor_count; t++) {
 		auto th = threadArgs[t];
 		fftwf_free(th->ADCinTime);
 		fftwf_free(th->ADCinFreq);
 		fftwf_free(th->inFreqTmp);
 		fftwf_free(th->outTimeTmp);
-		fftwf_destroy_plan(th->plan_t2f_r2c);
-		for (int d = 0; d < NDECIDX; d++)
-		{
-			fftwf_destroy_plan(th->plans_f2t_c2c[d]);
-		}
 
 		delete threadArgs[t];
 	}
@@ -164,6 +161,7 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 	if (processor_count > N_R2IQ_THREAD)
 		processor_count = N_R2IQ_THREAD;
 
+	{
 		fftwf_plan filterplan_t2f_c2c; // time to frequency fft
 
 		DbgPrintf((char *) "r2iqCntrl initialization\n");
@@ -180,38 +178,11 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 			filterHw[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // halfFft
 		}
 
-		for (int t = 0; t < halfFft; t++)
-		{
-			pfilterht[t][0] = 0.0f;
-			pfilterht[t][1] = 0.0f;
-		}
-
 		filterplan_t2f_c2c = fftwf_plan_dft_1d(halfFft, pfilterht, filterHw[0], FFTW_FORWARD, FFTW_MEASURE);
 		float *pht = new float[halfFft / 4 + 1];
 		for (int d = 0; d < NDECIDX; d++)
 		{
-			switch (d)
-			{
-			case 5:
-				KaiserWindow(halfFft / 4 + 1, 80.0f, 0.7f/64.0f, 1.0f/64.0f, pht);
-				break;
-			case 4:
-				KaiserWindow(halfFft / 4 + 1, 90.0f, 1.6f/64.0f, 2.0f/64.0f, pht);
-				break;
-			case 3:
-				KaiserWindow(halfFft / 4 + 1, 100.0f, 3.6f/64.0f, 4.0f/64.0f, pht);
-				break;
-			case 2:
-				KaiserWindow(halfFft / 4 + 1, 110.0f, 7.6f/64.0f, 8.0f/64.0f, pht);
-				break;
-			case 1:
-				KaiserWindow(halfFft / 4 + 1, 120.0f, 15.7f/64.0f, 16.0f/64.0f, pht);
-				break;
-			case 0:
-			default:
-				KaiserWindow(halfFft / 4 + 1, 120.0f, 30.5f/64.0f, 32.0f/64.0f, pht);
-				break;
-			}
+			KaiserWindow(halfFft / 4 + 1, 120.0f, 61.0f/mratio[d]/128.0f, 64.0f/mratio[d]/128.0f, pht);
 
 			float gainadj = gain  / sqrtf(2.0f) * 2048.0f / (float)FFTN_R_ADC; // reference is FFTN_R_ADC == 2048
 
@@ -235,14 +206,15 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 			th->ADCinFreq = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft + 1)); // 1024+1
 			th->inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
 			th->outTimeTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));
-			th->plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, th->ADCinTime, th->ADCinFreq, FFTW_MEASURE);
-			for (int d = 0; d < NDECIDX; d++)
-			{
-				th->plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], th->inFreqTmp, th->outTimeTmp, FFTW_BACKWARD, FFTW_MEASURE);
-			}
+		}
 
+		plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, threadArgs[0]->ADCinTime, threadArgs[0]->ADCinFreq, FFTW_MEASURE);
+		for (int d = 0; d < NDECIDX; d++)
+		{
+			plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], threadArgs[0]->inFreqTmp, threadArgs[0]->outTimeTmp, FFTW_BACKWARD, FFTW_MEASURE);
 		}
 	}
+}
 
 void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
@@ -251,7 +223,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 	int decimate = this->getDecimate();
 	fftwf_complex* filter = filterHw[decimate];
 	bool lsb = this->getSideband();
-	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
+	plan_f2t_c2c = &plans_f2t_c2c[decimate];
 
 	while (r2iqOn) {
 		int16_t *dataADC; // pointer to input data
@@ -282,7 +254,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			int offset = ((transferSize / sizeof(int16_t)) / mratio) * moff;
 			pout = this->obuffers[modx] + offset;
 
-			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
+			this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;
 
 			endloop = lastThread->ADCinTime + transferSize / sizeof(int16_t);
 			lastThread = th;
@@ -321,7 +293,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		for (int k = 0; k < fftPerBuf; k++)
 		{
 			// FFT first stage time to frequency, real to complex
-			fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
+			fftwf_execute_dft_r2c(plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
 
 			for (int m = 0; m < count; m++) // circular shift tune fs/2 first half array
 			{
@@ -330,9 +302,9 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 				th->inFreqTmp[m][1] = (source[m][1] * filter[m][0] -
 										source[m][0] * filter[m][1]);
-				}
+			}
 			if (mfft/2 != count)
-					memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft/2 - count));
+				memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft/2 - count));
 
 			for (int m = start; m < mfft / 2; m++) // circular shift tune fs/2 second half array
 			{
@@ -341,11 +313,11 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 				dest[m][1] = (source2[m][1] * filter2[m][0] -
 								source2[m][0] * filter2[m][1]);
-				}
+			}
 			if (start != 0)
 				memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 
-			fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
+			fftwf_execute_dft(*plan_f2t_c2c, th->inFreqTmp, th->outTimeTmp);     //  c2c decimation
 
 			if (lsb) // lower sideband
 			{
