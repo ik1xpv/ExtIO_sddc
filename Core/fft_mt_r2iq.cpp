@@ -24,10 +24,6 @@ The name r2iq as Real 2 I+Q stream
 #include <assert.h>
 
 struct r2iqThreadArg {
-
-	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
-	fftwf_plan plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
-	fftwf_plan plans_f2t_c2c[NDECIDX];
 	float *ADCinTime;                // point to each threads input buffers [nftt][n]
 	fftwf_complex *ADCinFreq;         // buffers in frequency
 	fftwf_complex *inFreqTmp;         // tmp decimation output buffers (after tune shift)
@@ -90,17 +86,18 @@ fft_mt_r2iq::~fft_mt_r2iq()
 	}
 	fftwf_free(filterHw);
 
+	fftwf_destroy_plan(plan_t2f_r2c);
+	for (int d = 0; d < NDECIDX; d++)
+	{
+		fftwf_destroy_plan(plans_f2t_c2c[d]);
+	}
+
 	for (unsigned t = 0; t < processor_count; t++) {
 		auto th = threadArgs[t];
 		fftwf_free(th->ADCinTime);
 		fftwf_free(th->ADCinFreq);
 		fftwf_free(th->inFreqTmp);
 		fftwf_free(th->outTimeTmp);
-		fftwf_destroy_plan(th->plan_t2f_r2c);
-		for (int d = 0; d < NDECIDX; d++)
-		{
-			fftwf_destroy_plan(th->plans_f2t_c2c[d]);
-		}
 
 		delete threadArgs[t];
 	}
@@ -170,6 +167,7 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 	if (processor_count > N_MAX_R2IQ_THREADS)
 		processor_count = N_MAX_R2IQ_THREADS;
 
+	{
 		fftwf_plan filterplan_t2f_c2c; // time to frequency fft
 
 		DbgPrintf((char *) "r2iqCntrl initialization\n");
@@ -186,51 +184,13 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 			filterHw[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // halfFft
 		}
 
-		for (int t = 0; t < halfFft; t++)
-		{
-			pfilterht[t][0] = 0.0f;
-			pfilterht[t][1] = 0.0f;
-		}
-
 		filterplan_t2f_c2c = fftwf_plan_dft_1d(halfFft, pfilterht, filterHw[0], FFTW_FORWARD, FFTW_MEASURE);
 		float *pht = new float[halfFft / 4 + 1];
 		for (int d = 0; d < NDECIDX; d++)	// @todo when increasing NDECIDX
 		{
 			// @todo: have dynamic bandpass filter size - depending on decimation
 			//   to allow same stopband-attenuation for all decimations
-#if 0
-			// switch below does same as this
-			float Astop = std::min(120.0f, 130.0f - d * 10.0f);
-			float normFpass = ???;
-			float normFstop = (32.0f / (1 << d)) / 64.0f;
-			KaiserWindow(halfFft / 4 + 1, Astop, 0.7f / 64.0f, normFstop, pht);
-#else
-			switch (d)
-			{
-			// @todo: case 6 == NDECIDX -1 is missing!?!
-			case 5:
-				KaiserWindow(halfFft / 4 + 1, 80.0f, 0.7f/64.0f, 1.0f/64.0f, pht);
-				break;
-			case 4:
-				KaiserWindow(halfFft / 4 + 1, 90.0f, 1.6f/64.0f, 2.0f/64.0f, pht);
-				break;
-			case 3:
-				KaiserWindow(halfFft / 4 + 1, 100.0f, 3.6f/64.0f, 4.0f/64.0f, pht);
-				break;
-			case 2:
-				KaiserWindow(halfFft / 4 + 1, 110.0f, 7.6f/64.0f, 8.0f/64.0f, pht);
-				break;
-			case 1:
-				KaiserWindow(halfFft / 4 + 1, 120.0f, 15.7f/64.0f, 16.0f/64.0f, pht);
-				break;
-			default:
-				//assert(0);  --> case 6 == NDECIDX -1
-				// no-break
-			case 0:
-				KaiserWindow(halfFft / 4 + 1, 120.0f, 30.5f/64.0f, 32.0f/64.0f, pht);
-				break;
-			}
-#endif
+			KaiserWindow(halfFft / 4 + 1, 120.0f, 61.0f/mratio[d]/128.0f, 64.0f/mratio[d]/128.0f, pht);
 
 			float gainadj = gain  / sqrtf(2.0f) * 2048.0f / (float)FFTN_R_ADC; // reference is FFTN_R_ADC == 2048
 
@@ -254,14 +214,15 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 			th->ADCinFreq = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft + 1)); // 1024+1
 			th->inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
 			th->outTimeTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));
-			th->plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, th->ADCinTime, th->ADCinFreq, FFTW_MEASURE);
-			for (int d = 0; d < NDECIDX; d++)
-			{
-				th->plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], th->inFreqTmp, th->outTimeTmp, FFTW_BACKWARD, FFTW_MEASURE);
-			}
+		}
 
+		plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, threadArgs[0]->ADCinTime, threadArgs[0]->ADCinFreq, FFTW_MEASURE);
+		for (int d = 0; d < NDECIDX; d++)
+		{
+			plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], threadArgs[0]->inFreqTmp, threadArgs[0]->outTimeTmp, FFTW_BACKWARD, FFTW_MEASURE);
 		}
 	}
+}
 
 void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
@@ -270,7 +231,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 	const int mratio = this->getRatio();
 	const fftwf_complex* filter = filterHw[decimate];
 	const bool lsb = this->getSideband();
-	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
+	plan_f2t_c2c = &plans_f2t_c2c[decimate];
 
 	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
@@ -301,7 +262,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			int offset = ((transferSize / sizeof(int16_t)) / mratio) * moff;
 			pout = this->obuffers[modx] + offset;
 
-			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
+			this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;
 
 			endloop = lastThread->ADCinTime + transferSize / sizeof(int16_t);
 			lastThread = th;
@@ -352,7 +313,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			{
 				// FFT first stage: time to frequency, real to complex
 				// 'full' transformation size: 2 * halfFft
-				fftwf_execute_dft_r2c(th->plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
+				fftwf_execute_dft_r2c(plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
 				// result now in th->ADCinFreq[]
 
 				// circular shift (mixing in full bins) and low/bandpass filtering (complex multiplication)
@@ -385,7 +346,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 				// 'shorter' inverse FFT transform (decimation); frequency (back) to COMPLEX time domain
 				// transform size: mfft = mfftdim[k] = halfFft / 2^k with k = mdecimation
-				fftwf_execute(th->plan_f2t_c2c);     //  c2c decimation
+				fftwf_execute_dft(*plan_f2t_c2c, th->inFreqTmp, th->outTimeTmp);     //  c2c decimation
 				// result now in th->outTimeTmp[]
 			}
 
