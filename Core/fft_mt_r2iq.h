@@ -2,6 +2,8 @@
 
 #include "r2iq.h"
 #include "fftw3.h"
+
+// use up to this many threads - really that many? (HA)
 #define N_R2IQ_THREAD 64
 
 class fft_mt_r2iq : public r2iqControlClass
@@ -26,7 +28,7 @@ private:
     r2iqThreadArg* lastThread;
 
     float GainScale;
-    int mfftdim [NDECIDX]; // FFT N dimensions
+    int mfftdim [NDECIDX]; // FFT N dimensions: mfftdim[k] = halfFft / 2^k
     int mtunebin;
 
     void *r2iqThreadf(r2iqThreadArg *th);   // thread function
@@ -40,8 +42,4 @@ private:
     std::condition_variable cvADCbufferAvailable;  // unlock when a sample buffer is ready
     std::mutex mutexR2iqControl;                   // r2iq control lock
     std::thread* r2iq_thread[N_R2IQ_THREAD]; // thread pointers
-
-protected:
-    int getDecimate() {return mdecimation;}
-    int getFftN()   {return mfftdim[mdecimation];}
 };
