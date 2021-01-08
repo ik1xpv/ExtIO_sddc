@@ -74,6 +74,24 @@ fft_mt_r2iq::fft_mt_r2iq() :
 	}
 	GainScale = BBRF103_GAINFACTOR;
 
+#ifndef NDEBUG
+	int mratio = 1;  // 1,2,4,8,16,..
+	const float Astop = 120.0f;
+	const float relPass = 0.75f;  // 85% of Nyquist should be usable
+	const float relStop = 1.2f;   // 'some' alias back into transition band is OK
+	printf("\n***************************************************************************\n");
+	printf("Filter tap estimation, Astop = %.1f dB, relPass = %.2f, relStop = %.2f\n", Astop, relPass, relStop);
+	for (int d = 0; d < NDECIDX; d++)
+	{
+		float Bw = 64.0f / mratio;
+		int ntaps = KaiserWindow(0, Astop, relPass * Bw / 128.0f, relStop * Bw / 128.0f, nullptr);
+		printf("decimation %2d: KaiserWindow(Astop = %.1f dB, Fpass = %.3f,Fstop = %.3f, Bw %.3f @ %f ) => %d taps\n",
+			d, Astop, relPass * Bw, relStop * Bw, Bw, 128.0f, ntaps);
+		mratio = mratio * 2;
+	}
+	printf("***************************************************************************\n");
+#endif
+
 }
 
 fft_mt_r2iq::~fft_mt_r2iq()
