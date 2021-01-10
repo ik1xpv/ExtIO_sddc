@@ -24,7 +24,28 @@ static float Izero(float x)
     return(sum);
 }
 
-void KaiserWindow(int num_taps, float Astop, float normFpass, float normFstop, float *m_Coef)
+
+////////////////////////////////////////////////////////////////////
+// Create a FIR Low Pass filter
+// num_taps if > 0, forces filter design to be this number of taps
+//          if < 0, limits filter design to be max negative number of taps
+// Astop = Stopband Atenuation in dB (ie 40dB is 40dB stopband attenuation)
+// normFpass = Lowpass passband frequency - relative to samplerate
+// normFstop = Lowpass stopband frequency - relative to samplerate
+// Coef = pointer to array, where to put the resulting (real) coefficients
+//        might be nullptr, to estimate the number of coefficients
+// return the used/estimated number of coefficients
+//
+//           -------------
+//                        |
+//                         |
+//                          |
+//                           |
+//    Astop                   ---------------
+//                    Fpass   Fstop
+//
+////////////////////////////////////////////////////////////////////
+int KaiserWindow(int num_taps, float Astop, float normFpass, float normFstop, float *Coef)
 {
     int n;
     float Beta;
@@ -48,9 +69,21 @@ void KaiserWindow(int num_taps, float Astop, float normFpass, float normFstop, f
     Beta = K_PI * Alpha;
     */
 
-    //number of filter taps we fix to 1025
-    int m_NumTaps = num_taps; // (Astop - 8.0) / (2.285*K_2PI*(normFstop - normFpass) ) + 1;
+    // now estimate number of filter taps required based on filter specs
+    int m_NumTaps = (Astop - 8.0) / (2.285*K_2PI*(normFstop - normFpass) ) + 1;
 
+    // clamp range of filter taps
+    if (num_taps < 0 && m_NumTaps > -num_taps)
+        m_NumTaps = -num_taps;
+    if (m_NumTaps < 3)
+        m_NumTaps = 3;
+
+    // early exit, if the user only wanted to estimate the number of taps
+    if (num_taps <= 0 && !Coef)
+        return m_NumTaps;
+
+    if (num_taps > 0)
+        m_NumTaps = num_taps;
 
     float fCenter = .5f * (float)(m_NumTaps - 1);
     float izb = Izero(Beta);        //precalculate denominator since is same for all points
@@ -65,8 +98,8 @@ void KaiserWindow(int num_taps, float Astop, float normFpass, float normFstop, f
             c = (float)sinf(K_2PI * x * normFcut) / (K_PI * x);
         //calculate Kaiser window and multiply to get coefficient
         x = ((float)n - ((float)m_NumTaps - 1.0f) / 2.0f) / (((float)m_NumTaps - 1.0f) / 2.0f);
-        m_Coef[n] = Scale * c * Izero(Beta * sqrtf(1 - (x * x))) / izb;
+        Coef[n] = Scale * c * Izero(Beta * sqrtf(1 - (x * x))) / izb;
     }
 
-    return;
+    return m_NumTaps;
 }

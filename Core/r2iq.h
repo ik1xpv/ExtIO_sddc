@@ -2,7 +2,7 @@
 #define R2IQ_H
 #include "license.txt" 
 
-#define NDECIDX 7  //number of srate
+#define NDECIDX 10  //number of srate
 
 #include <thread>
 #include <mutex>
@@ -39,9 +39,9 @@ protected:
       // 128 Msps: 0 => 64Msps, 1 => 32Msps, 2=> 16Msps, 3 = 8Msps, 4 = 4Msps, 5 = 2Msps
     bool r2iqOn;        // r2iq on flag
     int16_t RandTable[65536];  // ADC RANDomize table used to whitening EMI from ADC data bus.
+    int mratio [NDECIDX];  // ratio
 
 private:
-    int mratio [NDECIDX];  // ratio
     bool randADC;       // randomized ADC output
     bool sideband;
 };
