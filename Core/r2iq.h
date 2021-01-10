@@ -38,7 +38,6 @@ protected:
       // 64 Msps:               0 => 32Msps, 1=> 16Msps, 2 = 8Msps, 3 = 4Msps, 4 = 2Msps
       // 128 Msps: 0 => 64Msps, 1 => 32Msps, 2=> 16Msps, 3 = 8Msps, 4 = 4Msps, 5 = 2Msps
     bool r2iqOn;        // r2iq on flag
-    int16_t RandTable[65536];  // ADC RANDomize table used to whitening EMI from ADC data bus.
 
 private:
     int mratio [NDECIDX];  // ratio

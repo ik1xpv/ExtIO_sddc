@@ -50,23 +50,6 @@ r2iqControlClass::r2iqControlClass()
 	{
 		mratio[i] = mratio[i - 1] * 2;
 	}
-
-	// load RAND table for ADC
-	for (unsigned k = 0; k < 65536; k++)
-	{
-		if (k & 1)
-		{
-			RandTable[k] = (k ^ 0xFFFE);
-		}
-		else {
-			RandTable[k] = k;
-		}
-	}
-
-#ifndef NDEBUG
-	for (unsigned k = 0; k < 65536; k++)
-		assert(k == (uint16_t)RandTable[(uint16_t)RandTable[k]]);
-#endif
 }
 
 fft_mt_r2iq::fft_mt_r2iq() :
@@ -313,23 +296,63 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		// first frame
 		auto inloop = th->ADCinTime;
 
+		static_assert(mipp::N<int16_t>() == mipp::N<float>() * 2);
+
 		// duplicate  halfFft samples from the last frame
-		static_assert(halfFft % mipp::N<int16_t>() == 0);
-		for (int m = 0; m < halfFft; m+=mipp::N<int16_t>()) {
+		if (!this->getRand())        // plain samples no ADC rand set
+		{
+			static_assert(halfFft % mipp::N<int16_t>() == 0);
+			for (int m = 0; m < halfFft; m+=mipp::N<int16_t>()) {
+					rADC.loadu(&lastDataADC[m]);
+
+					auto r_adc_low = rADC.low();
+					rExt = r_adc_low.template cvt<int32_t>();
+					// parse low part
+					rA = rExt.cvt<float>();
+					rA.store(&inloop[m]);
+
+					// parse high part
+					auto r_adc_high = rADC.high();
+					rExt = r_adc_high.template cvt<int32_t>();
+					// parse low part
+					rA = rExt.cvt<float>();
+					rA.store(&inloop[m + mipp::N<float>()]);
+			}
+		}
+		else
+		{
+			mipp::Reg<int16_t> rOne;
+			mipp::Reg<int16_t> rNegativeTwo;
+			rOne.set1(1);
+			rNegativeTwo.set1(-2);
+			static_assert(halfFft % mipp::N<int16_t>() == 0);
+			for (int m = 0; m < halfFft; m+=mipp::N<int16_t>()) {
 				rADC.loadu(&lastDataADC[m]);
 
+				// c = adc & 1
+				auto rC = mipp::andb(rADC, rOne);
+
+				// mask = (c == 1)?
+				auto mask = mipp::cmpeq(rC, rOne);
+
+				//d = adc ^ (0xfffe)
+				auto rD = mipp::xorb(rADC, rNegativeTwo);
+
+				// adc = mask? d : adc;
+				rADC = mipp::blend(rD, rADC, mask);
+
+				// parse low part
 				auto r_adc_low = rADC.low();
 				rExt = r_adc_low.template cvt<int32_t>();
-				// parse low part
 				rA = rExt.cvt<float>();
 				rA.store(&inloop[m]);
 
 				// parse high part
 				auto r_adc_high = rADC.high();
 				rExt = r_adc_high.template cvt<int32_t>();
-				// parse low part
 				rA = rExt.cvt<float>();
 				rA.store(&inloop[m + mipp::N<float>()]);
+			}
 		}
 		inloop += halfFft;
 
@@ -359,11 +382,39 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		}
 		else
 		{
-			// @todo: can this get implemented without the RandTable[]?
-			//   for less cache trashing?
-			//   ideally with some simd commands ..
-			for (int m = 0; m < transferSize / sizeof(int16_t); m++) {
-				*inloop++ = (RandTable[(uint16_t)*dataADC++]);
+			mipp::Reg<int16_t> rOne;
+			mipp::Reg<int16_t> rNegativeTwo;
+			rOne.set1(1);
+			rNegativeTwo.set1(-2);
+
+			static_assert((transferSize /sizeof(int16_t)) % (mipp::N<float>() * 2) == 0);
+			for (int m = 0; m < transferSize / sizeof(int16_t); m+=mipp::N<int16_t>()) {
+				rADC.load(&dataADC[m]);
+
+				// c = adc & 1
+				auto rC = mipp::andb(rADC, rOne);
+
+				// mask = (c == 1)?
+				auto mask = mipp::cmpeq(rC, rOne);
+
+				//d = adc ^ (0xfffe)
+				auto rD = mipp::xorb(rADC, rNegativeTwo);
+
+				// adc = mask? d : adc;
+				rADC = mipp::blend(rD, rADC, mask);
+
+
+				// parse low part
+				auto r_adc_low = rADC.low();
+				rExt = r_adc_low.template cvt<int32_t>();
+				rA = rExt.cvt<float>();
+				rA.store(&inloop[m]);
+
+				// parse high part
+				auto r_adc_high = rADC.high();
+				rExt = r_adc_high.template cvt<int32_t>();
+				rA = rExt.cvt<float>();
+				rA.store(&inloop[m + mipp::N<float>()]);
 			}
 		}
 
