@@ -11,6 +11,8 @@
 
 #include <chrono>
 
+#include "mipp.h"
+
 using namespace std::chrono;
 
 #define USB_READ_CONCURRENT  4
@@ -125,7 +127,8 @@ RadioHandlerClass::RadioHandlerClass() :
 	hardware(new DummyRadio())
 {
 	for (int i = 0; i < QUEUE_SIZE; i++) {
-		buffers[i] = new int16_t[transferSize / sizeof(int16_t)];
+		auto t = new mipp::vector<int16_t>(transferSize / sizeof(int16_t));
+		buffers[i] = &(*t)[0];
 
 		// Allocate the buffers for the output queue
 		obuffers[i] = new float[transferSize / 2];
@@ -138,7 +141,8 @@ RadioHandlerClass::~RadioHandlerClass()
 {
 	for (int n = 0; n < QUEUE_SIZE; n++) {
 		delete[] obuffers[n];
-		delete[] buffers[n];
+		//@todo
+		//delete[] buffers[n];
 	}
 
 	delete stateFineTune;

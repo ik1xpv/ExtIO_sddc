@@ -33,8 +33,6 @@ private:
 
     void *r2iqThreadf(r2iqThreadArg *th);   // thread function
 
-    int halfFft;    // half the size of the first fft at ADC 64Msps real rate (2048)
-    int fftPerBuf; // number of ffts per buffer with 256|768 overlap
     fftwf_complex **filterHw;       // Hw complex to each decimation ratio
 
     uint32_t processor_count;

@@ -17,6 +17,8 @@ else()
     include_directories(${LIBFFTW_INCLUDE_DIRS})
 endif (MSVC)
 
+include_directories(${LIBMIPP_INCLUDE_DIRS})
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 add_library(SDDC_CORE STATIC ${SRC})

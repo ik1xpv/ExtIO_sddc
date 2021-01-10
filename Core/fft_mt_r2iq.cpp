@@ -23,6 +23,11 @@ The name r2iq as Real 2 I+Q stream
 #include <algorithm>
 #include <assert.h>
 
+#include "mipp.h"
+
+static const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
+static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
+
 struct r2iqThreadArg {
 
 	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
@@ -67,9 +72,6 @@ r2iqControlClass::r2iqControlClass()
 fft_mt_r2iq::fft_mt_r2iq() :
 	r2iqControlClass()
 {
-	halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
-	fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
-
 	mtunebin = halfFft / 4;
 	mfftdim[0] = halfFft;
 	for (int i = 1; i < NDECIDX; i++)
@@ -272,6 +274,10 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 	const bool lsb = this->getSideband();
 	th->plan_f2t_c2c = th->plans_f2t_c2c[decimate];
 
+	mipp::Reg<float> rA;
+	mipp::Reg<int16_t> rADC;
+	mipp::Reg<int32_t> rExt;
+
 	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
 		const float *endloop;    // pointer to end data to be copied to beginning
@@ -309,9 +315,13 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 		// first frame
 		auto inloop = th->ADCinTime;
-		for (int m = 0; m < halfFft; m++) {
-			*inloop++ = *endloop++;   // duplicate from last frame halfFft samples
+		static_assert(halfFft % mipp::N<float>() == 0);
+		for (int m = 0; m < halfFft; m+=mipp::N<float>()) {
+			rA.load(&endloop[m]); // duplicate form from frame halfFft samples
+			rA.store(&inloop[m]);
 		}
+
+		inloop += halfFft;
 
 		// @todo: move the following int16_t conversion to (32-bit) float
 		// directly inside the following loop (for "k < fftPerBuf")
@@ -319,8 +329,23 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		// idea: this should improve cache/memory locality
 		if (!this->getRand())        // plain samples no ADC rand set
 		{
-			for (int m = 0; m < transferSize / sizeof(int16_t); m++) {
-				*inloop++ = *dataADC++;
+			static_assert((transferSize /sizeof(int16_t)) % (mipp::N<float>() * 2) == 0);
+			for (int m = 0; m < transferSize / sizeof(int16_t); m+=mipp::N<int16_t>()) {
+				rADC.load(&dataADC[m]);
+
+				auto r_adc_low = rADC.low();
+				rExt = r_adc_low.template cvt<int32_t>();
+				// parse low part
+				rA = rExt.cvt<float>();
+				rA.store(&inloop[m]);
+
+				// parse high part
+				auto r_adc_high = rADC.high();
+				rExt = r_adc_high.template cvt<int32_t>();
+				// parse low part
+				rA = rExt.cvt<float>();
+				rA.store(&inloop[m + mipp::N<float>()]);
+
 			}
 		}
 		else
