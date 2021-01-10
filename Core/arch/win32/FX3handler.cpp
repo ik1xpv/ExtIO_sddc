@@ -146,7 +146,7 @@ bool  fx3handler::Open(uint8_t* fw_data, uint32_t fw_size) {
 	if (data[1] != FIRMWARE_VER_MAJOR ||
 		data[2] != FIRMWARE_VER_MINOR)
 	{
-		DbgPrintf("Firmware version mismatch\n");
+		DbgPrintf("Firmware version mismatch %d.%d != %d.%d (actual)\n", FIRMWARE_VER_MAJOR, FIRMWARE_VER_MINOR, data[1], data[2]);
 		Control(RESETFX3);
 		return false;
 	}

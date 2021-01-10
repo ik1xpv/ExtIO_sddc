@@ -344,6 +344,16 @@ bool RadioHandlerClass::UptDither(bool b)
 	return dither;
 }
 
+bool RadioHandlerClass::UptPga(bool b)
+{
+	pga = b;
+	if (pga)
+		hardware->FX3SetGPIO(PGA_EN);
+	else
+		hardware->FX3UnsetGPIO(PGA_EN);
+	return pga;
+}
+
 bool RadioHandlerClass::UptRand(bool b)
 {
 	randout = b;

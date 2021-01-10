@@ -1,7 +1,7 @@
 #pragma once
 
 #define FIRMWARE_VER_MAJOR 1
-#define FIRMWARE_VER_MINOR 2
+#define FIRMWARE_VER_MINOR 3
 
 // HF103 commands !!!
 enum FX3Command {
@@ -84,6 +84,7 @@ enum FX3Command {
 #define OUTXI13 (1U << 13)  	// 8192
 #define OUTXI14 (1U << 14)  	// 16384
 #define OUTXI15 (1U << 15)  	// 32768
+#define OUTXI16 (1U << 16)
 
 enum GPIOPin {
     SHDWN = OUTXIO5,
@@ -99,6 +100,7 @@ enum GPIOPin {
 
     // RX888r2
     VHF_EN = OUTXI15,
+    PGA_EN = OUTXI16,
 };
 
 enum RadioModel {
