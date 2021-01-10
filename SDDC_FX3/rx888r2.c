@@ -5,8 +5,7 @@
 #define GPIO_BIAS_HF 19
 #define GPIO_RANDO 20
 #define GPIO_LED_RED 21
-#define GPIO_LED_YELLOW 22
-#define GPIO_LED_BLUE 23
+#define GPIO_PGA 24
 #define GPIO_ATT_DATA  26
 #define GPIO_ATT_CLK   27
 #define GPIO_SHDWN 28
@@ -21,9 +20,8 @@ void rx888r2_GpioSet(uint32_t mdata)
     CyU3PGpioSetValue (GPIO_RANDO, (mdata & RANDO) == RANDO ); 		 // RAND
     CyU3PGpioSetValue (GPIO_BIAS_HF, (mdata & BIAS_HF) == BIAS_HF);
     CyU3PGpioSetValue (GPIO_BIAS_VHF, (mdata & BIAS_VHF) == BIAS_VHF);
-    CyU3PGpioSetValue (GPIO_LED_RED, (mdata & LED_RED) == LED_RED);
-    CyU3PGpioSetValue (GPIO_LED_YELLOW, (mdata & LED_YELLOW) == LED_YELLOW);
-    CyU3PGpioSetValue (GPIO_LED_BLUE, (mdata & LED_BLUE) == LED_BLUE);
+	CyU3PGpioSetValue (GPIO_LED_RED, (mdata & LED_RED) == LED_RED);
+	CyU3PGpioSetValue (GPIO_PGA, (mdata & PGA_EN ) != PGA_EN  ); 		 // PGA_EN
     CyU3PGpioSetValue (GPIO_VHF_EN, (mdata & VHF_EN) == VHF_EN ); // VHF_EN
 }
 
@@ -34,11 +32,10 @@ void rx888r2_GpioInitialize()
     ConfGPIOsimpleout (GPIO_RANDO);
     ConfGPIOsimpleout (GPIO_BIAS_HF);
     ConfGPIOsimpleout (GPIO_BIAS_VHF);
-    ConfGPIOsimpleout (GPIO_LED_RED);
-    ConfGPIOsimpleout (GPIO_LED_YELLOW);
-    ConfGPIOsimpleout (GPIO_LED_BLUE);
+	ConfGPIOsimpleout (GPIO_LED_RED);
     ConfGPIOsimpleout (GPIO_VHF_EN);
 
+	ConfGPIOsimpleout (GPIO_PGA);
     ConfGPIOsimpleout (GPIO_ATT_LE);
     ConfGPIOsimpleout (GPIO_ATT_DATA);
     ConfGPIOsimpleout (GPIO_ATT_CLK);
@@ -50,6 +47,8 @@ void rx888r2_GpioInitialize()
     CyU3PGpioSetValue (GPIO_ATT_CLK, 0);  // test version
     CyU3PGpioSetValue (GPIO_ATT_DATA, 0);  // ATT_DATA
     CyU3PGpioSetValue (GPIO_VGA_LE, 1);
+
+	CyU3PGpioSetValue (GPIO_PGA, 1); // PGA =1 , 1.5v range
 }
 
 /*

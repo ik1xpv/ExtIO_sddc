@@ -36,6 +36,8 @@ public:
     rf_mode GetmodeRF(){return (rf_mode)modeRF;}
     bool UptDither (bool b);
     bool GetDither () {return dither;}
+    bool UptPga(bool b);
+    bool GetPga() { return pga;}
     bool UptRand (bool b);
     bool GetRand () {return randout;}
     uint16_t GetFirmware() { return firmware; }
@@ -70,6 +72,7 @@ private:
     bool run;
     unsigned long count;    // absolute index
 
+    bool pga;
     bool dither;
     bool randout;
     bool biasT_HF;
