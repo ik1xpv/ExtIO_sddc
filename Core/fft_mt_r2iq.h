@@ -25,7 +25,6 @@ private:
     float** obuffers;   // pointer to output buffers
     int bufIdx;         // index to next buffer to be processed
     volatile std::atomic<int> cntr;           // counter of input buffer to be processed
-    r2iqThreadArg* lastThread;
 
     float GainScale;
     int mfftdim [NDECIDX]; // FFT N dimensions: mfftdim[k] = halfFft / 2^k

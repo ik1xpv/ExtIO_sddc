@@ -123,7 +123,6 @@ void fft_mt_r2iq::TurnOn() {
 	this->r2iqOn = true;
 	this->cntr = 0;
 	this->bufIdx = 0;
-	this->lastThread = threadArgs[0];
 
 	for (unsigned t = 0; t < processor_count; t++) {
 		r2iq_thread[t] = new std::thread(
@@ -280,7 +279,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
-		const float *endloop;    // pointer to end data to be copied to beginning
+		const int16_t *lastDataADC;
 		float * pout;
 
 		const int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
@@ -307,20 +306,31 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			int offset = ((transferSize / sizeof(int16_t)) / mratio) * moff;
 			pout = this->obuffers[modx] + offset;
 
+			lastDataADC = &this->buffers[(this->bufIdx + QUEUE_SIZE - 1) % QUEUE_SIZE][halfFft];
 			this->bufIdx = ((this->bufIdx + 1) % QUEUE_SIZE);
-
-			endloop = lastThread->ADCinTime + transferSize / sizeof(int16_t);
-			lastThread = th;
 		}
 
 		// first frame
 		auto inloop = th->ADCinTime;
-		static_assert(halfFft % mipp::N<float>() == 0);
-		for (int m = 0; m < halfFft; m+=mipp::N<float>()) {
-			rA.load(&endloop[m]); // duplicate form from frame halfFft samples
-			rA.store(&inloop[m]);
-		}
 
+		// duplicate  halfFft samples from the last frame
+		static_assert(halfFft % mipp::N<int16_t>() == 0);
+		for (int m = 0; m < halfFft; m+=mipp::N<int16_t>()) {
+				rADC.loadu(&lastDataADC[m]);
+
+				auto r_adc_low = rADC.low();
+				rExt = r_adc_low.template cvt<int32_t>();
+				// parse low part
+				rA = rExt.cvt<float>();
+				rA.store(&inloop[m]);
+
+				// parse high part
+				auto r_adc_high = rADC.high();
+				rExt = r_adc_high.template cvt<int32_t>();
+				// parse low part
+				rA = rExt.cvt<float>();
+				rA.store(&inloop[m + mipp::N<float>()]);
+		}
 		inloop += halfFft;
 
 		// @todo: move the following int16_t conversion to (32-bit) float
@@ -345,7 +355,6 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 				// parse low part
 				rA = rExt.cvt<float>();
 				rA.store(&inloop[m + mipp::N<float>()]);
-
 			}
 		}
 		else
