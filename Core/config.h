@@ -79,8 +79,11 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 extern bool saveADCsamplesflag;
 
 const int transferSize = 131072;
+const int transferSamples = 131072 / sizeof(int16_t);
 
 const uint32_t DEFAULT_ADC_FREQ = 64000000;	// ADC sampling frequency
+
+const uint32_t DEFAULT_TRANSFERS_PER_SEC = DEFAULT_ADC_FREQ / transferSamples;
 
 #endif // _CONFIG_H_
 
