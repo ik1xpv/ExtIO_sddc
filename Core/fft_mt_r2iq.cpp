@@ -251,6 +251,78 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 	}
 }
 
+template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int16_t *input, float* output, int size)
+{
+	mipp::Reg<int16_t> rADC;
+	mipp::Reg<int16_t> rOne;
+	mipp::Reg<int16_t> rNegativeTwo;
+	rOne.set1(1);
+	rNegativeTwo.set1(-2);
+
+	int m = 0;
+	for (; m < size; m+=mipp::N<int16_t>()) {
+			if (aligned)
+				rADC.load(&input[m]);
+			else
+				rADC.loadu(&input[m]);
+
+			if (rand)
+			{
+				// c = adc & 1
+				auto rC = mipp::andb(rADC, rOne);
+
+				// mask = (c == 1)?
+				auto mask = mipp::cmpeq(rC, rOne);
+
+				//d = adc ^ (0xfffe)
+				auto rD = mipp::xorb(rADC, rNegativeTwo);
+
+				// adc = mask? d : adc;
+				rADC = mipp::blend(rD, rADC, mask);
+			}
+
+			{
+				// convert low part
+				auto r_adc_low = rADC.low();
+				auto rExt = r_adc_low.template cvt<int32_t>();
+				auto rA = rExt.cvt<float>();
+				rA.store(&output[m]);
+			}
+
+			{
+				// convert high part
+				auto r_adc_high = rADC.high();
+				auto rExt = r_adc_high.template cvt<int32_t>();
+				auto rA = rExt.cvt<float>();
+				rA.store(&output[m + mipp::N<float>()]);
+			}
+	}
+
+	if (m != size)
+	{
+		// some left over, use standard version of converting
+		norm_convert_float<rand>(input + m, output + m, size - m);
+	}
+}
+
+template<bool rand> void fft_mt_r2iq::norm_convert_float(const int16_t *input, float* output, int size)
+{
+	for(int m = 0; m < size; m++)
+	{
+		int16_t val;
+		if (rand && (input[m] & 1))
+		{
+			val = input[m] ^ (-2);
+		}
+		else
+		{
+			val = input[m];
+		}
+		output[m] = float(val);
+	}
+}
+
+
 void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 	const int decimate = this->mdecimation;
@@ -305,58 +377,11 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		// duplicate  halfFft samples from the last frame
 		if (!this->getRand())        // plain samples no ADC rand set
 		{
-			static_assert(halfFft % mipp::N<int16_t>() == 0);
-			for (int m = 0; m < halfFft; m+=mipp::N<int16_t>()) {
-					rADC.loadu(&lastDataADC[m]);
-
-					auto r_adc_low = rADC.low();
-					rExt = r_adc_low.template cvt<int32_t>();
-					// parse low part
-					rA = rExt.cvt<float>();
-					rA.store(&inloop[m]);
-
-					// parse high part
-					auto r_adc_high = rADC.high();
-					rExt = r_adc_high.template cvt<int32_t>();
-					// parse low part
-					rA = rExt.cvt<float>();
-					rA.store(&inloop[m + mipp::N<float>()]);
-			}
+			simd_convert_float<false, false>(lastDataADC, inloop, halfFft);
 		}
 		else
 		{
-			mipp::Reg<int16_t> rOne;
-			mipp::Reg<int16_t> rNegativeTwo;
-			rOne.set1(1);
-			rNegativeTwo.set1(-2);
-			static_assert(halfFft % mipp::N<int16_t>() == 0);
-			for (int m = 0; m < halfFft; m+=mipp::N<int16_t>()) {
-				rADC.loadu(&lastDataADC[m]);
-
-				// c = adc & 1
-				auto rC = mipp::andb(rADC, rOne);
-
-				// mask = (c == 1)?
-				auto mask = mipp::cmpeq(rC, rOne);
-
-				//d = adc ^ (0xfffe)
-				auto rD = mipp::xorb(rADC, rNegativeTwo);
-
-				// adc = mask? d : adc;
-				rADC = mipp::blend(rD, rADC, mask);
-
-				// parse low part
-				auto r_adc_low = rADC.low();
-				rExt = r_adc_low.template cvt<int32_t>();
-				rA = rExt.cvt<float>();
-				rA.store(&inloop[m]);
-
-				// parse high part
-				auto r_adc_high = rADC.high();
-				rExt = r_adc_high.template cvt<int32_t>();
-				rA = rExt.cvt<float>();
-				rA.store(&inloop[m + mipp::N<float>()]);
-			}
+			simd_convert_float<true, false>(lastDataADC, inloop, halfFft);
 		}
 		inloop += halfFft;
 
@@ -374,67 +399,11 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			blockMinMax.first = *minmax.first;
 			blockMinMax.second = *minmax.second;
 #endif
-			static_assert(transferSamples % (mipp::N<float>() * 2) == 0);
-			for (int m = 0; m < transferSamples; m+=mipp::N<int16_t>()) {
-				rADC.load(&dataADC[m]);
-
-				auto r_adc_low = rADC.low();
-				rExt = r_adc_low.template cvt<int32_t>();
-				// parse low part
-				rA = rExt.cvt<float>();
-				rA.store(&inloop[m]);
-
-				// parse high part
-				auto r_adc_high = rADC.high();
-				rExt = r_adc_high.template cvt<int32_t>();
-				// parse low part
-				rA = rExt.cvt<float>();
-				rA.store(&inloop[m + mipp::N<float>()]);
-			}
+			simd_convert_float<false, true>(dataADC, inloop, transferSamples);
 		}
 		else
 		{
-			mipp::Reg<int16_t> rOne;
-			mipp::Reg<int16_t> rNegativeTwo;
-			rOne.set1(1);
-			rNegativeTwo.set1(-2);
-
-			static_assert((transferSize /sizeof(int16_t)) % (mipp::N<float>() * 2) == 0);
-			for (int m = 0; m < transferSize / sizeof(int16_t); m+=mipp::N<int16_t>()) {
-#if PRINT_INPUT_RANGE
-				int16_t smp = RandTable[(uint16_t)*dataADC++];
-				blockMinMax.first = std::min(blockMinMax.first, smp);
-				blockMinMax.second = std::max(blockMinMax.second, smp);
-				*inloop++ = smp;
-#else
-				rADC.load(&dataADC[m]);
-
-				// c = adc & 1
-				auto rC = mipp::andb(rADC, rOne);
-
-				// mask = (c == 1)?
-				auto mask = mipp::cmpeq(rC, rOne);
-
-				//d = adc ^ (0xfffe)
-				auto rD = mipp::xorb(rADC, rNegativeTwo);
-
-				// adc = mask? d : adc;
-				rADC = mipp::blend(rD, rADC, mask);
-
-
-				// parse low part
-				auto r_adc_low = rADC.low();
-				rExt = r_adc_low.template cvt<int32_t>();
-				rA = rExt.cvt<float>();
-				rA.store(&inloop[m]);
-
-				// parse high part
-				auto r_adc_high = rADC.high();
-				rExt = r_adc_high.template cvt<int32_t>();
-				rA = rExt.cvt<float>();
-				rA.store(&inloop[m + mipp::N<float>()]);
-#endif
-			}
+			simd_convert_float<true, true>(dataADC, inloop, transferSamples);
 		}
 
 #if PRINT_INPUT_RANGE

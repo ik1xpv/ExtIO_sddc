@@ -20,6 +20,10 @@ public:
     bool IsOn(void);
     void DataReady(void);
 
+protected:
+    template<bool rand, bool aligned> void simd_convert_float(const int16_t *input, float* output, int size);
+    template<bool rand>               void norm_convert_float(const int16_t *input, float* output, int size);
+
 private:
     int16_t** buffers;    // pointer to input buffers
     float** obuffers;   // pointer to output buffers
