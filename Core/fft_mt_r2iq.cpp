@@ -384,7 +384,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 						memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
 
 					// circular shift tune fs/2 second half array
-					simd_shift_freq(dest, source, filter, start, mfft/2);
+					simd_shift_freq(dest, source2 , filter2, start, mfft/2);
 					if (start != 0)
 						memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 				}
