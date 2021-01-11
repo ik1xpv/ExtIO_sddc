@@ -231,6 +231,11 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 			}
 
 			fftwf_execute_dft(filterplan_t2f_c2c, pfilterht, filterHw[d]);
+
+			for (int i = 0; i < halfFft; i++)
+			{
+				filterHw[d][i][1] = -filterHw[d][i][1];
+			}
 		}
 		delete[] pht;
 		fftwf_destroy_plan(filterplan_t2f_c2c);
@@ -374,26 +379,12 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 				// circular shift (mixing in full bins) and low/bandpass filtering (complex multiplication)
 				{
 					// circular shift tune fs/2 first half array into th->inFreqTmp[]
-					for (int m = 0; m < count; m++)
-					{
-						// besides circular shift, do complex multiplication with the lowpass filter's spectrum
-						th->inFreqTmp[m][0] = (source[m][0] * filter[m][0] +
-							source[m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] = (source[m][1] * filter[m][0] -
-							source[m][0] * filter[m][1]);
-					}
+					simd_shift_freq(th->inFreqTmp, source, filter, 0, count);
 					if (mfft / 2 != count)
 						memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
 
 					// circular shift tune fs/2 second half array
-					for (int m = start; m < mfft / 2; m++)
-					{
-						// also do complex multiplication with the lowpass filter's spectrum
-						dest[m][0] = (source2[m][0] * filter2[m][0] +
-							source2[m][1] * filter2[m][1]);
-						dest[m][1] = (source2[m][1] * filter2[m][0] -
-							source2[m][0] * filter2[m][1]);
-					}
+					simd_shift_freq(dest, source, filter, start, mfft/2);
 					if (start != 0)
 						memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 				}
@@ -468,4 +459,44 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 	} // while(run)
 //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
 	return 0;
+}
+
+void fft_mt_r2iq::simd_shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end)
+{
+	int m;
+	auto size = end - start;
+	auto vecLoopSize = (size / (mipp::N<float>())) * (mipp::N<float>());
+	dest += start;
+	for (m = 0; m < vecLoopSize; m += mipp::N<float>())
+	{
+		mipp::Regx2<float> rSrc1;
+		mipp::Regx2<float> rSrc2;
+
+		rSrc1.loadu(&source1[m][0]);
+		rSrc2.loadu(&source2[m][0]);
+
+		auto s1 = mipp::deinterleave(rSrc1[0], rSrc1[1]);
+		auto s2 = mipp::deinterleave(rSrc2[0], rSrc2[1]);
+
+		auto result = mipp::cmul(s1, s2);
+
+		auto r = mipp::interleave(result[0], result[1]);
+
+		r.store((float*)&dest[m][0]);
+	}
+
+	if (size != vecLoopSize)
+	{
+		norm_shift_freq(&dest[m], &source1[m], &source2[m], 0, size - vecLoopSize);
+	}
+}
+
+void fft_mt_r2iq::norm_shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end)
+{
+	for (int m = start; m < end; m++)
+	{
+		// besides circular shift, do complex multiplication with the lowpass filter's spectrum
+		dest[m][0] = source1[m][0] * source2[m][0] - source1[m][1] * source2[m][1];
+		dest[m][1] = source1[m][1] * source2[m][0] + source1[m][0] * source2[m][1];
+	}
 }

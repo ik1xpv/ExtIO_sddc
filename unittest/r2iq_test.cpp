@@ -168,3 +168,53 @@ TEST_CASE(R2IQ_TEST, RandPerfRun)
 }
 
 #endif
+
+TEST_CASE(R2IQ_TEST, ShiftTest)
+{
+    int Count = 16;
+    auto source1 = mipp::vector<fftwf_complex>(Count);
+    auto source2 = mipp::vector<fftwf_complex>(Count);
+    auto dest1 = mipp::vector<fftwf_complex>(Count);
+    auto dest2 = mipp::vector<fftwf_complex>(Count);
+
+    for(int i = 0; i < Count; i++) {
+        source1[i][0] = 1.0f;//std::rand();
+        source1[i][1] = 2.0f;//std::rand();
+        source2[i][0] = 1.0f;//std::rand();
+        source2[i][1] = 2.0f;//std::rand();
+    }
+
+    this->simd_shift_freq(&dest1[0], &source1[0], &source2[0], 0, Count);
+
+    this->norm_shift_freq(&dest2[0], &source1[0], &source2[0], 0, Count);
+
+    for(int i = 0; i < Count; i++) {
+        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
+        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
+    }
+}
+
+TEST_CASE(R2IQ_TEST, OddSizeShiftTest)
+{
+    int Count = 27;
+    auto source1 = mipp::vector<fftwf_complex>(Count);
+    auto source2 = mipp::vector<fftwf_complex>(Count);
+    auto dest1 = mipp::vector<fftwf_complex>(Count);
+    auto dest2 = mipp::vector<fftwf_complex>(Count);
+
+    for(int i = 0; i < Count; i++) {
+        source1[i][0] = 1.0f;//std::rand();
+        source1[i][1] = 2.0f;//std::rand();
+        source2[i][0] = 1.0f;//std::rand();
+        source2[i][1] = 2.0f;//std::rand();
+    }
+
+    this->simd_shift_freq(&dest1[0], &source1[0], &source2[0], 0, Count);
+
+    this->norm_shift_freq(&dest2[0], &source1[0], &source2[0], 0, Count);
+
+    for(int i = 0; i < Count; i++) {
+        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
+        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
+    }
+}
