@@ -104,7 +104,7 @@ TEST_CASE(R2IQ_TEST, UnalignedSizeTest)
         CHECK_EQUAL(validate[i], aligned_ouput[i]);
 }
 
-#ifdef NDEBUG
+#if 0
 
 TEST_CASE(R2IQ_TEST, AlignedPerfRun)
 {
