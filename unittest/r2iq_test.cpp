@@ -7,6 +7,9 @@
 
 #include <chrono>
 #include <thread>
+
+#include "fft_mt_r2iq_impl.hpp"
+
 using namespace std::chrono;
 
 namespace {
