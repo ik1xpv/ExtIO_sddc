@@ -96,12 +96,12 @@ private:
     float	mSpsIF;
 
     fx3class *fx3;
-    RadioHardware* hardware;
     uint32_t adcrate;
 
     std::mutex fc_mutex;
     std::mutex stop_mutex;
     float fc;
+    RadioHardware* hardware;
     shift_limited_unroll_C_sse_data_t* stateFineTune;
 };
 

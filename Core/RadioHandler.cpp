@@ -118,10 +118,10 @@ RadioHandlerClass::RadioHandlerClass() :
 	randout(false),
 	biasT_HF(false),
 	biasT_VHF(false),
-	modeRF(NOMODE),
 	firmware(0),
-	fc(0.0f),
+	modeRF(NOMODE),
 	adcrate(DEFAULT_ADC_FREQ),
+	fc(0.0f),
 	hardware(new DummyRadio())
 {
 	for (int i = 0; i < QUEUE_SIZE; i++) {
@@ -151,7 +151,6 @@ const char *RadioHandlerClass::getName()
 
 bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), r2iqControlClass *r2iqCntrl)
 {
-	int r = -1;
 	uint8_t rdata[4];
 	this->fx3 = Fx3;
 	this->Callback = callback;
