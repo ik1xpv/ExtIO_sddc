@@ -69,7 +69,8 @@ r2iqControlClass::r2iqControlClass()
 }
 
 fft_mt_r2iq::fft_mt_r2iq() :
-	r2iqControlClass()
+	r2iqControlClass(),
+	filterHw(nullptr)
 {
 	mtunebin = halfFft / 4;
 	mfftdim[0] = halfFft;
@@ -77,7 +78,7 @@ fft_mt_r2iq::fft_mt_r2iq() :
 	{
 		mfftdim[i] = mfftdim[i - 1] / 2;
 	}
-	GainScale = BBRF103_GAINFACTOR;
+	GainScale = 0.0f;
 
 #ifndef NDEBUG
 	int mratio = 1;  // 1,2,4,8,16,..
@@ -103,26 +104,29 @@ fft_mt_r2iq::~fft_mt_r2iq()
 {
 	fftwf_export_wisdom_to_filename("wisdom");
 
-	for (int d = 0; d < NDECIDX; d++)
+	if (filterHw)
 	{
-		fftwf_free(filterHw[d]);     // 4096
-	}
-	fftwf_free(filterHw);
+		for (int d = 0; d < NDECIDX; d++)
+		{
+			fftwf_free(filterHw[d]);     // 4096
+		}
+		fftwf_free(filterHw);
 
-	fftwf_destroy_plan(plan_t2f_r2c);
-	for (int d = 0; d < NDECIDX; d++)
-	{
-		fftwf_destroy_plan(plans_f2t_c2c[d]);
-	}
+		fftwf_destroy_plan(plan_t2f_r2c);
+		for (int d = 0; d < NDECIDX; d++)
+		{
+			fftwf_destroy_plan(plans_f2t_c2c[d]);
+		}
 
-	for (unsigned t = 0; t < processor_count; t++) {
-		auto th = threadArgs[t];
-		fftwf_free(th->ADCinTime);
-		fftwf_free(th->ADCinFreq);
-		fftwf_free(th->inFreqTmp);
-		fftwf_free(th->outTimeTmp);
+		for (unsigned t = 0; t < processor_count; t++) {
+			auto th = threadArgs[t];
+			fftwf_free(th->ADCinTime);
+			fftwf_free(th->ADCinFreq);
+			fftwf_free(th->inFreqTmp);
+			fftwf_free(th->outTimeTmp);
 
-		delete threadArgs[t];
+			delete threadArgs[t];
+		}
 	}
 }
 
@@ -260,7 +264,13 @@ template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int
 	rNegativeTwo.set1(-2);
 
 	int m = 0;
-	for (; m < size; m+=mipp::N<int16_t>()) {
+
+	auto vecLoopSize1 = (size / mipp::N<float>()) * mipp::N<float>();
+	auto vecLoopSize2 = (size / mipp::N<int16_t>()) * mipp::N<int16_t>();
+
+	auto vecLoopSize = std::min(vecLoopSize1, vecLoopSize2);
+
+	for (; m < vecLoopSize; m+=mipp::N<int16_t>()) {
 			if (aligned)
 				rADC.load(&input[m]);
 			else
@@ -286,7 +296,10 @@ template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int
 				auto r_adc_low = rADC.low();
 				auto rExt = r_adc_low.template cvt<int32_t>();
 				auto rA = rExt.cvt<float>();
-				rA.store(&output[m]);
+				if (aligned)
+					rA.store(&output[m]);
+				else
+					rA.storeu(&output[m]);
 			}
 
 			{
@@ -294,14 +307,18 @@ template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int
 				auto r_adc_high = rADC.high();
 				auto rExt = r_adc_high.template cvt<int32_t>();
 				auto rA = rExt.cvt<float>();
-				rA.store(&output[m + mipp::N<float>()]);
+
+				if (aligned)
+					rA.store(&output[m + mipp::N<float>()]);
+				else
+					rA.storeu(&output[m + mipp::N<float>()]);
 			}
 	}
 
-	if (m != size)
+	if (size - vecLoopSize > 0)
 	{
 		// some left over, use standard version of converting
-		norm_convert_float<rand>(input + m, output + m, size - m);
+		norm_convert_float<rand>(input + m, output + m, size - vecLoopSize);
 	}
 }
 
