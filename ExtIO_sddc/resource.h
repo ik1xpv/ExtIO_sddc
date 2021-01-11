@@ -22,6 +22,7 @@
 #define IDC_TRACE                       1012
 #define IDC_RFVIRTUAL                   1013
 #define IDC_ADCSAMPLES                  1014
+#define IDC_PGA                         1015
 #define RES_BIN_FIRMWARE                2000
 #define IHK_CR                          5001
 #define IDE_EDIT_MAIN                   40002

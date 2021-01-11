@@ -82,7 +82,6 @@ bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
 
 bool RX888R2Radio::UpdateattRF(int att)
 {
-    int att0 = att;
     if (!(gpios & VHF_EN))
     {
         // hf mode

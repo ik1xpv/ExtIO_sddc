@@ -64,6 +64,14 @@ bool Support128M()
 		model == RX999;
 }
 
+bool SupportPGA()
+{
+	auto model = RadioHandler.getModel();
+
+	return model == RX888r2 ||
+		model == RX999;
+}
+
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	HICON hIcon = NULL;
@@ -93,8 +101,14 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 		}
 
-		if (!Support128M())
+		if (!Support128M()) {
 			EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), FALSE);
+		}
+
+		if (!SupportPGA()) {
+			EnableWindow(GetDlgItem(hWnd, IDC_PGA), FALSE);
+		}
+
 #ifndef _DEBUG
 		ShowWindow(GetDlgItem(hWnd, IDC_ADCSAMPLES), FALSE);
 #endif
@@ -158,15 +172,17 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case extHw_READY:
 				if (!bSupportDynamicSRate) {
 					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), TRUE);
-					if (Support128M())
+					if (Support128M()) {
 						EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), TRUE);
+					}
 				}
 				break;
 			case extHw_RUNNING:
 				if (!bSupportDynamicSRate) {
 					EnableWindow(GetDlgItem(hWnd, IDC_BANDWIDTH), FALSE);
-					if (Support128M())
+					if (Support128M()) {
 						EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), FALSE);
+					}
 				}
 				break;
 
@@ -232,6 +248,14 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case BN_CLICKED:
 				RadioHandler.UptDither(!RadioHandler.GetDither());
+				break;
+			}
+			break;
+		case IDC_PGA:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				RadioHandler.UptPga(!RadioHandler.GetPga());
 				break;
 			}
 			break;

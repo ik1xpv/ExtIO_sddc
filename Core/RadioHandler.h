@@ -36,6 +36,8 @@ public:
     rf_mode GetmodeRF(){return (rf_mode)modeRF;}
     bool UptDither (bool b);
     bool GetDither () {return dither;}
+    bool UptPga(bool b);
+    bool GetPga() { return pga;}
     bool UptRand (bool b);
     bool GetRand () {return randout;}
     uint16_t GetFirmware() { return firmware; }
@@ -70,6 +72,7 @@ private:
     bool run;
     unsigned long count;    // absolute index
 
+    bool pga;
     bool dither;
     bool randout;
     bool biasT_HF;
@@ -93,12 +96,12 @@ private:
     float	mSpsIF;
 
     fx3class *fx3;
-    RadioHardware* hardware;
     uint32_t adcrate;
 
     std::mutex fc_mutex;
     std::mutex stop_mutex;
     float fc;
+    RadioHardware* hardware;
     shift_limited_unroll_C_sse_data_t* stateFineTune;
 };
 
