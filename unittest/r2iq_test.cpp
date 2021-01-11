@@ -171,11 +171,11 @@ TEST_CASE(R2IQ_TEST, RandPerfRun)
 
 TEST_CASE(R2IQ_TEST, ShiftTest)
 {
-    int Count = 16;
-    auto source1 = mipp::vector<fftwf_complex>(Count);
-    auto source2 = mipp::vector<fftwf_complex>(Count);
-    auto dest1 = mipp::vector<fftwf_complex>(Count);
-    auto dest2 = mipp::vector<fftwf_complex>(Count);
+    const int Count = 16;
+    fftwf_complex source1[Count];
+    fftwf_complex source2[Count];
+    fftwf_complex dest1[Count];
+    fftwf_complex dest2[Count];
 
     for(int i = 0; i < Count; i++) {
         source1[i][0] = 1.0f;//std::rand();
@@ -196,11 +196,11 @@ TEST_CASE(R2IQ_TEST, ShiftTest)
 
 TEST_CASE(R2IQ_TEST, OddSizeShiftTest)
 {
-    int Count = 27;
-    auto source1 = mipp::vector<fftwf_complex>(Count);
-    auto source2 = mipp::vector<fftwf_complex>(Count);
-    auto dest1 = mipp::vector<fftwf_complex>(Count);
-    auto dest2 = mipp::vector<fftwf_complex>(Count);
+    const int Count = 27;
+    fftwf_complex source1[Count];
+    fftwf_complex source2[Count];
+    fftwf_complex dest1[Count];
+    fftwf_complex dest2[Count];
 
     for(int i = 0; i < Count; i++) {
         source1[i][0] = 1.0f;//std::rand();
