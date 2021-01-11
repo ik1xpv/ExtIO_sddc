@@ -3,13 +3,13 @@
 
 #include "mipp.h"
 
+static_assert(mipp::N<int16_t>() == mipp::N<float>() * 2);
+
 template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int16_t *input, float* output, int size)
 {
 	mipp::Reg<int16_t> rADC;
-	mipp::Reg<int16_t> rOne;
-	mipp::Reg<int16_t> rNegativeTwo;
-	rOne.set1(1);
-	rNegativeTwo.set1(-2);
+	mipp::Reg<int16_t> rOne = 1;
+	mipp::Reg<int16_t> rNegativeTwo = -2;
 
 	int m = 0;
 
@@ -29,11 +29,11 @@ template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int
 				// c = adc & 1
 				auto rC = mipp::andb(rADC, rOne);
 
-				// mask = (c == 1)?
-				auto mask = mipp::cmpeq(rC, rOne);
-
 				//d = adc ^ (0xfffe)
 				auto rD = mipp::xorb(rADC, rNegativeTwo);
+
+				// mask = (c == 1)?
+				auto mask = mipp::cmpeq(rC, rOne);
 
 				// adc = mask? d : adc;
 				rADC = mipp::blend(rD, rADC, mask);

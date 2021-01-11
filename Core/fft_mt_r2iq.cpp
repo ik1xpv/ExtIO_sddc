@@ -30,8 +30,6 @@ The name r2iq as Real 2 I+Q stream
 // assure, that ADC is not oversteered?
 #define PRINT_INPUT_RANGE  0
 
-#include "mipp.h"
-
 static const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
 static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 
@@ -266,10 +264,6 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 	const bool lsb = this->getSideband();
 	plan_f2t_c2c = &plans_f2t_c2c[decimate];
 
-	mipp::Reg<float> rA;
-	mipp::Reg<int16_t> rADC;
-	mipp::Reg<int32_t> rExt;
-
 	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
 		const int16_t *lastDataADC;
@@ -305,8 +299,6 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 		// first frame
 		auto inloop = th->ADCinTime;
-
-		static_assert(mipp::N<int16_t>() == mipp::N<float>() * 2);
 
 		// duplicate  halfFft samples from the last frame
 		if (!this->getRand())        // plain samples no ADC rand set
