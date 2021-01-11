@@ -5,8 +5,6 @@
 
 #include "mipp.h"
 
-#define SIZE 36
-
 #include <chrono>
 #include <thread>
 using namespace std::chrono;
