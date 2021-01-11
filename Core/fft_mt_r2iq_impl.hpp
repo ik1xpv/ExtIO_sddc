@@ -2,6 +2,7 @@
 #include "config.h"
 
 #include "mipp.h"
+#include <assert.h>
 
 static_assert(mipp::N<int16_t>() == mipp::N<float>() * 2);
 
@@ -29,37 +30,31 @@ template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int
 				// c = adc & 1
 				auto rC = mipp::andb(rADC, rOne);
 
-				//d = adc ^ (0xfffe)
-				auto rD = mipp::xorb(rADC, rNegativeTwo);
-
 				// mask = (c == 1)?
 				auto mask = mipp::cmpeq(rC, rOne);
+
+				//d = adc ^ (0xfffe)
+				auto rD = mipp::xorb(rADC, rNegativeTwo);
 
 				// adc = mask? d : adc;
 				rADC = mipp::blend(rD, rADC, mask);
 			}
 
 			{
-				// convert low part
-				auto r_adc_low = rADC.low();
-				auto rExt = r_adc_low.template cvt<int32_t>();
-				auto rA = rExt.cvt<float>();
-				if (aligned)
-					rA.store(&output[m]);
-				else
-					rA.storeu(&output[m]);
-			}
+				auto rExt = rADC.low().template cvt<int32_t>();
+				auto rExtHihg = rADC.high().template cvt<int32_t>();
 
-			{
-				// convert high part
-				auto r_adc_high = rADC.high();
-				auto rExt = r_adc_high.template cvt<int32_t>();
-				auto rA = rExt.cvt<float>();
+				auto rLow = rExt.cvt<float>();
+				auto rHigh = rExtHihg.cvt<float>();
 
-				if (aligned)
-					rA.store(&output[m + mipp::N<float>()]);
-				else
-					rA.storeu(&output[m + mipp::N<float>()]);
+				if (aligned) {
+					rLow.store(&output[m]);
+					rHigh.store(&output[m + mipp::N<float>()]);
+				}
+				else {
+					rLow.storeu(&output[m]);
+					rHigh.storeu(&output[m + mipp::N<float>()]);
+				}
 			}
 	}
 
