@@ -167,6 +167,48 @@ TEST_CASE(R2IQ_TEST, RandPerfRun)
     REQUIRE_TRUE(nanoseconds(EndTime - StartTime) < nanoseconds(FinsihTime - EndTime));
 }
 
+TEST_CASE(R2IQ_TEST, ShiftPerfTest)
+{
+    const int Count = FFTN_R_ADC;
+    fftwf_complex source1[Count];
+    fftwf_complex source2[Count];
+    fftwf_complex dest1[Count];
+    fftwf_complex dest2[Count];
+
+    for(int i = 0; i < Count; i++) {
+        source1[i][0] = float(std::rand());
+        source1[i][1] = float(std::rand());
+        source2[i][0] = float(std::rand());
+        source2[i][1] = float(std::rand());
+    }
+
+    auto p = float(std::rand());
+    auto StartTime = high_resolution_clock::now();
+    for (volatile int i = 0; i < 50000; i++)
+    {
+        for(int i = 0; i < Count; i++) {
+            source1[i][0] = float(p * i);
+        }
+
+        this->simd_shift_freq(&dest1[0], &source1[0], &source2[0], 0, Count);
+    }
+
+    auto EndTime = high_resolution_clock::now();
+    for (volatile int i = 0; i < 50000; i++)
+    {
+        for(int i = 0; i < Count; i++)
+        {
+            source1[i][0] = float(p * i);
+        }
+
+        this->norm_shift_freq(&dest2[0], &source1[0], &source2[0], 0, Count);
+    }
+    auto FinsihTime = high_resolution_clock::now();
+
+    printf("Speed up Ratio: %.2lf\n", nanoseconds(FinsihTime - EndTime) *1.0f / nanoseconds(EndTime - StartTime));
+    REQUIRE_TRUE(nanoseconds(EndTime - StartTime) < nanoseconds(FinsihTime - EndTime));
+
+}
 #endif
 
 TEST_CASE(R2IQ_TEST, ShiftTest)
@@ -178,10 +220,10 @@ TEST_CASE(R2IQ_TEST, ShiftTest)
     fftwf_complex dest2[Count];
 
     for(int i = 0; i < Count; i++) {
-        source1[i][0] = 1.0f;//std::rand();
-        source1[i][1] = 2.0f;//std::rand();
-        source2[i][0] = 1.0f;//std::rand();
-        source2[i][1] = 2.0f;//std::rand();
+        source1[i][0] = float(std::rand())/32768.0f;
+        source1[i][1] = float(std::rand())/32768.0f;
+        source2[i][0] = float(std::rand())/32768.0f;
+        source2[i][1] = float(std::rand())/32768.0f;
     }
 
     this->simd_shift_freq(&dest1[0], &source1[0], &source2[0], 0, Count);
@@ -189,8 +231,8 @@ TEST_CASE(R2IQ_TEST, ShiftTest)
     this->norm_shift_freq(&dest2[0], &source1[0], &source2[0], 0, Count);
 
     for(int i = 0; i < Count; i++) {
-        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
-        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
+        CHECK_TRUE(fabs(dest1[i][0] - dest2[i][0]) < 0.0001f);
+        CHECK_TRUE(fabs(dest1[i][1] - dest2[i][1]) < 0.0001f);
     }
 }
 
@@ -203,10 +245,10 @@ TEST_CASE(R2IQ_TEST, OddSizeShiftTest)
     fftwf_complex dest2[Count];
 
     for(int i = 0; i < Count; i++) {
-        source1[i][0] = 1.0f;//std::rand();
-        source1[i][1] = 2.0f;//std::rand();
-        source2[i][0] = 1.0f;//std::rand();
-        source2[i][1] = 2.0f;//std::rand();
+        source1[i][0] = float(std::rand())/32768.0f;
+        source1[i][1] = float(std::rand())/32768.0f;
+        source2[i][0] = float(std::rand())/32768.0f;
+        source2[i][1] = float(std::rand())/32768.0f;
     }
 
     this->simd_shift_freq(&dest1[0], &source1[0], &source2[0], 0, Count);
@@ -214,7 +256,7 @@ TEST_CASE(R2IQ_TEST, OddSizeShiftTest)
     this->norm_shift_freq(&dest2[0], &source1[0], &source2[0], 0, Count);
 
     for(int i = 0; i < Count; i++) {
-        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
-        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
+        CHECK_TRUE(fabs(dest1[i][0] - dest2[i][0]) < 0.0001f);
+        CHECK_TRUE(fabs(dest1[i][1] - dest2[i][1]) < 0.0001f);
     }
 }
