@@ -46,7 +46,26 @@ jobs:
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE
 
-  build-on-linux:
+    - name: Install FFTW3
+      working-directory: ${{runner.workspace}}/build
+      shell: powershell
+      # Execute the build.  You can specify a specific target with "--target <NAME>"
+      run: Invoke-WebRequest -Uri "ftp://ftp.fftw.org/pub/fftw/fftw-3.3.5-dll32.zip" -OutFile fftw-3.3.5-dll32.zip
+
+    - name: Unzip FFTW3
+      working-directory: ${{runner.workspace}}/build
+      shell: powershell
+      # Execute the build.  You can specify a specific target with "--target <NAME>"
+      run: Expand-Archive -Path .\fftw-3.3.5-dll32.zip -DestinationPath unittest
+
+      - name: Test
+      working-directory: ${{runner.workspace}}/build
+      shell: bash
+      # Execute tests defined by the CMake configuration.
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest -C $BUILD_TYPE
+
+      build-on-linux:
     # The CMake configure and build commands are platform agnostic and should work equally
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
@@ -81,10 +100,3 @@ jobs:
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE
-
-    - name: Test
-      working-directory: ${{runner.workspace}}/build
-      shell: bash
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C $BUILD_TYPE
