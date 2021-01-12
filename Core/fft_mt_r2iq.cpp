@@ -33,7 +33,7 @@ The name r2iq as Real 2 I+Q stream
 static const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
 static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 
-#define USE_SIMD 0
+#define USE_SIMD 1
 #if USE_SIMD
 #define shift_freq simd_shift_freq
 #define convert_float simd_convert_float
@@ -154,6 +154,7 @@ void fft_mt_r2iq::TurnOn() {
 	this->r2iqOn = true;
 	this->cntr = 0;
 	this->bufIdx = 0;
+	this->lastThread = threadArgs[0];
 
 	for (unsigned t = 0; t < processor_count; t++) {
 		r2iq_thread[t] = new std::thread(
@@ -275,7 +276,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 
 	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
-		const int16_t *lastDataADC;
+		const float *endloop;    // pointer to end data to be copied to beginning
 		float * pout;
 
 		const int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
@@ -302,23 +303,17 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			int offset = ((transferSize / sizeof(int16_t)) / mratio) * moff;
 			pout = this->obuffers[modx] + offset;
 
-			lastDataADC = &this->buffers[(this->bufIdx + QUEUE_SIZE - 1) % QUEUE_SIZE][halfFft];
 			this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;
+
+			endloop = lastThread->ADCinTime + transferSize / sizeof(int16_t);
+			lastThread = th;
 		}
 
 		// first frame
 		auto inloop = th->ADCinTime;
-
-		// duplicate  halfFft samples from the last frame
-		if (!this->getRand())        // plain samples no ADC rand set
-		{
-			convert_float<false, false>(lastDataADC, inloop, halfFft);
+		for (int m = 0; m < halfFft; m++) {
+			*inloop++ = *endloop++;   // duplicate from last frame halfFft samples
 		}
-		else
-		{
-			convert_float<true, false>(lastDataADC, inloop, halfFft);
-		}
-		inloop += halfFft;
 
 		// @todo: move the following int16_t conversion to (32-bit) float
 		// directly inside the following loop (for "k < fftPerBuf")
