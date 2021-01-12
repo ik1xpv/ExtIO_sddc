@@ -235,11 +235,11 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 			// Bw *= 0.8f;  // easily visualize Kaiser filter's response
 			KaiserWindow(halfFft / 4 + 1, Astop, relPass * Bw / 128.0f, relStop * Bw / 128.0f, pht);
 
-			float gainadj = gain  / sqrtf(2.0f) * 2048.0f / (float)FFTN_R_ADC; // reference is FFTN_R_ADC == 2048
+			float gainadj = gain * 2048.0f / (float)FFTN_R_ADC; // reference is FFTN_R_ADC == 2048
 
 			for (int t = 0; t < (halfFft/4+1); t++)
 			{
-				pfilterht[t][0] = pfilterht[t][1] = gainadj * pht[t];
+				pfilterht[halfFft-1-t][0] = gainadj * pht[t];
 			}
 
 			fftwf_execute_dft(filterplan_t2f_c2c, pfilterht, filterHw[d]);
@@ -399,9 +399,9 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 					for (int m = 0; m < count; m++)
 					{
 						// besides circular shift, do complex multiplication with the lowpass filter's spectrum
-						th->inFreqTmp[m][0] = (source[m][0] * filter[m][0] +
+						th->inFreqTmp[m][0] = (source[m][0] * filter[m][0] -
 							source[m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] = (source[m][1] * filter[m][0] -
+						th->inFreqTmp[m][1] = (source[m][1] * filter[m][0] +
 							source[m][0] * filter[m][1]);
 					}
 					if (mfft / 2 != count)
@@ -411,9 +411,9 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 					for (int m = start; m < mfft / 2; m++)
 					{
 						// also do complex multiplication with the lowpass filter's spectrum
-						dest[m][0] = (source2[m][0] * filter2[m][0] +
+						dest[m][0] = (source2[m][0] * filter2[m][0] -
 							source2[m][1] * filter2[m][1]);
-						dest[m][1] = (source2[m][1] * filter2[m][0] -
+						dest[m][1] = (source2[m][1] * filter2[m][0] +
 							source2[m][0] * filter2[m][1]);
 					}
 					if (start != 0)
