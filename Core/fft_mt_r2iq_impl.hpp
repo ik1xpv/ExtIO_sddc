@@ -86,7 +86,7 @@ template<bool aligned> void fft_mt_r2iq::simd_shift_freq(fftwf_complex* dest, co
 {
 	int m;
 	auto size = end - start;
-	auto vecLoopSize = (size / (mipp::N<float>())) * (mipp::N<float>());
+	auto vecLoopSize = (size / mipp::N<float>()) * mipp::N<float>();
 	dest += start;
 	for (m = 0; m < vecLoopSize; m += mipp::N<float>())
 	{
@@ -117,7 +117,7 @@ template<bool aligned> void fft_mt_r2iq::simd_shift_freq(fftwf_complex* dest, co
 			r.storeu((float*)&dest[m][0]);
 	}
 
-	if (size != vecLoopSize)
+	if (size - vecLoopSize > 0)
 	{
 		norm_shift_freq<aligned>(&dest[m], &source1[m], &source2[m], 0, size - vecLoopSize);
 	}

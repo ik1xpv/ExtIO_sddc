@@ -213,7 +213,7 @@ TEST_CASE(R2IQ_TEST, ShiftPerfTest)
 
 TEST_CASE(R2IQ_TEST, ShiftTest)
 {
-    const int Count = 16;
+    const int Count = 1024;
     fftwf_complex source1[Count];
     fftwf_complex source2[Count];
     fftwf_complex dest1[Count];
@@ -226,9 +226,9 @@ TEST_CASE(R2IQ_TEST, ShiftTest)
         source2[i][1] = float(std::rand())/32768.0f;
     }
 
-    this->simd_shift_freq<false>(&dest1[0], &source1[0], &source2[0], 0, Count);
+    this->simd_shift_freq<true>(&dest1[0], &source1[0], &source2[0], 0, Count);
 
-    this->norm_shift_freq<false>(&dest2[0], &source1[0], &source2[0], 0, Count);
+    this->norm_shift_freq<true>(&dest2[0], &source1[0], &source2[0], 0, Count);
 
     for(int i = 0; i < Count; i++) {
         CHECK_EQUAL(dest1[i][0], dest2[i][0]);
@@ -254,6 +254,34 @@ TEST_CASE(R2IQ_TEST, OddSizeShiftTest)
     this->simd_shift_freq<false>(&dest1[0], &source1[0], &source2[0], 0, Count);
 
     this->norm_shift_freq<false>(&dest2[0], &source1[0], &source2[0], 0, Count);
+
+    for(int i = 0; i < Count; i++) {
+        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
+        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
+    }
+}
+
+TEST_CASE(R2IQ_TEST, FullSizeShiftTest)
+{
+    const int Count = 1024;
+    fftwf_complex source1[Count];
+    fftwf_complex source2[Count];
+    fftwf_complex dest1[Count];
+    fftwf_complex dest2[Count];
+
+    memset(dest1, 0, Count * sizeof(fftwf_complex));
+    memset(dest2, 0, Count * sizeof(fftwf_complex));
+
+    for(int i = 0; i < Count; i++) {
+        source1[i][0] = float(std::rand())/32768.0f;
+        source1[i][1] = float(std::rand())/32768.0f;
+        source2[i][0] = float(std::rand())/32768.0f;
+        source2[i][1] = float(std::rand())/32768.0f;
+    }
+
+    this->simd_shift_freq<false>(&dest1[0], &source1[0], &source2[0], 7, Count - 8);
+
+    this->norm_shift_freq<false>(&dest2[0], &source1[0], &source2[0], 7, Count - 8);
 
     for(int i = 0; i < Count; i++) {
         CHECK_EQUAL(dest1[i][0], dest2[i][0]);

@@ -111,31 +111,31 @@ fft_mt_r2iq::fft_mt_r2iq() :
 
 fft_mt_r2iq::~fft_mt_r2iq()
 {
+	if (filterHw == nullptr)
+		return;
+
 	fftwf_export_wisdom_to_filename("wisdom");
 
-	if (filterHw)
+	for (int d = 0; d < NDECIDX; d++)
 	{
-		for (int d = 0; d < NDECIDX; d++)
-		{
-			fftwf_free(filterHw[d]);     // 4096
-		}
-		fftwf_free(filterHw);
+		fftwf_free(filterHw[d]);     // 4096
+	}
+	fftwf_free(filterHw);
 
-		fftwf_destroy_plan(plan_t2f_r2c);
-		for (int d = 0; d < NDECIDX; d++)
-		{
-			fftwf_destroy_plan(plans_f2t_c2c[d]);
-		}
+	fftwf_destroy_plan(plan_t2f_r2c);
+	for (int d = 0; d < NDECIDX; d++)
+	{
+		fftwf_destroy_plan(plans_f2t_c2c[d]);
+	}
 
-		for (unsigned t = 0; t < processor_count; t++) {
-			auto th = threadArgs[t];
-			fftwf_free(th->ADCinTime);
-			fftwf_free(th->ADCinFreq);
-			fftwf_free(th->inFreqTmp);
-			fftwf_free(th->outTimeTmp);
+	for (unsigned t = 0; t < processor_count; t++) {
+		auto th = threadArgs[t];
+		fftwf_free(th->ADCinTime);
+		fftwf_free(th->ADCinFreq);
+		fftwf_free(th->inFreqTmp);
+		fftwf_free(th->outTimeTmp);
 
-			delete threadArgs[t];
-		}
+		delete threadArgs[t];
 	}
 }
 
@@ -383,7 +383,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 						memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
 
 					// circular shift tune fs/2 second half array
-					shift_freq<false>(dest, source2 , filter2, start, mfft/2);
+					shift_freq<false>(dest, source2, filter2, start, mfft/2);
 					if (start != 0)
 						memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 				}
