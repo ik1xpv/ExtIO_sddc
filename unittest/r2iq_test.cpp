@@ -284,7 +284,7 @@ TEST_CASE(R2IQ_TEST, FullSizeShiftTest)
     this->norm_shift_freq<false>(&dest2[0], &source1[0], &source2[0], 7, Count - 8);
 
     for(int i = 0; i < Count; i++) {
-        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
-        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
+        CHECK_TRUE(fabs(dest1[i][0] - dest2[i][0]) < 0.001f);
+        CHECK_TRUE(fabs(dest1[i][1] - dest2[i][1]) < 0.001f);
     }
 }

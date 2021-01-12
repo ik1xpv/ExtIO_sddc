@@ -58,6 +58,8 @@ template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int
 			}
 	}
 
+	assert(m == vecLoopSize);
+
 	if (size - vecLoopSize > 0)
 	{
 		// some left over, use standard version of converting
@@ -88,6 +90,8 @@ template<bool aligned> void fft_mt_r2iq::simd_shift_freq(fftwf_complex* dest, co
 	auto size = end - start;
 	auto vecLoopSize = (size / mipp::N<float>()) * mipp::N<float>();
 	dest += start;
+	source1 += start;
+	source2 += start;
 	for (m = 0; m < vecLoopSize; m += mipp::N<float>())
 	{
 		mipp::Regx2<float> rSrc1;
@@ -116,6 +120,8 @@ template<bool aligned> void fft_mt_r2iq::simd_shift_freq(fftwf_complex* dest, co
 		else
 			r.storeu((float*)&dest[m][0]);
 	}
+
+	assert(m == vecLoopSize);
 
 	if (size - vecLoopSize > 0)
 	{

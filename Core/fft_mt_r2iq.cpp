@@ -33,7 +33,8 @@ The name r2iq as Real 2 I+Q stream
 static const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
 static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 
-#define USE_SIMD 1
+// Disable SIMD support for now, waiting for cpu feature based switch and further optimization SIMD implementation
+#define USE_SIMD 0
 #if USE_SIMD
 #define shift_freq simd_shift_freq
 #define convert_float simd_convert_float
