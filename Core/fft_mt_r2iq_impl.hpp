@@ -61,11 +61,11 @@ template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int
 	if (size - vecLoopSize > 0)
 	{
 		// some left over, use standard version of converting
-		norm_convert_float<rand>(input + m, output + m, size - vecLoopSize);
+		norm_convert_float<rand, aligned>(input + m, output + m, size - vecLoopSize);
 	}
 }
 
-template<bool rand> void fft_mt_r2iq::norm_convert_float(const int16_t *input, float* output, int size)
+template<bool rand, bool aligned> void fft_mt_r2iq::norm_convert_float(const int16_t *input, float* output, int size)
 {
 	for(int m = 0; m < size; m++)
 	{

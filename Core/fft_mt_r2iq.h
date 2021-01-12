@@ -22,7 +22,7 @@ public:
 
 protected:
     template<bool rand, bool aligned> void simd_convert_float(const int16_t *input, float* output, int size);
-    template<bool rand>               void norm_convert_float(const int16_t *input, float* output, int size);
+    template<bool rand, bool aligned> void norm_convert_float(const int16_t *input, float* output, int size);
     template<bool aligned>            void simd_shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end);
     template<bool aligned>            void norm_shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end);
 

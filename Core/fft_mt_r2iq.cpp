@@ -33,6 +33,15 @@ The name r2iq as Real 2 I+Q stream
 static const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
 static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 
+#define USE_SIMD 0
+#if USE_SIMD
+#define shift_freq simd_shift_freq
+#define convert_float simd_convert_float
+#else
+#define shift_freq norm_shift_freq
+#define convert_float norm_convert_float
+#endif
+
 struct r2iqThreadArg {
 
 	r2iqThreadArg()
@@ -303,11 +312,11 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 		// duplicate  halfFft samples from the last frame
 		if (!this->getRand())        // plain samples no ADC rand set
 		{
-			simd_convert_float<false, false>(lastDataADC, inloop, halfFft);
+			convert_float<false, false>(lastDataADC, inloop, halfFft);
 		}
 		else
 		{
-			simd_convert_float<true, false>(lastDataADC, inloop, halfFft);
+			convert_float<true, false>(lastDataADC, inloop, halfFft);
 		}
 		inloop += halfFft;
 
@@ -325,11 +334,11 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			blockMinMax.first = *minmax.first;
 			blockMinMax.second = *minmax.second;
 #endif
-			simd_convert_float<false, true>(dataADC, inloop, transferSamples);
+			convert_float<false, true>(dataADC, inloop, transferSamples);
 		}
 		else
 		{
-			simd_convert_float<true, true>(dataADC, inloop, transferSamples);
+			convert_float<true, true>(dataADC, inloop, transferSamples);
 		}
 
 #if PRINT_INPUT_RANGE
@@ -374,12 +383,12 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 				// circular shift (mixing in full bins) and low/bandpass filtering (complex multiplication)
 				{
 					// circular shift tune fs/2 first half array into th->inFreqTmp[]
-					simd_shift_freq<false>(th->inFreqTmp, source, filter, 0, count);
+					shift_freq<false>(th->inFreqTmp, source, filter, 0, count);
 					if (mfft / 2 != count)
 						memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
 
 					// circular shift tune fs/2 second half array
-					simd_shift_freq<false>(dest, source2 , filter2, start, mfft/2);
+					shift_freq<false>(dest, source2 , filter2, start, mfft/2);
 					if (start != 0)
 						memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 				}

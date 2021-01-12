@@ -28,7 +28,7 @@ TEST_CASE(R2IQ_TEST, AlignedTest)
 
     this->simd_convert_float<false, true>(&aligned_input[0], &aligned_ouput[0], transferSamples);
 
-    this->norm_convert_float<false>(&aligned_input[0], &validate[0], transferSamples);
+    this->norm_convert_float<false, true>(&aligned_input[0], &validate[0], transferSamples);
 
     for(int i = 0; i < transferSamples; i++)
         CHECK_EQUAL(validate[i], aligned_ouput[i]);
@@ -45,7 +45,7 @@ TEST_CASE(R2IQ_TEST, UnalignedTest)
 
     this->simd_convert_float<false, false>(&unaligned_input[0], &unaligned_ouput[0], transferSamples);
 
-    this->norm_convert_float<false>(&unaligned_input[0], &validate[0], transferSamples);
+    this->norm_convert_float<false, true>(&unaligned_input[0], &validate[0], transferSamples);
 
     for(int i = 0; i < transferSamples; i++)
         CHECK_EQUAL(validate[i], unaligned_ouput[i]);
@@ -62,7 +62,7 @@ TEST_CASE(R2IQ_TEST, AlignedRANDTest)
 
     this->simd_convert_float<true, true>(&aligned_input[0], &aligned_ouput[0], transferSamples);
 
-    this->norm_convert_float<true>(&aligned_input[0], &validate[0], transferSamples);
+    this->norm_convert_float<true, true>(&aligned_input[0], &validate[0], transferSamples);
 
     for(int i = 0; i < transferSamples; i++)
         CHECK_EQUAL(validate[i], aligned_ouput[i]);
@@ -80,7 +80,7 @@ TEST_CASE(R2IQ_TEST, UnalignedRANDTest)
 
     this->simd_convert_float<true, false>(&unaligned_input[0], &unaligned_ouput[0], transferSamples);
 
-    this->norm_convert_float<true>(&unaligned_input[0], &validate[0], transferSamples);
+    this->norm_convert_float<true, true>(&unaligned_input[0], &validate[0], transferSamples);
 
     for(int i = 0; i < transferSamples; i++)
         CHECK_EQUAL(validate[i], unaligned_ouput[i]);
@@ -98,7 +98,7 @@ TEST_CASE(R2IQ_TEST, UnalignedSizeTest)
 
     this->simd_convert_float<false, true>(&aligned_input[0], &aligned_ouput[0], size);
 
-    this->norm_convert_float<false>(&aligned_input[0], &validate[0], size);
+    this->norm_convert_float<false, true>(&aligned_input[0], &validate[0], size);
 
     for(int i = 0; i < size; i++)
         CHECK_EQUAL(validate[i], aligned_ouput[i]);
