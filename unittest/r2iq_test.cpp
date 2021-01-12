@@ -226,13 +226,13 @@ TEST_CASE(R2IQ_TEST, ShiftTest)
         source2[i][1] = float(std::rand())/32768.0f;
     }
 
-    this->simd_shift_freq(&dest1[0], &source1[0], &source2[0], 0, Count);
+    this->simd_shift_freq<false>(&dest1[0], &source1[0], &source2[0], 0, Count);
 
-    this->norm_shift_freq(&dest2[0], &source1[0], &source2[0], 0, Count);
+    this->norm_shift_freq<false>(&dest2[0], &source1[0], &source2[0], 0, Count);
 
     for(int i = 0; i < Count; i++) {
-        CHECK_TRUE(fabs(dest1[i][0] - dest2[i][0]) < 0.0001f);
-        CHECK_TRUE(fabs(dest1[i][1] - dest2[i][1]) < 0.0001f);
+        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
+        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
     }
 }
 
@@ -251,12 +251,12 @@ TEST_CASE(R2IQ_TEST, OddSizeShiftTest)
         source2[i][1] = float(std::rand())/32768.0f;
     }
 
-    this->simd_shift_freq(&dest1[0], &source1[0], &source2[0], 0, Count);
+    this->simd_shift_freq<false>(&dest1[0], &source1[0], &source2[0], 0, Count);
 
-    this->norm_shift_freq(&dest2[0], &source1[0], &source2[0], 0, Count);
+    this->norm_shift_freq<false>(&dest2[0], &source1[0], &source2[0], 0, Count);
 
     for(int i = 0; i < Count; i++) {
-        CHECK_TRUE(fabs(dest1[i][0] - dest2[i][0]) < 0.0001f);
-        CHECK_TRUE(fabs(dest1[i][1] - dest2[i][1]) < 0.0001f);
+        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
+        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
     }
 }

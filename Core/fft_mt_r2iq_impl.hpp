@@ -81,3 +81,54 @@ template<bool rand> void fft_mt_r2iq::norm_convert_float(const int16_t *input, f
 		output[m] = float(val);
 	}
 }
+
+template<bool aligned> void fft_mt_r2iq::simd_shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end)
+{
+	int m;
+	auto size = end - start;
+	auto vecLoopSize = (size / (mipp::N<float>())) * (mipp::N<float>());
+	dest += start;
+	for (m = 0; m < vecLoopSize; m += mipp::N<float>())
+	{
+		mipp::Regx2<float> rSrc1;
+		mipp::Regx2<float> rSrc2;
+
+		if (aligned)
+		{
+			rSrc1.load(&source1[m][0]);
+			rSrc2.load(&source2[m][0]);
+		}
+		else
+		{
+			rSrc1.loadu(&source1[m][0]);
+			rSrc2.loadu(&source2[m][0]);
+		}
+
+		auto s1 = mipp::deinterleave(rSrc1[0], rSrc1[1]);
+		auto s2 = mipp::deinterleave(rSrc2[0], rSrc2[1]);
+
+		auto result = mipp::cmul(s1, s2);
+
+		auto r = mipp::interleave(result[0], result[1]);
+
+		if (aligned)
+			r.store((float*)&dest[m][0]);
+		else
+			r.storeu((float*)&dest[m][0]);
+	}
+
+	if (size != vecLoopSize)
+	{
+		norm_shift_freq<aligned>(&dest[m], &source1[m], &source2[m], 0, size - vecLoopSize);
+	}
+}
+
+template<bool aligned> void fft_mt_r2iq::norm_shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end)
+{
+	for (int m = start; m < end; m++)
+	{
+		// besides circular shift, do complex multiplication with the lowpass filter's spectrum
+		dest[m][0] = source1[m][0] * source2[m][0] - source1[m][1] * source2[m][1];
+		dest[m][1] = source1[m][1] * source2[m][0] + source1[m][0] * source2[m][1];
+	}
+}
