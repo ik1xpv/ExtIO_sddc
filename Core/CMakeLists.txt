@@ -17,7 +17,7 @@ if (MSVC)
 else()
     set_source_files_properties(fft_mt_r2iq_avx.cpp PROPERTIES COMPILE_FLAGS -mavx)
     set_source_files_properties(fft_mt_r2iq_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
-    set_source_files_properties(fft_mt_r2iq_avx512.cpp PROPERTIES COMPILE_FLAGS -mavx512)
+    set_source_files_properties(fft_mt_r2iq_avx512.cpp PROPERTIES COMPILE_FLAGS -mavx512f)
 
     include_directories(${LIBUSB_INCLUDE_DIRS})
     include_directories(${LIBFFTW_INCLUDE_DIRS})
