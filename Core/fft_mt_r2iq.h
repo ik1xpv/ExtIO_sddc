@@ -25,6 +25,8 @@ protected:
     template<bool rand, bool aligned> void norm_convert_float(const int16_t *input, float* output, int size);
     template<bool aligned>            void simd_shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end);
     template<bool aligned>            void norm_shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end);
+    template<bool flip, bool aligned> void simd_copy(fftwf_complex* dest, const fftwf_complex* source, int count);
+    template<bool flip, bool aligned> void norm_copy(fftwf_complex* dest, const fftwf_complex* source, int count);
 
 private:
     int16_t** buffers;    // pointer to input buffers

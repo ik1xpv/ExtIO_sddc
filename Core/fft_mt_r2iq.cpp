@@ -38,9 +38,11 @@ static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 
 #if USE_SIMD
 #define shift_freq simd_shift_freq
 #define convert_float simd_convert_float
+#define copy simd_copy
 #else
 #define shift_freq norm_shift_freq
 #define convert_float norm_convert_float
+#define copy norm_copy
 #endif
 
 struct r2iqThreadArg {
@@ -278,7 +280,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
 		const float *endloop;    // pointer to end data to be copied to beginning
-		float * pout;
+		fftwf_complex* pout;
 
 		const int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 
@@ -302,7 +304,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 			int modx = this->bufIdx / mratio;
 			int moff = this->bufIdx - modx * mratio;
 			int offset = ((transferSize / sizeof(int16_t)) / mratio) * moff;
-			pout = this->obuffers[modx] + offset;
+			pout = (fftwf_complex*)(this->obuffers[modx] + offset);
 
 			this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;
 
@@ -415,43 +417,22 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
 				// mirror just by negating the imaginary Q of complex I/Q
 				if (k == 0)
 				{
-					auto pTimeTmp = th->outTimeTmp[mfft / 4];
-					for (int i = 0; i < mfft / 2; i++)
-					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = -*pTimeTmp++;
-					}
+					copy<true, false>(pout, &th->outTimeTmp[mfft / 4], mfft/2);
 				}
 				else
 				{
-					auto pTimeTmp = th->outTimeTmp[0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
-					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = -*pTimeTmp++;
-					}
+					copy<true, false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->outTimeTmp[0], (3 * mfft / 4));
 				}
 			}
 			else // upper sideband
 			{
-				// simple memcpy() calls are sufficient (possibly faster?)
 				if (k == 0)
 				{
-					auto pTimeTmp = th->outTimeTmp[mfft / 4];
-					for (int i = 0; i < mfft / 2; i++)
-					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = *pTimeTmp++;
-					}
+					copy<false, false>(pout, &th->outTimeTmp[mfft / 4], mfft/2);
 				}
 				else
 				{
-					auto pTimeTmp = th->outTimeTmp[0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
-					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = *pTimeTmp++;
-					}
+					copy<false, false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->outTimeTmp[0], (3 * mfft / 4));
 				}
 			}
 			// result now in this->obuffers[]

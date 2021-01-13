@@ -31,7 +31,7 @@ TEST_CASE(R2IQ_TEST, AlignedTest)
     this->norm_convert_float<false, true>(&aligned_input[0], &validate[0], transferSamples);
 
     for(int i = 0; i < transferSamples; i++)
-        CHECK_EQUAL(validate[i], aligned_ouput[i]);
+        CHECK_CLOSE(validate[i], aligned_ouput[i], 0.001f);
 }
 
 TEST_CASE(R2IQ_TEST, UnalignedTest)
@@ -48,7 +48,7 @@ TEST_CASE(R2IQ_TEST, UnalignedTest)
     this->norm_convert_float<false, true>(&unaligned_input[0], &validate[0], transferSamples);
 
     for(int i = 0; i < transferSamples; i++)
-        CHECK_EQUAL(validate[i], unaligned_ouput[i]);
+        CHECK_CLOSE(validate[i], unaligned_ouput[i], 0.001f);
 }
 
 TEST_CASE(R2IQ_TEST, AlignedRANDTest)
@@ -65,8 +65,7 @@ TEST_CASE(R2IQ_TEST, AlignedRANDTest)
     this->norm_convert_float<true, true>(&aligned_input[0], &validate[0], transferSamples);
 
     for(int i = 0; i < transferSamples; i++)
-        CHECK_EQUAL(validate[i], aligned_ouput[i]);
-
+        CHECK_CLOSE(validate[i], aligned_ouput[i], 0.001f);
 }
 
 TEST_CASE(R2IQ_TEST, UnalignedRANDTest)
@@ -83,7 +82,7 @@ TEST_CASE(R2IQ_TEST, UnalignedRANDTest)
     this->norm_convert_float<true, true>(&unaligned_input[0], &validate[0], transferSamples);
 
     for(int i = 0; i < transferSamples; i++)
-        CHECK_EQUAL(validate[i], unaligned_ouput[i]);
+        CHECK_CLOSE(validate[i], unaligned_ouput[i], 0.001f);
 }
 
 TEST_CASE(R2IQ_TEST, UnalignedSizeTest)
@@ -101,115 +100,8 @@ TEST_CASE(R2IQ_TEST, UnalignedSizeTest)
     this->norm_convert_float<false, true>(&aligned_input[0], &validate[0], size);
 
     for(int i = 0; i < size; i++)
-        CHECK_EQUAL(validate[i], aligned_ouput[i]);
+        CHECK_CLOSE(validate[i], aligned_ouput[i], 0.001f);
 }
-
-#if 0
-
-TEST_CASE(R2IQ_TEST, AlignedPerfRun)
-{
-    auto aligned_input = mipp::vector<int16_t>(transferSamples);
-    auto aligned_ouput = mipp::vector<float>(transferSamples);
-    auto validate = std::vector<float>(transferSamples);
-
-    auto p = std::rand();
-    auto StartTime = high_resolution_clock::now();
-    for (volatile int i = 0; i < 50000; i++)
-    {
-        for(int i = 0; i < transferSamples; i++)
-            aligned_input[i] = p * i;
-
-        this->simd_convert_float<false, true>(&aligned_input[0], &aligned_ouput[0], transferSamples);
-    }
-
-    auto EndTime = high_resolution_clock::now();
-    for (volatile int i = 0; i < 50000; i++)
-    {
-        for(int i = 0; i < transferSamples; i++)
-            aligned_input[i] = p * i;
-
-        this->norm_convert_float<false>(&aligned_input[0], &aligned_ouput[0], transferSamples);
-    }
-    auto FinsihTime = high_resolution_clock::now();
-
-    printf("Speed up Ratio: %.2lf\n", nanoseconds(FinsihTime - EndTime) *1.0f / nanoseconds(EndTime - StartTime));
-    REQUIRE_TRUE(nanoseconds(EndTime - StartTime) < nanoseconds(FinsihTime - EndTime));
-}
-
-
-TEST_CASE(R2IQ_TEST, RandPerfRun)
-{
-    auto aligned_input = mipp::vector<int16_t>(transferSamples);
-    auto aligned_ouput = mipp::vector<float>(transferSamples);
-    auto validate = std::vector<float>(transferSamples);
-
-    auto p = std::rand();
-    auto StartTime = high_resolution_clock::now();
-    for (volatile int i = 0; i < 50000; i++)
-    {
-        for(int i = 0; i < transferSamples; i++)
-            aligned_input[i] = p * i;
-
-        this->simd_convert_float<true, true>(&aligned_input[0], &aligned_ouput[0], transferSamples);
-    }
-
-    auto EndTime = high_resolution_clock::now();
-    for (volatile int i = 0; i < 50000; i++)
-    {
-        for(int i = 0; i < transferSamples; i++)
-            aligned_input[i] = p * i;
-
-        this->norm_convert_float<true>(&aligned_input[0], &aligned_ouput[0], transferSamples);
-    }
-    auto FinsihTime = high_resolution_clock::now();
-
-    printf("Speed up Ratio: %.2lf\n", nanoseconds(FinsihTime - EndTime) *1.0f / nanoseconds(EndTime - StartTime));
-    REQUIRE_TRUE(nanoseconds(EndTime - StartTime) < nanoseconds(FinsihTime - EndTime));
-}
-
-TEST_CASE(R2IQ_TEST, ShiftPerfTest)
-{
-    const int Count = FFTN_R_ADC;
-    fftwf_complex source1[Count];
-    fftwf_complex source2[Count];
-    fftwf_complex dest1[Count];
-    fftwf_complex dest2[Count];
-
-    for(int i = 0; i < Count; i++) {
-        source1[i][0] = float(std::rand());
-        source1[i][1] = float(std::rand());
-        source2[i][0] = float(std::rand());
-        source2[i][1] = float(std::rand());
-    }
-
-    auto p = float(std::rand());
-    auto StartTime = high_resolution_clock::now();
-    for (volatile int i = 0; i < 50000; i++)
-    {
-        for(int i = 0; i < Count; i++) {
-            source1[i][0] = float(p * i);
-        }
-
-        this->simd_shift_freq(&dest1[0], &source1[0], &source2[0], 0, Count);
-    }
-
-    auto EndTime = high_resolution_clock::now();
-    for (volatile int i = 0; i < 50000; i++)
-    {
-        for(int i = 0; i < Count; i++)
-        {
-            source1[i][0] = float(p * i);
-        }
-
-        this->norm_shift_freq(&dest2[0], &source1[0], &source2[0], 0, Count);
-    }
-    auto FinsihTime = high_resolution_clock::now();
-
-    printf("Speed up Ratio: %.2lf\n", nanoseconds(FinsihTime - EndTime) *1.0f / nanoseconds(EndTime - StartTime));
-    REQUIRE_TRUE(nanoseconds(EndTime - StartTime) < nanoseconds(FinsihTime - EndTime));
-
-}
-#endif
 
 TEST_CASE(R2IQ_TEST, ShiftTest)
 {
@@ -231,8 +123,8 @@ TEST_CASE(R2IQ_TEST, ShiftTest)
     this->norm_shift_freq<true>(&dest2[0], &source1[0], &source2[0], 0, Count);
 
     for(int i = 0; i < Count; i++) {
-        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
-        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
+        CHECK_CLOSE(dest1[i][0], dest2[i][0], 0.001f);
+        CHECK_CLOSE(dest1[i][1], dest2[i][1], 0.001f);
     }
 }
 
@@ -256,8 +148,8 @@ TEST_CASE(R2IQ_TEST, OddSizeShiftTest)
     this->norm_shift_freq<false>(&dest2[0], &source1[0], &source2[0], 0, Count);
 
     for(int i = 0; i < Count; i++) {
-        CHECK_EQUAL(dest1[i][0], dest2[i][0]);
-        CHECK_EQUAL(dest1[i][1], dest2[i][1]);
+        CHECK_CLOSE(dest1[i][0], dest2[i][0], 0.001f);
+        CHECK_CLOSE(dest1[i][1], dest2[i][1], 0.001f);
     }
 }
 
@@ -284,7 +176,57 @@ TEST_CASE(R2IQ_TEST, FullSizeShiftTest)
     this->norm_shift_freq<false>(&dest2[0], &source1[0], &source2[0], 7, Count - 8);
 
     for(int i = 0; i < Count; i++) {
-        CHECK_TRUE(fabs(dest1[i][0] - dest2[i][0]) < 0.001f);
-        CHECK_TRUE(fabs(dest1[i][1] - dest2[i][1]) < 0.001f);
+        CHECK_CLOSE(dest1[i][0], dest2[i][0], 0.001f);
+        CHECK_CLOSE(dest1[i][1], dest2[i][1], 0.001f);
+    }
+}
+
+TEST_CASE(R2IQ_TEST, NonFlipCopyTest)
+{
+    const int Count = 1024;
+    fftwf_complex source1[Count];
+    fftwf_complex dest1[Count];
+    fftwf_complex dest2[Count];
+
+    memset(dest1, 0, Count * sizeof(fftwf_complex));
+    memset(dest2, 0, Count * sizeof(fftwf_complex));
+
+    for(int i = 0; i < Count; i++) {
+        source1[i][0] = float(std::rand())/32768.0f;
+        source1[i][1] = float(std::rand())/32768.0f;
+    }
+
+    this->simd_copy<false, false>(&dest1[0], &source1[0], Count - 17);
+
+    this->norm_copy<false, false>(&dest2[0], &source1[0], Count - 17);
+
+    for(int i = 0; i < Count; i++) {
+        CHECK_CLOSE(dest1[i][0], dest2[i][0], 0.001f);
+        CHECK_CLOSE(dest1[i][1], dest2[i][1], 0.001f);
+    }
+}
+
+TEST_CASE(R2IQ_TEST, FlipCopyTest)
+{
+    const int Count = 1024;
+    fftwf_complex source1[Count];
+    fftwf_complex dest1[Count];
+    fftwf_complex dest2[Count];
+
+    memset(dest1, 0, Count * sizeof(fftwf_complex));
+    memset(dest2, 0, Count * sizeof(fftwf_complex));
+
+    for(int i = 0; i < Count; i++) {
+        source1[i][0] = float(std::rand())/32768.0f;
+        source1[i][1] = float(std::rand())/32768.0f;
+    }
+
+    this->simd_copy<true, false>(&dest1[0], &source1[0], Count - 17);
+
+    this->norm_copy<true, false>(&dest2[0], &source1[0], Count - 17);
+
+    for(int i = 0; i < Count; i++) {
+        CHECK_CLOSE(dest1[i][0], dest2[i][0], 0.001f);
+        CHECK_CLOSE(dest1[i][1], dest2[i][1], 0.001f);
     }
 }

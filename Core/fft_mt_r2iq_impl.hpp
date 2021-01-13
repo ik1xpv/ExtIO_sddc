@@ -8,7 +8,6 @@ static_assert(mipp::N<int16_t>() == mipp::N<float>() * 2);
 
 template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int16_t *input, float* output, int size)
 {
-	mipp::Reg<int16_t> rADC;
 	mipp::Reg<int16_t> rOne = 1;
 	mipp::Reg<int16_t> rNegativeTwo = -2;
 
@@ -20,6 +19,7 @@ template<bool rand, bool aligned> void fft_mt_r2iq::simd_convert_float(const int
 	auto vecLoopSize = std::min(vecLoopSize1, vecLoopSize2);
 
 	for (; m < vecLoopSize; m+=mipp::N<int16_t>()) {
+			mipp::Reg<int16_t> rADC;
 			if (aligned)
 				rADC.load(&input[m]);
 			else
@@ -92,11 +92,11 @@ template<bool aligned> void fft_mt_r2iq::simd_shift_freq(fftwf_complex* dest, co
 	dest += start;
 	source1 += start;
 	source2 += start;
+	mipp::Regx2<float> rSrc1;
+	mipp::Regx2<float> rSrc2;
+
 	for (m = 0; m < vecLoopSize; m += mipp::N<float>())
 	{
-		mipp::Regx2<float> rSrc1;
-		mipp::Regx2<float> rSrc2;
-
 		if (aligned)
 		{
 			rSrc1.load(&source1[m][0]);
@@ -111,7 +111,7 @@ template<bool aligned> void fft_mt_r2iq::simd_shift_freq(fftwf_complex* dest, co
 		auto s1 = mipp::deinterleave(rSrc1[0], rSrc1[1]);
 		auto s2 = mipp::deinterleave(rSrc2[0], rSrc2[1]);
 
-		auto result = mipp::cmul(s1, s2);
+		auto result = s1.cmul(s2);
 
 		auto r = mipp::interleave(result[0], result[1]);
 
@@ -136,5 +136,64 @@ template<bool aligned> void fft_mt_r2iq::norm_shift_freq(fftwf_complex* dest, co
 		// besides circular shift, do complex multiplication with the lowpass filter's spectrum
 		dest[m][0] = source1[m][0] * source2[m][0] - source1[m][1] * source2[m][1];
 		dest[m][1] = source1[m][1] * source2[m][0] + source1[m][0] * source2[m][1];
+	}
+}
+
+template<bool flip, bool aligned> void fft_mt_r2iq::simd_copy(fftwf_complex* dest, const fftwf_complex* source, int count)
+{
+	int m;
+	auto vecLoopSize = (count / mipp::N<float>()) * mipp::N<float>();
+
+	const bool cmask[8] = {false, true, false, true, false, true, false, true};
+	mipp::Msk<mipp::N<float>()> msk(cmask);
+	mipp::Regx2<float> rSrc;
+
+	for (m = 0; m < vecLoopSize; m += mipp::N<float>())
+	{
+		if (aligned)
+		{
+			rSrc.load(&source[m][0]);
+		}
+		else
+		{
+			rSrc.loadu(&source[m][0]);
+		}
+
+		if (flip)
+		{
+			rSrc = mipp::Regx2<float>(
+				mipp::neg(rSrc[0], msk),
+				mipp::neg(rSrc[1], msk));
+		}
+
+		if (aligned)
+			rSrc.store(&dest[m][0]);
+		else
+			rSrc.storeu(&dest[m][0]);
+	}
+
+	if (count - vecLoopSize > 0)
+	{
+		norm_copy<flip, aligned>(&dest[m], &source[m], count - vecLoopSize);
+	}
+}
+
+template<bool flip, bool aligned> void fft_mt_r2iq::norm_copy(fftwf_complex* dest, const fftwf_complex* source, int count)
+{
+	if (flip)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			dest[i][0] = source[i][0];
+			dest[i][1] = -source[i][1];
+		}
+	}
+	else
+	{
+		for (int i = 0; i < count; i++)
+		{
+			dest[i][0] = source[i][0];
+			dest[i][1] = source[i][1];
+		}
 	}
 }

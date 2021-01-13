@@ -25,7 +25,7 @@ SET(LIBMIPP_INCLUDE_DIRS ${SOURCE_DIR}/src)
 
 if (MSVC)
     add_subdirectory(ExtIO_sddc)
-    set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3 /arch:AVX2 /fp:fast")
+    set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3 /arch:AVX2")
 else()
     set(CMAKE_CXX_FLAGS "-O3 -std=c++17 -Wall -Werror -march=native")
     #add_compile_options(-Wall -Wextra -pedantic)
