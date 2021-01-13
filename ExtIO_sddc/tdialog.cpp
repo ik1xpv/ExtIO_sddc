@@ -101,14 +101,6 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 		}
 
-		if (!Support128M()) {
-			EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), FALSE);
-		}
-
-		if (!SupportPGA()) {
-			EnableWindow(GetDlgItem(hWnd, IDC_PGA), FALSE);
-		}
-
 #ifndef _DEBUG
 		ShowWindow(GetDlgItem(hWnd, IDC_ADCSAMPLES), FALSE);
 #endif
@@ -129,6 +121,14 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC14), lbuffer);
 			sprintf(lbuffer, "%3.1fMsps", RadioHandler.getSpsIF());
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC16), lbuffer);
+		}
+
+		if (!Support128M()) {
+			EnableWindow(GetDlgItem(hWnd, IDC_OVERCLOCK), FALSE);
+		}
+
+		if (!SupportPGA()) {
+			EnableWindow(GetDlgItem(hWnd, IDC_PGA), FALSE);
 		}
 
 		if (GetStateButton(hWnd, IDC_IFGAINP))
