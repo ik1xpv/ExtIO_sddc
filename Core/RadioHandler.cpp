@@ -22,24 +22,23 @@ unsigned long Failures = 0;
 
 void RadioHandlerClass::OnDataPacket(int idx)
 {
-	int rd = r2iqCntrl->getRatio();
+	int len = EXT_BLOCKLEN / r2iqCntrl->getRatio();
 	// submit result to SDR application before processing next packet
 	++count;
+	int oidx = (idx - 1 + QUEUE_SIZE ) % QUEUE_SIZE;
 
 	if (run &&						// app is running
-		count > QUEUE_SIZE &&		// skip first batch
-		(idx % rd == 0))		// if decimate, every *rd* packages
+		count > QUEUE_SIZE)		// if decimate, every *rd* packages
 	{
-		int oidx = idx / rd;
 		std::unique_lock<std::mutex> lk(fc_mutex);
 		if (fc != 0.0f)
 		{
-			shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[oidx], EXT_BLOCKLEN, stateFineTune);
+			shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[oidx], len, stateFineTune);
 		}
 
-    	Callback(obuffers[oidx], EXT_BLOCKLEN);
+    	Callback(obuffers[oidx], len);
 
-		SamplesXIF += EXT_BLOCKLEN;
+		SamplesXIF += len;
 	}
 
 	r2iqCntrl->DataReady();   // inform r2iq buffer ready

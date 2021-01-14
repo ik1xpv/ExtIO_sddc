@@ -31,10 +31,7 @@
 			dataADC = this->buffers[this->bufIdx];
 			std::atomic_fetch_sub(&this->cntr, 1);
 
-			int modx = this->bufIdx / mratio;
-			int moff = this->bufIdx - modx * mratio;
-			int offset = ((transferSize / sizeof(int16_t)) / mratio) * moff;
-			pout = (fftwf_complex*)(this->obuffers[modx] + offset);
+			pout = (fftwf_complex*)(this->obuffers[this->bufIdx]);
 
 			this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;
 
