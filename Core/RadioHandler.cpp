@@ -203,9 +203,7 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 bool RadioHandlerClass::Start(int srate_idx)
 {
 	Stop();
-	double div = pow(2.0, srate_idx);
-	auto samplerate = 1000000.0 * (div * 2);
-	int decimate = (int)log2(getSampleRate() / (2 * samplerate));
+	int decimate = srate_idx;
 
 	DbgPrintf("RadioHandlerClass::Start\n");
 	run = true;
