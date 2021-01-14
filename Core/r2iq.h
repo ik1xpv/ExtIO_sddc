@@ -2,7 +2,7 @@
 #define R2IQ_H
 #include "license.txt" 
 
-#define NDECIDX 10  //number of srate
+#define NDECIDX 7  //number of srate
 
 #include <thread>
 #include <mutex>
