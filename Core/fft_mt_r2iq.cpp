@@ -20,35 +20,8 @@ The name r2iq as Real 2 I+Q stream
 #include "fir.h"
 
 #include <assert.h>
-#include <string.h>
-#include <algorithm>
 #include <utility>
 
-// assure, that ADC is not oversteered?
-#define PRINT_INPUT_RANGE  0
-
-
-struct r2iqThreadArg {
-
-	r2iqThreadArg()
-	{
-#if PRINT_INPUT_RANGE
-		MinMaxBlockCount = 0;
-		MinValue = 0;
-		MaxValue = 0;
-#endif
-	}
-
-	float *ADCinTime;                // point to each threads input buffers [nftt][n]
-	fftwf_complex *ADCinFreq;         // buffers in frequency
-	fftwf_complex *inFreqTmp;         // tmp decimation output buffers (after tune shift)
-	fftwf_complex *outTimeTmp;        // tmp decimation output buffers baseband time cplx
-#if PRINT_INPUT_RANGE
-	int MinMaxBlockCount;
-	int16_t MinValue;
-	int16_t MaxValue;
-#endif
-};
 
 r2iqControlClass::r2iqControlClass()
 {
@@ -61,38 +34,19 @@ r2iqControlClass::r2iqControlClass()
 	{
 		mratio[i] = mratio[i - 1] * 2;
 	}
-
-	// load RAND table for ADC
-	for (unsigned k = 0; k < 65536; k++)
-	{
-		if (k & 1)
-		{
-			RandTable[k] = (k ^ 0xFFFE);
-		}
-		else {
-			RandTable[k] = k;
-		}
-	}
-
-#ifndef NDEBUG
-	for (unsigned k = 0; k < 65536; k++)
-		assert(k == (uint16_t)RandTable[(uint16_t)RandTable[k]]);
-#endif
 }
 
 fft_mt_r2iq::fft_mt_r2iq() :
-	r2iqControlClass()
+	r2iqControlClass(),
+	filterHw(nullptr)
 {
-	halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
-	fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
-
 	mtunebin = halfFft / 4;
 	mfftdim[0] = halfFft;
 	for (int i = 1; i < NDECIDX; i++)
 	{
 		mfftdim[i] = mfftdim[i - 1] / 2;
 	}
-	GainScale = BBRF103_GAINFACTOR;
+	GainScale = 0.0f;
 
 #ifndef NDEBUG
 	int mratio = 1;  // 1,2,4,8,16,..
@@ -116,6 +70,9 @@ fft_mt_r2iq::fft_mt_r2iq() :
 
 fft_mt_r2iq::~fft_mt_r2iq()
 {
+	if (filterHw == nullptr)
+		return;
+
 	fftwf_export_wisdom_to_filename("wisdom");
 
 	for (int d = 0; d < NDECIDX; d++)
@@ -272,227 +229,47 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 	}
 }
 
-void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th) {
-
-	const int decimate = this->mdecimation;
-	const int mfft = this->mfftdim[decimate];	// = halfFft / 2^mdecimation
-	const int mratio = this->getRatio();
-	const fftwf_complex* filter = filterHw[decimate];
-	const bool lsb = this->getSideband();
-	plan_f2t_c2c = &plans_f2t_c2c[decimate];
-
-	while (r2iqOn) {
-		const int16_t *dataADC;  // pointer to input data
-		const float *endloop;    // pointer to end data to be copied to beginning
-		float * pout;
-
-		const int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
-
-		{
-			int wakecnt = 0;
-			std::unique_lock<std::mutex> lk(mutexR2iqControl);
-			while (this->cntr <= 0)
-			{
-				cvADCbufferAvailable.wait(lk, [&wakecnt, this] {
-					wakecnt++;
-					return this->cntr > 0;
-				});
-			}
-
-			if (!r2iqOn)
-				return 0;
-
-			dataADC = this->buffers[this->bufIdx];
-			std::atomic_fetch_sub(&this->cntr, 1);
-
-			int modx = this->bufIdx / mratio;
-			int moff = this->bufIdx - modx * mratio;
-			int offset = ((transferSize / sizeof(int16_t)) / mratio) * moff;
-			pout = this->obuffers[modx] + offset;
-
-			this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;
-
-			endloop = lastThread->ADCinTime + transferSize / sizeof(int16_t);
-			lastThread = th;
-		}
-
-		// first frame
-		auto inloop = th->ADCinTime;
-		for (int m = 0; m < halfFft; m++) {
-			*inloop++ = *endloop++;   // duplicate from last frame halfFft samples
-		}
-
-		// @todo: move the following int16_t conversion to (32-bit) float
-		// directly inside the following loop (for "k < fftPerBuf")
-		//   just before the forward fft "fftwf_execute_dft_r2c" is called
-		// idea: this should improve cache/memory locality
-#if PRINT_INPUT_RANGE
-		std::pair<int16_t, int16_t> blockMinMax = std::make_pair<int16_t, int16_t>(0, 0);
-#endif
-		if (!this->getRand())        // plain samples no ADC rand set
-		{
-#if PRINT_INPUT_RANGE
-			auto minmax = std::minmax_element(dataADC, dataADC + transferSamples);
-			blockMinMax.first = *minmax.first;
-			blockMinMax.second = *minmax.second;
-#endif
-			for (int m = 0; m < transferSamples; m++)
-			{
-				*inloop++ = *dataADC++;
-			}
-		}
-		else
-		{
-			// @todo: can this get implemented without the RandTable[]?
-			//   for less cache trashing?
-			//   ideally with some simd commands ..
-			for (int m = 0; m < transferSamples; m++)
-			{
-#if PRINT_INPUT_RANGE
-				int16_t smp = RandTable[(uint16_t)*dataADC++];
-				blockMinMax.first = std::min(blockMinMax.first, smp);
-				blockMinMax.second = std::max(blockMinMax.second, smp);
-				*inloop++ = smp;
+#ifdef _WIN32
+	//  Windows
+	#include <intrin.h>
+	#define cpuid(info, x)    __cpuidex(info, x, 0)
 #else
-				*inloop++ = (RandTable[(uint16_t)*dataADC++]);
-#endif
-			}
-		}
-
-#if PRINT_INPUT_RANGE
-		th->MinValue = std::min(blockMinMax.first, th->MinValue);
-		th->MaxValue = std::max(blockMinMax.second, th->MaxValue);
-		++th->MinMaxBlockCount;
-		if (th->MinMaxBlockCount * processor_count / 3 >= DEFAULT_TRANSFERS_PER_SEC )
-		{
-			float minBits = (th->MinValue < 0) ? (log10f((float)(-th->MinValue)) / log10f(2.0f)) : -1.0f;
-			float maxBits = (th->MaxValue > 0) ? (log10f((float)(th->MaxValue)) / log10f(2.0f)) : -1.0f;
-			printf("r2iq: min = %d (%.1f bits) %.2f%%, max = %d (%.1f bits) %.2f%%\n",
-				(int)th->MinValue, minBits, th->MinValue *-100.0f / 32768.0f,
-				(int)th->MaxValue, maxBits, th->MaxValue * 100.0f / 32768.0f);
-			th->MinValue = 0;
-			th->MaxValue = 0;
-			th->MinMaxBlockCount = 0;
-		}
+	//  GCC Intrinsics
+	#include <cpuid.h>
+	#define cpuid(info, x)  __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
 #endif
 
-		// decimate in frequency plus tuning
+void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th)
+{
+	int info[4];
+	bool HW_AVX = false;
+	bool HW_AVX2 = false;
+	bool HW_AVX512F = false;
 
-		// Calculate the parameters for the first half
-		const auto count = std::min(mfft/2, halfFft - _mtunebin);
-		const auto source = &th->ADCinFreq[_mtunebin];
+	cpuid(info, 0);
+	int nIds = info[0];
 
-		// Calculate the parameters for the second half
-		const auto start = std::max(0, mfft / 2 - _mtunebin);
-		const auto source2 = &th->ADCinFreq[_mtunebin - mfft / 2];
-		const auto filter2 = &filter[halfFft - mfft / 2];
-		const auto dest = &th->inFreqTmp[mfft / 2];
-		for (int k = 0; k < fftPerBuf; k++)
-		{
-			// core of fast convolution including filter and decimation
-			//   main part is 'overlap-scrap' (IMHO better name for 'overlap-save'), see
-			//   https://en.wikipedia.org/wiki/Overlap%E2%80%93save_method
-			{
-				// FFT first stage: time to frequency, real to complex
-				// 'full' transformation size: 2 * halfFft
-				fftwf_execute_dft_r2c(plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
-				// result now in th->ADCinFreq[]
+	if (nIds >= 0x00000001){
+		cpuid(info,0x00000001);
+		HW_AVX    = (info[2] & ((int)1 << 28)) != 0;
+	}
+	if (nIds >= 0x00000007){
+		cpuid(info,0x00000007);
+		HW_AVX2   = (info[1] & ((int)1 <<  5)) != 0;
 
-				// circular shift (mixing in full bins) and low/bandpass filtering (complex multiplication)
-				{
-					// circular shift tune fs/2 first half array into th->inFreqTmp[]
-					for (int m = 0; m < count; m++)
-					{
-						// besides circular shift, do complex multiplication with the lowpass filter's spectrum
-						th->inFreqTmp[m][0] = (source[m][0] * filter[m][0] -
-							source[m][1] * filter[m][1]);
-						th->inFreqTmp[m][1] = (source[m][1] * filter[m][0] +
-							source[m][0] * filter[m][1]);
-					}
-					if (mfft / 2 != count)
-						memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
+		HW_AVX512F     = (info[1] & ((int)1 << 16)) != 0;
+	}
 
-					// circular shift tune fs/2 second half array
-					for (int m = start; m < mfft / 2; m++)
-					{
-						// also do complex multiplication with the lowpass filter's spectrum
-						dest[m][0] = (source2[m][0] * filter2[m][0] -
-							source2[m][1] * filter2[m][1]);
-						dest[m][1] = (source2[m][1] * filter2[m][0] +
-							source2[m][0] * filter2[m][1]);
-					}
-					if (start != 0)
-						memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
-				}
-				// result now in th->inFreqTmp[]
+	DbgPrintf("Hardware Capability: AVX:%d AVX2:%d AVX512:%d\n", HW_AVX, HW_AVX2, HW_AVX512F);
 
-				// 'shorter' inverse FFT transform (decimation); frequency (back) to COMPLEX time domain
-				// transform size: mfft = mfftdim[k] = halfFft / 2^k with k = mdecimation
-				fftwf_execute_dft(*plan_f2t_c2c, th->inFreqTmp, th->outTimeTmp);     //  c2c decimation
-				// result now in th->outTimeTmp[]
-			}
+	if (HW_AVX512F)
+		return r2iqThreadf_avx512(th);
+	else if (HW_AVX2)
+		return r2iqThreadf_avx2(th);
+	else if (HW_AVX)
+		return r2iqThreadf_avx(th);
+	else
+		return r2iqThreadf_def(th);
 
-			// postprocessing
-			// @todo: is it possible to ..
-			//  1)
-			//    let inverse FFT produce/save it's result directly
-			//    in "this->obuffers[modx] + offset" (pout)
-			//    ( obuffers[] would need to have additional space ..;
-			//      need to move 'scrap' of 'ovelap-scrap'? )
-			//    at least FFTW would allow so,
-			//      see http://www.fftw.org/fftw3_doc/New_002darray-Execute-Functions.html
-			//    attention: multithreading!
-			//  2)
-			//    could mirroring (lower sideband) get calculated together
-			//    with fine mixer - modifying the mixer frequency? (fs - fc)/fs
-			//    (this would reduce one memory pass)
-			if (lsb) // lower sideband
-			{
-				// mirror just by negating the imaginary Q of complex I/Q
-				if (k == 0)
-				{
-					auto pTimeTmp = th->outTimeTmp[mfft / 4];
-					for (int i = 0; i < mfft / 2; i++)
-					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = -*pTimeTmp++;
-					}
-				}
-				else
-				{
-					auto pTimeTmp = th->outTimeTmp[0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
-					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = -*pTimeTmp++;
-					}
-				}
-			}
-			else // upper sideband
-			{
-				// simple memcpy() calls are sufficient (possibly faster?)
-				if (k == 0)
-				{
-					auto pTimeTmp = th->outTimeTmp[mfft / 4];
-					for (int i = 0; i < mfft / 2; i++)
-					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = *pTimeTmp++;
-					}
-				}
-				else
-				{
-					auto pTimeTmp = th->outTimeTmp[0];
-					for (int i = 0; i < 3 * mfft / 4; i++)
-					{
-						*pout++ = *pTimeTmp++;
-						*pout++ = *pTimeTmp++;
-					}
-				}
-			}
-			// result now in this->obuffers[]
-		}
-	} // while(run)
-//    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
-	return 0;
+
 }
