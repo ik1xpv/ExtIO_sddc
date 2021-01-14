@@ -63,11 +63,11 @@
 			blockMinMax.first = *minmax.first;
 			blockMinMax.second = *minmax.second;
 #endif
-			convert_float<false, true>(dataADC, inloop, transferSamples);
+			convert_float<false>(dataADC, inloop, transferSamples);
 		}
 		else
 		{
-			convert_float<true, true>(dataADC, inloop, transferSamples);
+			convert_float<true>(dataADC, inloop, transferSamples);
 		}
 
 #if PRINT_INPUT_RANGE
@@ -112,12 +112,12 @@
 				// circular shift (mixing in full bins) and low/bandpass filtering (complex multiplication)
 				{
 					// circular shift tune fs/2 first half array into th->inFreqTmp[]
-					shift_freq<false>(th->inFreqTmp, source, filter, 0, count);
+					shift_freq(th->inFreqTmp, source, filter, 0, count);
 					if (mfft / 2 != count)
 						memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
 
 					// circular shift tune fs/2 second half array
-					shift_freq<false>(dest, source2, filter2, start, mfft/2);
+					shift_freq(dest, source2, filter2, start, mfft/2);
 					if (start != 0)
 						memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 				}
@@ -148,22 +148,22 @@
 				// mirror just by negating the imaginary Q of complex I/Q
 				if (k == 0)
 				{
-					copy<true, false>(pout, &th->outTimeTmp[mfft / 4], mfft/2);
+					copy<true>(pout, &th->outTimeTmp[mfft / 4], mfft/2);
 				}
 				else
 				{
-					copy<true, false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->outTimeTmp[0], (3 * mfft / 4));
+					copy<true>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->outTimeTmp[0], (3 * mfft / 4));
 				}
 			}
 			else // upper sideband
 			{
 				if (k == 0)
 				{
-					copy<false, false>(pout, &th->outTimeTmp[mfft / 4], mfft/2);
+					copy<false>(pout, &th->outTimeTmp[mfft / 4], mfft/2);
 				}
 				else
 				{
-					copy<false, false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->outTimeTmp[0], (3 * mfft / 4));
+					copy<false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->outTimeTmp[0], (3 * mfft / 4));
 				}
 			}
 			// result now in this->obuffers[]

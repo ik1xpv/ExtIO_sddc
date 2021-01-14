@@ -29,7 +29,7 @@ public:
 
 protected:
 
-    template<bool rand, bool aligned> void convert_float(const int16_t *input, float* output, int size)
+    template<bool rand> void convert_float(const int16_t *input, float* output, int size)
     {
         for(int m = 0; m < size; m++)
         {
@@ -46,7 +46,7 @@ protected:
         }
     }
 
-    template<bool aligned>            void shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end)
+    void shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end)
     {
         for (int m = start; m < end; m++)
         {
@@ -56,7 +56,7 @@ protected:
         }
     }
 
-    template<bool flip, bool aligned> void copy(fftwf_complex* dest, const fftwf_complex* source, int count)
+    template<bool flip> void copy(fftwf_complex* dest, const fftwf_complex* source, int count)
     {
         if (flip)
         {
