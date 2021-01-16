@@ -1,7 +1,7 @@
 #include "RadioHandler.h"
 
 #define R828D_FREQ (16000000) // R820T reference frequency
-#define R828D_IF_CARRIER (5000000)
+#define R828D_IF_CARRIER (4570000)
 
 #define HIGH_MODE 0x80
 #define LOW_MODE 0x00
