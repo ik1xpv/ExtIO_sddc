@@ -1764,7 +1764,7 @@ int r82xx_set_bandwidth(struct r82xx_priv *priv, int bw, uint32_t rate, uint32_t
 		reg_0a = 0x10;
 		reg_0b = 0x0b;
 		if (apply)
-			priv->int_freq = 5000000;
+			priv->int_freq = 4570000;
 	} else if (bw > 6000000) {
 		// BW: 7 MHz
 		*applied_bw = 7000000;
