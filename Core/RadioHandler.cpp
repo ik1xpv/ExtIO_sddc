@@ -114,6 +114,7 @@ void RadioHandlerClass::AdcSamplesProcess()
 
 RadioHandlerClass::RadioHandlerClass() :
 	run(false),
+	pga(false),
 	dither(false),
 	randout(false),
 	biasT_HF(false),
@@ -122,7 +123,7 @@ RadioHandlerClass::RadioHandlerClass() :
 	modeRF(NOMODE),
 	adcrate(DEFAULT_ADC_FREQ),
 	fc(0.0f),
-	hardware(new DummyRadio())
+	hardware(new DummyRadio(nullptr))
 {
 	for (int i = 0; i < QUEUE_SIZE; i++) {
 		buffers[i] = new int16_t[transferSize / sizeof(int16_t)];
@@ -141,7 +142,11 @@ RadioHandlerClass::~RadioHandlerClass()
 		delete[] buffers[n];
 	}
 
+	if (r2iqCntrl)
+		delete r2iqCntrl;
+
 	delete stateFineTune;
+	delete hardware;
 }
 
 const char *RadioHandlerClass::getName()
@@ -187,7 +192,7 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 		break;
 
 	default:
-		hardware = new DummyRadio();
+		hardware = new DummyRadio(Fx3);
 		DbgPrintf("WARNING no SDR connected\n");
 		break;
 	}

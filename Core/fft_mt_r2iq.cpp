@@ -116,7 +116,7 @@ void fft_mt_r2iq::TurnOn() {
 	this->lastThread = threadArgs[0];
 
 	for (unsigned t = 0; t < processor_count; t++) {
-		r2iq_thread[t] = new std::thread(
+		r2iq_thread[t] = std::thread(
 			[this] (void* arg)
 				{ return this->r2iqThreadf((r2iqThreadArg*)arg); }, (void*)threadArgs[t]);
 	}
@@ -127,7 +127,7 @@ void fft_mt_r2iq::TurnOff(void) {
 	this->cntr = 100;
 	cvADCbufferAvailable.notify_all();
 	for (unsigned t = 0; t < processor_count; t++) {
-		r2iq_thread[t]->join();
+		r2iq_thread[t].join();
 	}
 }
 

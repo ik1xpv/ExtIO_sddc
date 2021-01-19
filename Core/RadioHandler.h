@@ -240,8 +240,8 @@ private:
 
 class DummyRadio : public RadioHardware {
 public:
-    DummyRadio() : RadioHardware(nullptr) {}
-    const char* getName() override { return "HF103"; }
+    DummyRadio(fx3class* fx3) : RadioHardware(fx3) {}
+    const char* getName() override { return "Dummy"; }
 
     void getFrequencyRange(int64_t& low, int64_t& high) override
     { low = 0; high = 6ll*1000*1000*1000;}
