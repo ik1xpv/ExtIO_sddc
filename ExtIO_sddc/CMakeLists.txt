@@ -6,17 +6,13 @@ include_directories("." "../Core")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
-get_filename_component(SDKPATH ${CMAKE_LINKER} DIRECTORY)
-find_program(LIBEXE lib HINTS ${SDKPATH} REQUIRED)
+add_library(ExtIO_SDDC SHARED ${SRC})
 
-add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/libfftw3f-3.lib
-    COMMAND ${LIBEXE} /def:${CMAKE_SOURCE_DIR}\\Core\\arch\\win32\\FFTW3\\libfftw3f-3.def /MACHINE:x86 /OUT:${CMAKE_BINARY_DIR}\\libfftw3f-3.lib
-)
+target_include_directories(ExtIO_SDDC PUBLIC "${LIBFFTW_INCLUDE_DIR}")
+target_link_directories(ExtIO_SDDC PUBLIC "${LIBFFTW_LIBRARY_DIRS}")
+target_link_libraries(ExtIO_SDDC PUBLIC ${LIBFFTW_LIBRARIES})
 
-add_library(ExtIO_SDDC SHARED ${SRC} ${CMAKE_BINARY_DIR}/libfftw3f-3.lib)
 
-target_link_libraries(ExtIO_SDDC PUBLIC ${CMAKE_BINARY_DIR}/libfftw3f-3.lib)
 target_link_libraries(ExtIO_SDDC PRIVATE SDDC_CORE)
 target_link_libraries(ExtIO_SDDC PUBLIC Setupapi.lib)
 set_target_properties(ExtIO_SDDC PROPERTIES PREFIX "")
