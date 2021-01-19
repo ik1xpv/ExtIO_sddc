@@ -140,7 +140,7 @@ TEST_CASE(CoreFixture, TuneTest)
 
     radio->Start(1); // full bandwidth
 
-    for (uint64_t i = 1000; i < 15000000;  i+=10000)
+    for (uint64_t i = 1000; i < 15000000;  i+=377000)
     {
         radio->TuneLO(i);
         std::this_thread::sleep_for(0.011s);

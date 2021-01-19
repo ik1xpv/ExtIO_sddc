@@ -248,7 +248,12 @@ public:
     void Initialize(uint32_t samplefreq) override {}
     bool UpdatemodeRF(rf_mode mode) override { return true; }
     bool UpdateattRF(int attIndex) override { return true; }
-    uint64_t TuneLo(uint64_t freq) override { return freq; }
+    uint64_t TuneLo(uint64_t freq) override {
+        if (freq < 64000000 /2)
+            return 0;
+        else
+            return freq;
+     }
 };
 
 #endif
