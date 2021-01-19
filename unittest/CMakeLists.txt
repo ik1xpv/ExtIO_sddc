@@ -16,18 +16,17 @@ file(GLOB UNITTESTS "./*.cpp")
 
 add_executable(unittest ${UNITTESTS})
 
-if (MSVC)
-    include_directories("../Core/arch/win32/FFTW3/")
-endif()
+target_include_directories(unittest PUBLIC "${LIBFFTW_INCLUDE_DIR}")
+target_link_directories(unittest PUBLIC "${LIBFFTW_LIBRARY_DIRS}")
 
 include_directories("." "../Core")
 include_directories(${LIBCPPUNIT_INCLUDE_DIRS})
 
 target_link_libraries(unittest PRIVATE SDDC_CORE)
 if (MSVC)
-  target_link_libraries(unittest PUBLIC ${CMAKE_BINARY_DIR}/libfftw3f-3.lib)
+  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES})
 else()
-  target_link_libraries(unittest PUBLIC fftw3f pthread)
+  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES} pthread)
 endif (MSVC)
 
 
