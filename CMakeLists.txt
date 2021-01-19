@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 project(SDDC VERSION 1.0.1)
 
+include(CTest)
+
 ### build options
 # default build type: Release
 if(NOT CMAKE_BUILD_TYPE)
@@ -21,3 +23,4 @@ endif (MSVC)
 
 add_subdirectory(Core)
 add_subdirectory(libsddc)
+add_subdirectory(unittest)

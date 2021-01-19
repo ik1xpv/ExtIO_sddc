@@ -104,7 +104,7 @@ private:
     r2iqThreadArg* threadArgs[N_MAX_R2IQ_THREADS];
     std::condition_variable cvADCbufferAvailable;  // unlock when a sample buffer is ready
     std::mutex mutexR2iqControl;                   // r2iq control lock
-    std::thread* r2iq_thread[N_MAX_R2IQ_THREADS]; // thread pointers
+    std::thread r2iq_thread[N_MAX_R2IQ_THREADS]; // thread pointers
 };
 
 // assure, that ADC is not oversteered?
