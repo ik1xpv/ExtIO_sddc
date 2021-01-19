@@ -10,6 +10,20 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 message(STATUS "Build type: " ${CMAKE_BUILD_TYPE} " - Version: " ${VERSION} " / " ${LIBVER})
 
+# allow disabling optimizations - for debug reasons
+option(USE_SIMD_OPTIMIZATIONS "enable SIMD optimizations" ON)
+
+# allow enabling address sanitizer - for debug reasons
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    option(USE_DEBUG_ASAN "use GCC's address sanitizer?" OFF)
+endif()
+
+if (USE_DEBUG_ASAN)
+  set(ASANLIB "asan")
+else()
+  set(ASANLIB "")
+endif()
+
 if (MSVC)
     set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3")
 
@@ -41,7 +55,13 @@ if (MSVC)
 
     add_subdirectory(ExtIO_sddc)
 else()
-    set(CMAKE_CXX_FLAGS "-O3 -std=c++17 -Wall -Werror")
+
+    if (USE_DEBUG_ASAN)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
+        set(CMAKE_CXX_FLAGS "-O0 -std=c++17 -Wall -Werror")
+    else()
+        set(CMAKE_CXX_FLAGS "-O3 -std=c++17 -Wall -Werror")
+    endif(USE_DEBUG_ASAN)
     #add_compile_options(-Wall -Wextra -pedantic)
     include(FindPkgConfig)
     pkg_check_modules(LIBUSB REQUIRED libusb-1.0)

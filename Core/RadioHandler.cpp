@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 #include "pf_mixer.h"
 #include "RadioHandler.h"
 #include "config.h"
@@ -325,8 +326,9 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 	actLo = hardware->TuneLo(wishedFreq);
 
 	// we need shift the samples
-	DbgPrintf("Offset freq %lld\n", (wishedFreq - actLo));
-	float fc = r2iqCntrl->setFreqOffset((wishedFreq - actLo) / (getSampleRate() / 2.0f));
+	int64_t offset = wishedFreq - actLo;
+	DbgPrintf("Offset freq %" PRIi64 "\n", offset);
+	float fc = r2iqCntrl->setFreqOffset(offset / (getSampleRate() / 2.0f));
 
 	if (this->fc != fc)
 	{
