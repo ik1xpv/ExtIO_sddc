@@ -26,7 +26,7 @@ target_link_libraries(unittest PRIVATE SDDC_CORE)
 if (MSVC)
   target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES})
 else()
-  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES} ${ASANLIB} pthread)
+  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES} pthread ${ASANLIB})
 endif (MSVC)
 
 

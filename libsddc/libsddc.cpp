@@ -37,7 +37,7 @@ class rawdata : public r2iqControlClass {
     void DataReady(void) override
     {
         current_running->callback(transferSize, (uint8_t*)buffers[idx], current_running->callback_context);
-        idx++;
+        idx = (idx + 1) % QUEUE_SIZE;
     }
 
 private:
@@ -74,6 +74,10 @@ sddc_t *sddc_open(int index, const char* imagefile)
     auto ret_val = new sddc_t();
 
     fx3class *fx3 = CreateUsbHandler();
+    if (fx3 == nullptr)
+    {
+        return nullptr;
+    }
 
     // open the firmware
     unsigned char* res_data;
@@ -92,7 +96,9 @@ sddc_t *sddc_open(int index, const char* imagefile)
     if (fread(res_data, 1, res_size, fp) != res_size)
         return nullptr;
 
-    fx3->Open(res_data, res_size);
+    bool openOK = fx3->Open(res_data, res_size);
+    if (!openOK)
+        return nullptr;
 
     ret_val->handler = new RadioHandlerClass();
 
