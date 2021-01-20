@@ -21,11 +21,6 @@ extern void IndicateError(uint16_t ErrorCode);
 extern CyU3PReturnStatus_t InitializeUSB(void);
 extern void ParseCommand(void);
 
-extern CyU3PReturnStatus_t Si5351init();
-
-extern void si5351aSetFrequencyA(UINT32 freq);
-extern void si5351aSetFrequencyB(UINT32 freq2);
-
 // Declare external data
 extern const char* EventName[];
 extern uint32_t glDMACount;
