@@ -15,6 +15,9 @@
 ##
 
 FX3FWROOT?=../SDK
+ARMGCC_INSTALL_PATH=/usr
+ARMGCC_VERSION=$(shell arm-none-eabi-gcc --version | grep ^gcc | sed 's/^.* //g')
+
 CYCONFOPT = fx3_release
 
 #all:compile
@@ -89,6 +92,7 @@ clean:
 	rm -f ./$(MODULE).img
 	rm -f ./$(MODULE).map
 	rm -f ./*.o
+	rm -Rf ./obj
 
 
 compile: $(C_OBJECT) $(A_OBJECT) $(EXES)

@@ -46,8 +46,8 @@ endif
 
 # The ARM toolchain location and the version are taken from environment variables
 LDLIBS  += \
-	"$$ARMGCC_INSTALL_PATH"/arm-none-eabi/lib/libstdc++.a	\
-	"$$ARMGCC_INSTALL_PATH"/arm-none-eabi/lib/libc.a	\
+	"$$ARMGCC_INSTALL_PATH"/lib/arm-none-eabi/lib/libstdc++.a	\
+	"$$ARMGCC_INSTALL_PATH"/lib/arm-none-eabi/lib/libc.a	\
 	"$$ARMGCC_INSTALL_PATH"/lib/gcc/arm-none-eabi/$(ARMGCC_VERSION)/libgcc.a
 
 EXEEXT = elf
