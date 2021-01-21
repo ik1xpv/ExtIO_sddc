@@ -269,7 +269,7 @@ int EXTIO_API StartHWdbl(double LOfreq)
 	}
 	// number of complex elements returned each
 	// invocation of the callback routine
-	return (int64_t) (EXT_BLOCKLEN / (1 << ExtIoGetActualSrateIdx()));
+	return (int64_t) (EXT_BLOCKLEN);
 }
 
 //---------------------------------------------------------------------------

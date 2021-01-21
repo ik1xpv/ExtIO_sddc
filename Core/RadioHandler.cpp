@@ -43,7 +43,7 @@ void RadioHandlerClass::OnDataPacket()
 		outputbuffer.ReadDone();
 
 		SamplesXIF += len;
-}
+	}
 }
 
 void RadioHandlerClass::AdcSamplesProcess()
@@ -201,7 +201,7 @@ bool RadioHandlerClass::Start(int decimate)
 
 	hardware->FX3producerOn();  // FX3 start the producer
 
-	outputbuffer.setBlockSize(EXT_BLOCKLEN * 2 * sizeof(float) / (1 << decimate));
+	outputbuffer.setBlockSize(EXT_BLOCKLEN * 2 * sizeof(float));
 
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
 	r2iqCntrl->setDecimate(decimate);

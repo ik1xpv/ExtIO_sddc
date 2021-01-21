@@ -123,7 +123,7 @@ TEST_CASE(CoreFixture, R2IQTest)
 
         REQUIRE_TRUE(count > 0);
         REQUIRE_TRUE(totalsize > 0);
-        REQUIRE_EQUAL(totalsize / count, transferSamples / 2 / (1 << decimate));
+        REQUIRE_EQUAL(totalsize / count, transferSamples / 2);
     }
 
     delete radio;

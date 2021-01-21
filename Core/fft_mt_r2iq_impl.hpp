@@ -4,12 +4,15 @@
 	const int mfft = this->mfftdim[decimate];	// = halfFft / 2^mdecimation
 	const fftwf_complex* filter = filterHw[decimate];
 	const bool lsb = this->getSideband();
+	const auto filter2 = &filter[halfFft - mfft / 2];
+
 	plan_f2t_c2c = &plans_f2t_c2c[decimate];
+	fftwf_complex* pout;
+	int decimate_count = 0;
 
 	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
 		const int16_t *endloop;    // pointer to end data to be copied to beginning
-		fftwf_complex* pout;
 
 		const int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 
@@ -70,7 +73,10 @@
 		inputbuffer->ReadDone();
 		// decimate in frequency plus tuning
 
-		pout = (fftwf_complex*)outputbuffer->getWritePtr();
+		if (decimate_count == 0)
+			pout = (fftwf_complex*)outputbuffer->getWritePtr();
+
+		decimate_count = (decimate_count + 1) & ((1 << decimate) - 1);
 
 		// Calculate the parameters for the first half
 		const auto count = std::min(mfft/2, halfFft - _mtunebin);
@@ -79,7 +85,6 @@
 		// Calculate the parameters for the second half
 		const auto start = std::max(0, mfft / 2 - _mtunebin);
 		const auto source2 = &th->ADCinFreq[_mtunebin - mfft / 2];
-		const auto filter2 = &filter[halfFft - mfft / 2];
 		const auto dest = &th->inFreqTmp[mfft / 2];
 		for (int k = 0; k < fftPerBuf; k++)
 		{
@@ -152,8 +157,14 @@
 			// result now in this->obuffers[]
 		}
 
-		outputbuffer->WriteDone();
-		pout = nullptr;
+		if (decimate_count == 0) {
+			outputbuffer->WriteDone();
+			pout = nullptr;
+		}
+		else
+		{
+			pout += mfft / 2 + (3 * mfft / 4) * (fftPerBuf - 1);
+		}
 	} // while(run)
 //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
 	return 0;
