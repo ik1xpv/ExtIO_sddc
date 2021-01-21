@@ -34,15 +34,18 @@ if (MSVC)
     if(${CMAKE_EXE_LINKER_FLAGS} MATCHES "X86")
         SET(FFTW_URL "ftp://ftp.fftw.org/pub/fftw/fftw-3.3.5-dll32.zip")
         SET(ARCH x86)
+        SET(HASH 29882a43033c9393479a4df52a2e9120589c06a2b724155b1a682747fa3e57d4)
     else()
         SET(FFTW_URL "ftp://ftp.fftw.org/pub/fftw/fftw-3.3.5-dll64.zip")
         SET(ARCH x64)
+        SET(HASH cfd88dc0e8d7001115ea79e069a2c695d52c8947f5b4f3b7ac54a192756f439f)
     endif()
 
     include(ExternalProject)
     ExternalProject_Add(
         LIBFFTW
         URL ${FFTW_URL}
+        URL_HASH SHA256=${HASH}
         BUILD_IN_SOURCE TRUE
         CONFIGURE_COMMAND   ""
         BUILD_COMMAND       ${LIBEXE} /def:./libfftw3f-3.def /MACHINE:${ARCH} /OUT:./fftw3f-3.lib
