@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "radio.h"
 
 #define GPIO_BIAS_VHF 18
 #define GPIO_BIAS_HF 19
