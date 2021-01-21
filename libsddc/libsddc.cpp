@@ -17,14 +17,13 @@ struct sddc
 
 sddc_t *current_running;
 
-static void Callback(float* data, uint32_t len)
+static void Callback(const float* data, uint32_t len)
 {
 }
 
 class rawdata : public r2iqControlClass {
-    void Init(float gain, int16_t** buffers, float** obuffers) override
+    void Init(float gain, ringbuffer<int16_t>* buffers, ringbuffer<float>* obuffers) override
     {
-        this->buffers = buffers;
         idx = 0;
     }
 
@@ -34,14 +33,7 @@ class rawdata : public r2iqControlClass {
         idx = 0;
     }
 
-    void DataReady(void) override
-    {
-        current_running->callback(transferSize, (uint8_t*)buffers[idx], current_running->callback_context);
-        idx = (idx + 1) % QUEUE_SIZE;
-    }
-
 private:
-    int16_t **buffers;
     int idx;
 };
 

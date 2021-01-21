@@ -14,6 +14,7 @@
 #include "tdialog.h"
 #include "splashwindow.h"
 #include "PScope_uti.h"
+#include "r2iq.h"
 
 #define   snprintf	_snprintf
 
@@ -91,11 +92,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
-static void Callback(float* data, uint32_t len)
+static void Callback(const float* data, uint32_t len)
 {
 	if (data)
 	{
-		pfnCallback(len, 0, 0.0F, data);
+		pfnCallback(len, 0, 0.0F, (void*)data);
 	}
 	else
 	{
@@ -168,10 +169,13 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		strcpy(name, RadioHandler.getName());
 		strcpy(model, RadioHandler.getName());
 
+		double srate;
 		DbgPrintf("Init Values:\n");
 		DbgPrintf("SDR_settings_valid = %d\n", SDR_settings_valid);  // settings are version specific !
-		DbgPrintf("giExtSrateIdxHF = %d   %f Msps\n", giExtSrateIdxHF, pow(2.0, 1.0 + giExtSrateIdxHF));
-		DbgPrintf("giExtSrateIdxVHF = %d   %f Msps\n", giExtSrateIdxVHF, pow(2.0, 1.0 + giExtSrateIdxVHF));
+		ExtIoGetSrates(giExtSrateIdxHF, &srate);
+		DbgPrintf("giExtSrateIdxHF = %d   %f Msps\n", giExtSrateIdxHF, srate/1000000.0);
+		ExtIoGetSrates(giExtSrateIdxVHF, &srate);
+		DbgPrintf("giExtSrateIdxVHF = %d   %f Msps\n", giExtSrateIdxVHF, srate/1000000.0);
 		DbgPrintf("giAttIdxHF = %d\n", giAttIdxHF);
 		DbgPrintf("giAttIdxVHF = %d\n", giAttIdxVHF);
 		DbgPrintf("giMgcIdxHF = %d\n", giMgcIdxHF);
@@ -265,7 +269,7 @@ int EXTIO_API StartHWdbl(double LOfreq)
 	}
 	// number of complex elements returned each
 	// invocation of the callback routine
-	return (int64_t) EXT_BLOCKLEN;
+	return (int64_t) (EXT_BLOCKLEN / (1 << ExtIoGetActualSrateIdx()));
 }
 
 //---------------------------------------------------------------------------
@@ -696,10 +700,11 @@ extern "C"
 int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 {
 	EnterFunction1(srate_idx);
-	double div = pow(2.0, srate_idx);
-	double srate = 1000000.0 * (div * 2.0);
-	if (srate / RadioHandler.getSampleRate() * 2.0 > 1.1)
+	if (srate_idx >= NDECIDX)
 		return -1;
+
+	double srate = RadioHandler.getSampleRate() * 1.0 / (1 << srate_idx + 1);
+	double srateM = srate / 1000000.0;
 	*samplerate = srate * FreqCorrectionFactor();
 	DbgPrintf("*ExtIoGetSrate idx %d  %e\n", srate_idx, *samplerate);
 	return 0;
@@ -709,12 +714,15 @@ extern "C"
 int EXTIO_API ExtIoSrateSelText(int srate_idx, char* text)
 {
 	EnterFunction1(srate_idx);
-	double div = pow(2.0, srate_idx);
-	double srateM = div * 2.0;
-	double srate = 1000000.0 * srateM;
-	if (srate / RadioHandler.getSampleRate() * 2.0 > 1.1)
+	if (srate_idx >= NDECIDX)
 		return -1;
-	snprintf(text, 15, "%.0lf MHz", srateM);
+
+	double srate = RadioHandler.getSampleRate() * 1.0 / (1 << (srate_idx + 1));
+	double srateM = srate / 1000000.0;
+	if (srate < 1000000)
+		snprintf(text, 15, "%.0lf KHz", srateM * 1000.0f);
+	else
+		snprintf(text, 15, "%.0lf MHz", srateM);
 	return 0;	// return != 0 on error
 }
 

@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include "FX3Class.h"
 
+#include "dsp/ringbuffer.h"
+
 class RadioHardware;
 class r2iqControlClass;
 
@@ -20,7 +22,7 @@ class RadioHandlerClass {
 public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
-    bool Init(fx3class* Fx3, void (*callback)(float*, uint32_t), r2iqControlClass *r2iqCntrl = nullptr);
+    bool Init(fx3class* Fx3, void (*callback)(const float*, uint32_t), r2iqControlClass *r2iqCntrl = nullptr);
     bool Start(int srate_idx);
     bool Stop();
     bool Close();
@@ -64,10 +66,10 @@ private:
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
     void CaculateStats();
-    void OnDataPacket(int idx);
+    void OnDataPacket();
     r2iqControlClass* r2iqCntrl;
 
-    void (*Callback)(float *data, uint32_t length);
+    void (*Callback)(const float *data, uint32_t length);
 
     bool run;
     unsigned long count;    // absolute index
@@ -82,12 +84,13 @@ private:
     RadioModel radio;
 
     // transfer variables
-    int16_t* buffers[QUEUE_SIZE];
-    float* obuffers[QUEUE_SIZE];
+    ringbuffer<int16_t> inputbuffer;
+    ringbuffer<float> outputbuffer;
 
     // threads
     std::thread adc_samples_thread;
     std::thread show_stats_thread;
+    std::thread submit_thread;
 
     // stats
     unsigned long BytesXferred;

@@ -56,7 +56,7 @@ class fx3handler : public fx3class
 static uint32_t count;
 static uint64_t totalsize;
 
-static void Callback(float* data, uint32_t len)
+static void Callback(const float* data, uint32_t len)
 {
     count++;
     totalsize += len;
@@ -123,7 +123,7 @@ TEST_CASE(CoreFixture, R2IQTest)
 
         REQUIRE_TRUE(count > 0);
         REQUIRE_TRUE(totalsize > 0);
-        REQUIRE_TRUE(totalsize / count == transferSamples / 2);
+        REQUIRE_EQUAL(totalsize / count, transferSamples / 2 / (1 << decimate));
     }
 
     delete radio;
