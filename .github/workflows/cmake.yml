@@ -78,8 +78,8 @@ jobs:
 
     - name: Build firmware
       shell: bash
-      working-directory: ${{runner.workspace}}/SDDC_FX3
-      run: make
+      working-directory: ${{runner.workspace}}/build
+      run: make -C ../SDDC_FX3
 
     - name: Build
       working-directory: ${{runner.workspace}}/build
