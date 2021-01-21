@@ -16,7 +16,7 @@
 
 FX3FWROOT?=../SDK
 ARMGCC_INSTALL_PATH=/usr
-ARMGCC_VERSION=$(shell arm-none-eabi-gcc --version | grep ^gcc | sed 's/^.* //g')
+ARMGCC_VERSION=$(shell arm-none-eabi-gcc --version | grep gcc | sed -n -e 's/.*\([0-9]\.[0-9]*\.[0-9]*\).*/\1/p' )
 
 CYCONFOPT = fx3_release
 
@@ -75,6 +75,8 @@ $(MODULE).$(EXEEXT): $(A_OBJECT) $(C_OBJECT)
 
 $(C_OBJECT) : | obj
 
+$(A_OBJECT) : | obj
+
 obj/%.o: %.c
 	$(COMPILE)
 
@@ -82,7 +84,7 @@ obj/%.o: %.S
 	$(ASSEMBLE)
 
 obj:
-	@mkdir -p $@
+	mkdir -p $@
 
 ELF2IMG = ./elf2img
 
