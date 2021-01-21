@@ -7,7 +7,7 @@
 	const auto filter2 = &filter[halfFft - mfft / 2];
 
 	plan_f2t_c2c = &plans_f2t_c2c[decimate];
-	fftwf_complex* pout;
+	fftwf_complex* pout = nullptr;
 	int decimate_count = 0;
 
 	while (r2iqOn) {
