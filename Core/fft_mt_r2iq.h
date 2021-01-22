@@ -122,7 +122,6 @@ struct r2iqThreadArg {
 	float *ADCinTime;                // point to each threads input buffers [nftt][n]
 	fftwf_complex *ADCinFreq;         // buffers in frequency
 	fftwf_complex *inFreqTmp;         // tmp decimation output buffers (after tune shift)
-	fftwf_complex *outTimeTmp;        // tmp decimation output buffers baseband time cplx
 #if PRINT_INPUT_RANGE
 	int MinMaxBlockCount;
 	int16_t MinValue;
