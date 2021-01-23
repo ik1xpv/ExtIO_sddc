@@ -138,7 +138,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		uint32_t res_size;
 
 #ifdef _DEBUG
-		FILE *fp = fopen("SDDC_FX3.img", "rb");
+		FILE *fp = fopen("TestFX3.img", "rb");
 		if (fp != nullptr)
 		{
 			fseek(fp, 0, SEEK_END);
