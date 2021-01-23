@@ -137,6 +137,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		unsigned char* res_data;
 		uint32_t res_size;
 
+#ifdef _DEBUG
 		FILE *fp = fopen("SDDC_FX3.img", "rb");
 		if (fp != nullptr)
 		{
@@ -147,6 +148,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			fread(res_data, 1, res_size, fp);
 		}
 		else
+#endif
 		{
 			HRSRC res = FindResource(hInst, MAKEINTRESOURCE(RES_BIN_FIRMWARE), RT_RCDATA);
 			HGLOBAL res_handle = LoadResource(hInst, res);
