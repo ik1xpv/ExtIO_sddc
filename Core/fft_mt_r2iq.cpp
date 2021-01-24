@@ -92,7 +92,6 @@ fft_mt_r2iq::~fft_mt_r2iq()
 		fftwf_free(th->ADCinTime);
 		fftwf_free(th->ADCinFreq);
 		fftwf_free(th->inFreqTmp);
-		fftwf_free(th->outTimeTmp);
 
 		delete threadArgs[t];
 	}
@@ -218,13 +217,12 @@ void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
 
 			th->ADCinFreq = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft + 1)); // 1024+1
 			th->inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
-			th->outTimeTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));
 		}
 
 		plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, threadArgs[0]->ADCinTime, threadArgs[0]->ADCinFreq, FFTW_MEASURE);
 		for (int d = 0; d < NDECIDX; d++)
 		{
-			plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], threadArgs[0]->inFreqTmp, threadArgs[0]->outTimeTmp, FFTW_BACKWARD, FFTW_MEASURE);
+			plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], threadArgs[0]->inFreqTmp, threadArgs[0]->inFreqTmp, FFTW_BACKWARD, FFTW_MEASURE);
 		}
 	}
 }

@@ -125,8 +125,8 @@
 
 				// 'shorter' inverse FFT transform (decimation); frequency (back) to COMPLEX time domain
 				// transform size: mfft = mfftdim[k] = halfFft / 2^k with k = mdecimation
-				fftwf_execute_dft(*plan_f2t_c2c, th->inFreqTmp, th->outTimeTmp);     //  c2c decimation
-				// result now in th->outTimeTmp[]
+				fftwf_execute_dft(*plan_f2t_c2c, th->inFreqTmp, th->inFreqTmp);     //  c2c decimation
+				// result now in th->inFreqTmp[]
 			}
 
 			// postprocessing
@@ -148,22 +148,22 @@
 				// mirror just by negating the imaginary Q of complex I/Q
 				if (k == 0)
 				{
-					copy<true>(pout, &th->outTimeTmp[mfft / 4], mfft/2);
+					copy<true>(pout, &th->inFreqTmp[mfft / 4], mfft/2);
 				}
 				else
 				{
-					copy<true>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->outTimeTmp[0], (3 * mfft / 4));
+					copy<true>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->inFreqTmp[0], (3 * mfft / 4));
 				}
 			}
 			else // upper sideband
 			{
 				if (k == 0)
 				{
-					copy<false>(pout, &th->outTimeTmp[mfft / 4], mfft/2);
+					copy<false>(pout, &th->inFreqTmp[mfft / 4], mfft/2);
 				}
 				else
 				{
-					copy<false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->outTimeTmp[0], (3 * mfft / 4));
+					copy<false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->inFreqTmp[0], (3 * mfft / 4));
 				}
 			}
 			// result now in this->obuffers[]
