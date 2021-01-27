@@ -15,6 +15,7 @@ SET(LIBCPPUNIT_INCLUDE_DIRS ${SOURCE_DIR})
 file(GLOB UNITTESTS "./*.cpp")
 
 add_executable(unittest ${UNITTESTS})
+add_dependencies(unittest LIBCPPUNIT)
 
 target_include_directories(unittest PUBLIC "${LIBFFTW_INCLUDE_DIR}")
 target_link_directories(unittest PUBLIC "${LIBFFTW_LIBRARY_DIRS}")
