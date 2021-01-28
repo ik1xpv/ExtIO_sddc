@@ -238,6 +238,30 @@ private:
     float steps[step_size];
 };
 
+class RXLucyRadio : public RadioHardware {
+public:
+    RXLucyRadio(fx3class* fx3);
+    const char* getName() override { return "Lucy"; }
+    float getGain() override { return HF103_GAINFACTOR; }
+
+    void getFrequencyRange(int64_t& low, int64_t& high) override;
+    void Initialize(uint32_t samplefreq) override;
+    bool UpdatemodeRF(rf_mode mode) override;
+    uint64_t TuneLo(uint64_t freq) override ;
+    bool UpdateattRF(int attIndex) override;
+    bool UpdateGainIF(int attIndex) override;    
+
+    int getRFSteps(const float** steps) override;
+    int getIFSteps(const float** steps) override;
+
+private:
+    static const int step_size = 16;
+    float steps[step_size];
+
+    static const int if_step_size = 64;
+    float if_steps[if_step_size];
+};
+
 class DummyRadio : public RadioHardware {
 public:
     DummyRadio(fx3class* fx3) : RadioHardware(fx3) {}

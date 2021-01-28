@@ -110,6 +110,7 @@ enum RadioModel {
     RX888 = 0x03,
     RX888r2 = 0x04,
     RX999 = 0x05,
+    RXLUCY = 0x06,
 };
 
 enum ArgumentList {
@@ -140,4 +141,8 @@ enum ArgumentList {
     // Preselector
     // Value: 0-2
     PRESELECTOR = 12,
+
+    // VHFATT
+    // Value: 0-15
+    VHF_ATTENUATOR = 13,
 };

@@ -192,6 +192,10 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 		hardware = new RX999Radio(Fx3);
 		break;
 
+	case RXLUCY:
+		hardware = new RXLucyRadio(Fx3);
+		break;
+
 	default:
 		hardware = new DummyRadio(Fx3);
 		DbgPrintf("WARNING no SDR connected\n");

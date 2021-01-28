@@ -159,6 +159,12 @@ CyFxSlFifoApplnUSBSetupCB (
 							rx999_GpioSet(mdata);
 							isHandled = CyTrue;
 							break;
+							
+						case RXLUCY:
+							rxlucy_GpioSet(mdata);
+							isHandled = CyTrue;
+							break;	
+							
 						}
 					}
 					break;
@@ -307,6 +313,10 @@ CyFxSlFifoApplnUSBSetupCB (
 									rx999_SetAttenuator(wValue);
 									rc = 0;
 									break;
+								case RXLUCY:
+									rxlucy_SetAttenuator(wValue);
+									rc = 0;
+								        break;
 							}
 							break;
 						case AD8340_VGA:
@@ -323,7 +333,6 @@ CyFxSlFifoApplnUSBSetupCB (
 							}
 							break;
 						case PRESELECTOR:
-						{
 							switch(HWconfig)
 							{
 								case RX999:
@@ -331,8 +340,16 @@ CyFxSlFifoApplnUSBSetupCB (
 									rc = 0;
 									break;
 							}
-						}
-						break;
+							break;
+						case VHF_ATTENUATOR:
+							switch(HWconfig)
+							{
+								case RXLUCY:
+									rxlucy_VHFAttenuator(wValue);
+									rc = 0;
+									break;
+							}
+							break;	
 					}
 					vendorRqtCnt++;
 					if (rc == 0)
