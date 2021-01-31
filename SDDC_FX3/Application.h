@@ -68,6 +68,8 @@
 
 // detect pin for HF103
 #define LED_KIT		   (54)		// This is also UART_CTS
+#define GPIO52			(52) // sense RXLUCY
+#define GPIO53			(53) // sense RXLUCY
 
 typedef struct outxio_t
 {
@@ -80,6 +82,7 @@ typedef struct outxio_t
 #include "cyu3externcend.h"
 
 CyU3PReturnStatus_t ConfGPIOsimpleout( uint8_t gpioid);
+CyU3PReturnStatus_t ConfGPIOsimpleinput( uint8_t gpioid);
 
 // bbrf103
 void bbrf103_GpioSet(uint32_t mdata);
@@ -100,11 +103,18 @@ void rx888r2_GpioInitialize();
 void rx888r2_SetAttenuator(uint8_t value);
 void rx888r2_SetGain(uint8_t value);
 
-// rx888r2
+// rx999
 void rx999_GpioSet(uint32_t mdata);
 void rx999_GpioInitialize();
 void rx999_SetAttenuator(uint8_t value);
 void rx999_SetGain(uint8_t value);
 int rx999_preselect(uint32_t data);
+
+// rxlucy
+void rxlucy_GpioSet(uint32_t mdata);
+void rxlucy_GpioInitialize();
+void rxlucy_SetAttenuator(uint8_t value);
+void rxlucy_VHFAttenuator(uint8_t value);
+
 
 #endif // _INCLUDED_APPLICATION_H_

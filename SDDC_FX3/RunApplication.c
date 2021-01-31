@@ -82,6 +82,25 @@ ConfGPIOsimpleinput( uint8_t gpioid)
 	 return apiRetStatus;
 }
 
+ConfGPIOsimpleinputPU( uint8_t gpioid)
+{
+	 CyU3PReturnStatus_t apiRetStatus = CY_U3P_SUCCESS;
+	 CyU3PGpioSimpleConfig_t gpioConfig;
+
+	  apiRetStatus = CyU3PDeviceGpioOverride (gpioid, CyTrue);
+	  CheckStatusSilent("CyU3PDeviceGpioOverride", apiRetStatus);
+	    /* Configure GPIO gpioid as output */
+	      gpioConfig.outValue = CyFalse;
+	      gpioConfig.driveLowEn = CyFalse;
+	      gpioConfig.driveHighEn = CyFalse;
+	      gpioConfig.inputEn = CyTrue;
+	      gpioConfig.intrMode = CY_U3P_GPIO_NO_INTR;
+	      apiRetStatus = CyU3PGpioSetSimpleConfig(gpioid , &gpioConfig);
+	      CheckStatusSilent("CyU3PGpioSetSimpleConfig", apiRetStatus);
+	      CyU3PGpioSetIoMode(gpioid, CY_U3P_GPIO_IO_MODE_WPU);
+	 return apiRetStatus;
+}
+
 // tentative to recognize LED and pull up at pin gpioid
 CyBool_t GPIOtestInputPulldown( uint8_t gpioid)
 {
@@ -159,6 +178,7 @@ void ApplicationThread ( uint32_t input)
 
     GpioInitClock();
 
+    
     Status = I2cInit (); // initialize i2c on FX3014 must be ok.
     if (Status != CY_U3P_SUCCESS)
     	DebugPrint(4, "\r\nI2cInit failed to initialize. Error code: %d.\r\n", Status);
@@ -167,8 +187,20 @@ void ApplicationThread ( uint32_t input)
 		Status = Si5351init();
 		if (Status != CY_U3P_SUCCESS)
 		{
-			HWconfig = HF103;
-			DebugPrint(4, "\r\nSi5351init failed to initialize. HF103 detected \r\n");
+			CyBool_t measure;
+			ConfGPIOsimpleinputPU(GPIO52); 
+    			ConfGPIOsimpleinputPU(GPIO53); 
+			CyU3PGpioSimpleGetValue ( GPIO52, &measure); //measure if external pull down
+			if (measure) 
+			{
+				HWconfig = HF103;
+				DebugPrint(4, "\r\nSi5351init failed to initialize. HF103 detected \r\n");
+			}
+			else
+			{
+				HWconfig = RXLUCY;
+				DebugPrint(4, "\r\nSi5351init failed to initialize. RXLUCY detected \r\n");
+			}
 		}
 		else
 		{
@@ -214,6 +246,9 @@ void ApplicationThread ( uint32_t input)
 		case RX999:
 			rx999_GpioInitialize();
 			break;
+		case RXLUCY:
+			rxlucy_GpioInitialize();
+			break;	
 	}
 
     // Spin up the USB Connection

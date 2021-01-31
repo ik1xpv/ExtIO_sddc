@@ -35,13 +35,15 @@ SOURCE= cyfxtx.c		\
 	StartStopApplication.c	\
 	StartUP.c		\
 	Support.c		\
-	USBdescriptor.c		\
+	USBdescriptor.c	\
 	USBhandler.c		\
-	hf103.c			\
+	hf103.c		\
 	bbrf103.c		\
-	rx888.c			\
-	rx999.c         \
-	rx888r2.c
+	rx888.c		\
+	rx999.c                \
+	rx888r2.c              \
+	rxlucy.c		\
+	pcal6408a.c
 
 ifeq ($(CYFXBUILD),arm)
 SOURCE_ASM=cyfx_startup.S
