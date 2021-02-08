@@ -762,7 +762,6 @@ extern "C"
 int SetOverclock(uint32_t adcfreq)
 {
 	RadioHandler.UpdateSampleRate(adcfreq);
-
 	int index = ExtIoGetActualSrateIdx();
 	double rate;
 	while (ExtIoGetSrates(index, &rate) == -1)

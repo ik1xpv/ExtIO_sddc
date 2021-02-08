@@ -23,6 +23,10 @@
 #define IDC_RFVIRTUAL                   1013
 #define IDC_ADCSAMPLES                  1014
 #define IDC_PGA                         1015
+#define IDC_EDIT1						1016
+#define IDC_FREQUPDATE					1017
+#define IDC_EDIT2						1018
+#define IDC_CORRUPDATE					1019
 #define RES_BIN_FIRMWARE                2000
 #define IHK_CR                          5001
 #define IDE_EDIT_MAIN                   40002
