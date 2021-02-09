@@ -7,6 +7,7 @@
 #define IDB_ICON1                       104
 #define IDB_BITMAP1                     105
 #define IDB_BITMAP2                     106
+#define IDD_DLG_HDSDR                   107
 #define DIALOGH                         80
 #define IDC_LW                          1001
 #define IDC_HF                          1002
@@ -78,6 +79,13 @@
 #define IDC_PAGE3_END                   40310
 #define IDC_HARDWARETYPE                40400
 #define IDC_STATIC                      -1
+
+#ifdef NDEBUG  // define in processor setup resource !
+#define DIALOGH 62
+#else
+#define DIALOGH 140
+#endif
+
 
 // Next default values for new objects
 // 

@@ -399,10 +399,8 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				uint32_t adcfreq= 0;
 				GetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer, sizeof(lbuffer));
 				sscanf(lbuffer, "%d", &adcfreq);
-				if ((adcfreq > (DEFAULT_ADC_FREQ * 1.1)) || (adcfreq < (DEFAULT_ADC_FREQ * 0.9)))
-				{
-					adcfreq = DEFAULT_ADC_FREQ;
-				}
+				if (adcfreq > MAX_ADC_FREQ) adcfreq = MAX_ADC_FREQ ;
+				if (adcfreq < MIN_ADC_FREQ) adcfreq = MIN_ADC_FREQ ;
 				sprintf(lbuffer, "%d", adcfreq);
 				SetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer);
 				SetOverclock(adcfreq);

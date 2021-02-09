@@ -20,7 +20,7 @@
 #define DEFAULT_TUNE_FREQ	999000.0	/* Turin MW broadcast ! */
 
 static bool SDR_settings_valid = false;		// assume settings are for some other ExtIO
-static char SDR_progname[32 + 1] = "\0";
+static char SDR_progname[2048 + 1] = "\0";
 static int  SDR_ver_major = -1;
 static int  SDR_ver_minor = -1;
 static const int	gHwType = exthwUSBfloat32;
@@ -112,7 +112,19 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 	if (!gbInitHW)
 	{
 		// do initialization
-		h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_MAIN), NULL, (DLGPROC)&DlgMainFn);
+		// verify if HDSDR host name
+		SDR_progname[0] = 0;
+		GetModuleFileName(NULL, SDR_progname, sizeof(SDR_progname) - 1);
+		if (strstr(SDR_progname, "HDSDR") == nullptr)
+		{
+			bSupportDynamicSRate = false;
+			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_MAIN), NULL, (DLGPROC)&DlgMainFn);
+		}
+		else
+		{
+			bSupportDynamicSRate = true;
+			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_HDSDR), NULL, (DLGPROC)&DlgMainFn);
+		}
 		RECT rect;
 		GetWindowRect(h_dialog, &rect);
 		SetWindowPos(h_dialog, HWND_TOPMOST, 0, 24, rect.right - rect.left, rect.bottom - rect.top, SWP_HIDEWINDOW);
@@ -699,8 +711,11 @@ int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 {
 	EnterFunction1(srate_idx);
 	double div = pow(2.0, srate_idx);
-	double srate = 1000000.0 * (div * 2.0);
-	if (srate / RadioHandler.getSampleRate() * 2.0 > 1.1)
+	double srateM = div * 2.0;
+	double bwmin = adcnominalfreq / 64.0;
+	double srate = bwmin * srateM;
+
+	if (srate / adcnominalfreq * 2.0 > 1.1)
 		return -1;
 	*samplerate = srate * FreqCorrectionFactor();
 	DbgPrintf("*ExtIoGetSrate idx %d  %e\n", srate_idx, *samplerate);
@@ -713,8 +728,9 @@ int EXTIO_API ExtIoSrateSelText(int srate_idx, char* text)
 	EnterFunction1(srate_idx);
 	double div = pow(2.0, srate_idx);
 	double srateM = div * 2.0;
-	double srate = 1000000.0 * srateM;
-	if (srate / RadioHandler.getSampleRate() * 2.0 > 1.1)
+	double bwmin = adcnominalfreq / 64.0;
+	double srate = bwmin * srateM;
+	if (srate / adcnominalfreq * 2.0 > 1.1)
 		return -1;
 	snprintf(text, 15, "%.0lf MHz", srateM);
 	return 0;	// return != 0 on error
@@ -761,6 +777,7 @@ int EXTIO_API ExtIoSetSrate(int srate_idx)
 extern "C"
 int SetOverclock(uint32_t adcfreq)
 {
+	adcnominalfreq = adcfreq;
 	RadioHandler.UpdateSampleRate(adcfreq);
 	int index = ExtIoGetActualSrateIdx();
 	double rate;
