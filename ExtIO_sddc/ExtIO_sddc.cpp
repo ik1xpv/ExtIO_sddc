@@ -713,6 +713,7 @@ int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 	double div = pow(2.0, srate_idx);
 	double srateM = div * 2.0;
 	double bwmin = adcnominalfreq / 64.0;
+	if (adcnominalfreq > N2_BANDSWITCH) bwmin /= 2.0;
 	double srate = bwmin * srateM;
 
 	if (srate / adcnominalfreq * 2.0 > 1.1)
@@ -729,6 +730,7 @@ int EXTIO_API ExtIoSrateSelText(int srate_idx, char* text)
 	double div = pow(2.0, srate_idx);
 	double srateM = div * 2.0;
 	double bwmin = adcnominalfreq / 64.0;
+	if (adcnominalfreq > N2_BANDSWITCH) bwmin /= 2.0;
 	double srate = bwmin * srateM;
 	if ((srate / adcnominalfreq) * 2.0 > 1.1)
 		return -1;

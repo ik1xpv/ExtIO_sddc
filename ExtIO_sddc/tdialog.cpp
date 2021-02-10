@@ -408,6 +408,17 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
+		case IDC_FREQCANC:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				char lbuffer[64];
+				sprintf(lbuffer, "%d", adcnominalfreq);
+				SetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer);
+				break;
+			}
+			break;
+
 		case IDC_CORRUPDATE:
 			switch (HIWORD(wParam))
 			{
