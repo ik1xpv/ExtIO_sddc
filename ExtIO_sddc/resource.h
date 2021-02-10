@@ -25,9 +25,10 @@
 #define IDC_ADCSAMPLES                  1014
 #define IDC_PGA                         1015
 #define IDC_EDIT1						1016
-#define IDC_FREQUPDATE					1017
+#define IDC_FREQAPPLY					1017
 #define IDC_EDIT2						1018
 #define IDC_CORRUPDATE					1019
+#define IDC_FREQCANC					1020
 #define RES_BIN_FIRMWARE                2000
 #define IHK_CR                          5001
 #define IDE_EDIT_MAIN                   40002

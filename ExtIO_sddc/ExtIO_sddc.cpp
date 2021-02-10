@@ -730,9 +730,9 @@ int EXTIO_API ExtIoSrateSelText(int srate_idx, char* text)
 	double srateM = div * 2.0;
 	double bwmin = adcnominalfreq / 64.0;
 	double srate = bwmin * srateM;
-	if (srate / adcnominalfreq * 2.0 > 1.1)
+	if ((srate / adcnominalfreq) * 2.0 > 1.1)
 		return -1;
-	snprintf(text, 15, "%.0lf MHz", srateM);
+	snprintf(text, 15, "%.3lf MHz", srate/1000000);
 	return 0;	// return != 0 on error
 }
 

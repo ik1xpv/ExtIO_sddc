@@ -86,8 +86,8 @@ const uint32_t DEFAULT_ADC_FREQ = 64000000;	// ADC sampling frequency
 
 const uint32_t DEFAULT_TRANSFERS_PER_SEC = DEFAULT_ADC_FREQ / transferSamples;
 
-const uint32_t MIN_ADC_FREQ = 20000000;	// ADC sampling frequency minimum
-const uint32_t MAX_ADC_FREQ = 130000000;	// ADC sampling frequency minimum
+const uint32_t MIN_ADC_FREQ = 40000000;	// ADC sampling frequency minimum
+const uint32_t MAX_ADC_FREQ = 150000000;	// ADC sampling frequency minimum
 
 #endif // _CONFIG_H_
 

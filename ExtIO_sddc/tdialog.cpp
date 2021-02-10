@@ -391,7 +391,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
-		case IDC_FREQUPDATE:
+		case IDC_FREQAPPLY:
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
