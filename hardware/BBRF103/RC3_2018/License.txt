@@ -1,0 +1,7 @@
+﻿Copyright (c) <2018> Radek Haša
+
+WARNING: notice that this hardware description is a BETA test version without any warranty and is intended for non-commercial purposes
+
+BBRF103-RC3 hardware design by Radeck Haša - hasaradek AT gmail DOT com,
+based on original design by IK1XPV Oscar Steila - ik1xpv AT gmail DOT com, http://www.steila.com/blog
+
