@@ -1,5 +1,5 @@
 // Microsoft Visual C++ generated resource script.
-//
+// 
 #include "resource.h"
 
 #include "winres.h"
@@ -92,12 +92,12 @@ BEGIN
     GROUPBOX        "", IDC_STATIC, 1, 84, 215, 1
     LTEXT           "Debug mode active", IDC_STATIC, 2, 90, 80, 10, NOT WS_GROUP
     CONTROL         "128M", IDC_OVERCLOCK, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 105, 90, 28, 10
-
+    PUSHBUTTON      "Save ADC", IDC_ADCSAMPLES, 150, 90, 48, 13, BS_FLAT
     LTEXT	        "Ref corr +/- ppm" IDC_STATIC,2,107,57,10,NOT WS_GROUP
     EDITTEXT        IDC_EDIT2,61,105,40,13,ES_RIGHT | ES_UPPERCASE | 
                     ES_AUTOHSCROLL 
     PUSHBUTTON      "Apply",IDC_CORRUPDATE,105,105,30,13,WS_GROUP | NOT WS_TABSTOP
-    PUSHBUTTON      "Save ADC", IDC_ADCSAMPLES, 4, 125, 48, 13, BS_FLAT
+   
 
   
 
