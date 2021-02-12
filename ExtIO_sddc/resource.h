@@ -29,6 +29,7 @@
 #define IDC_EDIT2						1018
 #define IDC_CORRUPDATE					1019
 #define IDC_FREQCANC					1020
+#define IDC_CORRCANC					1021
 #define RES_BIN_FIRMWARE                2000
 #define IHK_CR                          5001
 #define IDE_EDIT_MAIN                   40002
@@ -82,7 +83,7 @@
 #define IDC_STATIC                      -1
 
 #ifdef NDEBUG  // define in processor setup resource !
-#define DIALOGH 62
+#define DIALOGH 82
 #else
 #define DIALOGH 140
 #endif

@@ -380,6 +380,9 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 					SetOverclock(DEFAULT_ADC_FREQ);
 				}
+				char lbuffer[64];
+				sprintf(lbuffer, "%d", adcnominalfreq);
+				SetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer);
 				break;
 			}
 			break;
@@ -439,6 +442,17 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			break;
+		case IDC_CORRCANC:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				char lbuffer[64];
+				sprintf(lbuffer, "%.2f", gfFreqCorrectionPpm);
+				SetWindowText(GetDlgItem(hWnd, IDC_EDIT2), lbuffer);
+				break;
+			}
+			break;
+
 		}
 		break;
 	break;
