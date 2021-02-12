@@ -436,8 +436,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (adjppm > maxppm) adjppm =maxppm;
 				if (adjppm < -maxppm) adjppm = -maxppm;
 				sprintf(lbuffer, "%3.2f", adjppm);
-				gfFreqCorrectionPpm = adjppm; 
-				SetOverclock(adcnominalfreq);
+				SetPPMvalue(adjppm);
 				SetWindowText(GetDlgItem(hWnd, IDC_EDIT2), lbuffer);
 				break;
 			}

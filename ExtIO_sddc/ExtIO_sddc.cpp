@@ -800,6 +800,24 @@ int SetOverclock(uint32_t adcfreq)
 }
 
 //---------------------------------------------------------------------------
+// will be called by HDSDR with reference correction in ppm
+extern "C"
+void EXTIO_API SetPPMvalue(double new_ppm_value)
+{
+	gfFreqCorrectionPpm = new_ppm_value;
+	SetOverclock(adcnominalfreq);
+}
+
+//---------------------------------------------------------------------------
+//  base audio if rate 
+extern "C"
+void EXTIO_API IFrateInfo(int rate)
+{
+	// TODO
+
+}
+
+//---------------------------------------------------------------------------
 // will be called (at least) before exiting application
 extern "C"
 int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
