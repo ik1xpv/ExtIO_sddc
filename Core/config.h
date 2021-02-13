@@ -46,7 +46,7 @@ inline void null_func(const char *format, ...) { }
 
 #define VERSION             (1.1)	//	Dll version number x.xx
 #define SWVERSION           "1.1.1 alfa2"	  
-#define SETTINGS_IDENTIFIER	"sddc_1.05"
+#define SETTINGS_IDENTIFIER	"sddc_1.06"
 #define SWNAME				"ExtIO_sddc.dll"
 
 #define	QUEUE_SIZE 64

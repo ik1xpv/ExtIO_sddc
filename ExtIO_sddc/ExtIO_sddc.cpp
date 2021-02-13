@@ -266,7 +266,7 @@ int EXTIO_API StartHWdbl(double LOfreq)
 		uint8_t hb, lb;
 		hb = fw >> 8;
 		lb = (uint8_t) fw;
-		sprintf(ebuffer, "%s v%s  |  FX3 v%d.%02d  |  %s ",SWNAME, SWVERSION ,hb,lb, RadioHandler.getName() );
+		sprintf(ebuffer, "%s v%s | FX3 v%d.%02d | %s ",SWNAME, SWVERSION ,hb,lb, RadioHandler.getName() );
 		SetWindowText(h_dialog, ebuffer);
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_RUNNING);
 	}
@@ -843,6 +843,7 @@ int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
 	case 11: strcpy(description, "TuneFrequencyHz");   snprintf(value, 1024, "%lf", DEFAULT_TUNE_FREQ); return 0;
 #endif
 	case 12: strcpy(description, "Correction_ppm");   snprintf(value, 1024, "%lf", gfFreqCorrectionPpm); return 0;
+	case 13: strcpy(description, "ADC_nominal_freq");   snprintf(value, 1024, "%d", adcnominalfreq); return 0;
 	default: return -1;	// ERROR
 	}
 	return -1;	// ERROR
@@ -858,6 +859,7 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 	double tempDbl;
 	float  newAtten = 0.0F;
 	int tempInt;
+	uint32_t tempuint32;
 
 	// now we know that there's no need to save our settings into some (.ini) file,
 	// what won't be possible without admin rights!!!,
@@ -920,6 +922,12 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		if (sscanf(value, "%lf", &tempDbl) > 0)
 			gfFreqCorrectionPpm = tempDbl;
 		break;
+	case 13:
+		adcnominalfreq = DEFAULT_ADC_FREQ;
+		if (sscanf(value, "%d", &tempuint32) > 0)
+			adcnominalfreq = tempuint32;
+		break;
+
 	default:
 		break;
 	}

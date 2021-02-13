@@ -107,7 +107,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ShowWindow(GetDlgItem(hWnd, IDC_ADCSAMPLES), FALSE);
 #endif
 		char lbuffer[64];
-		sprintf(lbuffer, "%d", DEFAULT_ADC_FREQ);
+		sprintf(lbuffer, "%d", adcnominalfreq);
 		SetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer);
 		sprintf(lbuffer, "%3.2f", gfFreqCorrectionPpm);
 		SetWindowText(GetDlgItem(hWnd, IDC_EDIT2), lbuffer);
