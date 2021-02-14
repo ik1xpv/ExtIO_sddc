@@ -201,6 +201,7 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 		DbgPrintf("WARNING no SDR connected\n");
 		break;
 	}
+	adcrate = adcnominalfreq;
 	hardware->Initialize(adcnominalfreq);
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
 	this->r2iqCntrl = r2iqCntrl;
