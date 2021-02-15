@@ -20,7 +20,7 @@
 #define DEFAULT_TUNE_FREQ	999000.0	/* Turin MW broadcast ! */
 
 static bool SDR_settings_valid = false;		// assume settings are for some other ExtIO
-static char SDR_progname[32 + 1] = "\0";
+static char SDR_progname[2048 + 1] = "\0";
 static int  SDR_ver_major = -1;
 static int  SDR_ver_minor = -1;
 static const int	gHwType = exthwUSBfloat32;
@@ -112,7 +112,18 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 	if (!gbInitHW)
 	{
 		// do initialization
-		h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_MAIN), NULL, (DLGPROC)&DlgMainFn);
+		// verify if HDSDR host name 
+		GetModuleFileName(NULL, SDR_progname, sizeof(SDR_progname) - 1);
+		if (strstr(SDR_progname, "HDSDR") == nullptr)
+		{
+			bSupportDynamicSRate = false;
+			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_MAIN), NULL, (DLGPROC)&DlgMainFn);
+		}
+		else
+		{
+			bSupportDynamicSRate = true;
+			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_HDSDR), NULL, (DLGPROC)&DlgMainFn);
+		}
 		RECT rect;
 		GetWindowRect(h_dialog, &rect);
 		SetWindowPos(h_dialog, HWND_TOPMOST, 0, 24, rect.right - rect.left, rect.bottom - rect.top, SWP_HIDEWINDOW);
@@ -254,7 +265,7 @@ int EXTIO_API StartHWdbl(double LOfreq)
 		uint8_t hb, lb;
 		hb = fw >> 8;
 		lb = (uint8_t) fw;
-		sprintf(ebuffer, "%s v%s  |  FX3 v%d.%02d  |  %s ",SWNAME, SWVERSION ,hb,lb, RadioHandler.getName() );
+		sprintf(ebuffer, "%s v%s | FX3 v%d.%02d | %s ",SWNAME, SWVERSION ,hb,lb, RadioHandler.getName() );
 		SetWindowText(h_dialog, ebuffer);
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_RUNNING);
 	}
@@ -699,8 +710,12 @@ int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 {
 	EnterFunction1(srate_idx);
 	double div = pow(2.0, srate_idx);
-	double srate = 1000000.0 * (div * 2.0);
-	if (srate / RadioHandler.getSampleRate() * 2.0 > 1.1)
+	double srateM = div * 2.0;
+	double bwmin = adcnominalfreq / 64.0;
+	if (adcnominalfreq > N2_BANDSWITCH) bwmin /= 2.0;
+	double srate = bwmin * srateM;
+
+	if (srate / adcnominalfreq * 2.0 > 1.1)
 		return -1;
 	*samplerate = srate * FreqCorrectionFactor();
 	DbgPrintf("*ExtIoGetSrate idx %d  %e\n", srate_idx, *samplerate);
@@ -713,10 +728,12 @@ int EXTIO_API ExtIoSrateSelText(int srate_idx, char* text)
 	EnterFunction1(srate_idx);
 	double div = pow(2.0, srate_idx);
 	double srateM = div * 2.0;
-	double srate = 1000000.0 * srateM;
-	if (srate / RadioHandler.getSampleRate() * 2.0 > 1.1)
+	double bwmin = adcnominalfreq / 64.0;
+	if (adcnominalfreq > N2_BANDSWITCH) bwmin /= 2.0;
+	double srate = bwmin * srateM;
+	if ((srate / adcnominalfreq) * 2.0 > 1.1)
 		return -1;
-	snprintf(text, 15, "%.0lf MHz", srateM);
+	snprintf(text, 15, "%.1lf MHz", srate/1000000);
 	return 0;	// return != 0 on error
 }
 
@@ -761,8 +778,8 @@ int EXTIO_API ExtIoSetSrate(int srate_idx)
 extern "C"
 int SetOverclock(uint32_t adcfreq)
 {
+	adcnominalfreq = adcfreq;
 	RadioHandler.UpdateSampleRate(adcfreq);
-
 	int index = ExtIoGetActualSrateIdx();
 	double rate;
 	while (ExtIoGetSrates(index, &rate) == -1)
@@ -779,6 +796,24 @@ int SetOverclock(uint32_t adcfreq)
 	double internal_LOfreq = gfLOfreq / FreqCorrectionFactor();
 	RadioHandler.TuneLO(internal_LOfreq);
 	return 0;
+}
+
+//---------------------------------------------------------------------------
+// will be called by HDSDR with reference correction in ppm
+extern "C"
+void EXTIO_API SetPPMvalue(double new_ppm_value)
+{
+	gfFreqCorrectionPpm = new_ppm_value;
+	SetOverclock(adcnominalfreq);
+}
+
+//---------------------------------------------------------------------------
+//  base audio if rate 
+extern "C"
+void EXTIO_API IFrateInfo(int rate)
+{
+	// TODO
+
 }
 
 //---------------------------------------------------------------------------
@@ -807,6 +842,7 @@ int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value)
 	case 11: strcpy(description, "TuneFrequencyHz");   snprintf(value, 1024, "%lf", DEFAULT_TUNE_FREQ); return 0;
 #endif
 	case 12: strcpy(description, "Correction_ppm");   snprintf(value, 1024, "%lf", gfFreqCorrectionPpm); return 0;
+	case 13: strcpy(description, "ADC_nominal_freq");   snprintf(value, 1024, "%d", adcnominalfreq); return 0;
 	default: return -1;	// ERROR
 	}
 	return -1;	// ERROR
@@ -822,6 +858,7 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 	double tempDbl;
 	float  newAtten = 0.0F;
 	int tempInt;
+	uint32_t tempuint32;
 
 	// now we know that there's no need to save our settings into some (.ini) file,
 	// what won't be possible without admin rights!!!,
@@ -884,6 +921,12 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 		if (sscanf(value, "%lf", &tempDbl) > 0)
 			gfFreqCorrectionPpm = tempDbl;
 		break;
+	case 13:
+		adcnominalfreq = DEFAULT_ADC_FREQ;
+		if (sscanf(value, "%d", &tempuint32) > 0)
+			adcnominalfreq = tempuint32;
+		break;
+
 	default:
 		break;
 	}

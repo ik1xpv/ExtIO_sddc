@@ -87,3 +87,5 @@ extern "C" int  EXTIO_API ExtIoSetSrate(int idx);                   // returns !
 extern "C" int  EXTIO_API ExtIoGetSetting(int idx, char * description, char * value); // will be called (at least) before exiting application
 extern "C" void EXTIO_API ExtIoSetSetting(int idx, const char * value); // before calling InitHW() !!!
 
+extern "C" void EXTIO_API SetPPMvalue(double new_ppm_value);   
+extern "C" void EXTIO_API IFrateInfo(int rate);  

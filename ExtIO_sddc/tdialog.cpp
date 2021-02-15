@@ -28,6 +28,8 @@ unsigned int cntime = 0;
 
 extern RadioHandlerClass RadioHandler;
 extern "C" int SetOverclock(uint32_t adcfreq);
+extern double	gfFreqCorrectionPpm;
+
 
 void UpdateGain(HWND hControl, int current, const float* gains, int length)
 {
@@ -104,6 +106,11 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #ifndef _DEBUG
 		ShowWindow(GetDlgItem(hWnd, IDC_ADCSAMPLES), FALSE);
 #endif
+		char lbuffer[64];
+		sprintf(lbuffer, "%d", adcnominalfreq);
+		SetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer);
+		sprintf(lbuffer, "%3.2f", gfFreqCorrectionPpm);
+		SetWindowText(GetDlgItem(hWnd, IDC_EDIT2), lbuffer);
 
 		SetTimer(hWnd, 0, 200, NULL);
 	}
@@ -373,6 +380,9 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 					SetOverclock(DEFAULT_ADC_FREQ);
 				}
+				char lbuffer[64];
+				sprintf(lbuffer, "%d", adcnominalfreq);
+				SetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer);
 				break;
 			}
 			break;
@@ -382,6 +392,62 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case BN_CLICKED:
 				saveADCsamplesflag = true;
+				break;
+			}
+			break;
+
+		case IDC_FREQAPPLY:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				char lbuffer[64];
+				uint32_t adcfreq= 0;
+				GetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer, sizeof(lbuffer));
+				sscanf(lbuffer, "%d", &adcfreq);
+				if (adcfreq > MAX_ADC_FREQ) adcfreq = MAX_ADC_FREQ ;
+				if (adcfreq < MIN_ADC_FREQ) adcfreq = MIN_ADC_FREQ ;
+				sprintf(lbuffer, "%d", adcfreq);
+				SetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer);
+				SetOverclock(adcfreq);
+				break;
+			}
+			break;
+
+		case IDC_FREQCANC:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				char lbuffer[64];
+				sprintf(lbuffer, "%d", adcnominalfreq);
+				SetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer);
+				break;
+			}
+			break;
+
+		case IDC_CORRUPDATE:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				char lbuffer[64];
+				float adjppm;
+				float maxppm = 200.0;
+				GetWindowText(GetDlgItem(hWnd, IDC_EDIT2), lbuffer, sizeof(lbuffer));
+				sscanf(lbuffer, "%f", &adjppm);
+				if (adjppm > maxppm) adjppm =maxppm;
+				if (adjppm < -maxppm) adjppm = -maxppm;
+				sprintf(lbuffer, "%3.2f", adjppm);
+				SetPPMvalue(adjppm);
+				SetWindowText(GetDlgItem(hWnd, IDC_EDIT2), lbuffer);
+				break;
+			}
+			break;
+		case IDC_CORRCANC:
+			switch (HIWORD(wParam))
+			{
+			case BN_CLICKED:
+				char lbuffer[64];
+				sprintf(lbuffer, "%.2f", gfFreqCorrectionPpm);
+				SetWindowText(GetDlgItem(hWnd, IDC_EDIT2), lbuffer);
 				break;
 			}
 			break;

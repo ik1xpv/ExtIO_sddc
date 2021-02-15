@@ -45,8 +45,8 @@ inline void null_func(const char *format, ...) { }
 #endif
 
 #define VERSION             (1.1)	//	Dll version number x.xx
-#define SWVERSION           "1.1.1 alfa1"	  
-#define SETTINGS_IDENTIFIER	"sddc_1.05"
+#define SWVERSION           "1.1.1 alfa2"	  
+#define SETTINGS_IDENTIFIER	"sddc_1.06"
 #define SWNAME				"ExtIO_sddc.dll"
 
 #define	QUEUE_SIZE 64
@@ -77,6 +77,7 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 #define URL_HDSDRA          "<a>http://www.hdsdr.de/</a>"
 
 extern bool saveADCsamplesflag;
+extern uint32_t  adcnominalfreq;
 
 const int transferSize = 131072;
 const int transferSamples = 131072 / sizeof(int16_t);
@@ -85,5 +86,8 @@ const uint32_t DEFAULT_ADC_FREQ = 64000000;	// ADC sampling frequency
 
 const uint32_t DEFAULT_TRANSFERS_PER_SEC = DEFAULT_ADC_FREQ / transferSamples;
 
+extern uint32_t MIN_ADC_FREQ;		// ADC sampling frequency minimum
+extern uint32_t MAX_ADC_FREQ;		// ADC sampling frequency minimum
+extern uint32_t N2_BANDSWITCH;		// threshold 5 or 6 SR bandwidths
 #endif // _CONFIG_H_
 

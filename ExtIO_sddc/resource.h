@@ -7,6 +7,7 @@
 #define IDB_ICON1                       104
 #define IDB_BITMAP1                     105
 #define IDB_BITMAP2                     106
+#define IDD_DLG_HDSDR                   107
 #define DIALOGH                         80
 #define IDC_LW                          1001
 #define IDC_HF                          1002
@@ -23,6 +24,12 @@
 #define IDC_RFVIRTUAL                   1013
 #define IDC_ADCSAMPLES                  1014
 #define IDC_PGA                         1015
+#define IDC_EDIT1						1016
+#define IDC_FREQAPPLY					1017
+#define IDC_EDIT2						1018
+#define IDC_CORRUPDATE					1019
+#define IDC_FREQCANC					1020
+#define IDC_CORRCANC					1021
 #define RES_BIN_FIRMWARE                2000
 #define IHK_CR                          5001
 #define IDE_EDIT_MAIN                   40002
@@ -74,6 +81,13 @@
 #define IDC_PAGE3_END                   40310
 #define IDC_HARDWARETYPE                40400
 #define IDC_STATIC                      -1
+
+#ifdef NDEBUG  // define in processor setup resource !
+#define DIALOGH 82
+#else
+#define DIALOGH 140
+#endif
+
 
 // Next default values for new objects
 // 

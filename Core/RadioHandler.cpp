@@ -201,8 +201,8 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 		DbgPrintf("WARNING no SDR connected\n");
 		break;
 	}
-
-	hardware->Initialize(adcrate);
+	adcrate = adcnominalfreq;
+	hardware->Initialize(adcnominalfreq);
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
 	this->r2iqCntrl = r2iqCntrl;
 	r2iqCntrl->Init(hardware->getGain(), buffers, obuffers);
@@ -213,11 +213,16 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 bool RadioHandlerClass::Start(int srate_idx)
 {
 	Stop();
-	double div = pow(2.0, srate_idx);
-	auto samplerate = 1000000.0 * (div * 2);
-	int decimate = (int)log2(getSampleRate() / (2 * samplerate));
-
 	DbgPrintf("RadioHandlerClass::Start\n");
+
+	int	decimate = 4 - srate_idx;   // 5 IF bands
+	if (adcnominalfreq > N2_BANDSWITCH) 
+		decimate = 5 - srate_idx;   // 6 IF bands
+	if (decimate < 0)
+	{
+		decimate = 0;
+		DbgPrintf("WARNING decimate mismatch at srate_idx = %d\n", srate_idx);
+	}
 	run = true;
 	count = 0;
 
