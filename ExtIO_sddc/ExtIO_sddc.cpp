@@ -112,8 +112,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 	if (!gbInitHW)
 	{
 		// do initialization
-		// verify if HDSDR host name
-		SDR_progname[0] = 0;
+		// verify if HDSDR host name 
 		GetModuleFileName(NULL, SDR_progname, sizeof(SDR_progname) - 1);
 		if (strstr(SDR_progname, "HDSDR") == nullptr)
 		{
