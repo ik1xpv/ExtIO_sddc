@@ -2,6 +2,21 @@
 
 ![CMake](https://github.com/ik1xpv/ExtIO_sddc/workflows/CMake/badge.svg)
 
+
+### tag  v1.2RC1 Version "V1.2 RC1" date 18/2/2020
+- The ADC's nominal sampling frequency is user selectable from 50 MHz to 140 MHz at 1Hz step, 
+- The reference calibration can be adjusted in the dialog GUI in a range of +/- 200 ppm. (#171)
+- The tuner IF center frequency is moved to 4.570 MHz that is the standard for RT820T. We were using 5 MHz before when we did not have yet fine tune ability. (#159)
+- Support for AVX/2/512 instructions added. This change may reduce CPU usage for some modern hardware.(#152) 
+- The Kaiser-Bessel IF filter with 85% of Nyquist band are computer at initialization. It simplifies managment of IF filters (#147)
+- Add automatically build verification for both master branch and PRs. This  feature of the Github environment speeds development checks(#141)
+
+ So far the known issues:
+- The ADC sampling frequency can be selected via the ExtIO dialog.  HDSDR versions <= 2.80 require to close HDSDR.exe and restart the application to have the right IF sample rates. Higher HDSDR releases will have dynamically allocated IF sample rates and they will not require the restart.
+- This release does not operate correctly with HF103 and similar designs that do not use a pll to generate the ADC sampling clock.
+- The accuracy is that of the SI5351a programming about 1 Hz
+
+
 ### tag  v1.1.0 Version "V1.1.0" date 29/12/2020
 - Fix the round of rf/if gains in the UI #109
 - Fix sounds like clipping, on strong stations #120
