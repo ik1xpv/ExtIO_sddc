@@ -111,24 +111,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 	type = gHwType;
 	if (!gbInitHW)
 	{
-		// do initialization
-		// verify if HDSDR host name 
-		GetModuleFileName(NULL, SDR_progname, sizeof(SDR_progname) - 1);
-		if (strstr(SDR_progname, "HDSDR") == nullptr)
-		{
-			bSupportDynamicSRate = false;
-			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_MAIN), NULL, (DLGPROC)&DlgMainFn);
-		}
-		else
-		{
-			bSupportDynamicSRate = true;
-			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_HDSDR), NULL, (DLGPROC)&DlgMainFn);
-		}
-		RECT rect;
-		GetWindowRect(h_dialog, &rect);
-		SetWindowPos(h_dialog, HWND_TOPMOST, 0, 24, rect.right - rect.left, rect.bottom - rect.top, SWP_HIDEWINDOW);
 		splashW.createSplashWindow(hInst, IDB_BITMAP2, 15, 15, 15);
-
 #ifdef _DEBUG
 		if (AllocConsole())
 		{
@@ -211,17 +194,28 @@ bool EXTIO_API OpenHW(void)
 
 	// .... display here the DLL panel ,if any....
 
-//    ShowWindow(h_dialog, SW_SHOW);
-//     ShowWindow(h_dialog, SW_HIDE);
 #ifndef _DEBUG
 	splashW.showWindow();
 #endif
 
-	//EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_ATT);
 
 	splashW.destroySplashWindow();
-
-	SetWindowPos(h_dialog, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	// do initialization
+//   verify if HDSDR host name 
+	if (strstr(SDR_progname, "HDSDR") == nullptr)
+	{
+		h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_MAIN), NULL, (DLGPROC)&DlgMainFn);
+	}
+	else
+	{
+		if (( SDR_ver_major >= 2) && (SDR_ver_minor >=81))
+			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_HDSDR281), NULL, (DLGPROC)&DlgMainFn);
+		else
+			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_HDSDR), NULL, (DLGPROC)&DlgMainFn);
+	}
+	RECT rect;
+	GetWindowRect(h_dialog, &rect);
+	SetWindowPos(h_dialog, HWND_TOPMOST, 0, 24, rect.right - rect.left, rect.bottom - rect.top, SWP_HIDEWINDOW);
 
 	// in the above statement, F->handle is the window handle of the panel displayed
 	// by the DLL, if such a panel exists

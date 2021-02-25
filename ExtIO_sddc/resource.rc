@@ -116,10 +116,50 @@ BEGIN
     LTEXT           "IQ:", IDC_STATIC, 151, 108, 17, 10
     CTEXT           "64.0Msps", IDC_STATIC16, 165, 108, 45, 10, WS_BORDER
 
-    GROUPBOX        "", IDC_STATIC, 1, 82, 215, 1
+    GROUPBOX        "", IDC_STATIC, 1, 82, 215, 2
     LTEXT           "Debug mode active", IDC_STATIC, 2, 90, 80, 10, NOT WS_GROUP
     CONTROL         "128M", IDC_OVERCLOCK, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 100, 90, 28, 10
     PUSHBUTTON      "Save ADC", IDC_ADCSAMPLES, 150, 90, 48, 13, BS_FLAT
+
+
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog used with HDSDR host >2.81
+//
+
+IDD_DLG_HDSDR281 DIALOGEX 0, 0, 216, (DIALOGH - 20)  // dimensions release
+STYLE DS_SETFONT | WS_CAPTION | WS_SYSMENU
+CAPTION "ExtIO_sddc.dll ver:1.4"
+FONT 8, "Ms Shell Dlg", 0, 0, 0x0
+BEGIN
+GROUPBOX        "", IDC_STATIC, 4, 1, 208, 23
+LTEXT           "Antenna BiasT 3.3 Volt", IDC_STATIC, 16, 10, 80, 10, NOT WS_GROUP
+CONTROL         "VHF", IDC_BIAS_VHF, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 100, 10, 25, 10
+CONTROL         "HF", IDC_BIAS_HF, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 150, 10, 25, 10
+
+GROUPBOX        "", IDC_STATIC, 4, 19, 208, 40
+LTEXT           "ADC", IDC_STATIC, 16, 28, 17, 10, NOT WS_GROUP
+CONTROL         "Dither", IDC_DITHER, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 100, 27, 30, 10
+CONTROL         "Rand", IDC_RAND, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 150, 27, 30, 10
+LTEXT	        "Sampling frequency  Hz" IDC_STATIC, 16, 44, 100, 10, NOT WS_GROUP
+EDITTEXT        IDC_EDIT1, 100, 42, 46, 13, ES_CENTER | ES_UPPERCASE |
+ES_AUTOHSCROLL | ES_NUMBER
+PUSHBUTTON      "Apply", IDC_FREQAPPLY, 150, 42, 27, 12, WS_GROUP | NOT WS_TABSTOP
+PUSHBUTTON      "Cancel", IDC_FREQCANC, 178, 42, 27, 12, WS_GROUP | NOT WS_TABSTOP
+
+LTEXT           "ADC:", IDC_STATIC, 2, 88, 22, 10
+CTEXT           "128.0Msps", IDC_STATIC13, 23, 88, 38, 10, WS_BORDER
+LTEXT           "USB:", IDC_STATIC, 75, 88, 21, 10
+CTEXT           "256.0Mbps", IDC_STATIC14, 96, 88, 41, 10, WS_BORDER
+LTEXT           "IQ:", IDC_STATIC, 151, 88, 17, 10
+CTEXT           "64.0Msps", IDC_STATIC16, 165, 88, 45, 10, WS_BORDER
+
+GROUPBOX        "", IDC_STATIC, 1, 64, 215, 2
+LTEXT           "Debug mode active", IDC_STATIC, 2, 70, 60, 10, NOT WS_GROUP
+CONTROL         "128M", IDC_OVERCLOCK, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 100, 70, 28, 10
+PUSHBUTTON      "Save ADC", IDC_ADCSAMPLES, 150, 70, 48, 13, BS_FLAT
 
 
 END
