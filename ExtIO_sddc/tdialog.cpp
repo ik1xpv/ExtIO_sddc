@@ -30,6 +30,12 @@ extern RadioHandlerClass RadioHandler;
 extern "C" int SetOverclock(uint32_t adcfreq);
 extern double	gfFreqCorrectionPpm;
 
+void UpdatePPM(HWND hWnd)
+{
+	char lbuffer[64];
+	sprintf(lbuffer, "%3.2f", gfFreqCorrectionPpm);
+	SetWindowText(GetDlgItem(hWnd, IDC_EDIT2), lbuffer);
+}
 
 void UpdateGain(HWND hControl, int current, const float* gains, int length)
 {
@@ -109,9 +115,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		char lbuffer[64];
 		sprintf(lbuffer, "%d", adcnominalfreq);
 		SetWindowText(GetDlgItem(hWnd, IDC_EDIT1), lbuffer);
-		sprintf(lbuffer, "%3.2f", gfFreqCorrectionPpm);
-		SetWindowText(GetDlgItem(hWnd, IDC_EDIT2), lbuffer);
-
+		UpdatePPM(hWnd);  // update dialog PPM
 		SetTimer(hWnd, 0, 200, NULL);
 	}
 	return TRUE;

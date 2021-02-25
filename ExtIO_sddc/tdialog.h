@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 extern bool bSupportDynamicSRate;
+extern void UpdatePPM(HWND hWnd);
 
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

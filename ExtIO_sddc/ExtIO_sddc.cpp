@@ -805,9 +805,7 @@ void EXTIO_API SetPPMvalue(double new_ppm_value)
 {
 	gfFreqCorrectionPpm = new_ppm_value;
 	SetOverclock(adcnominalfreq);
-	char lbuffer[64];
-	sprintf(lbuffer, "%3.2f", gfFreqCorrectionPpm);
-	SetWindowText(GetDlgItem(h_dialog, IDC_EDIT2), lbuffer);
+	UpdatePPM(h_dialog);  // update dialog PPM
 }
 
 //---------------------------------------------------------------------------
