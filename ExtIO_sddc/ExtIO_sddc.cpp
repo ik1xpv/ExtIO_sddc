@@ -805,6 +805,17 @@ void EXTIO_API SetPPMvalue(double new_ppm_value)
 {
 	gfFreqCorrectionPpm = new_ppm_value;
 	SetOverclock(adcnominalfreq);
+	char lbuffer[64];
+	sprintf(lbuffer, "%3.2f", gfFreqCorrectionPpm);
+	SetWindowText(GetDlgItem(h_dialog, IDC_EDIT2), lbuffer);
+}
+
+//---------------------------------------------------------------------------
+// will be called by HDSDR with reference correction in ppm
+extern "C"
+double EXTIO_API GetPPMvalue(void)
+{
+	return gfFreqCorrectionPpm;
 }
 
 //---------------------------------------------------------------------------
