@@ -48,7 +48,7 @@ EXPORTS
 	ExtIoSetSrate
 
     SetPPMvalue
-
+	GetPPMvalue
 
 	ExtIoGetSetting
 	ExtIoSetSetting

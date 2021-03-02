@@ -8,6 +8,7 @@
 #define IDB_BITMAP1                     105
 #define IDB_BITMAP2                     106
 #define IDD_DLG_HDSDR                   107
+#define IDD_DLG_HDSDR281                108
 #define DIALOGH                         80
 #define IDC_LW                          1001
 #define IDC_HF                          1002
