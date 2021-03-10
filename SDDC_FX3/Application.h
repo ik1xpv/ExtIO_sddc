@@ -42,6 +42,7 @@
 
 #define USER_COMMAND_AVAILABLE	(0xA)
 #define VENDOR_RQT (0x1)
+#define VR_ARG (0x4)
 
 // Define constants for blinking Error LED used in StartUp.c
 #define PWM_PERIOD 				(20000000)   // Approximately 10Hz

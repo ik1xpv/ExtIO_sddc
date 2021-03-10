@@ -45,6 +45,18 @@ const char* EventName[] = {
 	    "OTG_SRP", "EP_UNDERRUN", "LINK_RECOVERY", "USB3_LINKFAIL", "SS_COMP_ENTRY", "SS_COMP_EXIT"
 };
 
+// For Debug and display the name of the FX3Command
+const char* FX3CommandName[] = {  // start 0xAA
+"STARTFX3", "STOPFX3", "TESTFX3", "GPIOFX3", "I2CWFX3","I2CRFX3", "0xB0", "RESETFX3",
+"STARTADC", "0xB3", "R82XXINIT","R82XXTUNE","SETARGFX3","0xB6", "R82XXSTDBY","AD4351TUNE"
+};
+
+// For Debug and display the name of the FX3Command
+const char* SETARGFX3List[] = { 
+"0", "R82XX_ATTENUATOR","R82XX_VGA","R82XX_SIDEBAND","R82XX_HARMONIC","5","6","7","8","9",
+"DAT31_ATT","AD8340_VGA","PRESELECTOR","VHF_ATTENUATOR"
+};
+
 
 
 void ParseCommand(void)

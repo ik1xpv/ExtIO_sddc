@@ -28,6 +28,8 @@ extern void si5351aSetFrequencyB(UINT32 freq2);
 
 // Declare external data
 extern const char* EventName[];
+extern const char* FX3CommandName[];
+extern const char* SETARGFX3List[];
 extern uint32_t glDMACount;
 
 // Global data owned by this module
@@ -155,12 +157,15 @@ void MsgParsing(uint32_t qevent)
 		case 0:
 			DebugPrint(4, "\r\nEvent received = %s   ", EventName[(uint8_t)qevent]);
 			break;
-		case 1:
-			DebugPrint(4, "\r\nVendor request = %x  %x  %x\r\n", (uint8_t)( qevent >> 16), (uint8_t) (qevent >> 8) , (uint8_t) qevent );
+		case VENDOR_RQT:
+			DebugPrint(4, "\r\n%s \t\t%x  %x\r\n", FX3CommandName[(uint8_t)( qevent >> 16) - 0xAA], (uint8_t) (qevent >> 8) , (uint8_t) qevent );
 			break;
+		case VR_ARG:
+			DebugPrint(4, "\r\n%s \t %s  %x\r\n", FX3CommandName[(uint8_t)( qevent >> 16) - 0xAA], SETARGFX3List[(uint8_t) (qevent >> 8)], (uint8_t) qevent );
+			break;	
 		case 2:
 			DebugPrint(4, "\r\nfree \r\n", (uint8_t) qevent );
-			break;
+			break;  
 		case USER_COMMAND_AVAILABLE:
 			ParseCommand();
 			break;

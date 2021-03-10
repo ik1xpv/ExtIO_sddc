@@ -66,7 +66,10 @@ CyFxSlFifoApplnUSBSetupCB (
     uint16_t wLength;
     CyBool_t isHandled = CyFalse;
     CyU3PReturnStatus_t apiRetStatus;
-
+	
+	uint8_t  db[3];  // debug flags
+   
+	
     /* Decode the fields from the setup request. */
     bReqType = (setupdat0 & CY_U3P_USB_REQUEST_TYPE_MASK);
     bType    = (bReqType & CY_U3P_USB_TYPE_MASK);
@@ -120,11 +123,12 @@ CyFxSlFifoApplnUSBSetupCB (
         }
     } else if (bType == CY_U3P_USB_VENDOR_RQT) {
 
-    	/*
-   	    uint8_t * pd = (uint8_t *) &glEp0Buffer[0];
-    	uint32_t event =( (VENDOR_RQT<<24) | ( bRequest<<16) | (pd[0]<<8) | pd[1] );
-    	CyU3PQueueSend(&EventAvailable, &event, CYU3P_NO_WAIT);
-  */
+		uint8_t * pd = (uint8_t *) &glEp0Buffer[0];
+		db[3] = VENDOR_RQT;
+		db[2] = bRequest;
+		db[1] = pd[0];
+		db[0] = pd[1];
+		
     	isHandled = CyFalse;
 
     	switch (bRequest)
@@ -285,6 +289,9 @@ CyFxSlFifoApplnUSBSetupCB (
 				{
 					int rc = -1;
 					CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL);
+					db[3] = VR_ARG;
+					db[1] = wIndex;
+					db[0] = wValue;
 					switch(wIndex) {
 						case R82XX_ATTENUATOR:
 							rc = set_all_gains(&tuner, wValue); // R820T2 set att
@@ -402,8 +409,9 @@ CyFxSlFifoApplnUSBSetupCB (
 					CyU3PUsbStall (0, CyTrue, CyFalse);
 					break;
     	}
-   	    uint8_t * pd = (uint8_t *) &glEp0Buffer[0];
-    	uint32_t event =( (VENDOR_RQT<<24) | ( bRequest<<16) | (pd[1]<<8) | pd[0] );
+    //	    uint8_t * pd = (uint8_t *) &glEp0Buffer[0];
+    //	uint32_t event =( (VENDOR_RQT<<24) | ( bRequest<<16) | (pd[1]<<8) | pd[0] );
+		uint32_t event = *(uint32_t *) db;
     	CyU3PQueueSend(&EventAvailable, &event, CYU3P_NO_WAIT);
     }
     return isHandled;
