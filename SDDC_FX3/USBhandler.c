@@ -71,12 +71,12 @@ TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wInde
 	
 	case R82XXTUNE:
 	case AD4351TUNE:
-		DebugPrint(4, "%d",(uint64_t *) &glEp0Buffer[0]);
+		DebugPrint(4, "%d", * (uint64_t *) &glEp0Buffer[0]);
 		break;
 		
 	case R82XXINIT:	
 	case STARTADC:
-		DebugPrint(4, "%d",(uint32_t *) &glEp0Buffer[0]);
+		DebugPrint(4, "%d", * (uint32_t *) &glEp0Buffer[0]);
 		break;
 		
 	case STARTFX3:
@@ -85,7 +85,7 @@ TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wInde
 		break;
 		
 	default:
-		DebugPrint(4, "%x\t%x", pdata[0] , pdata[1]);
+		DebugPrint(4, "0x%x\t0x%x", pdata[0] , pdata[1]);
 		break;
 		
 	}
