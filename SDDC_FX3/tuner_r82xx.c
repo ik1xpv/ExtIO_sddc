@@ -2407,7 +2407,7 @@ int set_all_gains(struct r82xx_priv *priv, UINT8 gain_index)
 	if (rc < 0)
 		return rc;
 
-  	DebugPrint(4, "\r\nset_all_gains %d",gain_index);
+  //	DebugPrint(4, "\r\nset_all_gains %d",gain_index);
 
 	return 0;
 }
