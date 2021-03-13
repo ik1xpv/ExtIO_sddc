@@ -26,7 +26,9 @@
 #include "cyu3externcstart.h"
 #include "i2cmodule.h"
 
-#define FIFO_DMA_RX_SIZE        (0)	                  /* DMA transfer size is set to infinite */
+#define TRACESERIAL					/* enable the serial debug */
+
+#define FIFO_DMA_RX_SIZE        (0)	               /* DMA transfer size is set to infinite */
 #define FIFO_THREAD_STACK       (0x400)               /* application thread stack size */
 #define FIFO_THREAD_PRIORITY    (8)                   /* application thread priority */
 #define CY_FX_EP_CONSUMER       (0x81)   				  /* EP 1 IN */

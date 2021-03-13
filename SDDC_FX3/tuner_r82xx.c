@@ -37,10 +37,19 @@
 #include "tuner_r82xx.h"
 
 #define WITH_ASYM_FILTER	0
-#define PRINT_PLL_ERRORS	0
-#define PRINT_VGA_REG		0
-#define PRINT_INITIAL_REGISTERS		0
-#define PRINT_ACTUAL_VCO_AND_ERR	0
+
+#ifdef TRACESERIAL
+	#define PRINT_PLL_ERRORS	1
+	#define PRINT_VGA_REG		0
+	#define PRINT_INITIAL_REGISTERS	0
+	#define PRINT_ACTUAL_VCO_AND_ERR	0
+#else
+	#define PRINT_PLL_ERRORS	0
+	#define PRINT_VGA_REG		0
+	#define PRINT_INITIAL_REGISTERS	0
+#	define PRINT_ACTUAL_VCO_AND_ERR	0
+#endif
+
 
 /* use fifth harmonic above this frequency in kHz, when PLL does NOT lock */
 #define FIFTH_HARM_FRQ_THRESH_KHZ	1770000
@@ -907,8 +916,8 @@ static int r82xx_set_pll_yc(struct r82xx_priv *priv, uint32_t freq)
   if (!(data[2] & 0x40)) {
     if (priv->cfg->verbose || PRINT_PLL_ERRORS)
       //fprintf(stderr, "r82xx_set_pll_yc(): error writing 'sdm lo' into i2c reg 0x15\n");
-      fprintf(stderr, "[R82XX] PLL not locked at Tuner LO %u Hz for RF %f MHz!\n",
-        freq, priv->rf_freq * 1E-6);
+      fprintf(stderr, "\r\n[R-001] PLL not locked at Tuner LO %d Hz for RF %d\r\n",
+        freq, priv->rf_freq);
     priv->has_lock = 0;
     return -1;
   }
@@ -1064,7 +1073,7 @@ static int r82xx_set_pll(struct r82xx_priv *priv, uint32_t freq)
 
 	if (nint > ((128 / vco_power_ref) - 1)) {
 		if (priv->cfg->verbose || PRINT_PLL_ERRORS)
-			fprintf(stderr, "[R82XX] No valid PLL values for %u Hz!\n", freq);
+			fprintf(stderr, "\r\n[R-002] No valid PLL values for %d Hz!\r\n", freq);
 		return -1;
 	}
 
@@ -1138,14 +1147,14 @@ static int r82xx_set_pll(struct r82xx_priv *priv, uint32_t freq)
 
 	if (!(data[2] & 0x40)) {
 		if (priv->cfg->verbose || PRINT_PLL_ERRORS)
-			fprintf(stderr, "[R82XX] PLL not locked at Tuner LO %u Hz for RF %f MHz!\n",
-				freq, priv->rf_freq * 1E-6);
+			fprintf(stderr, "\r\n[R-003] PLL not locked at Tuner LO %d Hz for RF %d MHz!\r\n",
+				freq, priv->rf_freq );
 		priv->has_lock = 0;
 		return -1;
 	}
-#if 0
+#if 1
 	else
-		fprintf(stderr, "[R82XX] PLL locked at Tuner LO %u Hz for RF %f MHz!\n", freq, priv->rf_freq * 1E-6);
+		fprintf(stderr, "\r\n[R82XX] PLL locked at Tuner LO %d Hz for RF %d MHz!\r\n", freq, priv->rf_freq);
 #endif
 
 	priv->has_lock = 1;
@@ -1174,7 +1183,7 @@ int r82xx_is_tuner_locked(struct r82xx_priv *priv)
 		return -3;
 	if (!(data[2] & 0x40)) {
 		if (priv->cfg->verbose || PRINT_PLL_ERRORS)
-			fprintf(stderr, "[R82XX] PLL not locked at check!\n");
+			fprintf(stderr, "\r\n[R-004] PLL not locked at check!\r\n");
 		return 1;
 	}
 	return 0;
@@ -2054,7 +2063,7 @@ int r82xx_set_freq64(struct r82xx_priv *priv, uint64_t freq)
 err:
 #if PRINT_PLL_ERRORS
 	if (rc < 0)
-		fprintf(stderr, "%s: failed=%d\n", __FUNCTION__, rc);
+		fprintf(stderr, "\r\n[R-005]%s: failed = %d\r\n", __FUNCTION__, rc);
 #endif
 	return rc;
 }
@@ -2078,6 +2087,7 @@ int r82xx_set_dither(struct r82xx_priv *priv, int dither)
 int r82xx_standby(struct r82xx_priv *priv)
 {
 	int rc;
+	
 
 	/* If device was not initialized yet, don't need to standby */
 	if (!priv->init_done)
@@ -2407,7 +2417,7 @@ int set_all_gains(struct r82xx_priv *priv, UINT8 gain_index)
 	if (rc < 0)
 		return rc;
 
-  //	DebugPrint(4, "\r\nset_all_gains %d",gain_index);
+  	DebugPrint(4, "\r\nset_all_gains %d",gain_index);
 
 	return 0;
 }

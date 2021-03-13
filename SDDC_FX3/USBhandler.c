@@ -51,9 +51,8 @@ uint8_t  vendorRqtCnt = 0;
 
 extern const char* FX3CommandName[];
 extern const char* SETARGFX3List[];
-#define  TRACESERIAL
 
-#ifdef TRACESERIAL
+#ifdef TRACESERIAL // in "Application.h"
 /* Trace function */
 void
 TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wIndex)
@@ -71,14 +70,15 @@ TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wInde
 	
 	case R82XXTUNE:
 	case AD4351TUNE:
-		DebugPrint(4, "%d", * (uint64_t *) &glEp0Buffer[0]);
+		DebugPrint(4, "%d", * (uint64_t *) pdata);
 		break;
 		
 	case R82XXINIT:	
 	case STARTADC:
-		DebugPrint(4, "%d", * (uint32_t *) &glEp0Buffer[0]);
+		DebugPrint(4, "%d", * (uint32_t *) pdata);
 		break;
 		
+	case R82XXSTDBY:
 	case STARTFX3:
 	case STOPFX3:
 	case RESETFX3:
@@ -254,7 +254,7 @@ CyFxSlFifoApplnUSBSetupCB (
 
 							// use xtal to check if r820 is intialized already
 							// if so, skip the intialize if xtal is not changed
-							if (tuner_config.xtal != freq)
+							//if (tuner_config.xtal != freq)
 							{
 								memset(&tuner_config, 0, sizeof(tuner_config));
 								memset(&tuner, 0, sizeof(tuner));
@@ -262,6 +262,7 @@ CyFxSlFifoApplnUSBSetupCB (
 								tuner_config.vco_curr_min = 0xff;
 								tuner_config.vco_curr_max = 0xff;
 								tuner_config.vco_algo = 0;
+								tuner_config.verbose = 1;
 
 								// detect the hardware
 								if (HWconfig == RX888 || HWconfig == BBRF103)
@@ -284,11 +285,12 @@ CyFxSlFifoApplnUSBSetupCB (
 								r82xx_init(&tuner);
 								r82xx_set_bandwidth(&tuner, 8*1000*1000, 0, &bw, 1);
 							}
+							/*
 							else
 							{
 								si5351aSetFrequencyB(tuner_config.xtal);
 							}
-
+							*/
 							vendorRqtCnt++;
 							isHandled = CyTrue;
 						}
