@@ -82,6 +82,7 @@ ConfGPIOsimpleinput( uint8_t gpioid)
 	 return apiRetStatus;
 }
 
+CyU3PReturnStatus_t
 ConfGPIOsimpleinputPU( uint8_t gpioid)
 {
 	 CyU3PReturnStatus_t apiRetStatus = CY_U3P_SUCCESS;
