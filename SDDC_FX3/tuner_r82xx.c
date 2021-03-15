@@ -1061,6 +1061,14 @@ static int r82xx_set_pll(struct r82xx_priv *priv, uint32_t freq)
         nint = (uint32_t) (vco_div / 65536);
 	sdm = (uint32_t) (vco_div % 65536);
 
+#if TRACESERIAL
+	{
+	  uint64_t actual_vco = (uint64_t)2 * pll_ref * nint + (uint64_t)2 * pll_ref * sdm / 65536;
+	  fprintf(stderr, "[R82XX] requested %u Hz; selected mix_div=%u vco_freqhl= %u %u nint=%u sdm=%u; actual_vco= %u %u; tuning error=%d Hz\r\n",
+		  freq, mix_div, (uint32_t) (vco_freq >> 32), (uint32_t) vco_freq, nint, sdm, 
+		  (uint32_t) (actual_vco>>32), (uint32_t) (actual_vco), (int32_t) (actual_vco - vco_freq) / mix_div);
+	}
+#endif
 #if PRINT_ACTUAL_VCO_AND_ERR
 	{
 	  uint64_t actual_vco = (uint64_t)2 * pll_ref * nint + (uint64_t)2 * pll_ref * sdm / 65536;

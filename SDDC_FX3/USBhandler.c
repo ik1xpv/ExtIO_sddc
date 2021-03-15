@@ -49,6 +49,51 @@ CyU3PDmaChannel glGPIF2USB_Handle;
 uint8_t  *glEp0Buffer = 0;              /* Buffer used to handle vendor specific control requests. */
 uint8_t  vendorRqtCnt = 0;
 
+extern const char* FX3CommandName[];
+extern const char* SETARGFX3List[];
+
+#ifdef TRACESERIAL 
+/* Trace function */
+void
+TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wIndex)
+{
+	DebugPrint(4, "\r\n%s\t", FX3CommandName[bRequest - 0xAA]);  
+	switch(bRequest)
+	{
+	case SETARGFX3:
+		DebugPrint(4, "%s\t%d", SETARGFX3List[wIndex],  wValue );
+		break;
+		
+	case GPIOFX3:
+		DebugPrint(4, "\t0x%x", * (uint32_t *) pdata);
+		break;
+	
+	case R82XXTUNE:
+	case AD4351TUNE:
+		DebugPrint(4, "%d", * (uint64_t *) pdata);
+		break;
+		
+	case R82XXINIT:	
+	case STARTADC:
+		DebugPrint(4, "%d", * (uint32_t *) pdata);
+		break;
+		
+	case R82XXSTDBY:
+	case STARTFX3:
+	case STOPFX3:
+	case RESETFX3:
+		break;
+		
+	default:
+		DebugPrint(4, "0x%x\t0x%x", pdata[0] , pdata[1]);
+		break;
+		
+	}
+	DebugPrint(4, "\r\n");
+}
+#endif
+
+
 /* Callback to handle the USB setup requests. */
 CyBool_t
 CyFxSlFifoApplnUSBSetupCB (
@@ -119,12 +164,7 @@ CyFxSlFifoApplnUSBSetupCB (
             }
         }
     } else if (bType == CY_U3P_USB_VENDOR_RQT) {
-
-    	/*
-   	    uint8_t * pd = (uint8_t *) &glEp0Buffer[0];
-    	uint32_t event =( (VENDOR_RQT<<24) | ( bRequest<<16) | (pd[0]<<8) | pd[1] );
-    	CyU3PQueueSend(&EventAvailable, &event, CYU3P_NO_WAIT);
-  */
+		
     	isHandled = CyFalse;
 
     	switch (bRequest)
@@ -271,8 +311,6 @@ CyFxSlFifoApplnUSBSetupCB (
 						uint64_t freq;
 						freq = *(uint64_t *) &glEp0Buffer[0];
 						r82xx_set_freq64(&tuner, freq);
-						// R820T2 tune
-						DebugPrint(4, "\r\n\r\nTune R820T2 %d \r\n",freq);
 						isHandled = CyTrue;
 					}
 					break;
@@ -284,8 +322,6 @@ CyFxSlFifoApplnUSBSetupCB (
 						uint64_t freq;
 						freq = *(uint64_t *) &glEp0Buffer[0];
 						adf4350_out_altvoltage0_frequency(freq);
-						// AD4351 tune
-						DebugPrint(4, "\r\n\r\nTune AD4351 %d \r\n",freq);
 						isHandled = CyTrue;
 					}
 					break;
@@ -411,9 +447,9 @@ CyFxSlFifoApplnUSBSetupCB (
 					CyU3PUsbStall (0, CyTrue, CyFalse);
 					break;
     	}
-   	    uint8_t * pd = (uint8_t *) &glEp0Buffer[0];
-    	uint32_t event =( (VENDOR_RQT<<24) | ( bRequest<<16) | (pd[1]<<8) | pd[0] );
-    	CyU3PQueueSend(&EventAvailable, &event, CYU3P_NO_WAIT);
+    #ifdef TRACESERIAL
+    	TraceSerial( bRequest, (uint8_t *) &glEp0Buffer[0], wValue, wIndex);
+    #endif
     }
     return isHandled;
 }
