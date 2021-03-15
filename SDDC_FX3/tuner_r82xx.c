@@ -561,7 +561,7 @@ static void shadow_store(struct r82xx_priv *priv, uint8_t reg, const uint8_t *va
 static int r82xx_write_arr(struct r82xx_priv *priv, uint8_t reg, const uint8_t *val,
 			   unsigned int len)
 {
-	int rc, size, k, regOff, regIdx, bufIdx, pos = 0;
+	int size, k, regOff, regIdx, bufIdx, pos = 0;
 
 	/* Store the shadow registers */
 	shadow_store(priv, reg, val, len);
@@ -597,7 +597,7 @@ static int r82xx_write_arr(struct r82xx_priv *priv, uint8_t reg, const uint8_t *
 		}
 
 #if 0
-		rc = rtlsdr_i2c_write_fn(priv->rtl_dev, priv->cfg->i2c_addr,
+		int rc = rtlsdr_i2c_write_fn(priv->rtl_dev, priv->cfg->i2c_addr,
 					 priv->buf, size + 1);
 
 		if (rc != size + 1) {
@@ -605,10 +605,13 @@ static int r82xx_write_arr(struct r82xx_priv *priv, uint8_t reg, const uint8_t *
 				   __FUNCTION__, rc, reg, size);
 			if (rc < 0)
 				return rc;
-			return -1;
+			return R820_I2C_ERROR;
 		}
 #else
-		I2cTransfer ( priv->buf[0], priv->cfg->i2c_addr, size, &priv->buf[1], false); // write 1 byte
+		CyU3PReturnStatus_t ret = I2cTransfer ( priv->buf[0], priv->cfg->i2c_addr, size, &priv->buf[1], false); // write 1 byte
+
+		if (ret != CY_U3P_SUCCESS)
+			return R820_I2C_ERROR;
 #endif
 		reg += size;
 		len -= size;
@@ -630,7 +633,7 @@ int r82xx_read_cache_reg(struct r82xx_priv *priv, int reg)
 	if (reg >= 0 && reg < NUM_REGS)
 		return priv->regs[reg];
 	else
-		return -1;
+		return R820_INVALID_PARAMETER;
 }
 
 int r82xx_write_reg_mask(struct r82xx_priv *priv, uint8_t reg, uint8_t val, uint8_t bit_mask)
@@ -673,23 +676,27 @@ static uint8_t r82xx_bitrev(uint8_t byte)
 
 static int r82xx_read(struct r82xx_priv *priv, uint8_t reg, uint8_t *val, int len)
 {
-	int rc, i;
+	int i;
 #if 0
 	uint8_t *p = &priv->buf[1];
 
 	priv->buf[0] = reg;
-	rc = rtlsdr_i2c_read_fn(priv->rtl_dev, priv->cfg->i2c_addr, p, len);
+	int rc = rtlsdr_i2c_read_fn(priv->rtl_dev, priv->cfg->i2c_addr, p, len);
 
 	if (rc != len) {
 		fprintf(stderr, "%s: i2c rd failed=%d reg=%02x len=%d\n",
 			   __FUNCTION__, rc, reg, len);
 		if (rc < 0)
 			return rc;
-		return -1;
+		return R820_I2C_ERROR;
 	}
 #else
 	uint8_t *p = val;
-	I2cTransfer(reg, priv->cfg->i2c_addr, len, val, true);
+	CyU3PReturnStatus_t ret = I2cTransfer(reg, priv->cfg->i2c_addr, len, val, true);
+
+	if (ret != CY_U3P_SUCCESS)
+		return R820_I2C_ERROR;
+
 #endif
 	/* Copy data to the output buffer */
 	for (i = 0; i < len; i++)
@@ -698,7 +705,7 @@ static int r82xx_read(struct r82xx_priv *priv, uint8_t reg, uint8_t *val, int le
 	return 0;
 }
 
-static void print_registers(struct r82xx_priv *priv)
+void print_registers(struct r82xx_priv *priv)
 {
 	uint8_t data[5];
 	int rc;
@@ -910,7 +917,7 @@ static int r82xx_set_pll_yc(struct r82xx_priv *priv, uint32_t freq)
       fprintf(stderr, "[R82XX] PLL not locked at Tuner LO %u Hz for RF %f MHz!\n",
         freq, priv->rf_freq * 1E-6);
     priv->has_lock = 0;
-    return -1;
+    return R820_PLL_CANNOT_LOCK;
   }
   priv->has_lock = 1;
 
@@ -1065,7 +1072,7 @@ static int r82xx_set_pll(struct r82xx_priv *priv, uint32_t freq)
 	if (nint > ((128 / vco_power_ref) - 1)) {
 		if (priv->cfg->verbose || PRINT_PLL_ERRORS)
 			fprintf(stderr, "[R82XX] No valid PLL values for %u Hz!\n", freq);
-		return -1;
+		return R820_INVALID_PARAMETER;
 	}
 
 	ni = (nint - 13) / 4;
@@ -1141,7 +1148,7 @@ static int r82xx_set_pll(struct r82xx_priv *priv, uint32_t freq)
 			fprintf(stderr, "[R82XX] PLL not locked at Tuner LO %u Hz for RF %f MHz!\n",
 				freq, priv->rf_freq * 1E-6);
 		priv->has_lock = 0;
-		return -1;
+		return R820_PLL_CANNOT_LOCK;
 	}
 #if 0
 	else
@@ -1631,7 +1638,7 @@ int r82xx_set_i2c_override(struct r82xx_priv *priv, unsigned i2c_register, unsig
 		return r82xx_write_reg_mask_ext(priv, reg, 0, 0, __FUNCTION__);
 	}
 	else
-		return -1;
+		return R820_INVALID_PARAMETER;
 }
 
 
