@@ -179,5 +179,12 @@ int r82xx_read_cache_reg(struct r82xx_priv *priv, int reg);
 int r82xx_write_reg_mask(struct r82xx_priv *priv, uint8_t reg, uint8_t val,uint8_t bit_mask);
 int r82xx_write_reg_mask_ext(struct r82xx_priv *priv, uint8_t reg, uint8_t val, uint8_t bit_mask, const char * func_name);
 
+// Error codes
+#define R820_SUCCESS			0
+#define R820_GENERAL_ERROR		-1
+#define R820_INVALID_PARAMETER 	-2
+#define R820_I2C_ERROR 			-3
+#define R820_PLL_CANNOT_LOCK 	-4
+
 #endif
 
