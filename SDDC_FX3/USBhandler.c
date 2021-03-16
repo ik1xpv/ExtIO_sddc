@@ -251,44 +251,35 @@ CyFxSlFifoApplnUSBSetupCB (
 						{
 							uint32_t freq;
 							freq = *(uint32_t *) &glEp0Buffer[0];
+					
+							memset(&tuner_config, 0, sizeof(tuner_config));
+							memset(&tuner, 0, sizeof(tuner));
 
-							// use xtal to check if r820 is intialized already
-							// if so, skip the intialize if xtal is not changed
-							if (tuner_config.xtal != freq)
+							tuner_config.vco_curr_min = 0xff;
+							tuner_config.vco_curr_max = 0xff;
+							tuner_config.vco_algo = 0;
+
+							// detect the hardware
+							if (HWconfig == RX888 || HWconfig == BBRF103)
 							{
-								memset(&tuner_config, 0, sizeof(tuner_config));
-								memset(&tuner, 0, sizeof(tuner));
-
-								tuner_config.vco_curr_min = 0xff;
-								tuner_config.vco_curr_max = 0xff;
-								tuner_config.vco_algo = 0;
-
-								// detect the hardware
-								if (HWconfig == RX888 || HWconfig == BBRF103)
-								{
-									tuner_config.xtal = freq;
-									tuner_config.i2c_addr = R820T_I2C_ADDR;
-									tuner_config.rafael_chip = CHIP_R820T;
-								}
-								else if (HWconfig == RX888r2)
-								{
-									tuner_config.xtal = freq;
-									tuner_config.i2c_addr = R828D_I2C_ADDR;
-									tuner_config.rafael_chip = CHIP_R828D;
-								}
-								si5351aSetFrequencyB(tuner_config.xtal);
-
-								tuner.cfg = &tuner_config;
-
-								uint32_t bw;
-								r82xx_init(&tuner);
-								r82xx_set_bandwidth(&tuner, 8*1000*1000, 0, &bw, 1);
+								tuner_config.xtal = freq;
+								tuner_config.i2c_addr = R820T_I2C_ADDR;
+								tuner_config.rafael_chip = CHIP_R820T;
 							}
-							else
+							else if (HWconfig == RX888r2)
 							{
-								si5351aSetFrequencyB(tuner_config.xtal);
+								tuner_config.xtal = freq;
+								tuner_config.i2c_addr = R828D_I2C_ADDR;
+								tuner_config.rafael_chip = CHIP_R828D;
 							}
+							si5351aSetFrequencyB(tuner_config.xtal);
 
+							tuner.cfg = &tuner_config;
+
+							uint32_t bw;
+							r82xx_init(&tuner);
+							r82xx_set_bandwidth(&tuner, 8*1000*1000, 0, &bw, 1);
+						
 							vendorRqtCnt++;
 							isHandled = CyTrue;
 						}

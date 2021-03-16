@@ -2094,10 +2094,6 @@ int r82xx_standby(struct r82xx_priv *priv)
 {
 	int rc;
 
-	/* If device was not initialized yet, don't need to standby */
-	if (!priv->init_done)
-		return 0;
-
 	rc = r82xx_write_reg(priv, 0x06, 0xb1);
 	if (rc < 0)
 		return rc;
