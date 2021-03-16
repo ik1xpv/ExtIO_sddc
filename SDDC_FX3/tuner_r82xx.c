@@ -57,6 +57,9 @@
 #define MHZ(x)		((x)*1000*1000)
 #define KHZ(x)		((x)*1000)
 
+/* setup time pll */
+#define DELAYPLL       (4)   
+
 /*
 Register Description
 many updates from https://github.com/old-dab/rtlsdr
@@ -903,7 +906,7 @@ static int r82xx_set_pll_yc(struct r82xx_priv *priv, uint32_t freq)
   priv->tuner_pll_set = 1;
 
 /***/
-
+  CyU3PThreadSleep(DELAYPLL); 
   /* Check if PLL has locked */
   rc = r82xx_read(priv, 0x00, data, 3);
   if (rc < 0) {
@@ -1126,7 +1129,7 @@ static int r82xx_set_pll(struct r82xx_priv *priv, uint32_t freq)
 	priv->tuner_pll_set = 1;
 
 	for (i = 0; i < 2; i++) {
-
+		CyU3PThreadSleep(DELAYPLL); 
 		/* Check if PLL has locked */
 		rc = r82xx_read(priv, 0x00, data, 3);
 		if (rc < 0) {
