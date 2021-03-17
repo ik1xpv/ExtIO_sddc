@@ -58,24 +58,8 @@ jobs:
     - name: Create Package
       shell: powershell
       run: Compress-Archive -DestinationPath SDDC_EXTIO.ZIP  -LiteralPath ${{runner.workspace}}/build/ExtIO_sddc/RelWithDebInfo/ExtIO_SDDC.dll,${{runner.workspace}}/build/ExtIO_sddc/RelWithDebInfo/ExtIO_SDDC.pdb,${{runner.workspace}}/build/unittest/libfftw3f-3.dll,README.md
-      
-    - name: Update Release
-      id: update_release
-      uses: johnwbyrd/update-release@v1.0.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: actions/upload-artifact@v2
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        tag: v_test 
-        release: Test Release
-        files: ./SDDC_EXTIO.ZIP
-        draft: false
-        prerelease: true
-        body: |
-          This is a test release which provides the binary built from the latest master.
-          
-          Target only for early testers. The build may be buggy, crash or even non-functional. It is not suitable for daily use.
-          
-          The build contains the last commit is:
-          ${{github.event.head_commit.message}}
-          
+        name: test-extio-package
+        path: SDDC_EXTIO.ZIP
