@@ -2,8 +2,12 @@
 
 ![CMake](https://github.com/ik1xpv/ExtIO_sddc/workflows/CMake/badge.svg)
 
+### tag  v1.2.0 Version "V1.2.0" date 18/3/2021
+- Fix the crosstalk HF <-> VHF/UHF issue #177
+- When HDSDR's version >= HDSDR v2.81 beta3 (March 8, 2021) following an ADC's sampling rate change the new IF bandwidths are computed dynamically and restart of HDSDR in not required.
 
-### tag  v1.2RC1 Version "V1.2 RC1" date 18/2/2020
+
+### tag  v1.2RC1 Version "V1.2 RC1" date 18/2/2021
 - The ADC's nominal sampling frequency is user selectable from 50 MHz to 140 MHz at 1Hz step, 
 - The reference calibration can be adjusted in the dialog GUI in a range of +/- 200 ppm. (#171)
 - The tuner IF center frequency is moved to 4.570 MHz that is the standard for RT820T. We were using 5 MHz before when we did not have yet fine tune ability. (#159)
