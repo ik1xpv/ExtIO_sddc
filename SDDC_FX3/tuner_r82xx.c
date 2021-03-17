@@ -48,6 +48,7 @@
 #define DEFAULT_HARMONIC			5
 #define PRINT_HARMONICS				0
 
+#define DELAYPLL 4
 
 /* #define VGA_FOR_AGC_MODE	16 */
 #define DEFAULT_IF_VGA_VAL	11
@@ -903,6 +904,7 @@ static int r82xx_set_pll_yc(struct r82xx_priv *priv, uint32_t freq)
   priv->tuner_pll_set = 1;
 
 /***/
+  CyU3PThreadSleep(DELAYPLL);
 
   /* Check if PLL has locked */
   rc = r82xx_read(priv, 0x00, data, 3);
@@ -1116,6 +1118,8 @@ static int r82xx_set_pll(struct r82xx_priv *priv, uint32_t freq)
 
 	/* all PLL stuff / registers set for this frequency - except 8 kHz pll autotune */
 	priv->tuner_pll_set = 1;
+
+	CyU3PThreadSleep(DELAYPLL);
 
 	for (i = 0; i < 2; i++) {
 
@@ -2086,10 +2090,6 @@ int r82xx_standby(struct r82xx_priv *priv)
 {
 	int rc;
 
-	/* If device was not initialized yet, don't need to standby */
-	if (!priv->init_done)
-		return 0;
-
 	rc = r82xx_write_reg(priv, 0x06, 0xb1);
 	if (rc < 0)
 		return rc;
@@ -2121,9 +2121,6 @@ int r82xx_standby(struct r82xx_priv *priv)
 	if (rc < 0)
 		return rc;
 	rc = r82xx_write_reg(priv, 0x19, 0x0c);
-
-	/* Force initial calibration */
-	priv->type = -1;
 
 	return rc;
 }
@@ -2194,8 +2191,6 @@ int r82xx_init(struct r82xx_priv *priv)
 	priv->haveR30H = priv->valR30H = 0;
 	priv->haveR30L = priv->valR30L = 0;
 #endif
-
-	priv->init_done = 1;
 
 #if USE_R82XX_ENV_VARS
 	// read environment variables
