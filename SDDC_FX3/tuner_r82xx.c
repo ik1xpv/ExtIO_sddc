@@ -48,6 +48,7 @@
 #define DEFAULT_HARMONIC			5
 #define PRINT_HARMONICS				0
 
+#define DELAYPLL 4
 
 /* #define VGA_FOR_AGC_MODE	16 */
 #define DEFAULT_IF_VGA_VAL	11
@@ -903,6 +904,7 @@ static int r82xx_set_pll_yc(struct r82xx_priv *priv, uint32_t freq)
   priv->tuner_pll_set = 1;
 
 /***/
+  CyU3PThreadSleep(DELAYPLL);
 
   /* Check if PLL has locked */
   rc = r82xx_read(priv, 0x00, data, 3);
@@ -1116,6 +1118,8 @@ static int r82xx_set_pll(struct r82xx_priv *priv, uint32_t freq)
 
 	/* all PLL stuff / registers set for this frequency - except 8 kHz pll autotune */
 	priv->tuner_pll_set = 1;
+
+	CyU3PThreadSleep(DELAYPLL);
 
 	for (i = 0; i < 2; i++) {
 
