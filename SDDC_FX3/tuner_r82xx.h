@@ -99,7 +99,6 @@ struct r82xx_priv {
 	int							has_lock;
 	int							tuner_pll_set;
 	int							tuner_harmonic;
-	int							init_done;
 	int							sideband;
 	int							disable_dither;
 

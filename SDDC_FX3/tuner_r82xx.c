@@ -2086,10 +2086,6 @@ int r82xx_standby(struct r82xx_priv *priv)
 {
 	int rc;
 
-	/* If device was not initialized yet, don't need to standby */
-	if (!priv->init_done)
-		return 0;
-
 	rc = r82xx_write_reg(priv, 0x06, 0xb1);
 	if (rc < 0)
 		return rc;
@@ -2121,9 +2117,6 @@ int r82xx_standby(struct r82xx_priv *priv)
 	if (rc < 0)
 		return rc;
 	rc = r82xx_write_reg(priv, 0x19, 0x0c);
-
-	/* Force initial calibration */
-	priv->type = -1;
 
 	return rc;
 }
@@ -2194,8 +2187,6 @@ int r82xx_init(struct r82xx_priv *priv)
 	priv->haveR30H = priv->valR30H = 0;
 	priv->haveR30L = priv->valR30L = 0;
 #endif
-
-	priv->init_done = 1;
 
 #if USE_R82XX_ENV_VARS
 	// read environment variables
