@@ -338,7 +338,8 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 	int64_t offset = wishedFreq - actLo;
 	DbgPrintf("Offset freq %" PRIi64 "\n", offset);
 	float fc = r2iqCntrl->setFreqOffset(offset / (getSampleRate() / 2.0f));
-
+	if (GetmodeRF() == VHFMODE)
+		fc = -fc;   // sign change with sideband used
 	if (this->fc != fc)
 	{
 		std::unique_lock<std::mutex> lk(fc_mutex);
