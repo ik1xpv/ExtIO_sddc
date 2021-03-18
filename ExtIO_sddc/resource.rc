@@ -233,7 +233,7 @@ IDB_ICON1               ICON                    "ExtIO_sddc.ico"
 // RCDATA
 //
 
-RES_BIN_FIRMWARE        RCDATA                  "SDDC_FX3.img"
+RES_BIN_FIRMWARE        RCDATA                  "..\SDDC_FX3.img"
 
 
 #ifdef APSTUDIO_INVOKED
