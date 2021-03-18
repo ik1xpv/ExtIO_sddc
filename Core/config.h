@@ -44,8 +44,8 @@ inline void null_func(const char *format, ...) { }
 #define DbgPrintf DbgEmpty
 #endif
 
-#define VERSION             (1.1)	//	Dll version number x.xx
-#define SWVERSION           "1.2.RC2"	  
+#define VERSION             (1.2)	//	Dll version number x.xx
+#define SWVERSION           "1.2.0"	  
 #define SETTINGS_IDENTIFIER	"sddc_1.06"
 #define SWNAME				"ExtIO_sddc.dll"
 
