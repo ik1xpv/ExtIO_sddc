@@ -12,6 +12,9 @@
 #include "Application.h"
 
 #include "tuner_r82xx.h"
+#include "Si5351.h"
+
+#include "radio.h"
 
 // Declare external functions
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
@@ -20,11 +23,6 @@ extern CyU3PReturnStatus_t InitializeDebugConsole(void);
 extern void IndicateError(uint16_t ErrorCode);
 extern CyU3PReturnStatus_t InitializeUSB(void);
 extern void ParseCommand(void);
-
-extern CyU3PReturnStatus_t Si5351init();
-
-extern void si5351aSetFrequencyA(UINT32 freq);
-extern void si5351aSetFrequencyB(UINT32 freq2);
 
 // Declare external data
 extern const char* EventName[];

@@ -1,0 +1,256 @@
+CYPRESS SOFTWARE LICENSE AGREEMENT
+
+This document is a legal agreement (the "Agreement") between you ("Licensee")
+and Cypress Semiconductor Corporation ("Cypress").  Cypress design and
+development tools include software (the "Technical Package") that may be
+distributed on CD-ROM, through the internet, as e-mail attachments, or
+through other means of delivery. Please read this Agreement carefully before
+opening software packet(s) or downloading, installing, or using the
+Technical Package.  By opening the software packet(s) or downloading,
+installing, or using the Technical Package, you agree to be bound by the
+terms of this Agreement and any applicable open source license agreement.
+If you do not agree to these terms and the applicable open source terms,
+promptly return all software items (disks, written materials and packaging)
+to Cypress or the place of purchase and destroy all electronic copies.
+This Agreement covers your rights and responsibilities with regard to the
+contents of the Technical Package, which may include one or more of the
+following: Cypress firmware ("Firmware"), Cypress operating system drivers
+("Drivers"), and Cypress application software ("Application Software").
+The Firmware, Drivers, and/or the Application Software may be provided in
+object code and/or source code form.
+
+1.	LICENSE GRANTS AND RESTRICTIONS
+
+1.1	Source Code.  This section applies to all software, whether Firmware,
+Drivers, and/or Application Software, supplied by Cypress in source code
+form ("Source Code").  Subject to the terms and conditions set forth herein,
+Cypress hereby grants to Licensee a limited, personal, non-exclusive,
+non-transferable license solely for Licensee's internal use to use, modify
+and create derivative works of the Source Code, and to compile the Source Code
+and derivative works thereof into object code for the sole purpose of creating
+custom software solely for use in a Licensee product that incorporates a
+Cypress integrated circuit (a "Licensee Product").  Cypress shall remain the
+sole owner of all right, title, and interest in and to the Source Code and
+all object code compiled from the Source Code, and all intellectual property
+rights associated therewith (including, without limitation, patent, trademark,
+copyright, trade secret, and any other proprietary rights).  Subject to
+Cypress' ownership of the underlying Source Code and object code, Licensee
+shall own any derivative works of the Source Code.  Licensee shall reproduce
+and include Cypress copyright and any other proprietary legends in and on
+every copy in any form of the (i) Source Code, (ii) object code compiled from
+the Source Code, and (iii) derivative works of any of the foregoing.
+
+1.2	Object Code.  This section applies to all software, whether Firmware,
+Drivers, and/or Application Software, supplied by Cypress in object code or
+executable form ("Object Code").  Subject to the terms and conditions set
+forth herein, Cypress hereby grants to Licensee a limited, personal,
+non-exclusive, non-transferable license to use the Object Code for the
+sole purpose of supporting a Licensee Product.  Licensee does not have the
+right to modify or create derivative works of the Object Code.  Cypress shall
+remain the sole owner of all right, title, and interest in and to the Object
+Code and all intellectual property rights associated therewith (including,
+without limitation, patent, trademark, copyright, trade secret, and any
+other proprietary rights).  Licensee shall not, and shall not permit any
+third party to decompile, disassemble, or otherwise reverse engineer or
+attempt to reconstruct or discover any source code or underlying ideas or
+algorithms of any of the software, whether Firmware, Drivers, and/or
+Application Software supplied by Cypress in object code form only.
+
+1.3	License to Distribute Licensed Software in Object Code Form.  Subject
+to the terms and conditions set forth herein, Cypress hereby grants to Licensee
+a worldwide, non-exclusive, non-transferable, royalty-free license to
+reproduce, sublicense and distribute the Firmware, Drivers, and/or Application
+Software, and derivative works thereof, in object code form only, with the
+applicable Licensee Product.
+
+1.4	Third Party Restrictions.  Licensee shall use best efforts, but in no
+case less than commercially reasonable efforts, to keep the Source Code
+confidential, and not to disclose to any third party, directly or indirectly,
+the Source Code.  Licensee shall not disclose or grant access to the Source
+Code and any third party manufacturer.
+
+1.5	No Other Rights.  Licensee acknowledges that the Firmware, Drivers,
+and Application Software are the property of Cypress.  Cypress grants to
+Licensee no license to any patents, copyrights, trade secrets, trademarks, or
+any other intellectual property rights, by implication, estoppel or otherwise,
+in the Firmware, Drivers, and Application Software, other than as expressly
+set forth in this Agreement.
+
+2.	DISCLAIMER OF WARRANTY AND SUPPORT
+
+LICENSEE UNDERSTANDS AND AGREES THAT, EXCEPT AS EXPRESSLY SET FORTH HEREIN,
+THE FIRMWARE, DRIVERS, AND APPLICATION SOFTWARE ARE PROVIDED "AS IS" WITHOUT
+WARRANTY OR INDEMNITY OF ANY KIND.  CYPRESS MAKES AND LICENSEE RECEIVES NO
+WARRANTIES IN CONNECTION WITH THE FIRMWARE, DRIVERS, AND APPLICATION SOFTWARE
+PROVIDED PURSUANT TO THIS AGREEMENT, EXPRESS, IMPLIED, STATUTORY OR IN ANY
+OTHER PROVISION OF THIS AGREEMENT OR COMMUNICATION BETWEEN CYPRESS AND
+LICENSEE.  CYPRESS SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTY OF
+NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE WITH
+RESPECT TO THE FIRMWARE, DRIVERS, AND APPLICATION SOFTWARE, AND THE USE,
+OPERATION OR SUPPORT THEREOF.
+
+3.	LIMITATION OF LIABILITY  
+
+CYPRESS' LIABILITY ARISING OUT OF THIS AGREEMENT SHALL NOT EXCEED THE
+GREATER OF: (A) THE LICENSE FEE PAID FOR THE TECHNICAL PACKAGE, IF ANY; OR
+(B) ONE HUNDRED DOLLARS (US$100).  IN NO EVENT WILL CYPRESS BE LIABLE FOR ANY
+LOSS OF DATA, LOST PROFITS, COST OF PROCUREMENT OF SUBSTITUTE TECHNOLOGY OR
+SERVICES OR FOR ANY SPECIAL, INCIDENTAL, CONSEQUENTIAL, INDIRECT OR PUNITIVE
+DAMAGES ARISING FROM THE USE OF THE TECHNICAL PACKAGE OR OTHERWISE ARISING
+OUT OF THIS AGREEMENT, HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+FOR BREACH OF CONTRACT, TORT (INCLUDING NEGLIGENCE) OR OTHERWISE.  THIS
+LIMITATION WILL APPLY EVEN IF CYPRESS HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.  LICENSEE ACKNOWLEDGES THAT THE LICENSE FEE, IF ANY, REFLECTS
+THIS ALLOCATION OF RISK.  THESE LIMITATIONS SHALL APPLY NOTWITHSTANDING THE
+FAILURE OF ESSENTIAL PURPOSE OF ANY LIMITED REMEDY.
+
+4.	TERM OF THE AGREEMENT
+The license is effective until terminated.  Either party may terminate this
+Agreement at any time upon written notice.  Upon termination of this Agreement,
+all licenses granted herein shall terminate, and Licensee shall, within
+fifteen (15) days, discontinue all use of the Firmware, Drivers, and
+Application Software, and shall, at Cypress' option, either return to Cypress
+or destroy the original and all copies of the Firmware, Drivers, and
+Application Software.  Licensee's rights under this Agreement will terminate
+automatically without notice from Cypress if Licensee fails to comply with
+any term(s) of this Agreement.  The following sections shall survive any
+termination of this Agreement: 1.4, 1.5, 2, 3, 4, 5 and 6.
+
+5.	CONFIDENTIALITY
+
+5.1	Confidential Information.  "Confidential Information" means any
+non-public data, information, or other materials of Cypress where such
+information is marked or otherwise communicated as being "proprietary" or
+"confidential" or the like, or where such information should, by its nature,
+be reasonably considered to be confidential and/or proprietary.  Without
+limiting the foregoing, the Source Code and Object Code shall be Confidential
+Information.
+
+5.2	Disclosure and Use.  Licensee shall use the Confidential Information
+only in performing under this Agreement and shall retain the Confidential
+Information in confidence and not disclose to any third party (except as
+authorized hereunder) without Cypress' prior written consent.  Licensee shall
+disclose the Confidential Information only to its employees and contractors
+who have a need to know such information for the purposes of this Agreement,
+and such employees and contractors must be bound by this Agreement or have
+entered into agreements with Licensee containing confidentiality provisions
+covering the Confidential Information with terms and conditions at least as
+restrictive as those set forth herein.  Without limiting the foregoing,
+Licensee shall keep the Source Code confidential, and shall not disclose to
+any third party, directly or indirectly (including, but not limited to,
+through Licensee's employees, representatives, agents and independent
+contractors), the Source Code, and shall not disclose, or grant access to,
+the Source Code to any third-party manufacturer.  All Confidential Information
+shall remain the sole property of Cypress or its licensors.
+
+5.3	Exceptions.  Notwithstanding the foregoing, Licensee's confidentiality
+obligations hereunder shall not apply to information which: (a) is already
+rightfully known to Licensee prior to disclosure by Cypress; (b) becomes
+publicly available without fault of Licensee; or (c) is rightfully obtained
+by Licensee from a third party without restriction as to disclosure.
+
+6.	MISCELLANEOUS
+
+6.1	Benchmarking.  This Agreement does not convey to you the right to
+publish performance benchmarking results involving any Technical Package.
+Permission to publish performance benchmarking results involving any Technical
+Package must be received in writing from Cypress prior to publishing.
+
+6.2	3rd Party Materials. Technical Package(s) provided under this
+Agreement may contain or be derived from portions of materials provided by
+a third party under license to Cypress, including open source software
+provided under an open source license agreement. Cypress has assumed
+responsibility for the selection of such materials to produce the Technical
+Package(s) licensed hereunder. THE THIRD PARTY DISCLAIMS ALL WARRANTIES
+EXPRESS OR IMPLIED WITH RESPECT TO THE USE OF SUCH MATERIALS IN CONNECTION
+WITH THE TECHNICAL PACKAGE(S), INCLUDING (WITHOUT LIMITATION) ANY WARRANTIES
+OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  The third party may
+enforce any of the provisions of this Agreement to the extent such third
+party materials are affected.  Additionally, any limitation of liabilities
+described in this Agreement also applies to any third-party supplier of
+materials supplied to Licensee. Cypress and its third-party supplier
+limitations of liabilities are not cumulative. Such third party supplier is
+an intended beneficiary of this Section.
+
+6.3	Assignment.  Licensee may not assign, transfer or delegate this
+Agreement or any rights or obligations hereunder, directly or indirectly, by
+operation of law or otherwise, without the prior written consent of Cypress.
+Any such attempted assignment shall be void.
+
+6.4	Notices.  All notices between the parties shall be in writing and
+shall be deemed to have been given if personally delivered or sent by
+certified or registered mail (return receipt), or telecopy confirmed in
+writing within five (5) business days, to the address set forth as follows,
+or such other address as is provided by notice as set forth herein:
+
+  Cypress Semiconductor Corporation
+  Attn: Legal Department
+  198 Champion Court
+  San Jose, California 95134
+
+Notices shall be deemed effective upon receipt or, if delivery is not effected
+by reason of some fault of the addressee, when tendered.
+
+6.5	Relationship of the Parties.  The parties to this Agreement are
+independent contractors.  There is no relationship of agency, partnership,
+joint venture, employment, or franchise between the parties.  Neither party
+has the authority to bind the other or to incur any obligation on its behalf.
+
+6.6	Governing Law; Forum Selection.  This Agreement is governed by the
+laws of the State of California, as applied to contracts made and to be
+performed in California, without regard to conflict of law rules.  All
+disputes arising out of this Agreement shall be subject to the exclusive
+jurisdiction and venue of the state and federal courts within Santa Clara
+County, California, and the parties consent to the personal and exclusive
+jurisdiction of these courts.
+
+6.7	Export Law Assurance.  Licensee may not use or otherwise export or
+reexport the Technical Package, any technical data and information delivered
+under this Agreement except as authorized by United States law and the laws
+of the jurisdiction in which the Technical Package was obtained. In particular,
+but without limitation, the Technical Package may not be exported or
+re-exported (a) into (or to a national or resident of) any U.S. embargoed
+countries (currently Cuba, Iran, North Korea, Sudan, and Syria) or (b) to
+anyone on the U.S. Treasury Department's list of Specially Designated
+Nationals or the U.S. Department of Commerce Denied Person's List or Entity
+List. By using the Technical Package, you represent and warrant that you are
+not located in, under control of, or a national or resident of any such
+country or on any such list.
+
+6.8	Government End Users. The Technical Package and related documentation
+are "Commercial Items", as that term is defined at 48 C.F.R. §2.101, consisting
+of "Commercial Computer Software" and "Commercial Computer Software
+Documentation", as such terms are used in 48 C.F.R. §12.212 or 48 C.F.R. 
+§227.7202, as applicable. Consistent with 48 C.F.R. §12.212 or 48 C.F.R. 
+§227.7202-1 through 227.7202-4, as applicable, the Commercial Computer
+Software and Commercial Computer Software Documentation are being licensed to
+U.S. Government end users (a) only as Commercial Items and (b) with only those
+rights as are granted to all other end users pursuant to the terms and
+conditions herein. Unpublished rights are reserved under the copyright laws of
+the United States.
+
+6.9	High Risk Activities. THE TECHNICAL PACKAGE IS NOT INTENDED FOR USE IN
+THE OPERATION OF NUCLEAR FACILITIES, AIRCRAFT NAVIGATION OR COMMUNICATION
+SYSTEMS, AIR TRAFFIC CONTROL SYSTEMS, LIFE SUPPORT MACHINES OR OTHER EQUIPMENT
+IN WHICH THE FAILURE OF THE TECHNICAL PACKAGE COULD LEAD TO DEATH, PERSONAL
+INJURY, OR SEVERE PHYSICAL OR ENVIRONMENTAL DAMAGE.
+
+6.10	Severability.  If any provision of this Agreement shall be unlawful,
+void, or for any reason unenforceable, then that provision shall be deemed
+severed from this Agreement and shall not affect the validity or enforceability
+of the remaining provisions of this Agreement.  This Agreement is the complete
+statement of the Agreement and supersedes any proposal or prior communication
+between the parties relating to the subject matter of this Agreement.  If
+Licensee has any questions regarding this Agreement, Licensee may contact
+Cypress.
+
+6.11	Waiver.  The waiver of, or failure to enforce, any breach or default
+hereunder shall not constitute the waiver of any other or subsequent breach
+or default.
+
+6.12	Entire Agreement.  This Agreement sets forth the entire agreement
+between the parties and supersedes any and all prior proposals, agreements,
+and representations between them, whether written or oral.  This Agreement
+may be changed only by mutual agreement of the parties in writing.
+
+[The End]

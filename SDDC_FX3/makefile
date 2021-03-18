@@ -15,6 +15,9 @@
 ##
 
 FX3FWROOT?=../SDK
+ARMGCC_INSTALL_PATH?=/usr
+ARMGCC_VERSION?=$(shell arm-none-eabi-gcc --version | grep gcc | sed -n -e 's/.*\([0-9]\.[0-9]*\.[0-9]*\).*/\1/p' )
+
 CYCONFOPT = fx3_release
 
 #all:compile
@@ -25,25 +28,34 @@ MODULE = SDDC_FX3
 
 all:$(MODULE).img
 
-SOURCE= cyfxtx.c		\
+USER_CFLAGS = -I./radio -I./driver
+
+vpath %.c driver
+vpath %.c radio
+
+USBSOURCE= cyfxtx.c		\
 	DebugConsole.c		\
 	i2cmodule.c		\
-	tuner_r82xx.c		\
 	RunApplication.c	\
-	Si5351.c		\
-	adf4351.c       \
 	StartStopApplication.c	\
 	StartUP.c		\
 	Support.c		\
 	USBdescriptor.c	\
-	USBhandler.c		\
-	hf103.c		\
+	USBhandler.c
+
+DRIVERSRC=\
+	Si5351.c		\
+	adf4351.c       \
+	tuner_r82xx.c		\
+	pcal6408a.c
+
+RADIOSRC= \
+	hf103.c			\
 	bbrf103.c		\
 	rx888.c		\
 	rx999.c                \
 	rx888r2.c              \
-	rxlucy.c		\
-	pcal6408a.c
+	rxlucy.c
 
 ifeq ($(CYFXBUILD),arm)
 SOURCE_ASM=cyfx_startup.S
@@ -51,19 +63,28 @@ else
 SOURCE_ASM=cyfx_gcc_startup.S
 endif
 
-C_OBJECT=$(SOURCE:%.c=./%.o)
-A_OBJECT=$(SOURCE_ASM:%.S=./%.o)
+SOURCE = ${USBSOURCE} ${DRIVERSRC} ${RADIOSRC}
+
+C_OBJECT=$(patsubst %.c,obj/%.o,$(SOURCE))
+A_OBJECT=$(patsubst %.S,obj/%.o,$(SOURCE_ASM))
 
 EXES = $(MODULE).$(EXEEXT)
 
 $(MODULE).$(EXEEXT): $(A_OBJECT) $(C_OBJECT)
 	$(LINK)
 
-$(C_OBJECT) : %.o : %.c
+$(C_OBJECT) : | obj
+
+$(A_OBJECT) : | obj
+
+obj/%.o: %.c
 	$(COMPILE)
 
-$(A_OBJECT) : %.o : %.S
+obj/%.o: %.S
 	$(ASSEMBLE)
+
+obj:
+	mkdir -p $@
 
 ELF2IMG = ./elf2img
 
@@ -73,6 +94,7 @@ clean:
 	rm -f ./$(MODULE).img
 	rm -f ./$(MODULE).map
 	rm -f ./*.o
+	rm -Rf ./obj
 
 
 compile: $(C_OBJECT) $(A_OBJECT) $(EXES)

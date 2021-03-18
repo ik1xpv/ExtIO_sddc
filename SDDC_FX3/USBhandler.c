@@ -14,6 +14,10 @@
 
 #include "tuner_r82xx.h"
 #include "adf4351.h"
+#include "Si5351.h"
+
+#include "radio.h"
+
 
 // Declare external functions
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
