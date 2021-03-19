@@ -12,7 +12,7 @@
 - The reference calibration can be adjusted in the dialog GUI in a range of +/- 200 ppm. (#171)
 - The tuner IF center frequency is moved to 4.570 MHz that is the standard for RT820T. We were using 5 MHz before when we did not have yet fine tune ability. (#159)
 - Support for AVX/2/512 instructions added. This change may reduce CPU usage for some modern hardware.(#152) 
-- The Kaiser-Bessel IF filter with 85% of Nyquist band are computer at initialization. It simplifies managment of IF filters (#147)
+- The Kaiser-Bessel IF filter with 85% of Nyquist band are computed at initialization. It simplifies managment of IF filters (#147)
 - Add automatically build verification for both master branch and PRs. This  feature of the Github environment speeds development checks(#141)
 
  So far the known issues:
@@ -138,7 +138,7 @@ make
 - Franco Venturi
 - All the Others !
 
-#### 2016,2017,2018,2019,2020  IK1XPV Oscar Steila - ik1xpv(at)gmail.com
+#### 2016,2017,2018,2019,2020,2021  IK1XPV Oscar Steila - ik1xpv(at)gmail.com
 https://sdr-prototypes.blogspot.com/
 
 http://www.steila.com/blog
