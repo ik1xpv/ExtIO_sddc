@@ -61,7 +61,7 @@ bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
     if (mode == VHFMODE)
     {
         // disable HF by set max ATT
-        UpdateattRF(hf_rf_step_size - 1);
+        UpdateattRF(0);  // max att 0 -> -31.5 dB
 
         // switch to VHF Attenna
         FX3SetGPIO(VHF_EN);
