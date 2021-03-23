@@ -255,7 +255,6 @@ CyFxSlFifoApplnUSBSetupCB (
 						{
 							uint32_t freq;
 							freq = *(uint32_t *) &glEp0Buffer[0];
-					
 							memset(&tuner_config, 0, sizeof(tuner_config));
 							memset(&tuner, 0, sizeof(tuner));
 
