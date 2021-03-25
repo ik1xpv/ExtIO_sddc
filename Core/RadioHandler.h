@@ -64,7 +64,7 @@ private:
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
     void CaculateStats();
-    void OnDataPacket(int idx);
+    void OnDataPacket(void *buf);
     r2iqControlClass* r2iqCntrl;
 
     void (*Callback)(float *data, uint32_t length);
@@ -86,7 +86,6 @@ private:
     float* obuffers[QUEUE_SIZE];
 
     // threads
-    std::thread adc_samples_thread;
     std::thread show_stats_thread;
 
     // stats

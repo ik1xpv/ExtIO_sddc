@@ -41,19 +41,19 @@ streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
                                   sddc_read_async_cb_t callback,
                                   void *callback_context);
 
-void streaming_close(streaming_t *this);
+void streaming_close(streaming_t *that);
 
-int streaming_set_sample_rate(streaming_t *this, uint32_t sample_rate);
+int streaming_set_sample_rate(streaming_t *that, uint32_t sample_rate);
 
-int streaming_set_random(streaming_t *this, int random);
+int streaming_set_random(streaming_t *that, int random);
 
-int streaming_start(streaming_t *this);
+int streaming_start(streaming_t *that);
 
-int streaming_stop(streaming_t *this);
+int streaming_stop(streaming_t *that);
 
-int streaming_reset_status(streaming_t *this);
+int streaming_reset_status(streaming_t *that);
 
-int streaming_read_sync(streaming_t *this, uint8_t *data, int length,
+int streaming_read_sync(streaming_t *that, uint8_t *data, int length,
                         int *transferred);
 
 #ifdef __cplusplus

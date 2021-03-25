@@ -44,13 +44,26 @@ class fx3handler : public fx3class
         return true;
     }
 
-	bool BeginDataXfer(uint8_t *buffer, long transferSize, void** context) {
-        return true;
+    std::thread emuthread;
+    bool run;
+	void StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock)
+    {
+        run = true;
+        emuthread = std::thread([callback, readsize, this]{
+            uint8_t *buf = new uint8_t[readsize];
+            while(run)
+            {
+                callback(buf);
+                std::this_thread::sleep_for(1ms);
+            }
+            delete[] buf;
+        });
     }
-	bool FinishDataXfer(void** context) {
-        return true;
+
+	void StopStream() {
+        run = false;
+        emuthread.join();
     }
-	void CleanupDataXfer(void** context) {}
 };
 
 static uint32_t count;
