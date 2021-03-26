@@ -51,10 +51,29 @@ void fx3handler::StartStream(const std::function<void( void* )> &callback, size_
 {
     this->Callback = callback;
     stream = streaming_open_async(this->dev, readsize, numofblock, PacketRead, this);
+
+    // Start background thread to poll the events
+    run = true;
+    poll_thread = std::thread(
+        [this]() {
+            while(run)
+            {
+                usb_device_handle_events(this->dev);
+            }
+        });
+
+    if (stream)
+    {
+        streaming_start(stream);
+    }
 }
 
 void fx3handler::StopStream()
 {
+    run = false;
+    poll_thread.join();
+
+    streaming_stop(stream);
     streaming_close(stream);
 }
 

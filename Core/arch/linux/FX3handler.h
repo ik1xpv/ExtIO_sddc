@@ -35,6 +35,8 @@ private:
 	usb_device_t *dev;
 	streaming_t *stream;
 	std::function<void( void* )> Callback;
+    bool run;
+    std::thread poll_thread;
 };
 
 
