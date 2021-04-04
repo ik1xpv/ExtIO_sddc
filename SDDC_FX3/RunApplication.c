@@ -186,20 +186,7 @@ void ApplicationThread ( uint32_t input)
 		Status = Si5351init();
 		if (Status != CY_U3P_SUCCESS)
 		{
-			CyBool_t measure;
-			ConfGPIOsimpleinputPU(GPIO52); 
-    			ConfGPIOsimpleinputPU(GPIO53); 
-			CyU3PGpioSimpleGetValue ( GPIO52, &measure); //measure if external pull down
-			if (measure) 
-			{
-				HWconfig = HF103;
-				DebugPrint(4, "\r\nSi5351init failed to initialize. HF103 detected \r\n");
-			}
-			else
-			{
-				HWconfig = RXLUCY;
-				DebugPrint(4, "\r\nSi5351init failed to initialize. RXLUCY detected \r\n");
-			}
+			HWconfig = HF103;
 		}
 		else
 		{
@@ -222,6 +209,13 @@ void ApplicationThread ( uint32_t input)
 			}
 			else
 			{
+			CyBool_t measure;
+			ConfGPIOsimpleinputPU(GPIO52); 
+    			ConfGPIOsimpleinputPU(GPIO53); 
+			CyU3PGpioSimpleGetValue ( GPIO52, &measure); //measure if external pull down
+			if (!measure)
+			    	HWconfig = RXLUCY;
+			else	
 				HWconfig = RX999;
 			}
 			si5351aSetFrequencyB(0);

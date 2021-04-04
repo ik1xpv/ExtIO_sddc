@@ -249,17 +249,11 @@ public:
     bool UpdatemodeRF(rf_mode mode) override;
     uint64_t TuneLo(uint64_t freq) override ;
     bool UpdateattRF(int attIndex) override;
-    bool UpdateGainIF(int attIndex) override;    
-
-    int getRFSteps(const float** steps) override;
-    int getIFSteps(const float** steps) override;
+    int getRFSteps(const float** steps) override; 
 
 private:
     static const int step_size = 16;
     float steps[step_size];
-
-    static const int if_step_size = 64;
-    float if_steps[if_step_size];
 };
 
 class DummyRadio : public RadioHardware {
