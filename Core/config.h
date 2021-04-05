@@ -50,7 +50,7 @@ inline void null_func(const char *format, ...) { }
 #define SETTINGS_IDENTIFIER	"sddc_1.06"
 #define SWNAME				"ExtIO_sddc.dll"
 
-#define	QUEUE_SIZE 32
+#define	QUEUE_SIZE 16
 #define WIDEFFTN  // test FFTN 8192 
 
 #define FFTN_R_ADC (8192)       // FFTN used for ADC real stream DDC  tested at  2048, 8192, 32768, 131072

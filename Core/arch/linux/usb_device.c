@@ -40,6 +40,8 @@
 #include "ezusb.h"
 #include "logging.h"
 
+#include "../../Interface.h"
+
 
 typedef struct usb_device usb_device_t;
 
@@ -251,7 +253,37 @@ usb_device_t *usb_device_open(int index, const char* image,
     goto FAIL1;
   }
 
+  if (!needs_firmware && image) {
+    /* FIXME: reset FX3 to move it in defined state */
+    ret = libusb_control_transfer(dev_handle, LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+                                  RESETFX3, 0, 0, 0, 0, 1000);
+    if (ret < 0 && ret != LIBUSB_ERROR_NO_DEVICE) {
+      log_error("failed to reset device", __func__, __FILE__, __LINE__);
+      goto FAIL2;
+    }
+
+    /* rescan USB to get a new device handle */
+    libusb_close(dev_handle);
+    libusb_exit(0);
+
+    /* wait unitl firmware is ready */
+    usleep(500 * 1000L);
+
+    ret = libusb_init(&ctx);
+    needs_firmware = 0;
+    dev_handle = find_usb_device(index, ctx, &device, &needs_firmware);
+
+    if (!needs_firmware) {
+      log_error("failed to put device in boot loader mode", __func__, __FILE__, __LINE__);
+      goto FAIL2;
+    }
+  }
+
   if (needs_firmware) {
+    if(!image) {
+      log_error("device needs firmware but none provided", __func__, __FILE__, __LINE__);
+      goto FAIL2;
+    }
     ret = load_image(dev_handle, image, size);
     if (ret != 0) {
       log_error("load_image() failed", __func__, __FILE__, __LINE__);
@@ -260,10 +292,12 @@ usb_device_t *usb_device_open(int index, const char* image,
 
     /* rescan USB to get a new device handle */
     libusb_close(dev_handle);
+    libusb_exit(0);
 
     /* wait unitl firmware is ready */
     usleep(500 * 1000L);
 
+    ret = libusb_init(&ctx);
     needs_firmware = 0;
     dev_handle = find_usb_device(index, ctx, &device, &needs_firmware);
     if (dev_handle == 0) {
@@ -347,7 +381,8 @@ void usb_device_close(usb_device_t *this)
 
 int usb_device_handle_events(usb_device_t *this)
 {
-  return libusb_handle_events_completed(this->context, &this->completed);
+  struct timeval tv = {0, 10};
+  return libusb_handle_events_timeout(this->context, &tv);
 }
 
 int usb_device_control(usb_device_t *this, uint8_t request, uint16_t value,
@@ -480,7 +515,7 @@ static int transfer_image(const uint8_t *image,
   const uint8_t bRequest = 0xa0;            // vendor command
   const unsigned int timeout = 5000;        // timeout (in ms) for each command
   const size_t max_write_size = 2 * 1024;   // max write size in bytes
- 
+
   // skip first word with 'CY' magic
   uint32_t *current = (uint32_t *) image + 1;
 

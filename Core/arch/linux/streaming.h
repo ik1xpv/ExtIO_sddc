@@ -34,6 +34,16 @@ typedef struct streaming streaming_t;
 typedef void (*sddc_read_async_cb_t)(uint32_t data_size, uint8_t *data,
 		                                      void *context);
 
+enum StreamingStatus {
+  STREAMING_STATUS_OFF,
+  STREAMING_STATUS_READY,
+  STREAMING_STATUS_STREAMING,
+  STREAMING_STATUS_CANCELLED,
+  STREAMING_STATUS_FAILED = 0xff
+};
+
+enum StreamingStatus streaming_status(streaming_t *that);
+
 streaming_t *streaming_open_sync(usb_device_t *usb_device);
 
 streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,

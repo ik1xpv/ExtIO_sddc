@@ -64,7 +64,7 @@ int main(int argc, char **argv)
   sddc_free_device_info(sddc_device_infos);
 
   /* open and close device */
-  sddc_t *sddc = sddc_open(0, imagefile);
+  sddc_t *sddc = sddc_open(0, imagefile, 1);
   if (sddc == 0) {
     fprintf(stderr, "ERROR - sddc_open() failed\n");
     return -1;

@@ -16,6 +16,10 @@ else()
   target_include_directories(sddc PUBLIC "${LIBUSB_INCLUDE_DIR}")
   target_link_directories(sddc PUBLIC "${LIBUSB_LIBRARY_DIRS}")
   target_link_libraries(sddc PUBLIC ${LIBUSB_LIBRARIES})
+
+  set_target_properties(sddc PROPERTIES PUBLIC_HEADER libsddc.h)
+  include(GNUInstallDirs)
+  install(TARGETS sddc PUBLIC_HEADER)
 endif (MSVC)
 
 target_include_directories(sddc PUBLIC "${LIBFFTW_INCLUDE_DIR}")

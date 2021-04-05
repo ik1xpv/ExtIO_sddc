@@ -18,7 +18,7 @@ public:
 	fx3handler();
 	virtual ~fx3handler(void);
 	bool Open(uint8_t* fw_data, uint32_t fw_size) override;
-	bool Control(FX3Command command, uint8_t data) override;
+	bool Control(FX3Command command, uint8_t data = 0) override;
 	bool Control(FX3Command command, uint32_t data) override;
 	bool Control(FX3Command command, uint64_t data) override;
 	bool SetArgument(uint16_t index, uint16_t value) override;

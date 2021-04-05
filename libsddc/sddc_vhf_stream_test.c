@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 
   int ret_val = -1;
 
-  sddc_t *sddc = sddc_open(0, imagefile);
+  sddc_t *sddc = sddc_open(0, imagefile, 1);
   if (sddc == 0) {
     fprintf(stderr, "ERROR - sddc_open() failed\n");
     return -1;
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
     goto DONE;
   }
 
-  if (sddc_set_async_params(sddc, 0, 0, count_bytes_callback, sddc) < 0) {
+  if (sddc_set_async_params(sddc, 0, 0, 0, count_bytes_callback, sddc) < 0) {
     fprintf(stderr, "ERROR - sddc_set_async_params() failed\n");
     goto DONE;
   }

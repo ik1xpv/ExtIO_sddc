@@ -3,6 +3,8 @@
 #include "r2iq.h"
 #include "RadioHandler.h"
 
+#include <stdarg.h>
+
 struct sddc
 {
     SDDCStatus status;
@@ -12,29 +14,62 @@ struct sddc
     double freq;
 
     sddc_read_async_cb_t callback;
+    sddc_raw_read_async_cb_t raw_callback;
+    bool raw;
     void *callback_context;
 };
 
 sddc_t *current_running;
 
+void logFX3(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	vfprintf(stderr, format, ap);
+	va_end(ap);
+}
+
 static void Callback(const float* data, uint32_t len)
 {
+    if(current_running->callback != nullptr && !current_running->raw) {
+        current_running->callback(len, (float*) data, current_running->callback_context);
+    }
 }
 
 class rawdata : public r2iqControlClass {
     void Init(float gain, ringbuffer<int16_t>* buffers, ringbuffer<float>* obuffers) override
     {
-        idx = 0;
+        buf = buffers;
     }
 
     void TurnOn() override
     {
         this->r2iqOn = true;
-        idx = 0;
+        pull_thread = std::thread(
+            [this]() {
+                while(this->r2iqOn)
+                {
+                    const int16_t* data = buf->getReadPtr();
+                    if(!this->r2iqOn) {
+                        break;
+                    }
+                    if(current_running->raw_callback != nullptr) {
+                        current_running->raw_callback(transferSize, (uint8_t*) data, current_running->callback_context);
+                    }
+                    buf->ReadDone();
+                }
+            });
+    }
+
+    void TurnOff() override
+    {
+        this->r2iqOn = false;
+        pull_thread.join();
     }
 
 private:
-    int idx;
+    ringbuffer<int16_t>* buf;
+    std::thread pull_thread;
 };
 
 int sddc_get_device_count()
@@ -61,7 +96,7 @@ int sddc_free_device_info(struct sddc_device_info *sddc_device_infos)
     return 0;
 }
 
-sddc_t *sddc_open(int index, const char* imagefile)
+sddc_t *sddc_open(int index, const char* imagefile, int raw)
 {
     auto ret_val = new sddc_t();
 
@@ -93,11 +128,13 @@ sddc_t *sddc_open(int index, const char* imagefile)
         return nullptr;
 
     ret_val->handler = new RadioHandlerClass();
+    ret_val->handler->EnableDebug(logFX3, nullptr);
 
-    if (ret_val->handler->Init(fx3, Callback, new rawdata()))
+    if (ret_val->handler->Init(fx3, Callback, raw != 0 ? new rawdata() : nullptr))
     {
         ret_val->status = SDDC_STATUS_READY;
         ret_val->samplerateidx = 0;
+        ret_val->raw = raw;
     }
 
     return ret_val;
@@ -180,6 +217,33 @@ int sddc_set_rf_mode(sddc_t *t, enum RFMode rf_mode)
     return 0;
 }
 
+int sddc_support_pga(sddc_t *t)
+{
+    switch(t->handler->getModel())
+    {
+        case RadioModel::RX888r2:
+        case RadioModel::RX888r3:
+        case RadioModel::RX999:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int sddc_support_128adc(sddc_t *t)
+{
+    switch(t->handler->getModel())
+    {
+        case RadioModel::RX888:
+        case RadioModel::RX888r2:
+        case RadioModel::RX888r3:
+        case RadioModel::RX999:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 /* LED functions */
 int sddc_led_on(sddc_t *t, uint8_t led_pattern)
 {
@@ -246,17 +310,41 @@ int sddc_set_adc_random(sddc_t *t, int random)
     return 0;
 }
 
+double sddc_get_adc_rate(sddc_t *t)
+{
+    return t->handler->getSampleRate();
+}
+
+int sddc_set_adc_rate(sddc_t *t, double rate)
+{
+    if(rate > MAX_ADC_FREQ)
+        rate = MAX_ADC_FREQ;
+    if(rate < MIN_ADC_FREQ)
+        rate = MIN_ADC_FREQ;
+
+    //TODO: different rates
+    if(sddc_support_128adc(t) && rate > DEFAULT_ADC_FREQ)
+        rate = DEFAULT_ADC_FREQ*2;
+    else
+        rate = DEFAULT_ADC_FREQ;
+
+    t->handler->UpdateSampleRate(rate);
+    return 0;
+}
+
+int sddc_get_pga(sddc_t *t)
+{
+    return t->handler->GetPga() && sddc_support_pga(t);
+}
+
+int sddc_set_pga(sddc_t *t, int pga)
+{
+    if(sddc_support_pga(t))
+        t->handler->UptPga(pga != 0);
+    return 0;
+}
+
 /* HF block functions */
-double sddc_get_hf_attenuation(sddc_t *t)
-{
-    return 0;
-}
-
-int sddc_set_hf_attenuation(sddc_t *t, double attenuation)
-{
-    return 0;
-}
-
 int sddc_get_hf_bias(sddc_t *t)
 {
     return t->handler->GetBiasT_HF();
@@ -282,9 +370,9 @@ int sddc_set_tuner_frequency(sddc_t *t, double frequency)
     return 0;
 }
 
-int sddc_get_tuner_rf_attenuations(sddc_t *t, const double *attenuations[])
+int sddc_get_tuner_rf_attenuations(sddc_t *t, const float *attenuations[])
 {
-    return 0;
+    return t->handler->GetRFAttSteps(attenuations);
 }
 
 double sddc_get_tuner_rf_attenuation(sddc_t *t)
@@ -292,17 +380,23 @@ double sddc_get_tuner_rf_attenuation(sddc_t *t)
     return 0;
 }
 
-int sddc_set_tuner_rf_attenuation(sddc_t *t, double attenuation)
+int sddc_set_tuner_rf_attenuation(sddc_t *t, float attenuation)
 {
-    //TODO, convert double to index
-    t->handler->UpdateattRF(5);
+    const float *attenuations;
+    int size = t->handler->GetRFAttSteps(&attenuations);
+    int idx = 0;
+    for(int i=0; i<size;i++) {
+        if(fabs(attenuation-attenuations[i])<0.00001) {
+            idx = i;
+        }
+    }
+    t->handler->UpdateattRF(idx);
     return 0;
 }
 
-int sddc_get_tuner_if_attenuations(sddc_t *t, const double *attenuations[])
+int sddc_get_tuner_if_attenuations(sddc_t *t, const float *attenuations[])
 {
-    // TODO
-    return 0;
+    return t->handler->GetIFGainSteps(attenuations);
 }
 
 double sddc_get_tuner_if_attenuation(sddc_t *t)
@@ -310,8 +404,17 @@ double sddc_get_tuner_if_attenuation(sddc_t *t)
     return 0;
 }
 
-int sddc_set_tuner_if_attenuation(sddc_t *t, double attenuation)
+int sddc_set_tuner_if_attenuation(sddc_t *t, float attenuation)
 {
+    const float *attenuations;
+    int size = t->handler->GetIFGainSteps(&attenuations);
+    int idx = 0;
+    for(int i=0; i<size;i++) {
+        if(fabs(attenuation-attenuations[i])<0.00001) {
+            idx = i;
+        }
+    }
+    t->handler->UpdateIFGain(idx);
     return 0;
 }
 
@@ -326,29 +429,48 @@ int sddc_set_vhf_bias(sddc_t *t, int bias)
     return 0;
 }
 
-double sddc_get_sample_rate(sddc_t *t)
+uint64_t sddc_get_sample_rate(sddc_t *t)
 {
-    return 0;
+    switch(t->samplerateidx)
+    {
+        case 5:
+            return 64000000;
+        case 4:
+            return 32000000;
+        case 3:
+            return 16000000;
+        case 2:
+            return 8000000;
+        case 1:
+            return 4000000;
+        case 0:
+            return 2000000;
+        default:
+            return 0;
+    }
 }
 
-int sddc_set_sample_rate(sddc_t *t, double sample_rate)
+int sddc_set_sample_rate(sddc_t *t, uint64_t sample_rate)
 {
-    switch((int64_t)sample_rate)
+    switch(sample_rate)
     {
+        case 64000000:
+            t->samplerateidx = 5;
+            break;
         case 32000000:
-            t->samplerateidx = 0;
+            t->samplerateidx = 4;
             break;
         case 16000000:
-            t->samplerateidx = 1;
+            t->samplerateidx = 3;
             break;
         case 8000000:
             t->samplerateidx = 2;
             break;
         case 4000000:
-            t->samplerateidx = 3;
+            t->samplerateidx = 1;
             break;
         case 2000000:
-            t->samplerateidx = 4;
+            t->samplerateidx = 0;
             break;
         default:
             return -1;
@@ -356,12 +478,20 @@ int sddc_set_sample_rate(sddc_t *t, double sample_rate)
     return 0;
 }
 
-int sddc_set_async_params(sddc_t *t, uint32_t frame_size, 
-                          uint32_t num_frames, sddc_read_async_cb_t callback,
+int sddc_set_async_params(sddc_t *t, uint32_t frame_size,
+                          uint32_t num_frames,
+                          sddc_read_async_cb_t callback,
+                          sddc_raw_read_async_cb_t raw_callback,
                           void *callback_context)
 {
     // TODO: ignore frame_size, num_frames
-    t->callback = callback;
+    if(t->raw) {
+        t->raw_callback = raw_callback;
+        t->callback = nullptr;
+    } else {
+        t->callback = callback;
+        t->raw_callback = nullptr;
+    }
     t->callback_context = callback_context;
     return 0;
 }

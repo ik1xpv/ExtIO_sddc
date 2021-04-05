@@ -265,3 +265,9 @@ __pycache__/
 /bugz03.png
 /bugz04.png
 *.png
+
+# SDK output files
+SDDC_FX3/SDDC_FX3.elf
+SDDC_FX3/SDDC_FX3.img
+SDDC_FX3/SDDC_FX3.map
+SDDC_FX3/elf2img
