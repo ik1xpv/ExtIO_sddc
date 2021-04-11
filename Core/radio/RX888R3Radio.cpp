@@ -128,6 +128,7 @@ uint64_t RX888R3Radio::TuneLo(uint64_t freq)
             else if (freq <= 12*1000*1000) sel = 0b100;
             else if (freq <= 30*1000*1000) sel = 0b010;
             else if (freq <= 60*1000*1000) sel = 0b110;
+            else sel = 0b011;
         }
         else if (SampleRate < 32 * 1000 * 1000)
             sel = 0b101;
