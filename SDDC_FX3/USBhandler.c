@@ -303,12 +303,11 @@ CyFxSlFifoApplnUSBSetupCB (
 									adf4350_setup(0, 0, adf4351_init_params);
 									break;
 								case RX888r3:
-									RDA5815Initial();
+									si5351aSetFrequencyB(freq);
+									RDA5815Initial(freq);
 									break;
 								break;
 							}
-
-						
 							vendorRqtCnt++;
 							isHandled = CyTrue;
 						}
@@ -318,8 +317,23 @@ CyFxSlFifoApplnUSBSetupCB (
 			case TUNERSTDBY:
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 					{
-						r82xx_standby(&tuner);
-						si5351aSetFrequencyB(0);
+						switch(HWconfig)
+						{
+							case RX888:
+							case RX888r2:
+							case BBRF103:
+								r82xx_standby(&tuner);
+								si5351aSetFrequencyB(0);
+								break;
+							case RX999:
+							case RXLUCY:
+								break;
+							case RX888r3:
+								RDA5815Shutdown();
+								si5351aSetFrequencyB(0);
+								break;
+						}
+
 						isHandled = CyTrue;
 					}
 					break;
