@@ -387,7 +387,7 @@ double EXTIO_API SetHWLOdbl(double LOfreq)
 	rf_mode rfmode = RadioHandler.GetmodeRF();
 	rf_mode newmode = RadioHandler.PrepareLo(LOfreq);
 
-	if (rf_mode == NOMODE) // this freq is not supported
+	if (newmode == NOMODE) // this freq is not supported
 		return -1;
 
 	if ((newmode == HFMODE) && (rfmode != VHFMODE))
