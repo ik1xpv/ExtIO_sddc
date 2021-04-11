@@ -14,6 +14,10 @@
 #define GPIO_VHF_EN 35
 #define GPIO_VGA_LE 38
 
+#define GPIO_PRESEL_0 22
+#define GPIO_PRESEL_1 23
+#define GPIO_PRESEL_2 34
+
 void rx888r3_GpioSet(uint32_t mdata)
 {
     CyU3PGpioSetValue (GPIO_SHDWN, (mdata & SHDWN) == SHDWN ); 		 // SHDN
@@ -23,7 +27,7 @@ void rx888r3_GpioSet(uint32_t mdata)
     CyU3PGpioSetValue (GPIO_BIAS_VHF, (mdata & BIAS_VHF) == BIAS_VHF);
 	CyU3PGpioSetValue (GPIO_LED_RED, (mdata & LED_RED) == LED_RED);
 	CyU3PGpioSetValue (GPIO_PGA, (mdata & PGA_EN ) != PGA_EN  ); 		 // PGA_EN
-    CyU3PGpioSetValue (GPIO_VHF_EN, (mdata & VHF_EN) == VHF_EN ); // VHF_ENßß
+    CyU3PGpioSetValue (GPIO_VHF_EN, (mdata & VHF_EN) == VHF_EN ); // VHF_EN
 }
 
 void rx888r3_GpioInitialize()
@@ -50,6 +54,15 @@ void rx888r3_GpioInitialize()
     CyU3PGpioSetValue (GPIO_VGA_LE, 1);
 
 	CyU3PGpioSetValue (GPIO_PGA, 1); // PGA =1 , 1.5v range
+
+	// preselector
+	ConfGPIOsimpleout (GPIO_PRESEL_0);
+	ConfGPIOsimpleout (GPIO_PRESEL_1);
+	ConfGPIOsimpleout (GPIO_PRESEL_2);
+
+	CyU3PGpioSetValue (GPIO_PRESEL_0, 0);
+	CyU3PGpioSetValue (GPIO_PRESEL_1, 0);
+	CyU3PGpioSetValue (GPIO_PRESEL_2, 0);
 }
 
 /*
@@ -96,4 +109,13 @@ void rx888r3_SetGain(uint8_t value)
 	}
 	CyU3PGpioSetValue (GPIO_VGA_LE, 1);    // ATT_LE latched
 	CyU3PGpioSetValue (GPIO_ATT_DATA, 0); // ATT_DATA
+}
+
+int rx888r3_preselect(uint32_t data)
+{
+	CyU3PGpioSetValue (GPIO_PRESEL_0, ((data >> 0) & 0x01));
+	CyU3PGpioSetValue (GPIO_PRESEL_1, ((data >> 1) & 0x01));
+	CyU3PGpioSetValue (GPIO_PRESEL_2, ((data >> 2) & 0x01));
+
+	return 0;
 }
