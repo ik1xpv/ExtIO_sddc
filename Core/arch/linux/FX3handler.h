@@ -23,8 +23,8 @@ public:
 	bool SetArgument(uint16_t index, uint16_t value) override;
 	bool GetHardwareInfo(uint32_t* data) override;
 
-	void StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock);
-	void StopStream();
+	void StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock) override;
+	void StopStream() override;
 
 private:
 	bool ReadUsb(uint8_t command, uint16_t value, uint16_t index, uint8_t *data, size_t size);

@@ -28,7 +28,7 @@ class rawdata : public r2iqControlClass {
         idx = 0;
     }
 
-    virtual void TurnOn()
+    void TurnOn() override
     {
         this->r2iqOn = true;
         idx = 0;
