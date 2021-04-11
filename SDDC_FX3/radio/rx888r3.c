@@ -13,6 +13,7 @@
 #define GPIO_DITH 29
 #define GPIO_VHF_EN 35
 #define GPIO_VGA_LE 38
+#define GPIO_FM_NOTCH 39
 
 #define GPIO_PRESEL_0 22
 #define GPIO_PRESEL_1 23
@@ -28,6 +29,8 @@ void rx888r3_GpioSet(uint32_t mdata)
 	CyU3PGpioSetValue (GPIO_LED_RED, (mdata & LED_RED) == LED_RED);
 	CyU3PGpioSetValue (GPIO_PGA, (mdata & PGA_EN ) != PGA_EN  ); 		 // PGA_EN
     CyU3PGpioSetValue (GPIO_VHF_EN, (mdata & VHF_EN) == VHF_EN ); // VHF_EN
+
+	CyU3PGpioSetValue (GPIO_FM_NOTCH, (mdata & FM_NOTCH) != FM_NOTCH);
 }
 
 void rx888r3_GpioInitialize()
@@ -46,12 +49,15 @@ void rx888r3_GpioInitialize()
     ConfGPIOsimpleout (GPIO_ATT_CLK);
     ConfGPIOsimpleout (GPIO_VGA_LE);
 
+	ConfGPIOsimpleout (GPIO_FM_NOTCH);
+
     rx888r3_GpioSet(LED_RED | LED_YELLOW | LED_BLUE);
 
     CyU3PGpioSetValue (GPIO_ATT_LE, 0);  // ATT_LE latched
     CyU3PGpioSetValue (GPIO_ATT_CLK, 0);  // test version
     CyU3PGpioSetValue (GPIO_ATT_DATA, 0);  // ATT_DATA
     CyU3PGpioSetValue (GPIO_VGA_LE, 1);
+	CyU3PGpioSetValue (GPIO_FM_NOTCH, 1); // disable FM Notch
 
 	CyU3PGpioSetValue (GPIO_PGA, 1); // PGA =1 , 1.5v range
 
