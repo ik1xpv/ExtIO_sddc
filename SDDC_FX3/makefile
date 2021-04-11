@@ -56,6 +56,7 @@ RADIOSRC= \
 	rx888.c		\
 	rx999.c                \
 	rx888r2.c              \
+	rx888r3.c              \
 	rxlucy.c
 
 ifeq ($(CYFXBUILD),arm)

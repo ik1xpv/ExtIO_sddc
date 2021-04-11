@@ -205,6 +205,35 @@ private:
     uint32_t SampleRate;
 };
 
+class RX888R3Radio : public RadioHardware {
+public:
+    RX888R3Radio(fx3class* fx3);
+    const char* getName() override { return "RX888 mkIII"; }
+    float getGain() override { return RX888mk2_GAINFACTOR; }
+    rf_mode PrepareLo(uint64_t freq) override;
+    void Initialize(uint32_t samplefreq) override;
+    bool UpdatemodeRF(rf_mode mode) override;
+    uint64_t TuneLo(uint64_t freq) override;
+    bool UpdateattRF(int attIndex) override;
+    bool UpdateGainIF(int attIndex) override;
+
+    int getRFSteps(const float** steps ) override;
+    int getIFSteps(const float** steps ) override;
+
+private:
+    static const int  hf_rf_step_size = 64;
+    static const int  hf_if_step_size = 127;
+    static const int vhf_if_step_size = 16;
+    static const int vhf_rf_step_size = 29;
+
+    float  hf_rf_steps[hf_rf_step_size];
+    float  hf_if_steps[hf_if_step_size];
+    static const float vhf_rf_steps[vhf_rf_step_size];
+    static const float vhf_if_steps[vhf_if_step_size];
+
+    uint32_t SampleRate;
+};
+
 class RX999Radio : public RadioHardware {
 public:
     RX999Radio(fx3class* fx3);

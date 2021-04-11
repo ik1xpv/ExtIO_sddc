@@ -140,6 +140,10 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 		hardware = new RX888R2Radio(Fx3);
 		break;
 
+	case RX888r3:
+		hardware = new RX888R3Radio(Fx3);
+		break;
+
 	case RX999:
 		hardware = new RX999Radio(Fx3);
 		break;
