@@ -14,23 +14,46 @@
 
 using namespace std::chrono;
 
-#define USB_READ_CONCURRENT  4
-
 // transfer variables
 
 unsigned long Failures = 0;
 
-void RadioHandlerClass::OnDataPacket(int idx)
+void RadioHandlerClass::OnDataPacket(void* buf)
 {
+	int buf_idx = count % QUEUE_SIZE;
 	int rd = r2iqCntrl->getRatio();
 	// submit result to SDR application before processing next packet
 	++count;
 
+	if (buf == nullptr)
+	{
+		// error case
+		Callback(NULL, 0);
+		run = false;
+
+		return;
+	}
+
+	buffers[buf_idx] = (int16_t*)buf;
+	BytesXferred += transferSize;
+
+#ifdef _DEBUG		//PScope buffer screenshot
+		if (saveADCsamplesflag == true)
+		{
+			saveADCsamplesflag = false; // do it once
+			unsigned int numsamples = transferSize / sizeof(int16_t);
+			float samplerate  = (float) getSampleRate();
+			PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
+				"ADCrealsamples.adc input real ADC 16 bit samples",
+				(short*)buf, samplerate, numsamples);
+		}
+#endif
+
 	if (run &&						// app is running
 		count > QUEUE_SIZE &&		// skip first batch
-		(idx % rd == 0))		// if decimate, every *rd* packages
+		(buf_idx % rd == 0))		// if decimate, every *rd* packages
 	{
-		int oidx = idx / rd;
+		int oidx = buf_idx / rd;
 		std::unique_lock<std::mutex> lk(fc_mutex);
 		if (fc != 0.0f)
 		{
@@ -43,74 +66,6 @@ void RadioHandlerClass::OnDataPacket(int idx)
 	}
 
 	r2iqCntrl->DataReady();   // inform r2iq buffer ready
-}
-
-void RadioHandlerClass::AdcSamplesProcess()
-{
-	DbgPrintf("AdcSamplesProc thread runs\n");
-	int buf_idx;            // queue index
-	int read_idx;
-	void*		contexts[USB_READ_CONCURRENT];
-
-	Failures = 0;
-
-	memset(contexts, 0, sizeof(contexts));
-
-	// Queue-up the first batch of transfer requests
-	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
-		if (!fx3->BeginDataXfer((uint8_t*)buffers[n], transferSize, &contexts[n])) {
-			DbgPrintf("Xfer request rejected.\n");
-			return;
-		}
-	}
-
-	read_idx = 0;	// context cycle index
-	buf_idx = 0;	// buffer cycle index
-
-	// The infinite xfer loop.
-	while (run) {
-		if (!fx3->FinishDataXfer(&contexts[read_idx])) {
-		}
-
-		BytesXferred += transferSize;
-
-		OnDataPacket(buf_idx);
-
-#ifdef _DEBUG		//PScope buffer screenshot
-		if (saveADCsamplesflag == true)
-		{
-			saveADCsamplesflag = false; // do it once
-			auto pi = buffers[buf_idx];
-			unsigned int numsamples = transferSize / sizeof(int16_t);
-			float samplerate  = (float) getSampleRate();
-			PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
-				"ADCrealsamples.adc input real ADC 16 bit samples",
-				pi, samplerate, numsamples);
-		}
-#endif
-
-		// Re-submit this queue element to keep the queue full
-		if (!fx3->BeginDataXfer((uint8_t*)buffers[buf_idx], transferSize, &contexts[read_idx])) { // BeginDataXfer failed
-			DbgPrintf("Xfer request rejected.\n");
-			Failures++;
-			break;
-		}
-
-		buf_idx = (buf_idx + 1) % QUEUE_SIZE;
-		read_idx = (read_idx + 1) % USB_READ_CONCURRENT;
-	}  // End of the infinite loop
-
-	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
-		fx3->CleanupDataXfer(&contexts[n]);
-	}
-
-	if (Failures)
-	{
-		Callback(nullptr, 0);
-	}
-
-	DbgPrintf("AdcSamplesProc thread_exit\n");
-	return;  // void *
 }
 
 RadioHandlerClass::RadioHandlerClass() :
@@ -127,8 +82,6 @@ RadioHandlerClass::RadioHandlerClass() :
 	hardware(new DummyRadio(nullptr))
 {
 	for (int i = 0; i < QUEUE_SIZE; i++) {
-		buffers[i] = new int16_t[transferSize / sizeof(int16_t)];
-
 		// Allocate the buffers for the output queue
 		obuffers[i] = new float[transferSize / 2];
 	}
@@ -140,7 +93,6 @@ RadioHandlerClass::~RadioHandlerClass()
 {
 	for (int n = 0; n < QUEUE_SIZE; n++) {
 		delete[] obuffers[n];
-		delete[] buffers[n];
 	}
 
 	if (r2iqCntrl)
@@ -231,10 +183,9 @@ bool RadioHandlerClass::Start(int srate_idx)
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
 	r2iqCntrl->setDecimate(decimate);
 	r2iqCntrl->TurnOn();
-	adc_samples_thread = std::thread(
-		[this](void* arg){
-			this->AdcSamplesProcess();
-		}, nullptr);
+	fx3->StartStream([this](void* buf) {
+		this->OnDataPacket(buf);
+	}, transferSize, QUEUE_SIZE);
 
 	show_stats_thread = std::thread([this](void*) {
 		this->CaculateStats();
@@ -251,12 +202,11 @@ bool RadioHandlerClass::Stop()
 	{
 		r2iqCntrl->TurnOff();
 
+		fx3->StopStream();
+
 		run = false; // now waits for threads
 		show_stats_thread.join(); //first to be joined
 		DbgPrintf("show_stats_thread join2\n");
-
-		adc_samples_thread.join();
-		DbgPrintf("adc_samples_thread join1\n");
 
 		hardware->FX3producerOff();     //FX3 stop the producer
 	}

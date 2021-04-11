@@ -12,6 +12,7 @@
 // 
 
 #include <stdint.h>
+#include <functional>
 #include "../Interface.h"
 
 class fx3class
@@ -25,9 +26,9 @@ public:
 	virtual bool SetArgument(uint16_t index, uint16_t value) = 0;
 	virtual bool GetHardwareInfo(uint32_t* data) = 0;
 
-	virtual bool BeginDataXfer(uint8_t *buffer, long transferSize, void** context) = 0;
-	virtual bool FinishDataXfer(void** context) = 0;
-	virtual void CleanupDataXfer(void** context) = 0;
+	virtual void StartStream(const std::function<void( void* )> &f, size_t readsize, int numofblock) = 0;
+	virtual void StopStream() = 0;
+
 };
 
 extern "C" fx3class* CreateUsbHandler();

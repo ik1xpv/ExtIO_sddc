@@ -47,19 +47,39 @@ bool fx3handler::GetHardwareInfo(uint32_t* data)
     return usb_device_control(this->dev, TESTFX3, 0, 0, (uint8_t *) data, sizeof(*data), 1) == 0;
 }
 
-bool fx3handler::BeginDataXfer(uint8_t *buffer, long transferSize, void** context)
+void fx3handler::StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock)
 {
-    //TODO
-    return true;
+    this->Callback = callback;
+    stream = streaming_open_async(this->dev, readsize, numofblock, PacketRead, this);
+
+    // Start background thread to poll the events
+    run = true;
+    poll_thread = std::thread(
+        [this]() {
+            while(run)
+            {
+                usb_device_handle_events(this->dev);
+            }
+        });
+
+    if (stream)
+    {
+        streaming_start(stream);
+    }
 }
 
-bool fx3handler::FinishDataXfer(void** context)
+void fx3handler::StopStream()
 {
-    // TODO
-    return true;
+    run = false;
+    poll_thread.join();
+
+    streaming_stop(stream);
+    streaming_close(stream);
 }
 
-void fx3handler::CleanupDataXfer(void** context)
+void fx3handler::PacketRead(uint32_t data_size, uint8_t *data, void *context)
 {
-    //TODO
+    fx3handler *handler = (fx3handler*)context;
+
+    handler->Callback(data);
 }

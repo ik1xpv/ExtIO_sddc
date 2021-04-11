@@ -351,3 +351,88 @@ void fx3handler::CleanupDataXfer(void** context)
 	CloseHandle(readContext->overlap.hEvent);
 	delete (readContext);
 }
+
+#define USB_READ_CONCURRENT 4
+
+void fx3handler::AdcSamplesProcess()
+{
+	DbgPrintf("AdcSamplesProc thread runs\n");
+	int buf_idx;            // queue index
+	int read_idx;
+	void*		contexts[USB_READ_CONCURRENT];
+
+	memset(contexts, 0, sizeof(contexts));
+
+	// Queue-up the first batch of transfer requests
+	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
+		if (!BeginDataXfer((uint8_t*)buffers[n], transferSize, &contexts[n])) {
+			DbgPrintf("Xfer request rejected.\n");
+			return;
+		}
+	}
+
+	read_idx = 0;	// context cycle index
+	buf_idx = 0;	// buffer cycle index
+
+	// The infinite xfer loop.
+	while (run) {
+		if (!FinishDataXfer(&contexts[read_idx])) {
+			break;
+		}
+
+		this->Callback(buffers[buf_idx]);
+
+		// Re-submit this queue element to keep the queue full
+		if (!BeginDataXfer((uint8_t*)buffers[buf_idx], transferSize, &contexts[read_idx])) { // BeginDataXfer failed
+			DbgPrintf("Xfer request rejected.\n");
+			break;
+		}
+
+		buf_idx = (buf_idx + 1) % QUEUE_SIZE;
+		read_idx = (read_idx + 1) % USB_READ_CONCURRENT;
+	}  // End of the infinite loop
+
+	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
+		CleanupDataXfer(&contexts[n]);
+	}
+
+	DbgPrintf("AdcSamplesProc thread_exit\n");
+	return;  // void *
+}
+
+void fx3handler::StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock)
+{
+	// Allocate the context and buffers
+	buffers = new int16_t*[numofblock];
+	Callback = callback;
+
+	for (int i = 0; i < numofblock; i++)
+	{
+		buffers[i] = new int16_t[ readsize / sizeof(int16_t)];
+	}
+	// create the thread
+	this->numofblock = numofblock;
+	run = true;
+	adc_samples_thread = new std::thread(
+		[this]() {
+			this->AdcSamplesProcess();
+		}
+	);
+}
+
+void fx3handler::StopStream()
+{
+	// set the flag
+	run = false;
+	adc_samples_thread->join();
+
+	// force exit the thread
+	for (int i = 0; i < numofblock; i++)
+	{
+		delete[] buffers[i];
+	}
+
+	delete[] buffers;
+
+	delete adc_samples_thread;
+}

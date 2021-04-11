@@ -8,7 +8,7 @@ struct sddc
     SDDCStatus status;
     RadioHandlerClass* handler;
     uint8_t led;
-    int samplerate;
+    int samplerateidx;
     double freq;
 
     sddc_read_async_cb_t callback;
@@ -28,7 +28,7 @@ class rawdata : public r2iqControlClass {
         idx = 0;
     }
 
-    virtual void TurnOn()
+    void TurnOn() override
     {
         this->r2iqOn = true;
         idx = 0;
@@ -105,7 +105,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
     if (ret_val->handler->Init(fx3, Callback, new rawdata()))
     {
         ret_val->status = SDDC_STATUS_READY;
-        ret_val->samplerate = 1;
+        ret_val->samplerateidx = 0;
     }
 
     return ret_val;
@@ -339,7 +339,26 @@ double sddc_get_sample_rate(sddc_t *t)
 
 int sddc_set_sample_rate(sddc_t *t, double sample_rate)
 {
-    t->samplerate = 1;
+    switch((int64_t)sample_rate)
+    {
+        case 32000000:
+            t->samplerateidx = 0;
+            break;
+        case 16000000:
+            t->samplerateidx = 1;
+            break;
+        case 8000000:
+            t->samplerateidx = 2;
+            break;
+        case 4000000:
+            t->samplerateidx = 3;
+            break;
+        case 2000000:
+            t->samplerateidx = 4;
+            break;
+        default:
+            return -1;
+    }
     return 0;
 }
 
@@ -356,7 +375,7 @@ int sddc_set_async_params(sddc_t *t, uint32_t frame_size,
 int sddc_start_streaming(sddc_t *t)
 {
     current_running = t;
-    t->handler->Start(t->samplerate);
+    t->handler->Start(t->samplerateidx);
     return 0;
 }
 
