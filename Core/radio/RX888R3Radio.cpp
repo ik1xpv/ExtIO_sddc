@@ -53,7 +53,7 @@ void RX888R3Radio::Initialize(uint32_t adc_rate)
 rf_mode RX888R3Radio::PrepareLo(uint64_t freq)
 {
     if (freq < 10 * 1000) return NOMODE;
-    if (freq > 2150 * 1000 * 1000) return NOMODE;
+    if (freq > 2150ll * 1000 * 1000) return NOMODE;
 
     if ( freq >= 250 * 1000 * 1000)
         return VHFMODE;
