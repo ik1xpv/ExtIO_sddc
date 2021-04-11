@@ -46,6 +46,7 @@ USBSOURCE= cyfxtx.c		\
 DRIVERSRC=\
 	Si5351.c		\
 	adf4351.c       \
+	rd5815.c	\
 	tuner_r82xx.c		\
 	pcal6408a.c
 

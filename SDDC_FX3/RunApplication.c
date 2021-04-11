@@ -13,6 +13,7 @@
 
 #include "tuner_r82xx.h"
 #include "Si5351.h"
+#include "rd5815.h"
 
 #include "radio.h"
 
@@ -219,6 +220,10 @@ void ApplicationThread ( uint32_t input)
 			else if (I2cTransfer(0, R828D_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
 			{
 				HWconfig = RX888r2;
+			}
+			else if (I2cTransfer(0, RD5812_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
+			{
+				HWconfig = RX888r3;
 			}
 			else
 			{

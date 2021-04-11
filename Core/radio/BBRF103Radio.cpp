@@ -49,13 +49,13 @@ bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
         FX3UnsetGPIO(ATT_SEL0 | ATT_SEL1);
 
         // Initialize Tuner
-        return Fx3->Control(R82XXINIT, (uint32_t)R820T_FREQ);
+        return Fx3->Control(TUNERINIT, (uint32_t)R820T_FREQ);
     }
 
     else if (mode == HFMODE )   // (mode == HFMODE || mode == VLFMODE) no more VLFMODE
     {
         // Stop Tuner
-        Fx3->Control(R82XXSTDBY);
+        Fx3->Control(TUNERSTDBY);
 
         // switch to HF Attenna
         return FX3SetGPIO(ATT_SEL0 | ATT_SEL1);
@@ -102,7 +102,7 @@ uint64_t BBRF103Radio::TuneLo(uint64_t freq)
     }
     else {
         // this is in VHF mode
-        Fx3->Control(R82XXTUNE, freq);
+        Fx3->Control(TUNERTUNE, freq);
         return freq - R820T2_IF_CARRIER;
     }
 }

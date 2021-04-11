@@ -76,11 +76,11 @@ bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
         Fx3->SetArgument(AD8340_VGA, gain);
         // Enable Tuner reference clock
         uint32_t ref = R828D_FREQ;
-        return Fx3->Control(R82XXINIT, ref); // Initialize Tuner
+        return Fx3->Control(TUNERINIT, ref); // Initialize Tuner
     }
     else if (mode == HFMODE)
     {
-        Fx3->Control(R82XXSTDBY); // Stop Tuner
+        Fx3->Control(TUNERSTDBY); // Stop Tuner
 
         return FX3UnsetGPIO(VHF_EN);                // switch to HF Attenna
     }
@@ -121,7 +121,7 @@ uint64_t RX888R2Radio::TuneLo(uint64_t freq)
     else
     {
         // this is in VHF mode
-        Fx3->Control(R82XXTUNE, freq);
+        Fx3->Control(TUNERTUNE, freq);
         return freq - R828D_IF_CARRIER;
     }
 }
