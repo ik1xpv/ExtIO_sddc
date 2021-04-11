@@ -278,6 +278,11 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 	return true;
 }
 
+rf_mode RadioHandlerClass::PrepareLo(uint64_t lo)
+{
+	return hardware->PrepareLo(lo);
+}
+
 uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 {
 	uint64_t actLo;

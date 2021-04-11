@@ -31,15 +31,22 @@ RXLucyRadio::RXLucyRadio(fx3class *fx3)
 
 void RXLucyRadio::Initialize(uint32_t adc_rate)
 {
-    uint32_t data = adc_rate;
-    Fx3->Control(STARTADC, data);
+    SampleRate = adc_rate;
+    Fx3->Control(STARTADC, adc_rate);
 }
 
-void RXLucyRadio::getFrequencyRange(int64_t &low, int64_t &high)
+
+rf_mode RXLucyRadio::PrepareLo(uint64_t freq)
 {
-    low = 35000ll * 1000;
-    high = 6000ll * 1000 * 1000; //
+    if (freq < 35000ll * 1000) return NOMODE;
+    if (freq > 6000ll * 1000 * 1000) return NOMODE;
+
+    if ( freq >= this->SampleRate / 2)
+        return VHFMODE;
+    else
+        return HFMODE;
 }
+
 
 bool RXLucyRadio::UpdateattRF(int att)
 {

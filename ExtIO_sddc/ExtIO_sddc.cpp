@@ -384,17 +384,13 @@ double EXTIO_API SetHWLOdbl(double LOfreq)
 	// Set here the frequency of the controlled hardware to LOfreq
 	const double wishedLO = LOfreq;
 	double ret = 0;
-
-	if (RadioHandler.getModel() == HF103) // HF frequency limits
-	{
-#if EXPORT_EXTIO_TUNE_FUNCTIONS
-		if (gfTunefreq > HF_HIGH) gfTunefreq = HF_HIGH;
-#endif
-		if (LOfreq > HF_HIGH - 1000000) LOfreq = (HF_HIGH) - 1000000;
-	}
-
 	rf_mode rfmode = RadioHandler.GetmodeRF();
-	if ((LOfreq > RadioHandler.getSampleRate()/2) && (rfmode != VHFMODE))
+	rf_mode newmode = RadioHandler.PrepareLo(LOfreq);
+
+	if (rf_mode == NOMODE) // this freq is not supported
+		return -1;
+
+	if ((newmode == HFMODE) && (rfmode != VHFMODE))
 	{
 			RadioHandler.UpdatemodeRF(VHFMODE);
 			ExtIoSetMGC(giMgcIdxVHF);
@@ -407,7 +403,7 @@ double EXTIO_API SetHWLOdbl(double LOfreq)
 			if (giExtSrateIdxHF != giExtSrateIdxVHF)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 	}
-	else if ((LOfreq <= RadioHandler.getSampleRate()/2) && (rfmode != HFMODE))
+	else if ((newmode == VHFMODE) && (rfmode != HFMODE))
 	{
 			RadioHandler.UpdatemodeRF(HFMODE);
 			ExtIoSetMGC(giMgcIdxHF);
