@@ -15,9 +15,13 @@
 #define GPIO_VGA_LE 38
 #define GPIO_FM_NOTCH 39
 
-#define GPIO_PRESEL_0 22
-#define GPIO_PRESEL_1 23
-#define GPIO_PRESEL_2 34
+#define GPIO_DIY_0 22
+#define GPIO_DIY_1 23
+#define GPIO_DIY_2 34
+
+#define GPIO_PRESEL_0 50
+#define GPIO_PRESEL_1 54
+#define GPIO_PRESEL_2 55
 
 void rx888r3_GpioSet(uint32_t mdata)
 {
@@ -66,9 +70,16 @@ void rx888r3_GpioInitialize()
 	ConfGPIOsimpleout (GPIO_PRESEL_1);
 	ConfGPIOsimpleout (GPIO_PRESEL_2);
 
-	CyU3PGpioSetValue (GPIO_PRESEL_0, 0);
-	CyU3PGpioSetValue (GPIO_PRESEL_1, 0);
-	CyU3PGpioSetValue (GPIO_PRESEL_2, 0);
+	rx888r3_preselect (0b011); // default 64M
+
+	// diy gpio
+	ConfGPIOsimpleout (GPIO_DIY_0);
+	ConfGPIOsimpleout (GPIO_DIY_1);
+	ConfGPIOsimpleout (GPIO_DIY_2);
+
+	CyU3PGpioSetValue (GPIO_DIY_0, 0);
+	CyU3PGpioSetValue (GPIO_DIY_1, 0);
+	CyU3PGpioSetValue (GPIO_DIY_2, 0);
 }
 
 /*

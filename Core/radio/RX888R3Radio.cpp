@@ -120,13 +120,19 @@ uint64_t RX888R3Radio::TuneLo(uint64_t freq)
         // set bpf
         int sel;
         // set preselector
-        if (freq <= 2*1000*1000) sel = 0b000;
-        else if (freq <= 12*1000*1000) sel = 0b100;
-        else if (freq <= 30*1000*1000) sel = 0b010;
-        else if (freq <= 60*1000*1000) sel = 0b110;
-        else if (freq  >  86*1000*1000 && freq <= 108*1000*1000) sel = 0b001; // FM
-        else if (SampleRate < 32 * 1000 * 1000) sel = 0b101;
-        else sel = 0b011;
+        if (freq  >  86*1000*1000 && freq <= 108*1000*1000)
+            sel = 0b001; // FM
+        else if (SampleRate <= 4 * 1000 * 1000)
+        {
+            if (freq <= 2*1000*1000) sel = 0b000;
+            else if (freq <= 12*1000*1000) sel = 0b100;
+            else if (freq <= 30*1000*1000) sel = 0b010;
+            else if (freq <= 60*1000*1000) sel = 0b110;
+        }
+        else if (SampleRate < 32 * 1000 * 1000)
+            sel = 0b101;
+        else
+            sel = 0b011;
 
         Fx3->SetArgument(PRESELECTOR, sel);
 
