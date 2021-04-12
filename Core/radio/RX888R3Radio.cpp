@@ -112,6 +112,8 @@ bool RX888R3Radio::UpdateattRF(int att)
     }
 }
 
+#define M(x) ((x)*1000000)
+
 uint64_t RX888R3Radio::TuneLo(uint64_t freq)
 {
     if (!(gpios & VHF_EN))
@@ -120,22 +122,23 @@ uint64_t RX888R3Radio::TuneLo(uint64_t freq)
         // set bpf
         int sel;
         // set preselector
-        if (freq  >  86*1000*1000 && freq <= 108*1000*1000)
-            sel = 0b001; // FM
-        else if (SampleRate <= 4 * 1000 * 1000)
-        {
-            if (freq <= 2*1000*1000) sel = 0b000;
-            else if (freq <= 12*1000*1000) sel = 0b100;
-            else if (freq <= 30*1000*1000) sel = 0b010;
-            else if (freq <= 60*1000*1000) sel = 0b110;
-            else sel = 0b011;
-        }
-        else if (SampleRate < 32 * 1000 * 1000)
+        if (freq > M(64) && freq <= M(128))
+            sel = 0b001; // FM undersampling
+        else if (SampleRate < M(32))
             sel = 0b101;
         else
             sel = 0b011;
 
         Fx3->SetArgument(PRESELECTOR, sel);
+
+        if (freq < M(64))
+            return 0;
+        else if (freq < M(128))
+            return M(64);
+        else if (freq < M(192))
+            return M(64 * 2);
+        else if (freq < M(256))
+            return M(64 * 3);
 
         return 0;
     }
