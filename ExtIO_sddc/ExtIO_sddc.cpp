@@ -390,7 +390,7 @@ double EXTIO_API SetHWLOdbl(double LOfreq)
 	if (newmode == NOMODE) // this freq is not supported
 		return -1;
 
-	if ((newmode == HFMODE) && (rfmode != VHFMODE))
+	if ((newmode == VHFMODE) && (rfmode != VHFMODE))
 	{
 			RadioHandler.UpdatemodeRF(VHFMODE);
 			ExtIoSetMGC(giMgcIdxVHF);
@@ -403,7 +403,7 @@ double EXTIO_API SetHWLOdbl(double LOfreq)
 			if (giExtSrateIdxHF != giExtSrateIdxVHF)
 				EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 	}
-	else if ((newmode == VHFMODE) && (rfmode != HFMODE))
+	else if ((newmode == HFMODE) && (rfmode != HFMODE))
 	{
 			RadioHandler.UpdatemodeRF(HFMODE);
 			ExtIoSetMGC(giMgcIdxHF);
