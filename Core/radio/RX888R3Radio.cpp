@@ -1,7 +1,6 @@
 #include "RadioHandler.h"
 
-#define R828D_FREQ (16000000) // R820T reference frequency
-#define R828D_IF_CARRIER (4570000)
+#define REFCLK_FREQ (24000000) // R820T reference frequency
 
 #define HIGH_MODE 0x80
 #define LOW_MODE 0x00
@@ -75,7 +74,7 @@ bool RX888R3Radio::UpdatemodeRF(rf_mode mode)
         uint8_t gain = 0x80 | 3;
         Fx3->SetArgument(AD8340_VGA, gain);
         // Enable Tuner reference clock
-        uint32_t ref = R828D_FREQ;
+        uint32_t ref = REFCLK_FREQ;
         return Fx3->Control(TUNERINIT, ref); // Initialize Tuner
     }
     else if (mode == HFMODE)
@@ -146,7 +145,7 @@ uint64_t RX888R3Radio::TuneLo(uint64_t freq)
     {
         // this is in VHF mode
         Fx3->Control(TUNERTUNE, freq);
-        return freq - R828D_IF_CARRIER;
+        return freq;
     }
 }
 
