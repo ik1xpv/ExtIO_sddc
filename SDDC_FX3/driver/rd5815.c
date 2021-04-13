@@ -4,18 +4,18 @@
 static uint32_t refclk;
 
 void RDA5815Initial(uint32_t freq)
-{    
+{
 	refclk = freq;
-//I2cTransferW1( RD5812_I2C_ADDR, register address,register data); 
+	//I2cTransferW1( RD5812_I2C_ADDR, register address,register data);
 
-	CyU3PThreadSleep(1);//Wait 1ms. 
-	 // Chip register soft reset
+	CyU3PThreadSleep(1); //Wait 1ms.
+						 // Chip register soft reset
 	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0x04);
 	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0x05);
 
 	// Initial configuration start
 
-	//pll setting 
+	//pll setting
 	I2cTransferW1(0x1a, RD5812_I2C_ADDR, 0x13);
 	I2cTransferW1(0x41, RD5812_I2C_ADDR, 0x53);
 	I2cTransferW1(0x38, RD5812_I2C_ADDR, 0x9B);
@@ -26,40 +26,40 @@ void RDA5815Initial(uint32_t freq)
 	I2cTransferW1(0x0c, RD5812_I2C_ADDR, 0xE2);
 	I2cTransferW1(0x2e, RD5812_I2C_ADDR, 0x6F);
 
-	switch(refclk)
+	switch (refclk)
 	{
 	case 27000000:
-		I2cTransferW1(0x72, RD5812_I2C_ADDR, 0x07);	// v1.1, 1538~1539
+		I2cTransferW1(0x72, RD5812_I2C_ADDR, 0x07); // v1.1, 1538~1539
 		I2cTransferW1(0x73, RD5812_I2C_ADDR, 0x10);
 		I2cTransferW1(0x74, RD5812_I2C_ADDR, 0x71);
 		I2cTransferW1(0x75, RD5812_I2C_ADDR, 0x06); // v1.1, 1363~1364, 1862~1863
 		I2cTransferW1(0x76, RD5812_I2C_ADDR, 0x40);
 		I2cTransferW1(0x77, RD5812_I2C_ADDR, 0x89);
-		I2cTransferW1(0x79, RD5812_I2C_ADDR, 0x04);	// v1.1, 900
+		I2cTransferW1(0x79, RD5812_I2C_ADDR, 0x04); // v1.1, 900
 		I2cTransferW1(0x7A, RD5812_I2C_ADDR, 0x2A);
 		I2cTransferW1(0x7B, RD5812_I2C_ADDR, 0xAA);
 		I2cTransferW1(0x7C, RD5812_I2C_ADDR, 0xAB);
 		break;
 	case 30000000:
-		I2cTransferW1(0x72, RD5812_I2C_ADDR, 0x06);	// v1.2, 1544~1545
+		I2cTransferW1(0x72, RD5812_I2C_ADDR, 0x06); // v1.2, 1544~1545
 		I2cTransferW1(0x73, RD5812_I2C_ADDR, 0x60);
 		I2cTransferW1(0x74, RD5812_I2C_ADDR, 0x66);
 		I2cTransferW1(0x75, RD5812_I2C_ADDR, 0x05); // v1.2, 1364~1365, 1859~1860
 		I2cTransferW1(0x76, RD5812_I2C_ADDR, 0xA0);
 		I2cTransferW1(0x77, RD5812_I2C_ADDR, 0x7B);
-		I2cTransferW1(0x79, RD5812_I2C_ADDR, 0x03);	// v1.2, 901
+		I2cTransferW1(0x79, RD5812_I2C_ADDR, 0x03); // v1.2, 901
 		I2cTransferW1(0x7A, RD5812_I2C_ADDR, 0xC0);
 		I2cTransferW1(0x7B, RD5812_I2C_ADDR, 0x00);
 		I2cTransferW1(0x7C, RD5812_I2C_ADDR, 0x00);
 		break;
 	case 24000000:
-		I2cTransferW1(0x72, RD5812_I2C_ADDR, 0x08);	// v1.3, 1547~1548
+		I2cTransferW1(0x72, RD5812_I2C_ADDR, 0x08); // v1.3, 1547~1548
 		I2cTransferW1(0x73, RD5812_I2C_ADDR, 0x00);
 		I2cTransferW1(0x74, RD5812_I2C_ADDR, 0x80);
 		I2cTransferW1(0x75, RD5812_I2C_ADDR, 0x07); // v1.3, 1367~1368, 1859~1860
 		I2cTransferW1(0x76, RD5812_I2C_ADDR, 0x10);
 		I2cTransferW1(0x77, RD5812_I2C_ADDR, 0x9A);
-		I2cTransferW1(0x79, RD5812_I2C_ADDR, 0x04);	// v1.3, 901
+		I2cTransferW1(0x79, RD5812_I2C_ADDR, 0x04); // v1.3, 901
 		I2cTransferW1(0x7A, RD5812_I2C_ADDR, 0xB0);
 		I2cTransferW1(0x7B, RD5812_I2C_ADDR, 0x00);
 		I2cTransferW1(0x7C, RD5812_I2C_ADDR, 0x00);
@@ -133,24 +133,24 @@ void RDA5815Initial(uint32_t freq)
 	I2cTransferW1(0xb4, RD5812_I2C_ADDR, 0xDF);
 	I2cTransferW1(0xb6, RD5812_I2C_ADDR, 0x0F);
 
-	I2cTransferW1(0xb7, RD5812_I2C_ADDR, 0x15);	//start    
-	I2cTransferW1(0xb9, RD5812_I2C_ADDR, 0x6c);	           
-	I2cTransferW1(0xbb, RD5812_I2C_ADDR, 0x63);	           
-	I2cTransferW1(0xbd, RD5812_I2C_ADDR, 0x5a);	           
-	I2cTransferW1(0xbf, RD5812_I2C_ADDR, 0x5a);	           
-	I2cTransferW1(0xc1, RD5812_I2C_ADDR, 0x55);	           
-	I2cTransferW1(0xc3, RD5812_I2C_ADDR, 0x55);	           
-	I2cTransferW1(0xc5, RD5812_I2C_ADDR, 0x47);	           
-	I2cTransferW1(0xa3, RD5812_I2C_ADDR, 0x53);	           
-	I2cTransferW1(0xa5, RD5812_I2C_ADDR, 0x4f);	           
-	I2cTransferW1(0xa7, RD5812_I2C_ADDR, 0x4e);	           
-	I2cTransferW1(0xa9, RD5812_I2C_ADDR, 0x4e);	           
+	I2cTransferW1(0xb7, RD5812_I2C_ADDR, 0x15); //start
+	I2cTransferW1(0xb9, RD5812_I2C_ADDR, 0x6c);
+	I2cTransferW1(0xbb, RD5812_I2C_ADDR, 0x63);
+	I2cTransferW1(0xbd, RD5812_I2C_ADDR, 0x5a);
+	I2cTransferW1(0xbf, RD5812_I2C_ADDR, 0x5a);
+	I2cTransferW1(0xc1, RD5812_I2C_ADDR, 0x55);
+	I2cTransferW1(0xc3, RD5812_I2C_ADDR, 0x55);
+	I2cTransferW1(0xc5, RD5812_I2C_ADDR, 0x47);
+	I2cTransferW1(0xa3, RD5812_I2C_ADDR, 0x53);
+	I2cTransferW1(0xa5, RD5812_I2C_ADDR, 0x4f);
+	I2cTransferW1(0xa7, RD5812_I2C_ADDR, 0x4e);
+	I2cTransferW1(0xa9, RD5812_I2C_ADDR, 0x4e);
 	I2cTransferW1(0xab, RD5812_I2C_ADDR, 0x54);
 	I2cTransferW1(0xad, RD5812_I2C_ADDR, 0x31);
 	I2cTransferW1(0xaf, RD5812_I2C_ADDR, 0x43);
-	I2cTransferW1(0xb1, RD5812_I2C_ADDR, 0x9f);   
+	I2cTransferW1(0xb1, RD5812_I2C_ADDR, 0x9f);
 
-	I2cTransferW1(0xb8, RD5812_I2C_ADDR, 0x6c); //end      
+	I2cTransferW1(0xb8, RD5812_I2C_ADDR, 0x6c); //end
 	I2cTransferW1(0xba, RD5812_I2C_ADDR, 0x92);
 	I2cTransferW1(0xbc, RD5812_I2C_ADDR, 0x8a);
 	I2cTransferW1(0xbe, RD5812_I2C_ADDR, 0x8a);
@@ -164,10 +164,10 @@ void RDA5815Initial(uint32_t freq)
 	I2cTransferW1(0xaa, RD5812_I2C_ADDR, 0x6f);
 	I2cTransferW1(0xac, RD5812_I2C_ADDR, 0x65);
 	I2cTransferW1(0xae, RD5812_I2C_ADDR, 0x43);
-	I2cTransferW1(0xb0, RD5812_I2C_ADDR, 0x9f); 
-	I2cTransferW1(0xb2, RD5812_I2C_ADDR, 0xf0); 
+	I2cTransferW1(0xb0, RD5812_I2C_ADDR, 0x9f);
+	I2cTransferW1(0xb2, RD5812_I2C_ADDR, 0xf0);
 
-	I2cTransferW1(0x81, RD5812_I2C_ADDR, 0x92); //rise     
+	I2cTransferW1(0x81, RD5812_I2C_ADDR, 0x92); //rise
 	I2cTransferW1(0x82, RD5812_I2C_ADDR, 0xb4);
 	I2cTransferW1(0x83, RD5812_I2C_ADDR, 0xb3);
 	I2cTransferW1(0x84, RD5812_I2C_ADDR, 0xac);
@@ -180,10 +180,10 @@ void RDA5815Initial(uint32_t freq)
 	I2cTransferW1(0x8b, RD5812_I2C_ADDR, 0x9b);
 	I2cTransferW1(0x8c, RD5812_I2C_ADDR, 0x7d);
 	I2cTransferW1(0x8d, RD5812_I2C_ADDR, 0x74);
-	I2cTransferW1(0x8e, RD5812_I2C_ADDR, 0x9f);           
-	I2cTransferW1(0x8f, RD5812_I2C_ADDR, 0xf0);   
-	         
-	I2cTransferW1(0x90, RD5812_I2C_ADDR, 0x15); //fall     
+	I2cTransferW1(0x8e, RD5812_I2C_ADDR, 0x9f);
+	I2cTransferW1(0x8f, RD5812_I2C_ADDR, 0xf0);
+
+	I2cTransferW1(0x90, RD5812_I2C_ADDR, 0x15); //fall
 	I2cTransferW1(0x91, RD5812_I2C_ADDR, 0x39);
 	I2cTransferW1(0x92, RD5812_I2C_ADDR, 0x30);
 	I2cTransferW1(0x93, RD5812_I2C_ADDR, 0x27);
@@ -199,25 +199,25 @@ void RDA5815Initial(uint32_t freq)
 	I2cTransferW1(0x9d, RD5812_I2C_ADDR, 0x31);
 	I2cTransferW1(0x9e, RD5812_I2C_ADDR, 0x43);
 
-	CyU3PThreadSleep(10);//Wait 10ms; 
+	CyU3PThreadSleep(10); //Wait 10ms;
 
 	// Initial configuration end
 }
-	
+
 /********************************************************************************/
 //	Function to Set the RDA5815
-//	fPLL:		Frequency			unit: MHz from 250 to 2300 
-//	fSym:	SymbolRate			unit: KSps from 1000 to 60000 
+//	fPLL:		Frequency			unit: MHz from 250 to 2300
+//	fSym:	SymbolRate			unit: KSps from 1000 to 60000
 /********************************************************************************/
-int32_t RDA5815Set(unsigned long fPLL, unsigned long fSym )
+int32_t RDA5815Set(unsigned long fPLL, unsigned long fSym)
 {
- 	unsigned char buffer; 
- 	unsigned long temp_value = 0;
-	unsigned long bw;/*,temp_value1 = 0,temp_value2=0 ;*/
-	unsigned char Filter_bw_control_bit;	
+	unsigned char buffer;
+	unsigned long temp_value = 0;
+	unsigned long bw; /*,temp_value1 = 0,temp_value2=0 ;*/
+	unsigned char Filter_bw_control_bit;
 
 	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0xc1); //add by rda 2011.8.9,RXON = 0 , change normal working state to idle state
-	I2cTransferW1(0x2b, RD5812_I2C_ADDR, 0x95);//clk_interface_27m=0  add by rda 2012.1.12
+	I2cTransferW1(0x2b, RD5812_I2C_ADDR, 0x95); //clk_interface_27m=0  add by rda 2012.1.12
 
 	//set frequency start
 	switch (refclk)
@@ -233,41 +233,41 @@ int32_t RDA5815Set(unsigned long fPLL, unsigned long fSym )
 		break;
 	}
 
-	buffer = ((unsigned char)((temp_value>>24)&0xff));
+	buffer = ((unsigned char)((temp_value >> 24) & 0xff));
 	I2cTransferW1(0x07, RD5812_I2C_ADDR, buffer);
-	buffer = ((unsigned char)((temp_value>>16)&0xff));	
-	I2cTransferW1(0x08, RD5812_I2C_ADDR, buffer);	
-   	buffer = ((unsigned char)((temp_value>>8)&0xff));
-	I2cTransferW1(0x09, RD5812_I2C_ADDR, buffer);	
-   	buffer = ((unsigned char)( temp_value&0xff));
+	buffer = ((unsigned char)((temp_value >> 16) & 0xff));
+	I2cTransferW1(0x08, RD5812_I2C_ADDR, buffer);
+	buffer = ((unsigned char)((temp_value >> 8) & 0xff));
+	I2cTransferW1(0x09, RD5812_I2C_ADDR, buffer);
+	buffer = ((unsigned char)(temp_value & 0xff));
 	I2cTransferW1(0x0a, RD5812_I2C_ADDR, buffer);
 	//set frequency end
-	
+
 	// set Filter bandwidth start
-	bw=fSym;		//kHz
+	bw = fSym; //kHz
 
-	Filter_bw_control_bit = (unsigned char)((bw*135/200+4000)/1000);
+	Filter_bw_control_bit = (unsigned char)((bw * 135 / 200 + 4000) / 1000);
 
-	if(Filter_bw_control_bit<4)
-		Filter_bw_control_bit = 4;    // MHz
-	else if(Filter_bw_control_bit>40)
-		Filter_bw_control_bit = 40;   // MHz
-	
-	Filter_bw_control_bit&=0x3f;
-	Filter_bw_control_bit|=0x40;		//v1.5
+	if (Filter_bw_control_bit < 4)
+		Filter_bw_control_bit = 4; // MHz
+	else if (Filter_bw_control_bit > 40)
+		Filter_bw_control_bit = 40; // MHz
+
+	Filter_bw_control_bit &= 0x3f;
+	Filter_bw_control_bit |= 0x40; //v1.5
 
 	I2cTransferW1(0x0b, RD5812_I2C_ADDR, Filter_bw_control_bit);
 	// set Filter bandwidth end
-	
-	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0xc3);		//add by rda 2011.8.9,RXON = 0 ,rxon=1,normal working
-	I2cTransferW1(0x2b, RD5812_I2C_ADDR, 0x97);		//clk_interface_27m=1  add by rda 2012.1.12  
-	CyU3PThreadSleep(5);//Wait 5ms;
-  
-	return 1;   
+
+	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0xc3); //add by rda 2011.8.9,RXON = 0 ,rxon=1,normal working
+	I2cTransferW1(0x2b, RD5812_I2C_ADDR, 0x97); //clk_interface_27m=1  add by rda 2012.1.12
+	CyU3PThreadSleep(5);						//Wait 5ms;
+
+	return 1;
 }
 
 void RDA5815Shutdown()
 {
-	 // Chip register soft reset
+	// Chip register soft reset
 	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0x00);
 }
