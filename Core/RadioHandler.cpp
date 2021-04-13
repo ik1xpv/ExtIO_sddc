@@ -69,6 +69,7 @@ void RadioHandlerClass::OnDataPacket(void* buf)
 }
 
 RadioHandlerClass::RadioHandlerClass() :
+	DbgPrintFX3(nullptr),
 	run(false),
 	pga(false),
 	dither(false),
@@ -342,6 +343,11 @@ void RadioHandlerClass::CaculateStats()
 
 	BytesXferred = 0;
 	SamplesXIF = 0;
+
+	uint16_t maxlen = 64;
+	uint8_t  debdata[64];
+	memset(debdata, 0, sizeof(debdata));
+
 	auto StartingTime = high_resolution_clock::now();
 
 	while (run) {
@@ -359,7 +365,28 @@ void RadioHandlerClass::CaculateStats()
 		SamplesXIF = 0;
 
 		StartingTime = high_resolution_clock::now();
+		int nt = 5;
+#ifdef _DEBUG  
+		while (nt-- > 0)
+		{
+			std::this_thread::sleep_for(0.1s);
+			
+			if (hardware->ReadDebugTrace(debdata, maxlen) == true) // there are message from FX3 ?
+			{
+				int len = strlen((char*)debdata);
+				if (len > maxlen - 1) len = maxlen - 1;
+				debdata[len] = 0;
+				if ((len > 0)&&(DbgPrintFX3 != nullptr))
+				{
+					DbgPrintFX3("%s\n", (char*)debdata);
+					memset(debdata, 0, sizeof(debdata));
+				}
+			}
+			
+		}
+#else
 		std::this_thread::sleep_for(0.5s);
+#endif
 	}
 	return;
 }

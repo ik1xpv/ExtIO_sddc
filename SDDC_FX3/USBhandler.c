@@ -34,6 +34,10 @@ extern CyBool_t glIsApplnActive;				// Set true once device is enumerated
 extern uint8_t  HWconfig;       			    // Hardware config
 extern uint16_t  FWconfig;       			    // Firmware config hb.lb
 
+extern CyBool_t flagdebug;
+extern uint16_t debtxtlen;
+extern uint8_t bufdebug[MAXLEN];  
+
 // r820xx data
 struct r82xx_priv tuner;
 struct r82xx_config tuner_config;
@@ -52,50 +56,51 @@ CyU3PDmaChannel glGPIF2USB_Handle;
 uint8_t  *glEp0Buffer = 0;              /* Buffer used to handle vendor specific control requests. */
 uint8_t  vendorRqtCnt = 0;
 
-#ifdef TRACESERIAL 
 
 extern const char* FX3CommandName[];
 extern const char* SETARGFX3List[];
 
 /* Trace function */
 void
-TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wIndex)
-{
-	DebugPrint(4, "\r\n%s\t", FX3CommandName[bRequest - 0xAA]);  
-	switch(bRequest)
+TraceList( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wIndex)
+{	
+	if ( bRequest != READINFODEBUG)
 	{
-	case SETARGFX3:
-		DebugPrint(4, "%s\t%d", SETARGFX3List[wIndex],  wValue );
-		break;
+	DebugUSB(4, "%s\t", FX3CommandName[bRequest - 0xAA]);  
+		switch(bRequest)
+		{
+		case SETARGFX3:
+			DebugUSB(4, "%s\t%d", SETARGFX3List[wIndex],  wValue );
+			break;
+			
+		case GPIOFX3:
+			DebugUSB(4, "\t0x%x", * (uint32_t *) pdata);
+			break;
 		
-	case GPIOFX3:
-		DebugPrint(4, "\t0x%x", * (uint32_t *) pdata);
-		break;
-	
-	case R82XXTUNE:
-	case AD4351TUNE:
-		DebugPrint(4, "%d", * (uint64_t *) pdata);
-		break;
-		
-	case R82XXINIT:	
-	case STARTADC:
-		DebugPrint(4, "%d", * (uint32_t *) pdata);
-		break;
-		
-	case R82XXSTDBY:
-	case STARTFX3:
-	case STOPFX3:
-	case RESETFX3:
-		break;
-		
-	default:
-		DebugPrint(4, "0x%x\t0x%x", pdata[0] , pdata[1]);
-		break;
-		
+		case R82XXTUNE:
+		case AD4351TUNE:
+			DebugUSB(4, "%d", * (uint64_t *) pdata);
+			break;
+			
+		case R82XXINIT:	
+		case STARTADC:
+			DebugUSB(4, "%d", * (uint32_t *) pdata);
+			break;
+			
+		case R82XXSTDBY:
+		case STARTFX3:
+		case STOPFX3:
+		case RESETFX3:
+			break;
+		default:
+			DebugUSB(4, "default ? ? 0x%02x\t0x%02x", pdata[0] , pdata[1]);
+			break;
+			
+		}
+	DebugUSB(4, "\n");
 	}
-	DebugPrint(4, "\r\n");
+
 }
-#endif
 
 
 /* Callback to handle the USB setup requests. */
@@ -248,6 +253,27 @@ CyFxSlFifoApplnUSBSetupCB (
 						isHandled = CyTrue;
 					}
 					break;
+
+
+			case READINFODEBUG:		
+					{
+					if (debtxtlen > 0) 
+						{
+							uint16_t len = debtxtlen;
+							memcpy(glEp0Buffer, bufdebug, len);
+							debtxtlen=0;
+							glEp0Buffer[len-1] = 0;
+							CyU3PUsbSendEP0Data (len, glEp0Buffer);
+							vendorRqtCnt++;
+							isHandled = CyTrue;
+						}
+					else
+						{
+							isHandled = CyFalse;
+						}
+					}
+					break;
+			
 
 			case R82XXINIT:
 					{
@@ -424,26 +450,25 @@ CyFxSlFifoApplnUSBSetupCB (
 					CyU3PDeviceReset(CyFalse);
 					break;
 
-            case TESTFX3:
+            		case TESTFX3:
 					glEp0Buffer[0] =  HWconfig;
 					glEp0Buffer[1] = (uint8_t) (FWconfig >> 8);
 					glEp0Buffer[2] = (uint8_t) FWconfig;
 					glEp0Buffer[3] = vendorRqtCnt;
 					CyU3PUsbSendEP0Data (4, glEp0Buffer);
+					flagdebug = (wValue == 1); // debug mode 
 					vendorRqtCnt++;
 					isHandled = CyTrue;
 					break;
 
-            default: /* unknown request, stall the endpoint. */
+            		default: /* unknown request, stall the endpoint. */
 
 					isHandled = CyFalse;
 					CyU3PDebugPrint (4, "STALL EP0 V.REQ %x\n",bRequest);
 					CyU3PUsbStall (0, CyTrue, CyFalse);
 					break;
     	}
-    #ifdef TRACESERIAL
-    	TraceSerial( bRequest, (uint8_t *) &glEp0Buffer[0], wValue, wIndex);
-    #endif
+    	TraceList( bRequest, (uint8_t *) &glEp0Buffer[0], wValue, wIndex);
     }
     return isHandled;
 }

@@ -224,9 +224,12 @@ bool fx3handler::GetHardwareInfo(UINT32* data) { // firmware control BBRF
 	long lgt = 4;
 
 	fx3dev->ControlEndPt->ReqCode = TESTFX3;
-	fx3dev->ControlEndPt->Value = (USHORT)0;
+#ifdef _DEBUG
+	fx3dev->ControlEndPt->Value = (USHORT) 1;
+#else
+	fx3dev->ControlEndPt->Value = (USHORT) 0;
+#endif
 	fx3dev->ControlEndPt->Index = (USHORT)0;
-	lgt = 4; // TESTFX3 len
 	bool r = fx3dev->ControlEndPt->Read((PUCHAR)data, lgt);
 	DbgPrintf("GetHardwareInfo %x .%x %x\n", r, TESTFX3, *data);
 	if (r == false)
@@ -235,6 +238,15 @@ bool fx3handler::GetHardwareInfo(UINT32* data) { // firmware control BBRF
 	}
 	return r;
 
+}
+
+bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
+{
+	long lgt = len;
+	bool r;
+	fx3dev->ControlEndPt->ReqCode = READINFODEBUG;
+	r = fx3dev->ControlEndPt->Read((PUCHAR)pdata, lgt);
+	return r;
 }
 
 bool fx3handler::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
