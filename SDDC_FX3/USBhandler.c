@@ -236,6 +236,8 @@ CyFxSlFifoApplnUSBSetupCB (
 
 						case RX888r3:
 							rx888r3_GpioSet(mdata);
+							isHandled = CyTrue;
+							break;
 
 						case RX999:
 							rx999_GpioSet(mdata);
@@ -408,12 +410,12 @@ CyFxSlFifoApplnUSBSetupCB (
 									hf103_SetAttenuator(wValue);
 									rc = 0;
 									break;
-								case RX888r3:
-									rx888r3_SetAttenuator(wValue);
-									rc = 0;
-									break;
 								case RX888r2:
 									rx888r2_SetAttenuator(wValue);
+									rc = 0;
+									break;
+								case RX888r3:
+									rx888r3_SetAttenuator(wValue);
 									rc = 0;
 									break;
 								case RX999:

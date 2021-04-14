@@ -9,6 +9,7 @@
 #include <mutex>
 #include <condition_variable>
 
+#define _CONSOLE
 
 #ifdef __cplusplus
 inline void null_func(const char *format, ...) { }
@@ -27,7 +28,7 @@ inline void null_func(const char *format, ...) { }
 	  }\
 	}while(0)
 
-#ifdef VERBOSE_DEBUG
+#ifdef VERBOSE_CONSOLE
 	#define EnterFunction() \
 	DbgPrintf("==>%s\n", __FUNCDNAME__)
 
@@ -38,7 +39,7 @@ inline void null_func(const char *format, ...) { }
 	#define EnterFunction1(v1)
 #endif
 
-#ifdef _DEBUG
+#ifdef _CONSOLE
 #define DbgPrintf (printf)
 #else
 #define DbgPrintf DbgEmpty

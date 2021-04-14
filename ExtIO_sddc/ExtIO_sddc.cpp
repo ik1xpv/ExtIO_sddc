@@ -134,7 +134,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 	if (!gbInitHW)
 	{
 		splashW.createSplashWindow(hInst, IDB_BITMAP2, 15, 15, 15);
-#ifdef _DEBUG
+#ifdef _CONSOLE
 		if (AllocConsole())
 		{
 			freopen("CONOUT$", "wt", stdout);
