@@ -11,6 +11,7 @@
  */
 
 #include "Application.h"
+#include <stdarg.h>
 
 // Declare external functions
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
@@ -18,14 +19,12 @@ extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
 // Declare external data
 extern CyU3PQueue EventAvailable;			  	// Used for threads communications
 extern uint32_t glDMACount;
-
-// Global data owned by this module
-
-
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
-
 extern CyU3PThread ThreadHandle[APP_THREADS];		// Handles to my Application Threads
 extern void *StackPtr[APP_THREADS];				// Stack allocated to each thread
+extern CyBool_t glIsApplnActive;				// Set true once device is enumerated
+
+// Global data owned by this module
 
 CyBool_t glDebugTxEnabled = CyFalse;	// Set true once I can output messages to the Console
 CyU3PDmaChannel glUARTtoCPU_Handle;		// Handle needed by Uart Callback routine
@@ -37,6 +36,11 @@ uint32_t ClockValue;	// Used to Set/Display GPIF clock
 uint8_t Toggle;
 uint32_t Qevent __attribute__ ((aligned (32)));
 
+CyBool_t flagdebug = false;
+uint16_t debtxtlen = 0;
+uint8_t bufdebug[MAXLEN];  // buffer debug string//
+
+
 // For Debug and education display the name of the Event
 const char* EventName[] = {
 	    "CONNECT", "DISCONNECT", "SUSPEND", "RESUME", "RESET", "SET_CONFIGURATION", "SPEED",
@@ -45,11 +49,11 @@ const char* EventName[] = {
 	    "OTG_SRP", "EP_UNDERRUN", "LINK_RECOVERY", "USB3_LINKFAIL", "SS_COMP_ENTRY", "SS_COMP_EXIT"
 };
 
-#ifdef TRACESERIAL 
+
 // For Debug and display the name of the FX3Command
 const char* FX3CommandName[] = {  // start 0xAA
 "STARTFX3", "STOPFX3", "TESTFX3", "GPIOFX3", "I2CWFX3","I2CRFX3", "0xB0", "RESETFX3",
-"STARTADC", "0xB3", "R82XXINIT","R82XXTUNE","SETARGFX3","0xB6", "R82XXSTDBY","AD4351TUNE"
+"STARTADC", "0xB3", "R82XXINIT","R82XXTUNE","SETARGFX3","0xB6", "R82XXSTDBY","AD4351TUNE","READINFODEBUG"
 };
 
 // For Debug and display the name of the FX3Command
@@ -57,7 +61,7 @@ const char* SETARGFX3List[] = {
 "0", "R82XX_ATTENUATOR","R82XX_VGA","R82XX_SIDEBAND","R82XX_HARMONIC","5","6","7","8","9",
 "DAT31_ATT","AD8340_VGA","PRESELECTOR","VHF_ATTENUATOR"
 };
-#endif
+
 
 void ParseCommand(void)
 {
@@ -117,6 +121,144 @@ void ParseCommand(void)
 	else DebugPrint(4, "Input: '%s'\r\n", &ConsoleInBuffer[0]);
 	ConsoleInIndex = 0;
 }
+
+
+
+uint8_t * CyU3PDebugIntToStr(uint8_t *convertedString, uint32_t num, uint8_t base);
+
+// from /FX3_SDK_1_3_1_SRC/sdk/firmware/src/system/cyu3debug.c  
+// MyDebugSNPrint
+
+static CyU3PReturnStatus_t MyDebugSNPrint (
+        uint8_t  *debugMsg,
+        uint16_t *length,
+        char     *message,
+        va_list   argp)
+{
+    uint8_t  *string_p;
+    uint8_t  *argStr = NULL;
+    CyBool_t  copyReqd = CyFalse;
+    uint16_t  i = 0, j, maxLength = *length;
+    int32_t   intArg;
+    uint32_t  uintArg;
+    uint8_t   convertedString[11];
+
+    if (debugMsg == 0)
+        return CY_U3P_ERROR_BAD_ARGUMENT;
+
+    /* Parse the string and copy into the buffer for sending out. */
+    for (string_p = (uint8_t *)message; (*string_p != '\0'); string_p++)
+    {
+        if (i >= (maxLength - 2))
+            return CY_U3P_ERROR_BAD_ARGUMENT;
+
+        if (*string_p != '%')
+        {
+            debugMsg[i++] = *string_p;
+            continue;
+        }
+
+        string_p++;
+        switch (*string_p)
+        {
+        case '%' :
+            {
+                debugMsg[i++] = '%';
+            }
+            break;
+
+        case 'c' :
+            {
+                debugMsg[i++] = (uint8_t)va_arg (argp, int32_t);
+            }
+            break;
+
+        case 'd' :
+            {
+                intArg = va_arg (argp, int32_t);
+                if (intArg < 0)
+                {
+                    debugMsg[i++] = '-';
+                    intArg = -intArg;
+                }
+
+                argStr =  CyU3PDebugIntToStr (convertedString, intArg, 10);
+                copyReqd = CyTrue;
+            }
+            break;
+
+        case 's':
+            {
+                argStr = va_arg (argp, uint8_t *);
+                copyReqd = CyTrue;
+            }
+            break;
+
+        case 'u':
+            {
+                uintArg = va_arg (argp, uint32_t);
+                argStr = CyU3PDebugIntToStr (convertedString, uintArg, 10);
+                copyReqd = CyTrue;
+            }
+            break;
+
+        case 'X':
+        case 'x':
+            {
+                uintArg = va_arg (argp, uint32_t);
+                argStr = CyU3PDebugIntToStr (convertedString, uintArg, 16);
+                copyReqd = CyTrue;
+            }
+            break;
+
+        default:
+            return CY_U3P_ERROR_BAD_ARGUMENT;
+        }
+
+        if (copyReqd)
+        {
+            j = (uint16_t)strlen ((char *)argStr);
+            if (i >= (maxLength - j - 1))
+                return CY_U3P_ERROR_BAD_ARGUMENT;
+            strcpy ((char *)(debugMsg + i), (char *)argStr);
+            i += j;
+            copyReqd = CyFalse;
+        }
+    }
+
+    /* NULL-terminate the string. There will always be space for this. */
+    debugMsg[i] = '\0';
+    *length     = i;
+
+    return CY_U3P_SUCCESS;
+}
+
+void DebugPrint2USB ( uint8_t priority, char *msg, ...)
+{
+	if ((glIsApplnActive != CyTrue)||(flagdebug == false)) return;
+	va_list argp;
+	uint8_t buf[MAXLEN];
+//		memset(buf,0,sizeof(buf)); // not necessary
+		CyU3PReturnStatus_t stat;
+		uint16_t len = MAXLEN;
+		va_start (argp, msg);
+		stat = MyDebugSNPrint (buf, &len, msg, argp);
+		va_end (argp);
+		if ( stat == CY_U3P_SUCCESS ) 
+		{
+			if(debtxtlen+len < MAXLEN ) {
+				memcpy(&bufdebug[debtxtlen], buf, len);
+				debtxtlen = debtxtlen+len;
+			}
+			else{
+				if (MAXLEN-len-1 >0) memset(&bufdebug[debtxtlen], '.', MAXLEN-len-1); // ubderflow
+				bufdebug[MAXLEN-1] = 0;
+				debtxtlen = MAXLEN;
+			}
+		}
+}
+
+
 
 void UartCallback(CyU3PUartEvt_t Event, CyU3PUartError_t Error)
 // Handle characters typed in by the developer

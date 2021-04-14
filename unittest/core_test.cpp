@@ -44,6 +44,10 @@ class fx3handler : public fx3class
         return true;
     }
 
+    bool ReadDebugTrace(uint8_t* pdata, uint8_t len) {
+        return true;
+    }
+
     std::thread emuthread;
     bool run;
 	void StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock)

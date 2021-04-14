@@ -39,7 +39,7 @@ public:
 	bool Control(FX3Command command, uint64_t data);
 	bool SetArgument(uint16_t index, uint16_t value);
 	bool GetHardwareInfo(uint32_t* data);
-
+	bool ReadDebugTrace(uint8_t* pdata, uint8_t len);
 	void StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock);
 	void StopStream();
 

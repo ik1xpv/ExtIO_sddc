@@ -65,6 +65,28 @@ double FreqCorrectionFactor()
 	return 1.0 + gfFreqCorrectionPpm / 1E6;
 }
 
+std::mutex mtx_print;           // mutex for critical section
+
+// printf console from ExtIO debug
+void dbgprintf(const char* fmt, ...) {
+	mtx_print.lock();
+	va_list args;
+	va_start(args, fmt);
+	vprintf(fmt, args);
+	va_end(args);
+	mtx_print.unlock();
+}
+// printf console from FX3 via USB callback
+static void printf_USB_cb(const char* fmt, ...) {
+	mtx_print.lock();
+	SetConsoleColorTXT(TXT_CYAN);
+	va_list args;
+	va_start(args, fmt);
+	vprintf(fmt, args);
+	va_end(args);
+	SetConsoleColorTXT(TXT_GREEN);
+	mtx_print.unlock();
+}
 
 //---------------------------------------------------------------------------
 
@@ -123,6 +145,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			SetWindowPos(Hconsole, HWND_TOPMOST, rect.right - 800, 24, 800, 420, SWP_SHOWWINDOW);
 			DbgPrintf((char *) "Oscar Steila IK1XPV fecit MMXVIII - MMXX\n");
 			MakeWindowTransparent(Hconsole, 0xC0);
+			SetConsoleColorTXT(TXT_GREEN);
 		}
 #endif
 		EnterFunction();  // now works
@@ -152,7 +175,11 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 
 		auto Fx3 = CreateUsbHandler();
 		gbInitHW = Fx3->Open(res_data, res_size) &&
-				   RadioHandler.Init(Fx3, Callback); // Check if it there hardware
+				   RadioHandler.Init(Fx3, Callback ); // Check if it there hardware
+#ifdef _DEBUG
+			RadioHandler.EnableDebug( printf_USB_cb );
+#endif 
+
 		if (!gbInitHW)
 		{
 			MessageBox(NULL, "Is SDR powered on and connected ?\r\n\r\nPlease start HDSDR again",

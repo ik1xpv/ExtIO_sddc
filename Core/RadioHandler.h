@@ -60,6 +60,10 @@ public:
 
     void uptLed(int led, bool on);
 
+    void EnableDebug(void (*dbgprintFX3)(const char* fmt, ...)) { this->DbgPrintFX3 = dbgprintFX3; };
+
+    bool ReadDebugTrace(uint8_t* pdata, uint8_t len) { return fx3->ReadDebugTrace(pdata, len); }
+
 private:
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
@@ -68,6 +72,7 @@ private:
     r2iqControlClass* r2iqCntrl;
 
     void (*Callback)(float *data, uint32_t length);
+    void (*DbgPrintFX3)(const char* fmt, ...);
 
     bool run;
     unsigned long count;    // absolute index
@@ -125,6 +130,8 @@ public:
 
     bool FX3producerOn() { return Fx3->Control(STARTFX3); }
     bool FX3producerOff() { return Fx3->Control(STOPFX3); }
+
+    bool ReadDebugTrace(uint8_t* pdata, uint8_t len) { return Fx3->ReadDebugTrace(pdata, len); }
 
     bool FX3SetGPIO(uint32_t mask);
     bool FX3UnsetGPIO(uint32_t mask);

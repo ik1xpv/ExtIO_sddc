@@ -65,6 +65,10 @@ enum FX3Command {
     // Tune 4351 to a frequency
     // WRITE: UINT64
     AD4351TUNE = 0xB9,
+
+    // Read Debug string if any
+    // READ: 
+    READINFODEBUG = 0xBA,
 };
 
 #define OUTXIO0 (1U << 0) 	// ATT_LE
