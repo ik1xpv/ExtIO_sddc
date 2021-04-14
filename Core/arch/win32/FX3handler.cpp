@@ -87,6 +87,19 @@ bool  fx3handler::Open(uint8_t* fw_data, uint32_t fw_size) {
 	if (n == 0) return r;					// return if no devices connected
 	if (!GetFx3Device()) return r;          // NO FX3 device connected
 
+#ifdef _DEBUG
+	if (!fx3dev->IsBootLoaderRunning()) { // if not bootloader device
+		Control(RESETFX3);          // reset the fx3 firmware via CyU3PDeviceReset(false)
+		DbgPrintf("DEBUG - Reset Firmware\n");
+		Sleep(300);
+		fx3dev->Close();            // close class
+		delete fx3dev;              // destroy class
+		Sleep(300);
+		fx3dev = new CCyFX3Device;  // create class
+		GetFx3Device();             // open class
+	}
+#endif
+
 	FX3_FWDWNLOAD_ERROR_CODE dlf = SUCCESS;
 	if (fx3dev->IsBootLoaderRunning())
 	{

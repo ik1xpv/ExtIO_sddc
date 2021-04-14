@@ -346,7 +346,7 @@ void RadioHandlerClass::CaculateStats()
 
 	uint16_t maxlen = 64;
 	uint8_t  debdata[64];
-	memset(debdata, 0, sizeof(debdata));
+	memset(debdata, 0, maxlen);
 
 	auto StartingTime = high_resolution_clock::now();
 
@@ -365,8 +365,9 @@ void RadioHandlerClass::CaculateStats()
 		SamplesXIF = 0;
 
 		StartingTime = high_resolution_clock::now();
-		int nt = 5;
+	
 #ifdef _DEBUG  
+		int nt = 5;
 		while (nt-- > 0)
 		{
 			std::this_thread::sleep_for(0.1s);
