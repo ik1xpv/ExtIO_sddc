@@ -85,7 +85,6 @@ enum FX3Command {
 #define OUTXI14 (1U << 14)  	// 16384
 #define OUTXI15 (1U << 15)  	// 32768
 #define OUTXI16 (1U << 16)
-#define OUTXI17 (1U << 17)
 
 enum GPIOPin {
     SHDWN = OUTXIO5,
@@ -102,9 +101,6 @@ enum GPIOPin {
     // RX888r2
     VHF_EN = OUTXI15,
     PGA_EN = OUTXI16,
-
-    // RX888r3
-    FM_NOTCH = OUTXI17,
 };
 
 enum RadioModel {

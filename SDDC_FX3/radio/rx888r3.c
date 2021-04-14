@@ -13,7 +13,6 @@
 #define GPIO_DITH 29
 #define GPIO_VHF_EN 35
 #define GPIO_VGA_LE 38
-#define GPIO_FM_NOTCH 39
 
 #define GPIO_DIY_0 22
 #define GPIO_DIY_1 23
@@ -22,6 +21,7 @@
 #define GPIO_PRESEL_0 50
 #define GPIO_PRESEL_1 54
 #define GPIO_PRESEL_2 55
+#define GPIO_FM_NOTCH 39
 
 void rx888r3_GpioSet(uint32_t mdata)
 {
@@ -33,8 +33,6 @@ void rx888r3_GpioSet(uint32_t mdata)
 	CyU3PGpioSetValue (GPIO_LED_RED, (mdata & LED_RED) == LED_RED);
 	CyU3PGpioSetValue (GPIO_PGA, (mdata & PGA_EN ) != PGA_EN  ); 		 // PGA_EN
     CyU3PGpioSetValue (GPIO_VHF_EN, (mdata & VHF_EN) == VHF_EN ); // VHF_EN
-
-	CyU3PGpioSetValue (GPIO_FM_NOTCH, (mdata & FM_NOTCH) != FM_NOTCH);
 }
 
 void rx888r3_GpioInitialize()
@@ -53,15 +51,12 @@ void rx888r3_GpioInitialize()
     ConfGPIOsimpleout (GPIO_ATT_CLK);
     ConfGPIOsimpleout (GPIO_VGA_LE);
 
-	ConfGPIOsimpleout (GPIO_FM_NOTCH);
-
     rx888r3_GpioSet(LED_RED | LED_YELLOW | LED_BLUE);
 
     CyU3PGpioSetValue (GPIO_ATT_LE, 0);  // ATT_LE latched
     CyU3PGpioSetValue (GPIO_ATT_CLK, 0);  // test version
     CyU3PGpioSetValue (GPIO_ATT_DATA, 0);  // ATT_DATA
     CyU3PGpioSetValue (GPIO_VGA_LE, 1);
-	CyU3PGpioSetValue (GPIO_FM_NOTCH, 1); // disable FM Notch
 
 	CyU3PGpioSetValue (GPIO_PGA, 1); // PGA =1 , 1.5v range
 
@@ -69,6 +64,7 @@ void rx888r3_GpioInitialize()
 	ConfGPIOsimpleout (GPIO_PRESEL_0);
 	ConfGPIOsimpleout (GPIO_PRESEL_1);
 	ConfGPIOsimpleout (GPIO_PRESEL_2);
+	ConfGPIOsimpleout (GPIO_FM_NOTCH);
 
 	rx888r3_preselect (0b011); // default 64M
 
@@ -133,6 +129,7 @@ int rx888r3_preselect(uint32_t data)
 	CyU3PGpioSetValue (GPIO_PRESEL_0, ((data >> 0) & 0x01));
 	CyU3PGpioSetValue (GPIO_PRESEL_1, ((data >> 1) & 0x01));
 	CyU3PGpioSetValue (GPIO_PRESEL_2, ((data >> 2) & 0x01));
+	CyU3PGpioSetValue (GPIO_FM_NOTCH, !((data >> 3) & 0x01));
 
 	return 0;
 }
