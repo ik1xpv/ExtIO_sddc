@@ -83,3 +83,8 @@ void fx3handler::PacketRead(uint32_t data_size, uint8_t *data, void *context)
 
     handler->Callback(data);
 }
+
+bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
+{
+	return true;
+}

@@ -1,3 +1,5 @@
+
+
 /**************************************************************
  * MakeWindowTrasparent(window, factor)
  *
@@ -12,7 +14,10 @@
 
 #define LWA_COLORKEY            0x00000001
 #define LWA_ALPHA               0x00000002
+
+
 #include <windows.h>
+#include "uti.h"
 
 typedef DWORD(WINAPI *PSLWA)(HWND, DWORD, BYTE, DWORD);
 
@@ -87,3 +92,10 @@ void Command(HWND hwnd, int controlID, int command)
 {
 	SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(controlID, command), (LPARAM)0);
 }
+
+
+void SetConsoleColorTXT(console_color c)
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), c);
+}
+

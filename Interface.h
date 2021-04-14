@@ -61,6 +61,10 @@ enum FX3Command {
     // Stop Tuner
     // WRITE: NONE
 	TUNERSTDBY = 0xB8,
+
+    // Read Debug string if any
+    // READ:
+    READINFODEBUG = 0xBA,
 };
 
 #define OUTXIO0 (1U << 0) 	// ATT_LE
