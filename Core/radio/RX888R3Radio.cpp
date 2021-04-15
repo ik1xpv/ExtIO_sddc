@@ -1,6 +1,7 @@
 #include "RadioHandler.h"
 
-#define REFCLK_FREQ (24000000) // R820T reference frequency
+#define REFCLK_FREQ (27000000) // R820T reference frequency
+#define IF_FREQ (20000000)
 
 #define HIGH_MODE 0x80
 #define LOW_MODE 0x00
@@ -144,8 +145,8 @@ uint64_t RX888R3Radio::TuneLo(uint64_t freq)
     else
     {
         // this is in VHF mode
-        Fx3->Control(TUNERTUNE, freq);
-        return freq;
+        Fx3->Control(TUNERTUNE, freq + IF_FREQ);
+        return freq - IF_FREQ;
     }
 }
 
