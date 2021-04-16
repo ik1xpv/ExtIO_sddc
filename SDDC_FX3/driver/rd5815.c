@@ -7,9 +7,11 @@ void RDA5815Initial(uint32_t freq)
 {
 	refclk = freq;
 	//I2cTransferW1( RD5812_I2C_ADDR, register address,register data);
+	DebugUSB(4, "RDA5815Initial\n");
 
 	CyU3PThreadSleep(1); //Wait 1ms.
-						 // Chip register soft reset
+
+	// Chip register soft reset
 	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0x04);
 	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0x05);
 
@@ -66,6 +68,7 @@ void RDA5815Initial(uint32_t freq)
 		break;
 
 	default:
+		DebugUSB(4, "refclk is out of rage");
 		break;
 	}
 
@@ -216,6 +219,8 @@ int32_t RDA5815Set(unsigned long fPLL, unsigned long fSym)
 	unsigned long bw; /*,temp_value1 = 0,temp_value2=0 ;*/
 	unsigned char Filter_bw_control_bit;
 
+	DebugUSB(4, "RDA5815Set %d, %d\n", fPLL/1000000, fSym);
+
 	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0xc1); //add by rda 2011.8.9,RXON = 0 , change normal working state to idle state
 	I2cTransferW1(0x2b, RD5812_I2C_ADDR, 0x95); //clk_interface_27m=0  add by rda 2012.1.12
 
@@ -231,6 +236,8 @@ int32_t RDA5815Set(unsigned long fPLL, unsigned long fSym)
 	case 24000000:								  // v1.3
 		temp_value = (unsigned long)fPLL * 87381; //((2^21) / RDA5815_XTALFREQ);
 		break;
+	default:
+		DebugUSB(4, "refclk is out of rage\n");
 	}
 
 	buffer = ((unsigned char)((temp_value >> 24) & 0xff));
@@ -269,5 +276,7 @@ int32_t RDA5815Set(unsigned long fPLL, unsigned long fSym)
 void RDA5815Shutdown()
 {
 	// Chip register soft reset
+	DebugUSB(4, "RDA5815Shutdown\n");
 	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0x00);
+	refclk = 0;
 }
