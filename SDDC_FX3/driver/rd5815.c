@@ -219,7 +219,7 @@ int32_t RDA5815Set(unsigned long fPLL, unsigned long fSym)
 	unsigned long bw; /*,temp_value1 = 0,temp_value2=0 ;*/
 	unsigned char Filter_bw_control_bit;
 
-	DebugUSB(4, "RDA5815Set %d, %d\n", fPLL/1000000, fSym);
+	DebugUSB(4, "RDA5815Set %d, %d\n", fPLL, fSym);
 
 	I2cTransferW1(0x04, RD5812_I2C_ADDR, 0xc1); //add by rda 2011.8.9,RXON = 0 , change normal working state to idle state
 	I2cTransferW1(0x2b, RD5812_I2C_ADDR, 0x95); //clk_interface_27m=0  add by rda 2012.1.12
@@ -239,6 +239,8 @@ int32_t RDA5815Set(unsigned long fPLL, unsigned long fSym)
 	default:
 		DebugUSB(4, "refclk is out of rage\n");
 	}
+
+	DebugUSB(4, "set value to 0x%x\n", temp_value);
 
 	buffer = ((unsigned char)((temp_value >> 24) & 0xff));
 	I2cTransferW1(0x07, RD5812_I2C_ADDR, buffer);
@@ -262,6 +264,8 @@ int32_t RDA5815Set(unsigned long fPLL, unsigned long fSym)
 
 	Filter_bw_control_bit &= 0x3f;
 	Filter_bw_control_bit |= 0x40; //v1.5
+
+	DebugUSB(4, "set bw valye to 0x%x\n", Filter_bw_control_bit);
 
 	I2cTransferW1(0x0b, RD5812_I2C_ADDR, Filter_bw_control_bit);
 	// set Filter bandwidth end

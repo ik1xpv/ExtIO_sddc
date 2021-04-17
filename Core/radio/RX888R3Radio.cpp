@@ -145,8 +145,15 @@ uint64_t RX888R3Radio::TuneLo(uint64_t freq)
     else
     {
         // this is in VHF mode
-        Fx3->Control(TUNERTUNE, freq + IF_FREQ);
-        return freq - IF_FREQ;
+        uint64_t targetVCO = freq + IF_FREQ;
+
+        uint32_t hardwareVCO = targetVCO / 1000000; // convert to MHz
+        int offset = targetVCO % 1000000;
+
+        DbgPrintf("Target VCO = %lldHZ, hardware VCO= %dMHX, Actual IF = %lldHZ\n", freq + IF_FREQ, hardwareVCO, IF_FREQ - offset);
+
+        Fx3->Control(TUNERTUNE, hardwareVCO);
+        return freq - (IF_FREQ - offset);
     }
 }
 
