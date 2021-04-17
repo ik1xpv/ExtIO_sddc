@@ -19,12 +19,11 @@ extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
 // Declare external data
 extern CyU3PQueue EventAvailable;			  	// Used for threads communications
 extern uint32_t glDMACount;
+extern CyBool_t glIsApplnActive;				// Set true once device is enumerated
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
+
 extern CyU3PThread ThreadHandle[APP_THREADS];		// Handles to my Application Threads
 extern void *StackPtr[APP_THREADS];				// Stack allocated to each thread
-extern CyBool_t glIsApplnActive;				// Set true once device is enumerated
-
-// Global data owned by this module
 
 CyBool_t glDebugTxEnabled = CyFalse;	// Set true once I can output messages to the Console
 CyU3PDmaChannel glUARTtoCPU_Handle;		// Handle needed by Uart Callback routine
@@ -40,7 +39,6 @@ CyBool_t flagdebug = false;
 uint16_t debtxtlen = 0;
 uint8_t bufdebug[MAXLEN];  // buffer debug string//
 
-
 // For Debug and education display the name of the Event
 const char* EventName[] = {
 	    "CONNECT", "DISCONNECT", "SUSPEND", "RESUME", "RESET", "SET_CONFIGURATION", "SPEED",
@@ -49,7 +47,7 @@ const char* EventName[] = {
 	    "OTG_SRP", "EP_UNDERRUN", "LINK_RECOVERY", "USB3_LINKFAIL", "SS_COMP_ENTRY", "SS_COMP_EXIT"
 };
 
-
+#ifdef TRACESERIAL 
 // For Debug and display the name of the FX3Command
 const char* FX3CommandName[] = {  // start 0xAA
 "STARTFX3", "STOPFX3", "TESTFX3", "GPIOFX3", "I2CWFX3","I2CRFX3", "0xB0", "RESETFX3",
@@ -61,18 +59,20 @@ const char* SETARGFX3List[] = {
 "0", "R82XX_ATTENUATOR","R82XX_VGA","R82XX_SIDEBAND","R82XX_HARMONIC","5","6","7","8","9",
 "DAT31_ATT","AD8340_VGA","PRESELECTOR","VHF_ATTENUATOR"
 };
-
+#endif
 
 void ParseCommand(void)
 {
 	// User has entered a command, process it
     CyU3PReturnStatus_t Status = CY_U3P_SUCCESS;
 
-    if (!strcmp("", ConsoleInBuffer))
+    if (!strcmp("?", ConsoleInBuffer))
     {
     	DebugPrint(4, "\r\nEnter commands:\r\n"
     			"threads, stack, gpif, reset\r\n"
     			"DMAcnt = %x\r\n", glDMACount);
+    	DebugUSB(4, "Commands: ?, threads, stack, gpif, reset\r\n"
+    		    "DMAcnt = %x\r\n", glDMACount);
     }
     else if (!strcmp("threads", ConsoleInBuffer))
 	{
@@ -84,12 +84,15 @@ void ParseCommand(void)
 		tx_thread_info_get(ThisThread, &ThreadName, NULL, NULL, NULL, NULL, NULL, &NextThread, NULL);
 		// Now, using the Thread linked list, look for other threads until I find myself again
 		DebugPrint(4, "\r\nThis : '%s'", ThreadName);
+		DebugUSB(4, "\r\nThis : '%s'", ThreadName);
 		while (NextThread != ThisThread)
 		{
 			tx_thread_info_get(NextThread, &ThreadName, NULL, NULL, NULL, NULL, NULL, &NextThread, NULL);
 			DebugPrint(4, "\r\nFound: '%s'", ThreadName);
+			DebugUSB(4, "\r\nFound: '%s'", ThreadName);
 		}
 		DebugPrint(4, "\r\n\r\n");
+		DebugUSB(4, "\r\n");
 	}
     else if (!strcmp("stack", ConsoleInBuffer))
     {
@@ -121,8 +124,6 @@ void ParseCommand(void)
 	else DebugPrint(4, "Input: '%s'\r\n", &ConsoleInBuffer[0]);
 	ConsoleInIndex = 0;
 }
-
-
 
 uint8_t * CyU3PDebugIntToStr(uint8_t *convertedString, uint32_t num, uint8_t base);
 
@@ -250,14 +251,14 @@ void DebugPrint2USB ( uint8_t priority, char *msg, ...)
 				memcpy(&bufdebug[debtxtlen], buf, len);
 				debtxtlen = debtxtlen+len;
 			}
-			else{
-				if (MAXLEN-len-1 >0) memset(&bufdebug[debtxtlen], '.', MAXLEN-len-1); // ubderflow
+			/* else{
+				memset(&bufdebug[debtxtlen], '.', MAXLEN-debtxtlen-2); // ubderflow
 				bufdebug[MAXLEN-1] = 0;
 				debtxtlen = MAXLEN;
 			}
+		*/
 		}
 }
-
 
 
 void UartCallback(CyU3PUartEvt_t Event, CyU3PUartError_t Error)

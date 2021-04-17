@@ -26,7 +26,8 @@
 #include "cyu3externcstart.h"
 #include "i2cmodule.h"
 
-#define MAXLEN 64		// max buffer debug len
+#define TRACESERIAL		/* enable the trace to serial port*/
+#define MAXLEN (100)		// max buffer debug len
 
 #define FIFO_DMA_RX_SIZE        (0)	                  /* DMA transfer size is set to infinite */
 #define FIFO_THREAD_STACK       (0x400)               /* application thread stack size */
@@ -65,14 +66,14 @@
 #define INFINITE_TRANSFER_SIZE			 (0)
 
 #define APP_THREADS						 (1)
-// void null_func(uint8_t, ...)  // redefine DebugPrint if required 
-#define DebugPrint CyU3PDebugPrint
+// void null_func(uint8_t, ...)  // redefine DebugPrint if required
+#define DebugPrint (CyU3PDebugPrint)
 
 extern void DebugPrint2USB ( uint8_t priority, char *msg, ...);
-#define DebugUSB DebugPrint2USB
+#define DebugUSB (DebugPrint2USB)
 
 // detect pin for HF103
-#define LED_KIT		(54) // This is also UART_CTS
+#define LED_KIT		   (54)		// This is also UART_CTS
 #define GPIO52			(52) // sense RXLUCY
 #define GPIO53			(53) // sense RXLUCY
 

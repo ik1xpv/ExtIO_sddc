@@ -344,8 +344,8 @@ void RadioHandlerClass::CaculateStats()
 	BytesXferred = 0;
 	SamplesXIF = 0;
 
-	uint16_t maxlen = 64;
-	uint8_t  debdata[64];
+	uint16_t maxlen = 100;
+	uint8_t  debdata[100];
 	memset(debdata, 0, maxlen);
 
 	auto StartingTime = high_resolution_clock::now();
@@ -371,7 +371,14 @@ void RadioHandlerClass::CaculateStats()
 		while (nt-- > 0)
 		{
 			std::this_thread::sleep_for(0.1s);
-			
+			debdata[0] = 0; //clean buffer 
+			if (GetConsoleIn != nullptr)
+			{
+				GetConsoleIn((char *)debdata, maxlen);
+				if (debdata[0] !=0) 
+					DbgPrintf("%s", (char*)debdata);
+			}
+
 			if (hardware->ReadDebugTrace(debdata, maxlen) == true) // there are message from FX3 ?
 			{
 				int len = strlen((char*)debdata);
