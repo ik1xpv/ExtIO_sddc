@@ -55,7 +55,7 @@ rf_mode RX888R3Radio::PrepareLo(uint64_t freq)
     if (freq < 10 * 1000) return NOMODE;
     if (freq > 2150ll * 1000 * 1000) return NOMODE;
 
-    if ( freq >= 250 * 1000 * 1000)
+    if ( freq >= 220 * 1000 * 1000)
         return VHFMODE;
     else
         return HFMODE;
