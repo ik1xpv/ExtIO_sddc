@@ -44,7 +44,7 @@ extern uint8_t m_gain_index;
 
 extern CyBool_t flagdebug;
 extern volatile uint16_t debtxtlen;
-extern uint8_t bufdebug[MAXLEN];  
+extern uint8_t bufdebug[MAXLEN_D_USB];  
 
 #define CYFX_SDRAPP_MAX_EP0LEN  64      /* Max. data length supported for EP0 requests. */
 

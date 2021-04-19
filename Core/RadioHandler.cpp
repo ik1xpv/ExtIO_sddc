@@ -9,6 +9,7 @@
 #include "fft_mt_r2iq.h"
 #include "config.h"
 #include "PScope_uti.h"
+#include "../Interface.h"
 
 #include <chrono>
 
@@ -344,9 +345,8 @@ void RadioHandlerClass::CaculateStats()
 	BytesXferred = 0;
 	SamplesXIF = 0;
 
-	uint16_t maxlen = 100;
-	uint8_t  debdata[100];
-	memset(debdata, 0, maxlen);
+	uint8_t  debdata[MAXLEN_D_USB];
+	memset(debdata, 0, MAXLEN_D_USB);
 
 	auto StartingTime = high_resolution_clock::now();
 
@@ -374,15 +374,15 @@ void RadioHandlerClass::CaculateStats()
 			debdata[0] = 0; //clean buffer 
 			if (GetConsoleIn != nullptr)
 			{
-				GetConsoleIn((char *)debdata, maxlen);
+				GetConsoleIn((char *)debdata, MAXLEN_D_USB);
 				if (debdata[0] !=0) 
 					DbgPrintf("%s", (char*)debdata);
 			}
 
-			if (hardware->ReadDebugTrace(debdata, maxlen) == true) // there are message from FX3 ?
+			if (hardware->ReadDebugTrace(debdata, MAXLEN_D_USB) == true) // there are message from FX3 ?
 			{
 				int len = strlen((char*)debdata);
-				if (len > maxlen - 1) len = maxlen - 1;
+				if (len > MAXLEN_D_USB - 1) len = MAXLEN_D_USB - 1;
 				debdata[len] = 0;
 				if ((len > 0)&&(DbgPrintFX3 != nullptr))
 				{

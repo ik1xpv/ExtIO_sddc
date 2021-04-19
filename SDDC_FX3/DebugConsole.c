@@ -37,7 +37,7 @@ uint32_t Qevent __attribute__ ((aligned (32)));
 
 CyBool_t flagdebug = false;
 volatile uint16_t debtxtlen = 0;
-uint8_t bufdebug[MAXLEN];  // buffer debug string//
+uint8_t bufdebug[MAXLEN_D_USB];  // buffer debug string//
 
 // For Debug and education display the name of the Event
 const char* EventName[] = {
@@ -81,13 +81,13 @@ void ParseCommand(void)
 		ThisThread = CyU3PThreadIdentify();
 		tx_thread_info_get(ThisThread, &ThreadName, NULL, NULL, NULL, NULL, NULL, &NextThread, NULL);
 		// Now, using the Thread linked list, look for other threads until I find myself again
-		DebugPrint(4, "This : '%s'\r\n", ThreadName);
+		DebugPrint(4, "This : '%s'", ThreadName);
 		while (NextThread != ThisThread)
 		{
 			tx_thread_info_get(NextThread, &ThreadName, NULL, NULL, NULL, NULL, NULL, &NextThread, NULL);
-			DebugPrint(4, "Found: '%s'\r\n", ThreadName);
+			DebugPrint(4, "\r\nFound: '%s'", ThreadName);
 		}
-		DebugPrint(4, "\r\n");
+		DebugPrint(4, "\r\n\r\n");
 	}
     else if (!strcmp("stack", ConsoleInBuffer))
     {
@@ -233,17 +233,17 @@ void DebugPrint2USB ( uint8_t priority, char *msg, ...)
 {
 	if ((glIsApplnActive != CyTrue)||(flagdebug == false)) return;
 	va_list argp;
-	uint8_t buf[MAXLEN];
+	uint8_t buf[MAXLEN_D_USB];
 //		memset(buf,0,sizeof(buf)); // not necessary
 		CyU3PReturnStatus_t stat;
-		uint16_t len = MAXLEN;
+		uint16_t len = MAXLEN_D_USB;
 		va_start (argp, msg);
 		stat = MyDebugSNPrint (buf, &len, msg, argp);
 		va_end (argp);
 		if ( stat == CY_U3P_SUCCESS ) 
 		{
-			if (debtxtlen+len > MAXLEN) CyU3PThreadSleep(150);
-			if (debtxtlen+len < MAXLEN ) 
+			if (debtxtlen+len > MAXLEN_D_USB) CyU3PThreadSleep(100);
+			if (debtxtlen+len < MAXLEN_D_USB) 
 			{
 				memcpy(&bufdebug[debtxtlen], buf, len);
 				debtxtlen = debtxtlen+len;		

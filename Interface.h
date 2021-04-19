@@ -151,5 +151,7 @@ enum ArgumentList {
     VHF_ATTENUATOR = 13,
 };
 
-#define _DEBUG_USB_
+#define _DEBUG_USB_  
+#define MAXLEN_D_USB (100)
+
 

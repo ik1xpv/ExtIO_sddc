@@ -29,7 +29,6 @@
 #include "../Interface.h"
 
 #define TRACESERIAL		/* enable the trace to serial port*/
-#define MAXLEN (100)		// max buffer debug len
 
 #define FIFO_DMA_RX_SIZE        (0)	                  /* DMA transfer size is set to infinite */
 #define FIFO_THREAD_STACK       (0x400)               /* application thread stack size */
