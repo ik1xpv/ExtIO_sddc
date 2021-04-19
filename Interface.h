@@ -64,11 +64,11 @@ enum FX3Command {
 
     // Tune 4351 to a frequency
     // WRITE: UINT64
-    AD4351TUNE = 0xB9,
+    	AD4351TUNE = 0xB9,
 
-    // Read Debug string if any
-    // READ: 
-    READINFODEBUG = 0xBA,
+    // GET
+    // READ: UINT16
+    	READINFODEBUG = 0xBA,
 };
 
 #define OUTXIO0 (1U << 0) 	// ATT_LE
@@ -150,3 +150,6 @@ enum ArgumentList {
     // Value: 0-15
     VHF_ATTENUATOR = 13,
 };
+
+#define _DEBUG_USB_
+

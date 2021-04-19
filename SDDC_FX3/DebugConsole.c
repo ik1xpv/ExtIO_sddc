@@ -36,7 +36,7 @@ uint8_t Toggle;
 uint32_t Qevent __attribute__ ((aligned (32)));
 
 CyBool_t flagdebug = false;
-uint16_t debtxtlen = 0;
+volatile uint16_t debtxtlen = 0;
 uint8_t bufdebug[MAXLEN];  // buffer debug string//
 
 // For Debug and education display the name of the Event
@@ -68,49 +68,44 @@ void ParseCommand(void)
 
     if (!strcmp("?", ConsoleInBuffer))
     {
-    	DebugPrint(4, "\r\nEnter commands:\r\n"
-    			"threads, stack, gpif, reset\r\n"
-    			"DMAcnt = %x\r\n", glDMACount);
-    	DebugUSB(4, "Commands: ?, threads, stack, gpif, reset\r\n"
-    		    "DMAcnt = %x\r\n", glDMACount);
+    	DebugPrint(4, "Enter commands:\r\n"
+    			"threads, stack, gpif, reset;\t"
+    			"DMAcnt = %x\r\n\r\n", glDMACount);
     }
     else if (!strcmp("threads", ConsoleInBuffer))
 	{
-    	DebugPrint(4, "\r\nthreads:");
+    	DebugPrint(4, "threads:\r\n");
 		CyU3PThread *ThisThread, *NextThread;
 		char* ThreadName;
 		// First find out who I am
 		ThisThread = CyU3PThreadIdentify();
 		tx_thread_info_get(ThisThread, &ThreadName, NULL, NULL, NULL, NULL, NULL, &NextThread, NULL);
 		// Now, using the Thread linked list, look for other threads until I find myself again
-		DebugPrint(4, "\r\nThis : '%s'", ThreadName);
-		DebugUSB(4, "\r\nThis : '%s'", ThreadName);
+		DebugPrint(4, "This : '%s'\r\n", ThreadName);
 		while (NextThread != ThisThread)
 		{
 			tx_thread_info_get(NextThread, &ThreadName, NULL, NULL, NULL, NULL, NULL, &NextThread, NULL);
-			DebugPrint(4, "\r\nFound: '%s'", ThreadName);
-			DebugUSB(4, "\r\nFound: '%s'", ThreadName);
+			DebugPrint(4, "Found: '%s'\r\n", ThreadName);
 		}
-		DebugPrint(4, "\r\n\r\n");
-		DebugUSB(4, "\r\n");
+		DebugPrint(4, "\r\n");
 	}
     else if (!strcmp("stack", ConsoleInBuffer))
     {
 		char* ThreadName;
-		DebugPrint(4, "\r\nstack:");
+		DebugPrint(4, "stack:\r\n");
 		// Note that StackSize is in bytes but RTOS fill pattern is a uint32
 		uint32_t* StackStartPtr = StackPtr[0];
 		uint32_t* DataPtr = StackStartPtr;
 		while (*DataPtr++ != 0xEFEFEFEF) ;
 		CyU3PThreadInfoGet(&ThreadHandle[0], &ThreadName, 0, 0, 0);
 		ThreadName += 3;	// Skip numeric ID
-		DebugPrint(4, "\r\nStack free in %s is %d/%d\r\n", ThreadName,
+		DebugPrint(4, "Stack free in %s is %d/%d\r\n\r\n", ThreadName,
 				FIFO_THREAD_STACK - ((DataPtr - StackStartPtr)<<2), FIFO_THREAD_STACK);
     }
 	else if (!strcmp("reset", ConsoleInBuffer))
 	{
-		DebugPrint(4, "\r\nreset:");
-		DebugPrint(4, "\r\nRESETTING CPU\r\n");
+		DebugPrint(4, "reset:\r\n");
+		DebugPrint(4, "RESETTING CPU\r\n");
 		CyU3PThreadSleep(100);
 		CyU3PDeviceReset(CyFalse);
 	}
@@ -118,10 +113,10 @@ void ParseCommand(void)
 	{
 		uint8_t State = 0xFF;
 		Status = CyU3PGpifGetSMState(&State);
-		CheckStatus("Get GPIF State", Status);
-		DebugPrint(4, "\r\nGPIF State = %d\r\n", State);
+		CheckStatus("Get GPIF State ", Status);
+		DebugPrint(4, "GPIF State = %d\r\n\r\n", State);
 	}
-	else DebugPrint(4, "Input: '%s'\r\n", &ConsoleInBuffer[0]);
+	else DebugPrint(4, "Input: '%s'\r\n\r\n", &ConsoleInBuffer[0]);
 	ConsoleInIndex = 0;
 }
 
@@ -247,16 +242,12 @@ void DebugPrint2USB ( uint8_t priority, char *msg, ...)
 		va_end (argp);
 		if ( stat == CY_U3P_SUCCESS ) 
 		{
-			if(debtxtlen+len < MAXLEN ) {
+			if (debtxtlen+len > MAXLEN) CyU3PThreadSleep(150);
+			if (debtxtlen+len < MAXLEN ) 
+			{
 				memcpy(&bufdebug[debtxtlen], buf, len);
-				debtxtlen = debtxtlen+len;
-			}
-			/* else{
-				memset(&bufdebug[debtxtlen], '.', MAXLEN-debtxtlen-2); // ubderflow
-				bufdebug[MAXLEN-1] = 0;
-				debtxtlen = MAXLEN;
-			}
-		*/
+				debtxtlen = debtxtlen+len;		
+			}		
 		}
 }
 

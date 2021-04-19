@@ -43,7 +43,7 @@ extern int set_vga_gain(struct r82xx_priv *priv, UINT8 gain_index);
 extern uint8_t m_gain_index;
 
 extern CyBool_t flagdebug;
-extern uint16_t debtxtlen;
+extern volatile uint16_t debtxtlen;
 extern uint8_t bufdebug[MAXLEN];  
 
 #define CYFX_SDRAPP_MAX_EP0LEN  64      /* Max. data length supported for EP0 requests. */
@@ -70,29 +70,24 @@ TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wInde
 {
 	if ( bRequest != READINFODEBUG)
 	{
-		DebugUSB(4, "%s ", FX3CommandName[bRequest - 0xAA]); 
-		DebugPrint(4, "\r\n%s\t", FX3CommandName[bRequest - 0xAA]);  
+		DebugPrint(4, "%s\t", FX3CommandName[bRequest - 0xAA]);  
 		switch(bRequest)
 		{
 		case SETARGFX3:
-			DebugUSB(4, "%s\t%d", SETARGFX3List[wIndex],  wValue );
 			DebugPrint(4, "%s\t%d", SETARGFX3List[wIndex],  wValue );
 			break;
 			
 		case GPIOFX3:
-			DebugUSB(4, "\t0x%x", * (uint32_t *) pdata);
 			DebugPrint(4, "\t0x%x", * (uint32_t *) pdata);
 			break;
 		
 		case R82XXTUNE:
 		case AD4351TUNE:
-			DebugUSB(4, "%d", * (uint64_t *) pdata);
 			DebugPrint(4, "%d", * (uint64_t *) pdata);
 			break;
 			
 		case R82XXINIT:	
 		case STARTADC:
-			DebugUSB(4, "%d", * (uint32_t *) pdata);
 			DebugPrint(4, "%d", * (uint32_t *) pdata);
 			break;
 			
@@ -107,8 +102,7 @@ TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wInde
 			break;
 			
 		}
-		DebugUSB(4, "\n");
-		DebugPrint(4, "\r\n");
+		DebugPrint(4, "\r\n\n");
 	}
 }
 #endif
@@ -548,7 +542,7 @@ void USBEvent_Callback ( CyU3PUsbEventType_t evtype, uint16_t evdata)
  */
 CyBool_t  LPMRequest_Callback ( CyU3PUsbLinkPowerMode link_mode)
 {
-	DebugPrint (4, "\r\n LPMRequest_Callback link_mode %x \r\n", link_mode );
+	// DebugPrint (4, "LPMRequest_Callback link_mode %x \r\n", link_mode );
 	return CyTrue;
 }
 

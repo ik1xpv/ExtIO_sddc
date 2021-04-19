@@ -367,10 +367,10 @@ void RadioHandlerClass::CaculateStats()
 		StartingTime = high_resolution_clock::now();
 	
 #ifdef _DEBUG  
-		int nt = 5;
+		int nt = 10;
 		while (nt-- > 0)
 		{
-			std::this_thread::sleep_for(0.1s);
+			std::this_thread::sleep_for(0.05s);
 			debdata[0] = 0; //clean buffer 
 			if (GetConsoleIn != nullptr)
 			{
@@ -386,7 +386,7 @@ void RadioHandlerClass::CaculateStats()
 				debdata[len] = 0;
 				if ((len > 0)&&(DbgPrintFX3 != nullptr))
 				{
-					DbgPrintFX3("%s\n", (char*)debdata);
+					DbgPrintFX3("%s", (char*)debdata);
 					memset(debdata, 0, sizeof(debdata));
 				}
 			}

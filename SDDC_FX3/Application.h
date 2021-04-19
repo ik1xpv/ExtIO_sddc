@@ -26,6 +26,8 @@
 #include "cyu3externcstart.h"
 #include "i2cmodule.h"
 
+#include "../Interface.h"
+
 #define TRACESERIAL		/* enable the trace to serial port*/
 #define MAXLEN (100)		// max buffer debug len
 
@@ -67,10 +69,13 @@
 
 #define APP_THREADS						 (1)
 // void null_func(uint8_t, ...)  // redefine DebugPrint if required
-#define DebugPrint (CyU3PDebugPrint)
-
 extern void DebugPrint2USB ( uint8_t priority, char *msg, ...);
-#define DebugUSB (DebugPrint2USB)
+
+#ifndef _DEBUG_USB_  // #include "../Interface.h"
+#define DebugPrint (CyU3PDebugPrint)
+#else
+#define DebugPrint (DebugPrint2USB)
+#endif
 
 // detect pin for HF103
 #define LED_KIT		   (54)		// This is also UART_CTS
@@ -82,7 +87,6 @@ typedef struct outxio_t
     uint8_t  buffer[4];         /* The actual byte used is [0][1]  */
 } outxio_t;
 
-#include "../Interface.h"
 
 
 #include "cyu3externcend.h"
