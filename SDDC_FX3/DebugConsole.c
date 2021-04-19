@@ -66,7 +66,7 @@ void ParseCommand(void)
 	// User has entered a command, process it
     CyU3PReturnStatus_t Status = CY_U3P_SUCCESS;
 
-    if (!strcmp("", ConsoleInBuffer))
+    if (!strcmp("", ConsoleInBuffer)||!strcmp("?", ConsoleInBuffer) )
     {
     	DebugPrint(4, "Enter commands:\r\n"
     			"threads, stack, gpif, reset;\r\n"
