@@ -36,8 +36,8 @@ extern uint8_t  HWconfig;       			    // Hardware config
 extern uint16_t  FWconfig;       			    // Firmware config hb.lb
 
 extern CyBool_t flagdebug;
-extern uint16_t debtxtlen;
-extern uint8_t bufdebug[MAXLEN];  
+extern volatile uint16_t debtxtlen;
+extern uint8_t bufdebug[MAXLEN_D_USB];  
 
 // r820xx data
 struct r82xx_priv tuner;
@@ -57,34 +57,40 @@ CyU3PDmaChannel glGPIF2USB_Handle;
 uint8_t  *glEp0Buffer = 0;              /* Buffer used to handle vendor specific control requests. */
 uint8_t  vendorRqtCnt = 0;
 
+#ifdef TRACESERIAL 
 
 extern const char* FX3CommandName[];
 extern const char* SETARGFX3List[];
 
+extern CyU3PQueue EventAvailable;	  	// Used for threads communications
+uint32_t Qevent __attribute__ ((aligned (32)));
+extern char ConsoleInBuffer[32];				// Buffer for user Console Input
+extern uint32_t ConsoleInIndex;				// Index into ConsoleIn buffer
+
 /* Trace function */
 void
-TraceList( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wIndex)
+TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wIndex)
 {
-	if (bRequest != READINFODEBUG)
+	if ( bRequest != READINFODEBUG)
 	{
-		DebugUSB(4, "%s\t", FX3CommandName[bRequest - 0xAA]);
-		switch (bRequest)
+		DebugPrint(4, "%s\t", FX3CommandName[bRequest - 0xAA]);  
+		switch(bRequest)
 		{
 		case SETARGFX3:
-			DebugUSB(4, "%s\t%d", SETARGFX3List[wIndex], wValue);
+			DebugPrint(4, "%s\t%d", SETARGFX3List[wIndex],  wValue );
 			break;
 
 		case GPIOFX3:
-			DebugUSB(4, "\t0x%x", *(uint32_t *)pdata);
+			DebugPrint(4, "\t0x%x", * (uint32_t *) pdata);
 			break;
 
 		case TUNERTUNE:
-			DebugUSB(4, "%d", *(uint64_t *)pdata);
+			DebugPrint(4, "%d", *(uint64_t *)pdata);
 			break;
 
 		case TUNERINIT:
 		case STARTADC:
-			DebugUSB(4, "%d", *(uint32_t *)pdata);
+			DebugPrint(4, "%d", * (uint32_t *) pdata);
 			break;
 
 		case TUNERSTDBY:
@@ -92,13 +98,15 @@ TraceList( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wIndex)
 		case STOPFX3:
 		case RESETFX3:
 			break;
+			
 		default:
-			DebugUSB(4, "default ? ? 0x%02x\t0x%02x", pdata[0], pdata[1]);
+			DebugPrint(4, "0x%x\t0x%x", pdata[0] , pdata[1]);
 			break;
 		}
-		DebugUSB(4, "\n");
+		DebugPrint(4, "\r\n\n");
 	}
 }
+#endif
 
 void r820_initialize(uint32_t freq)
 {
@@ -286,25 +294,6 @@ CyFxSlFifoApplnUSBSetupCB (
 					{
 						apiRetStatus = CyU3PUsbSendEP0Data(wLength, glEp0Buffer);
 						isHandled = CyTrue;
-					}
-					break;
-
-			case READINFODEBUG:
-					{
-					if (debtxtlen > 0)
-						{
-							uint16_t len = debtxtlen;
-							memcpy(glEp0Buffer, bufdebug, len);
-							debtxtlen=0;
-							glEp0Buffer[len-1] = 0;
-							CyU3PUsbSendEP0Data (len, glEp0Buffer);
-							vendorRqtCnt++;
-							isHandled = CyTrue;
-						}
-					else
-						{
-							isHandled = CyFalse;
-						}
 					}
 					break;
 
@@ -513,14 +502,51 @@ CyFxSlFifoApplnUSBSetupCB (
 					isHandled = CyTrue;
 					break;
 
-            		default: /* unknown request, stall the endpoint. */
+
+	   case READINFODEBUG:	
+					{
+					if (wValue >0)
+					{
+						char InputChar = (char) wValue;
+					 	if (InputChar  == 0x0d)
+						{
+							Qevent = USER_COMMAND_AVAILABLE << 24;
+							CyU3PQueueSend(&EventAvailable, &Qevent, CYU3P_NO_WAIT);
+						}
+						else
+						{
+							ConsoleInBuffer[ConsoleInIndex] = InputChar | 0x20;		// Save character as lower case (for compares)
+							if (ConsoleInIndex++ < sizeof(ConsoleInBuffer)) ConsoleInBuffer[ConsoleInIndex] = 0;
+							else ConsoleInIndex--;
+						}			
+					}
+					if (debtxtlen > 0) 
+						{
+							uint16_t len = debtxtlen;
+							memcpy(glEp0Buffer, bufdebug, len);
+							debtxtlen=0;
+							glEp0Buffer[len-1] = 0;
+							CyU3PUsbSendEP0Data (len, glEp0Buffer);
+							vendorRqtCnt++;
+							isHandled = CyTrue;
+						}
+					else
+						{
+							isHandled = CyTrue;
+							CyU3PUsbStall (0, CyTrue, CyFalse);
+						}
+					}
+
+					break;
+
+            default: /* unknown request, stall the endpoint. */
 
 					isHandled = CyFalse;
 					CyU3PDebugPrint (4, "STALL EP0 V.REQ %x\n",bRequest);
 					CyU3PUsbStall (0, CyTrue, CyFalse);
 					break;
     	}
-    	TraceList( bRequest, (uint8_t *) &glEp0Buffer[0], wValue, wIndex);
+    	TraceSerial( bRequest, (uint8_t *) &glEp0Buffer[0], wValue, wIndex);
     }
     return isHandled;
 }
@@ -571,7 +597,7 @@ void USBEvent_Callback ( CyU3PUsbEventType_t evtype, uint16_t evdata)
  */
 CyBool_t  LPMRequest_Callback ( CyU3PUsbLinkPowerMode link_mode)
 {
-	DebugPrint (4, "\r\n LPMRequest_Callback link_mode %x \r\n", link_mode );
+	// DebugPrint (4, "LPMRequest_Callback link_mode %x \r\n", link_mode );
 	return CyTrue;
 }
 

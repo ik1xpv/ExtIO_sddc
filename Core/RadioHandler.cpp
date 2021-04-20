@@ -9,6 +9,7 @@
 #include "fft_mt_r2iq.h"
 #include "config.h"
 #include "PScope_uti.h"
+#include "../Interface.h"
 
 #include <chrono>
 
@@ -353,9 +354,8 @@ void RadioHandlerClass::CaculateStats()
 	BytesXferred = 0;
 	SamplesXIF = 0;
 
-	uint16_t maxlen = 64;
-	uint8_t  debdata[64];
-	memset(debdata, 0, maxlen);
+	uint8_t  debdata[MAXLEN_D_USB];
+	memset(debdata, 0, MAXLEN_D_USB);
 
 	auto StartingTime = high_resolution_clock::now();
 
@@ -376,19 +376,26 @@ void RadioHandlerClass::CaculateStats()
 		StartingTime = high_resolution_clock::now();
 	
 #ifdef _DEBUG  
-		int nt = 5;
+		int nt = 10;
 		while (nt-- > 0)
 		{
-			std::this_thread::sleep_for(0.1s);
-			
-			if (hardware->ReadDebugTrace(debdata, maxlen) == true) // there are message from FX3 ?
+			std::this_thread::sleep_for(0.05s);
+			debdata[0] = 0; //clean buffer 
+			if (GetConsoleIn != nullptr)
+			{
+				GetConsoleIn((char *)debdata, MAXLEN_D_USB);
+				if (debdata[0] !=0) 
+					DbgPrintf("%s", (char*)debdata);
+			}
+
+			if (hardware->ReadDebugTrace(debdata, MAXLEN_D_USB) == true) // there are message from FX3 ?
 			{
 				int len = strlen((char*)debdata);
-				if (len > maxlen - 1) len = maxlen - 1;
+				if (len > MAXLEN_D_USB - 1) len = MAXLEN_D_USB - 1;
 				debdata[len] = 0;
 				if ((len > 0)&&(DbgPrintFX3 != nullptr))
 				{
-					DbgPrintFX3("%s\n", (char*)debdata);
+					DbgPrintFX3("%s", (char*)debdata);
 					memset(debdata, 0, sizeof(debdata));
 				}
 			}

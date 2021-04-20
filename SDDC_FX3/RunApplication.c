@@ -153,7 +153,7 @@ void MsgParsing(uint32_t qevent)
 	switch (label)
 	{
 		case 0:
-			DebugPrint(4, "\r\nEvent received = %s   ", EventName[(uint8_t)qevent]);
+			DebugPrint(4, "\r\nEvent received = %s   \r\n", EventName[(uint8_t)qevent]);
 			break;
 		case 1:
 			DebugPrint(4, "\r\nVendor request = %x  %x  %x\r\n", (uint8_t)( qevent >> 16), (uint8_t) (qevent >> 8) , (uint8_t) qevent );
@@ -170,7 +170,9 @@ void MsgParsing(uint32_t qevent)
 void ApplicationThread ( uint32_t input)
 {
 	// input is passed to this routine from CyU3PThreadCreate, useful if the same code is used for multiple threads
-	int32_t Seconds = 0;
+#ifndef _DEBUG_USB_
+	int32_t Seconds = 0;  // second count in serial debug
+#endif
 	uint32_t nline;
 
     CyU3PReturnStatus_t Status;
@@ -295,12 +297,14 @@ void ApplicationThread ( uint32_t input)
 						MsgParsing(Qevent);
 					}
 				}
+#ifndef _DEBUG_USB_  // #include "../Interface.h"  -> second count in serial debug
 				if (glDMACount > 7812)
 				{
 					glDMACount -= 7812;
-					DebugPrint(4, "%d, ", Seconds++);
+					DebugPrint(4, "%d, \n", Seconds++);
 				}
-			}
+#endif
+			}			
 	    }
 	 DebugPrint(4, "\r\nApplication failed to initialize. Error code: %d.\r\n", Status);
 	 	 // Returning here will stop the Application Thread running - it failed anyway so this is OK

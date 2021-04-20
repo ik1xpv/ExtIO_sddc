@@ -131,7 +131,7 @@ void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status)
 	{
 		if (Status == CY_U3P_SUCCESS)
 		{
-			DebugPrint(4, "\r\n%s = Successful", StringPtr);
+			DebugPrint(4, "%s = Successful\r\n", StringPtr);
 			return;
 		}
 		// else hang here

@@ -258,6 +258,7 @@ bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 	long lgt = len;
 	bool r;
 	fx3dev->ControlEndPt->ReqCode = READINFODEBUG;
+	fx3dev->ControlEndPt->Value = (USHORT) pdata[0]; // upstream char
 	r = fx3dev->ControlEndPt->Read((PUCHAR)pdata, lgt);
 	return r;
 }

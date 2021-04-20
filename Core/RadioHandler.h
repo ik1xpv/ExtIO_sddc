@@ -69,7 +69,11 @@ public:
 
     void uptLed(int led, bool on);
 
-    void EnableDebug(void (*dbgprintFX3)(const char* fmt, ...)) { this->DbgPrintFX3 = dbgprintFX3; };
+    void EnableDebug(void (*dbgprintFX3)(const char* fmt, ...), bool (*getconsolein)(char* buf, int maxlen)) 
+        { 
+          this->DbgPrintFX3 = dbgprintFX3; 
+          this->GetConsoleIn = getconsolein;
+        };
 
     bool ReadDebugTrace(uint8_t* pdata, uint8_t len) { return fx3->ReadDebugTrace(pdata, len); }
 
@@ -82,6 +86,7 @@ private:
 
     void (*Callback)(float *data, uint32_t length);
     void (*DbgPrintFX3)(const char* fmt, ...);
+    bool (*GetConsoleIn)(char* buf, int maxlen);
 
     bool run;
     unsigned long count;    // absolute index

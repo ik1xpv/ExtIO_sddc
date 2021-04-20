@@ -88,6 +88,43 @@ static void printf_USB_cb(const char* fmt, ...) {
 	mtx_print.unlock();
 }
 
+static bool GetConsoleInput(char* buf, int maxlen)
+{
+	DWORD nevents = 0;
+	INPUT_RECORD irInBuf[128];
+	KEY_EVENT_RECORD key;
+	int i;
+	bool rc = false;
+	int counter = 0;
+	if (Hconsole == nullptr) return rc;
+	HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+	if (GetNumberOfConsoleInputEvents(hInput, &nevents))
+	{
+		if (nevents > 0)
+		{
+			if (!ReadConsoleInput(hInput, irInBuf, 128, &nevents))
+			{
+				dbgprintf("ReadConsoleInput error\n");
+				return rc;
+			}
+			for (i = 0; i < nevents; i++)
+			{
+				if (irInBuf[i].EventType == KEY_EVENT)
+				{
+					if (((KEY_EVENT_RECORD&)irInBuf[i].Event).bKeyDown)
+					{
+						buf[counter] = ((KEY_EVENT_RECORD&)irInBuf[i].Event).uChar.AsciiChar;
+						rc = true;
+						if (counter < maxlen - 2) counter++;
+					}
+				}
+			}
+			buf[counter] = 0; // terminate string
+		}
+	}
+	return rc;
+}
+
 //---------------------------------------------------------------------------
 
 HMODULE hInst;
@@ -177,7 +214,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		gbInitHW = Fx3->Open(res_data, res_size) &&
 				   RadioHandler.Init(Fx3, Callback ); // Check if it there hardware
 #ifdef _DEBUG
-			RadioHandler.EnableDebug( printf_USB_cb );
+			RadioHandler.EnableDebug( printf_USB_cb , GetConsoleInput);
 #endif 
 
 		if (!gbInitHW)
