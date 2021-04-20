@@ -83,10 +83,9 @@ TraceSerial( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wInde
 		case GPIOFX3:
 			DebugPrint(4, "\t0x%x", * (uint32_t *) pdata);
 			break;
-		
-		case R82XXTUNE:
-		case AD4351TUNE:
-			DebugPrint(4, "%d", * (uint64_t *) pdata);
+
+		case TUNERTUNE:
+			DebugPrint(4, "%d", *(uint64_t *)pdata);
 			break;
 
 		case TUNERINIT:
@@ -298,25 +297,6 @@ CyFxSlFifoApplnUSBSetupCB (
 					}
 					break;
 
-			case READINFODEBUG:
-					{
-					if (debtxtlen > 0)
-						{
-							uint16_t len = debtxtlen;
-							memcpy(glEp0Buffer, bufdebug, len);
-							debtxtlen=0;
-							glEp0Buffer[len-1] = 0;
-							CyU3PUsbSendEP0Data (len, glEp0Buffer);
-							vendorRqtCnt++;
-							isHandled = CyTrue;
-						}
-					else
-						{
-							isHandled = CyFalse;
-						}
-					}
-					break;
-
 			case TUNERINIT:
 					{
 						if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
@@ -511,7 +491,7 @@ CyFxSlFifoApplnUSBSetupCB (
 					CyU3PDeviceReset(CyFalse);
 					break;
 
-            case TESTFX3:
+            		case TESTFX3:
 					glEp0Buffer[0] =  HWconfig;
 					glEp0Buffer[1] = (uint8_t) (FWconfig >> 8);
 					glEp0Buffer[2] = (uint8_t) FWconfig;
@@ -566,9 +546,7 @@ CyFxSlFifoApplnUSBSetupCB (
 					CyU3PUsbStall (0, CyTrue, CyFalse);
 					break;
     	}
-    #ifdef TRACESERIAL
     	TraceSerial( bRequest, (uint8_t *) &glEp0Buffer[0], wValue, wIndex);
-    #endif
     }
     return isHandled;
 }
