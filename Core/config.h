@@ -9,6 +9,7 @@
 #include <mutex>
 #include <condition_variable>
 
+#define _DEBUG
 
 #ifdef __cplusplus
 inline void null_func(const char *format, ...) { }

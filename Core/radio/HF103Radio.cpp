@@ -16,10 +16,11 @@ HF103Radio::HF103Radio(fx3class* fx3)
     }
 }
 
-void HF103Radio::getFrequencyRange(int64_t& low, int64_t& high)
+rf_mode HF103Radio::PrepareLo(uint64_t freq)
 {
-    low = 0;
-    high = 32 * 1000 * 1000;
+    if (freq > 32 * 1000 * 1000) return NOMODE;
+
+    return HFMODE;
 }
 
 bool HF103Radio::UpdatemodeRF(rf_mode mode)

@@ -67,13 +67,7 @@ void rx999_GpioSet(uint32_t mdata)
     CyU3PGpioSetValue (GPIO_BIAS_HF, (mdata & BIAS_HF) == BIAS_HF);
     CyU3PGpioSetValue (GPIO_BIAS_VHF, (mdata & BIAS_VHF) == BIAS_VHF);
     CyU3PGpioSetValue (GPIO_LED_RED, (mdata & LED_RED) == LED_RED);
-    CyU3PGpioSetValue (GPIO_VHF_EN, (mdata & VHF_EN) == VHF_EN ); // VHF_EN
-
-	if ((mdata & VHF_EN) == VHF_EN)
-	{
-	    // Initialize adf4351
-	    adf4350_setup(0, 0, adf4351_init_params);
-	}
+    CyU3PGpioSetValue (GPIO_VHF_EN, (mdata & VHF_EN) == VHF_EN ); // VHF_ENß
 }
 
 void rx999_GpioInitialize()

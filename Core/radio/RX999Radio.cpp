@@ -26,14 +26,20 @@ RX999Radio::RX999Radio(fx3class *fx3)
 
 void RX999Radio::Initialize(uint32_t adc_rate)
 {
-    uint32_t data = adc_rate;
-    Fx3->Control(STARTADC, data);
+    SampleRate = adc_rate;
+    Fx3->Control(STARTADC, adc_rate);
 }
 
-void RX999Radio::getFrequencyRange(int64_t &low, int64_t &high)
+
+rf_mode RX999Radio::PrepareLo(uint64_t freq)
 {
-    low = 10 * 1000;
-    high = 6000ll * 1000 * 1000; //
+    if (freq < 10 * 1000) return NOMODE;
+    if (freq > 6000ll * 1000 * 1000) return NOMODE;
+
+    if ( freq >= this->SampleRate / 2)
+        return VHFMODE;
+    else
+        return HFMODE;
 }
 
 bool RX999Radio::UpdatemodeRF(rf_mode mode)
@@ -46,11 +52,11 @@ bool RX999Radio::UpdatemodeRF(rf_mode mode)
         // Initialize VCO
 
         // Initialize Mixer
-
-        return true;
+        return Fx3->Control(TUNERINIT, (uint32_t)0);
     }
     else if (mode == HFMODE)
     {
+        Fx3->Control(TUNERSTDBY);
         return FX3UnsetGPIO(VHF_EN);                // switch to HF Attenna
     }
 
@@ -83,7 +89,7 @@ uint64_t RX999Radio::TuneLo(uint64_t freq)
         else if (freq <= 2000ll*1000*1000) sel = 0b001;
         else sel = 0b011;
 
-        Fx3->Control(AD4351TUNE, freq + IF_FREQ);
+        Fx3->Control(TUNERTUNE, freq + IF_FREQ);
 
         Fx3->SetArgument(PRESELECTOR, sel);
         // Set VCXO

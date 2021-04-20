@@ -13,6 +13,14 @@
 class RadioHardware;
 class r2iqControlClass;
 
+enum {
+    RESULT_OK,
+    RESULT_BIG_STEP,
+    RESULT_TOO_HIGH,
+    RESULT_TOO_LOW,
+    RESULT_NOT_POSSIBLE
+};
+
 struct shift_limited_unroll_C_sse_data_s;
 typedef struct shift_limited_unroll_C_sse_data_s shift_limited_unroll_C_sse_data_t;
 
@@ -57,6 +65,7 @@ public:
     void UpdBiasT_VHF(bool flag);
 
     uint64_t TuneLO(uint64_t lo);
+    rf_mode PrepareLo(uint64_t lo);
 
     void uptLed(int led, bool on);
 
@@ -122,7 +131,7 @@ public:
 
     virtual ~RadioHardware();
     virtual const char* getName() = 0;
-    virtual void getFrequencyRange(int64_t& low, int64_t& high) = 0;
+    virtual rf_mode PrepareLo(uint64_t freq) = 0;
     virtual float getGain() { return BBRF103_GAINFACTOR; }
     virtual void Initialize(uint32_t samplefreq) = 0;
     virtual bool UpdatemodeRF(rf_mode mode) = 0;
@@ -151,7 +160,7 @@ public:
     BBRF103Radio(fx3class* fx3);
     const char* getName() override { return "BBRF103"; }
     float getGain() override { return BBRF103_GAINFACTOR; }
-    void getFrequencyRange(int64_t& low, int64_t& high) override;
+    rf_mode PrepareLo(uint64_t freq) override;
     void Initialize(uint32_t samplefreq) override;
     bool UpdatemodeRF(rf_mode mode) override;
     uint64_t TuneLo(uint64_t freq) override;
@@ -168,6 +177,8 @@ private:
 
     static const int if_step_size = 16;
     static const float if_steps[if_step_size];
+
+    uint32_t SampleRate;
 };
 
 class RX888Radio : public BBRF103Radio {
@@ -182,7 +193,7 @@ public:
     RX888R2Radio(fx3class* fx3);
     const char* getName() override { return "RX888 mkII"; }
     float getGain() override { return RX888mk2_GAINFACTOR; }
-    void getFrequencyRange(int64_t& low, int64_t& high) override;
+    rf_mode PrepareLo(uint64_t freq) override;
     void Initialize(uint32_t samplefreq) override;
     bool UpdatemodeRF(rf_mode mode) override;
     uint64_t TuneLo(uint64_t freq) override;
@@ -202,6 +213,37 @@ private:
     float  hf_if_steps[hf_if_step_size];
     static const float vhf_rf_steps[vhf_rf_step_size];
     static const float vhf_if_steps[vhf_if_step_size];
+
+    uint32_t SampleRate;
+};
+
+class RX888R3Radio : public RadioHardware {
+public:
+    RX888R3Radio(fx3class* fx3);
+    const char* getName() override { return "RX888 mkIII"; }
+    float getGain() override { return RX888mk2_GAINFACTOR; }
+    rf_mode PrepareLo(uint64_t freq) override;
+    void Initialize(uint32_t samplefreq) override;
+    bool UpdatemodeRF(rf_mode mode) override;
+    uint64_t TuneLo(uint64_t freq) override;
+    bool UpdateattRF(int attIndex) override;
+    bool UpdateGainIF(int attIndex) override;
+
+    int getRFSteps(const float** steps ) override;
+    int getIFSteps(const float** steps ) override;
+
+private:
+    static const int  hf_rf_step_size = 64;
+    static const int  hf_if_step_size = 127;
+    static const int vhf_if_step_size = 16;
+    static const int vhf_rf_step_size = 29;
+
+    float  hf_rf_steps[hf_rf_step_size];
+    float  hf_if_steps[hf_if_step_size];
+    static const float vhf_rf_steps[vhf_rf_step_size];
+    static const float vhf_if_steps[vhf_if_step_size];
+
+    uint32_t SampleRate;
 };
 
 class RX999Radio : public RadioHardware {
@@ -210,7 +252,7 @@ public:
     const char* getName() override { return "RX999"; }
     float getGain() override { return RX888_GAINFACTOR; }
 
-    void getFrequencyRange(int64_t& low, int64_t& high) override;
+    rf_mode PrepareLo(uint64_t freq) override;
     void Initialize(uint32_t samplefreq) override;
     bool UpdatemodeRF(rf_mode mode) override;
     uint64_t TuneLo(uint64_t freq) override;
@@ -224,6 +266,7 @@ private:
     static const int if_step_size = 127;
 
     float  if_steps[if_step_size];
+    uint32_t SampleRate;
 };
 
 class HF103Radio : public RadioHardware {
@@ -232,7 +275,7 @@ public:
     const char* getName() override { return "HF103"; }
     float getGain() override { return HF103_GAINFACTOR; }
 
-    void getFrequencyRange(int64_t& low, int64_t& high) override;
+    rf_mode PrepareLo(uint64_t freq) override;
 
     void Initialize(uint32_t samplefreq) override {};
 
@@ -255,7 +298,7 @@ public:
     const char* getName() override { return "Lucy"; }
     float getGain() override { return HF103_GAINFACTOR; }
 
-    void getFrequencyRange(int64_t& low, int64_t& high) override;
+    rf_mode PrepareLo(uint64_t freq) override;
     void Initialize(uint32_t samplefreq) override;
     bool UpdatemodeRF(rf_mode mode) override;
     uint64_t TuneLo(uint64_t freq) override ;
@@ -271,6 +314,7 @@ private:
 
     static const int if_step_size = 64;
     float if_steps[if_step_size];
+    uint32_t SampleRate;
 };
 
 class DummyRadio : public RadioHardware {
@@ -278,8 +322,8 @@ public:
     DummyRadio(fx3class* fx3) : RadioHardware(fx3) {}
     const char* getName() override { return "Dummy"; }
 
-    void getFrequencyRange(int64_t& low, int64_t& high) override
-    { low = 0; high = 6ll*1000*1000*1000;}
+    rf_mode PrepareLo(uint64_t freq) override
+    { return HFMODE;}
     void Initialize(uint32_t samplefreq) override {}
     bool UpdatemodeRF(rf_mode mode) override { return true; }
     bool UpdateattRF(int attIndex) override { return true; }

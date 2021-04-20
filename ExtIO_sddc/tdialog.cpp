@@ -69,6 +69,7 @@ bool Support128M()
 
 	return model == RX888 ||
 		model == RX888r2 ||
+		model == RX888r3 ||
 		model == RX999;
 }
 
@@ -77,6 +78,7 @@ bool SupportPGA()
 	auto model = RadioHandler.getModel();
 
 	return model == RX888r2 ||
+		model == RX888r3 ||
 		model == RX999;
 }
 

@@ -1,7 +1,7 @@
 #include "RadioHandler.h"
 
-#define R828D_FREQ (16000000) // R820T reference frequency
-#define R828D_IF_CARRIER (4570000)
+#define REFCLK_FREQ (27000000) // R820T reference frequency
+#define IF_FREQ (20000000)
 
 #define HIGH_MODE 0x80
 #define LOW_MODE 0x00
@@ -12,16 +12,16 @@
 
 #define MODE HIGH_MODE
 
-const float RX888R2Radio::vhf_rf_steps[RX888R2Radio::vhf_rf_step_size] = {
+const float RX888R3Radio::vhf_rf_steps[RX888R3Radio::vhf_rf_step_size] = {
     0.0f, 0.9f, 1.4f, 2.7f, 3.7f, 7.7f, 8.7f, 12.5f, 14.4f, 15.7f,
     16.6f, 19.7f, 20.7f, 22.9f, 25.4f, 28.0f, 29.7f, 32.8f,
     33.8f, 36.4f, 37.2f, 38.6f, 40.2f, 42.1f, 43.4f, 43.9f,
     44.5f, 48.0f, 49.6f};
 
-const float RX888R2Radio::vhf_if_steps[RX888R2Radio::vhf_if_step_size] = {
+const float RX888R3Radio::vhf_if_steps[RX888R3Radio::vhf_if_step_size] = {
     -4.7f, -2.1f, 0.5f, 3.5f, 7.7f, 11.2f, 13.6f, 14.9f, 16.3f, 19.5f, 23.1f, 26.5f, 30.0f, 33.7f, 37.2f, 40.8f};
 
-RX888R2Radio::RX888R2Radio(fx3class *fx3)
+RX888R3Radio::RX888R3Radio(fx3class *fx3)
     : RadioHardware(fx3)
 {
     for (uint8_t i = 0; i < hf_rf_step_size; i++)
@@ -44,24 +44,24 @@ RX888R2Radio::RX888R2Radio(fx3class *fx3)
     }
 }
 
-void RX888R2Radio::Initialize(uint32_t adc_rate)
+void RX888R3Radio::Initialize(uint32_t adc_rate)
 {
     SampleRate = adc_rate;
     Fx3->Control(STARTADC, adc_rate);
 }
 
-rf_mode RX888R2Radio::PrepareLo(uint64_t freq)
+rf_mode RX888R3Radio::PrepareLo(uint64_t freq)
 {
     if (freq < 10 * 1000) return NOMODE;
-    if (freq > 1750 * 1000 * 1000) return NOMODE;
+    if (freq > 2150ll * 1000 * 1000) return NOMODE;
 
-    if ( freq >= this->SampleRate / 2)
+    if ( freq >= 220 * 1000 * 1000)
         return VHFMODE;
     else
         return HFMODE;
 }
 
-bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
+bool RX888R3Radio::UpdatemodeRF(rf_mode mode)
 {
     if (mode == VHFMODE)
     {
@@ -75,7 +75,7 @@ bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
         uint8_t gain = 0x80 | 3;
         Fx3->SetArgument(AD8340_VGA, gain);
         // Enable Tuner reference clock
-        uint32_t ref = R828D_FREQ;
+        uint32_t ref = REFCLK_FREQ;
         return Fx3->Control(TUNERINIT, ref); // Initialize Tuner
     }
     else if (mode == HFMODE)
@@ -88,7 +88,7 @@ bool RX888R2Radio::UpdatemodeRF(rf_mode mode)
     return false;
 }
 
-bool RX888R2Radio::UpdateattRF(int att)
+bool RX888R3Radio::UpdateattRF(int att)
 {
     if (!(gpios & VHF_EN))
     {
@@ -105,28 +105,59 @@ bool RX888R2Radio::UpdateattRF(int att)
     }
     else
     {
-        uint16_t index = att;
+        // uint16_t index = att;
         // this is in VHF mode
-        return Fx3->SetArgument(R82XX_ATTENUATOR, index);
+        // return Fx3->SetArgument(R82XX_ATTENUATOR, index);
+        return false;
     }
 }
 
-uint64_t RX888R2Radio::TuneLo(uint64_t freq)
+#define M(x) ((x)*1000000)
+
+uint64_t RX888R3Radio::TuneLo(uint64_t freq)
 {
     if (!(gpios & VHF_EN))
     {
         // this is in HF mode
+        // set bpf
+        int sel;
+        // set preselector
+        if (freq > M(64) && freq <= M(128))
+            sel = 0b001; // FM undersampling
+        else if (SampleRate < M(32))
+            sel = 0b101;
+        else
+            sel = 0b011;
+
+        Fx3->SetArgument(PRESELECTOR, sel);
+
+        if (freq < M(64))
+            return 0;
+        else if (freq < M(128))
+            return M(64);
+        else if (freq < M(192))
+            return M(64 * 2);
+        else if (freq < M(256))
+            return M(64 * 3);
+
         return 0;
     }
     else
     {
         // this is in VHF mode
-        Fx3->Control(TUNERTUNE, freq);
-        return freq - R828D_IF_CARRIER;
+        uint64_t targetVCO = freq + IF_FREQ;
+
+        uint32_t hardwareVCO = targetVCO / 1000000; // convert to MHz
+        int offset = targetVCO % 1000000;
+
+        DbgPrintf("Target VCO = %luHZ, hardware VCO= %dMHX, Actual IF = %dHZ\n", freq + IF_FREQ, hardwareVCO, IF_FREQ - offset);
+
+        Fx3->Control(TUNERTUNE, hardwareVCO);
+        return freq - (IF_FREQ - offset);
     }
 }
 
-int RX888R2Radio::getRFSteps(const float **steps)
+int RX888R3Radio::getRFSteps(const float **steps)
 {
     if (!(gpios & VHF_EN))
     {
@@ -141,7 +172,7 @@ int RX888R2Radio::getRFSteps(const float **steps)
     }
 }
 
-int RX888R2Radio::getIFSteps(const float **steps)
+int RX888R3Radio::getIFSteps(const float **steps)
 {
     if (!(gpios & VHF_EN))
     {
@@ -155,7 +186,7 @@ int RX888R2Radio::getIFSteps(const float **steps)
     }
 }
 
-bool RX888R2Radio::UpdateGainIF(int gain_index)
+bool RX888R3Radio::UpdateGainIF(int gain_index)
 {
     if (!(gpios & VHF_EN))
     {
@@ -173,6 +204,7 @@ bool RX888R2Radio::UpdateGainIF(int gain_index)
     else
     {
         // this is in VHF mode
-        return Fx3->SetArgument(R82XX_VGA, (uint16_t)gain_index);
+        // return Fx3->SetArgument(R82XX_VGA, (uint16_t)gain_index);
+        return false;
     }
 }
