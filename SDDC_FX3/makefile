@@ -46,6 +46,7 @@ USBSOURCE= cyfxtx.c		\
 DRIVERSRC=\
 	Si5351.c		\
 	adf4351.c       \
+	rd5815.c	\
 	tuner_r82xx.c		\
 	pcal6408a.c
 
@@ -55,6 +56,7 @@ RADIOSRC= \
 	rx888.c		\
 	rx999.c                \
 	rx888r2.c              \
+	rx888r3.c              \
 	rxlucy.c
 
 ifeq ($(CYFXBUILD),arm)

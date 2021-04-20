@@ -135,6 +135,8 @@ enum SDDCHWModel sddc_get_hw_model(sddc_t *t)
             return HW_RX888;
         case RadioModel::RX888r2:
             return HW_RX888R2;
+        case RadioModel::RX888r3:
+            return HW_RX888R3;
         case RadioModel::RX999:
             return HW_RX999;
         default:

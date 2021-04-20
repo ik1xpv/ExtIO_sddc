@@ -141,6 +141,10 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 		hardware = new RX888R2Radio(Fx3);
 		break;
 
+	case RX888r3:
+		hardware = new RX888R3Radio(Fx3);
+		break;
+
 	case RX999:
 		hardware = new RX999Radio(Fx3);
 		break;
@@ -277,6 +281,11 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 			r2iqCntrl->setSideband(false);
 	}
 	return true;
+}
+
+rf_mode RadioHandlerClass::PrepareLo(uint64_t lo)
+{
+	return hardware->PrepareLo(lo);
 }
 
 uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)

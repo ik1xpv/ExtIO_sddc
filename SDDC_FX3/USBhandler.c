@@ -15,6 +15,7 @@
 #include "tuner_r82xx.h"
 #include "adf4351.h"
 #include "Si5351.h"
+#include "rd5815.h"
 
 #include "radio.h"
 
@@ -63,45 +64,74 @@ extern const char* SETARGFX3List[];
 /* Trace function */
 void
 TraceList( uint8_t  bRequest, uint8_t * pdata, uint16_t wValue, uint16_t wIndex)
-{	
-	if ( bRequest != READINFODEBUG)
+{
+	if (bRequest != READINFODEBUG)
 	{
-	DebugUSB(4, "%s\t", FX3CommandName[bRequest - 0xAA]);  
-		switch(bRequest)
+		DebugUSB(4, "%s\t", FX3CommandName[bRequest - 0xAA]);
+		switch (bRequest)
 		{
 		case SETARGFX3:
-			DebugUSB(4, "%s\t%d", SETARGFX3List[wIndex],  wValue );
+			DebugUSB(4, "%s\t%d", SETARGFX3List[wIndex], wValue);
 			break;
-			
+
 		case GPIOFX3:
-			DebugUSB(4, "\t0x%x", * (uint32_t *) pdata);
+			DebugUSB(4, "\t0x%x", *(uint32_t *)pdata);
 			break;
-		
-		case R82XXTUNE:
-		case AD4351TUNE:
-			DebugUSB(4, "%d", * (uint64_t *) pdata);
+
+		case TUNERTUNE:
+			DebugUSB(4, "%d", *(uint64_t *)pdata);
 			break;
-			
-		case R82XXINIT:	
+
+		case TUNERINIT:
 		case STARTADC:
-			DebugUSB(4, "%d", * (uint32_t *) pdata);
+			DebugUSB(4, "%d", *(uint32_t *)pdata);
 			break;
-			
-		case R82XXSTDBY:
+
+		case TUNERSTDBY:
 		case STARTFX3:
 		case STOPFX3:
 		case RESETFX3:
 			break;
 		default:
-			DebugUSB(4, "default ? ? 0x%02x\t0x%02x", pdata[0] , pdata[1]);
+			DebugUSB(4, "default ? ? 0x%02x\t0x%02x", pdata[0], pdata[1]);
 			break;
-			
 		}
-	DebugUSB(4, "\n");
+		DebugUSB(4, "\n");
 	}
-
 }
 
+void r820_initialize(uint32_t freq)
+{
+	memset(&tuner_config, 0, sizeof(tuner_config));
+	memset(&tuner, 0, sizeof(tuner));
+
+	tuner_config.vco_curr_min = 0xff;
+	tuner_config.vco_curr_max = 0xff;
+	tuner_config.vco_algo = 0;
+
+	// detect the hardware
+	if (HWconfig == RX888 || HWconfig == BBRF103)
+	{
+		tuner_config.xtal = freq;
+		tuner_config.i2c_addr = R820T_I2C_ADDR;
+		tuner_config.rafael_chip = CHIP_R820T;
+	}
+	else if (HWconfig == RX888r2)
+	{
+		tuner_config.xtal = freq;
+		tuner_config.i2c_addr = R828D_I2C_ADDR;
+		tuner_config.rafael_chip = CHIP_R828D;
+	}
+	si5351aSetFrequencyB(tuner_config.xtal);
+
+	tuner.cfg = &tuner_config;
+
+	uint32_t bw;
+	r82xx_init(&tuner);
+	r82xx_set_bandwidth(&tuner, 8*1000*1000, 0, &bw, 1);
+
+	return;
+}
 
 /* Callback to handle the USB setup requests. */
 CyBool_t
@@ -204,6 +234,11 @@ CyFxSlFifoApplnUSBSetupCB (
 							isHandled = CyTrue;
 							break;
 
+						case RX888r3:
+							rx888r3_GpioSet(mdata);
+							isHandled = CyTrue;
+							break;
+
 						case RX999:
 							rx999_GpioSet(mdata);
 							isHandled = CyTrue;
@@ -254,10 +289,9 @@ CyFxSlFifoApplnUSBSetupCB (
 					}
 					break;
 
-
-			case READINFODEBUG:		
+			case READINFODEBUG:
 					{
-					if (debtxtlen > 0) 
+					if (debtxtlen > 0)
 						{
 							uint16_t len = debtxtlen;
 							memcpy(glEp0Buffer, bufdebug, len);
@@ -273,75 +307,81 @@ CyFxSlFifoApplnUSBSetupCB (
 						}
 					}
 					break;
-			
 
-			case R82XXINIT:
+			case TUNERINIT:
 					{
 						if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 						{
 							uint32_t freq;
 							freq = *(uint32_t *) &glEp0Buffer[0];
-							memset(&tuner_config, 0, sizeof(tuner_config));
-							memset(&tuner, 0, sizeof(tuner));
 
-							tuner_config.vco_curr_min = 0xff;
-							tuner_config.vco_curr_max = 0xff;
-							tuner_config.vco_algo = 0;
-
-							// detect the hardware
-							if (HWconfig == RX888 || HWconfig == BBRF103)
+							switch(HWconfig)
 							{
-								tuner_config.xtal = freq;
-								tuner_config.i2c_addr = R820T_I2C_ADDR;
-								tuner_config.rafael_chip = CHIP_R820T;
+								case RX888:
+								case RX888r2:
+								case BBRF103:
+									r820_initialize(freq);
+									break;
+								case RX999:
+								case RXLUCY:
+									adf4350_setup(0, 0, adf4351_init_params);
+									break;
+								case RX888r3:
+									si5351aSetFrequencyB(freq);
+									RDA5815Initial(freq);
+									break;
+								break;
 							}
-							else if (HWconfig == RX888r2)
-							{
-								tuner_config.xtal = freq;
-								tuner_config.i2c_addr = R828D_I2C_ADDR;
-								tuner_config.rafael_chip = CHIP_R828D;
-							}
-							si5351aSetFrequencyB(tuner_config.xtal);
-
-							tuner.cfg = &tuner_config;
-
-							uint32_t bw;
-							r82xx_init(&tuner);
-							r82xx_set_bandwidth(&tuner, 8*1000*1000, 0, &bw, 1);
-						
 							vendorRqtCnt++;
 							isHandled = CyTrue;
 						}
 					}
 					break;
 
-			case R82XXSTDBY:
+			case TUNERSTDBY:
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 					{
-						r82xx_standby(&tuner);
-						si5351aSetFrequencyB(0);
+						switch(HWconfig)
+						{
+							case RX888:
+							case RX888r2:
+							case BBRF103:
+								r82xx_standby(&tuner);
+								si5351aSetFrequencyB(0);
+								break;
+							case RX999:
+							case RXLUCY:
+								break;
+							case RX888r3:
+								RDA5815Shutdown();
+								si5351aSetFrequencyB(0);
+								break;
+						}
+
 						isHandled = CyTrue;
 					}
 					break;
 
-			case R82XXTUNE:
+			case TUNERTUNE:
 					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
 					{
 
 						uint64_t freq;
 						freq = *(uint64_t *) &glEp0Buffer[0];
-						r82xx_set_freq64(&tuner, freq);
-						isHandled = CyTrue;
-					}
-					break;
 
-			case AD4351TUNE:
-					if(CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL)== CY_U3P_SUCCESS)
-					{
-
-						uint64_t freq;
-						freq = *(uint64_t *) &glEp0Buffer[0];
-						adf4350_out_altvoltage0_frequency(freq);
+						switch(HWconfig)
+						{
+							case RX888r3:
+								RDA5815Set(freq, 40000);
+								break;
+							case RXLUCY:
+							case RX999:
+								adf4350_out_altvoltage0_frequency(freq);
+								break;
+							default:
+								r82xx_set_freq64(&tuner, freq);
+								break;
+						}
 						isHandled = CyTrue;
 					}
 					break;
@@ -374,6 +414,10 @@ CyFxSlFifoApplnUSBSetupCB (
 									rx888r2_SetAttenuator(wValue);
 									rc = 0;
 									break;
+								case RX888r3:
+									rx888r3_SetAttenuator(wValue);
+									rc = 0;
+									break;
 								case RX999:
 									rx999_SetAttenuator(wValue);
 									rc = 0;
@@ -391,6 +435,10 @@ CyFxSlFifoApplnUSBSetupCB (
 									rx888r2_SetGain(wValue);
 									rc = 0;
 									break;
+								case RX888r3:
+									rx888r3_SetGain(wValue);
+									rc = 0;
+									break;
 								case RX999:
 									rx999_SetGain(wValue);
 									rc = 0;
@@ -400,6 +448,10 @@ CyFxSlFifoApplnUSBSetupCB (
 						case PRESELECTOR:
 							switch(HWconfig)
 							{
+								case RX888r3:
+									rx888r3_preselect(wValue);
+									rc = 0;
+									break;
 								case RX999:
 									rx999_preselect(wValue);
 									rc = 0;

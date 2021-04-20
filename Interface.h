@@ -1,7 +1,7 @@
 #pragma once
 
-#define FIRMWARE_VER_MAJOR 1
-#define FIRMWARE_VER_MINOR 3
+#define FIRMWARE_VER_MAJOR 2
+#define FIRMWARE_VER_MINOR 1
 
 // HF103 commands !!!
 enum FX3Command {
@@ -52,22 +52,18 @@ enum FX3Command {
     // R82XX family Tuner functions
     // Initialize R82XX tuner
     // WRITE: NONE
-	R82XXINIT = 0xB4,
+	TUNERINIT = 0xB4,
 
     // Tune to a sepcific frequency 
     // WRITE: UINT64
-	R82XXTUNE = 0xB5,
+	TUNERTUNE = 0xB5,
 
     // Stop Tuner
     // WRITE: NONE
-	R82XXSTDBY = 0xB8,
-
-    // Tune 4351 to a frequency
-    // WRITE: UINT64
-    AD4351TUNE = 0xB9,
+	TUNERSTDBY = 0xB8,
 
     // Read Debug string if any
-    // READ: 
+    // READ:
     READINFODEBUG = 0xBA,
 };
 
@@ -115,6 +111,7 @@ enum RadioModel {
     RX888r2 = 0x04,
     RX999 = 0x05,
     RXLUCY = 0x06,
+    RX888r3 = 0x07,
 };
 
 enum ArgumentList {

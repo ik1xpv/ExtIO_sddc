@@ -20,7 +20,14 @@ void rx888r2_GpioInitialize();
 void rx888r2_SetAttenuator(uint8_t value);
 void rx888r2_SetGain(uint8_t value);
 
-// rx888r2
+// rx888r3
+void rx888r3_GpioSet(uint32_t mdata);
+void rx888r3_GpioInitialize();
+void rx888r3_SetAttenuator(uint8_t value);
+void rx888r3_SetGain(uint8_t value);
+int  rx888r3_preselect(uint32_t data);
+
+// rx999
 void rx999_GpioSet(uint32_t mdata);
 void rx999_GpioInitialize();
 void rx999_SetAttenuator(uint8_t value);

@@ -32,7 +32,6 @@
 #define GPIO_4351_LE   	34 // ADF4351 pin 3
 #define GPIO_6408_INT  	35 // PCAL6408  pin 3
 
-extern adf4350_init_param adf4351_init_params;
 extern uint32_t registers[6];
 extern int32_t adf4350_write(uint32_t data);
 
@@ -42,14 +41,6 @@ void rxlucy_GpioSet(uint32_t mdata)
     CyU3PGpioSetValue (GPIO_SHDWN, (mdata & SHDWN) == SHDWN ); 		 // SHDN
     CyU3PGpioSetValue (GPIO_DITH, (mdata & DITH ) == DITH  ); 		 // DITH
     CyU3PGpioSetValue (GPIO_RANDO, (mdata & RANDO) == RANDO ); 		 // RAND
-
-   // VHF_EN 
-
-	if ((mdata & VHF_EN) == VHF_EN)
-	{
-	    // Initialize adf4351
-	    adf4350_setup(0, 0, adf4351_init_params);
-	}
 }
 
 void rxlucy_GpioInitialize()

@@ -53,7 +53,7 @@ const char* EventName[] = {
 // For Debug and display the name of the FX3Command
 const char* FX3CommandName[] = {  // start 0xAA
 "STARTFX3", "STOPFX3", "TESTFX3", "GPIOFX3", "I2CWFX3","I2CRFX3", "0xB0", "RESETFX3",
-"STARTADC", "0xB3", "R82XXINIT","R82XXTUNE","SETARGFX3","0xB6", "R82XXSTDBY","AD4351TUNE","READINFODEBUG"
+"STARTADC", "0xB3", "TUNERINIT","TUNERTUNE","SETARGFX3","0xB7", "TUNERSTDBY","0xB9","READINFODEBUG"
 };
 
 // For Debug and display the name of the FX3Command

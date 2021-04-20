@@ -25,6 +25,7 @@
 #include "cyu3uart.h"
 #include "cyu3externcstart.h"
 #include "i2cmodule.h"
+#include "adf4351.h"
 
 #define MAXLEN 64		// max buffer debug len
 
@@ -108,6 +109,13 @@ void rx888r2_GpioInitialize();
 void rx888r2_SetAttenuator(uint8_t value);
 void rx888r2_SetGain(uint8_t value);
 
+// rx888r3
+void rx888r3_GpioSet(uint32_t mdata);
+void rx888r3_GpioInitialize();
+void rx888r3_SetAttenuator(uint8_t value);
+void rx888r3_SetGain(uint8_t value);
+int rx888r3_preselect(uint32_t data);
+
 // rx999
 void rx999_GpioSet(uint32_t mdata);
 void rx999_GpioInitialize();
@@ -121,5 +129,6 @@ void rxlucy_GpioInitialize();
 void rxlucy_SetAttenuator(uint8_t value);
 void rxlucy_VHFAttenuator(uint8_t value);
 
+extern adf4350_init_param adf4351_init_params;
 
 #endif // _INCLUDED_APPLICATION_H_

@@ -26,14 +26,19 @@ BBRF103Radio::BBRF103Radio(fx3class* fx3)
 
 void BBRF103Radio::Initialize(uint32_t adc_rate)
 {
-    uint32_t data = adc_rate;
-    Fx3->Control(STARTADC, data);
+    this->SampleRate = adc_rate;
+    Fx3->Control(STARTADC, adc_rate);
 }
 
-void BBRF103Radio::getFrequencyRange(int64_t& low, int64_t& high)
+rf_mode BBRF103Radio::PrepareLo(uint64_t freq)
 {
-    low = 10 * 1000;
-    high = 1750 * 1000 * 1000; // 
+    if (freq < 10 * 1000) return NOMODE;
+    if (freq > 1750 * 1000 * 1000) return NOMODE;
+
+    if ( freq >= this->SampleRate / 2)
+        return VHFMODE;
+    else
+        return HFMODE;
 }
 
 bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
@@ -44,13 +49,13 @@ bool BBRF103Radio::UpdatemodeRF(rf_mode mode)
         FX3UnsetGPIO(ATT_SEL0 | ATT_SEL1);
 
         // Initialize Tuner
-        return Fx3->Control(R82XXINIT, (uint32_t)R820T_FREQ);
+        return Fx3->Control(TUNERINIT, (uint32_t)R820T_FREQ);
     }
 
     else if (mode == HFMODE )   // (mode == HFMODE || mode == VLFMODE) no more VLFMODE
     {
         // Stop Tuner
-        Fx3->Control(R82XXSTDBY);
+        Fx3->Control(TUNERSTDBY);
 
         // switch to HF Attenna
         return FX3SetGPIO(ATT_SEL0 | ATT_SEL1);
@@ -97,7 +102,7 @@ uint64_t BBRF103Radio::TuneLo(uint64_t freq)
     }
     else {
         // this is in VHF mode
-        Fx3->Control(R82XXTUNE, freq);
+        Fx3->Control(TUNERTUNE, freq);
         return freq - R820T2_IF_CARRIER;
     }
 }
