@@ -101,33 +101,6 @@ ConfGPIOsimpleinputPU( uint8_t gpioid)
 	 return apiRetStatus;
 }
 
-// tentative to recognize LED and pull up at pin gpioid
-CyBool_t GPIOtestInputPulldown( uint8_t gpioid)
-{
-	CyU3PGpioSimpleConfig_t gpioConfig;
-	CyBool_t measure;
-	CyU3PDeviceGpioOverride (gpioid, CyTrue);
-	/* Configure GPIO gpioid as output */
-	gpioConfig.outValue = CyFalse;
-	gpioConfig.driveLowEn = CyTrue;
-	gpioConfig.driveHighEn = CyTrue;
-	gpioConfig.inputEn = CyFalse;
-	gpioConfig.intrMode = CY_U3P_GPIO_NO_INTR;
-	CyU3PGpioSetSimpleConfig(gpioid , &gpioConfig); // GPIO is output
-	CyU3PGpioSetValue (gpioid, 1); // up to discharge led capacitance
-	gpioConfig.driveLowEn = CyFalse;
-	gpioConfig.driveHighEn = CyFalse;
-	gpioConfig.inputEn = CyTrue;
-	CyU3PGpioSetSimpleConfig(gpioid , &gpioConfig); // GPIO is output
-	/* Adding internal pull-down resistor to GPIO */
-	CyU3PGpioSetIoMode(gpioid, CY_U3P_GPIO_IO_MODE_WPD); // activate pull down
-	CyU3PGpioSimpleGetValue ( gpioid, &measure); //measure 1 if external pull up or LED to vdd
-	CyU3PGpioSetIoMode(gpioid, CY_U3P_GPIO_IO_MODE_NONE);
-	return measure;
-}
-
-
-
 void
 GpioInitClock()
 {
@@ -174,7 +147,7 @@ void ApplicationThread ( uint32_t input)
 	int32_t Seconds = 0;  // second count in serial debug
 #endif
 	uint32_t nline;
-
+	CyBool_t measure;
     CyU3PReturnStatus_t Status;
     HWconfig = 0;
 
@@ -189,7 +162,6 @@ void ApplicationThread ( uint32_t input)
 		Status = Si5351init();
 		if (Status != CY_U3P_SUCCESS)
 		{
-			CyBool_t measure;
 			ConfGPIOsimpleinputPU(GPIO52);
 			ConfGPIOsimpleinputPU(GPIO53);
 			CyU3PGpioSimpleGetValue ( GPIO52, &measure); //measure if external pull down
@@ -206,12 +178,14 @@ void ApplicationThread ( uint32_t input)
 		}
 		else
 		{
+			ConfGPIOsimpleinputPU(GPIO50);
 			si5351aSetFrequencyB(16000000);
 			uint8_t identity;
 			if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
 			{
 				// check if BBRF103 or RX888 (RX666 ?)
-				if(GPIOtestInputPulldown(LED_KIT)) {
+				CyU3PGpioSimpleGetValue ( GPIO50, &measure);
+				if(!measure) { 
 					HWconfig = BBRF103;
 					DebugPrint(4, "R820T Detectedinitialize. BBRF103 detected.");
 				}
