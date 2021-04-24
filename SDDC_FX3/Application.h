@@ -77,8 +77,8 @@ extern void DebugPrint2USB ( uint8_t priority, char *msg, ...);
 #define DebugPrint (DebugPrint2USB)
 #endif
 
-// detect pin for HF103
-#define LED_KIT		   (54)		// This is also UART_CTS
+// radio detect gpios 
+#define GPIO50			(50) // sense BBRF103
 #define GPIO52			(52) // sense RXLUCY
 #define GPIO53			(53) // sense RXLUCY
 
