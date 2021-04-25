@@ -50,17 +50,17 @@ class fx3handler : public fx3class
 
     std::thread emuthread;
     bool run;
-	void StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock)
+    void StartStream(ringbuffer<int16_t>& input, int numofblock)
     {
         run = true;
-        emuthread = std::thread([callback, readsize, this]{
-            uint8_t *buf = new uint8_t[readsize];
+        emuthread = std::thread([&input, this]{
             while(run)
             {
-                callback(buf);
+                auto ptr = input.getWritePtr();
+                memset(ptr, 0x5A, input.getWriteCount());
+                input.WriteDone();
                 std::this_thread::sleep_for(1ms);
             }
-            delete[] buf;
         });
     }
 
@@ -73,7 +73,7 @@ class fx3handler : public fx3class
 static uint32_t count;
 static uint64_t totalsize;
 
-static void Callback(float* data, uint32_t len)
+static void Callback(const float* data, uint32_t len)
 {
     count++;
     totalsize += len;
@@ -140,7 +140,7 @@ TEST_CASE(CoreFixture, R2IQTest)
 
         REQUIRE_TRUE(count > 0);
         REQUIRE_TRUE(totalsize > 0);
-        REQUIRE_TRUE(totalsize / count == transferSamples / 2);
+        REQUIRE_EQUAL(totalsize / count, transferSamples / 2);
     }
 
     delete radio;

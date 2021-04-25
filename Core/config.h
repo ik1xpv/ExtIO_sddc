@@ -80,8 +80,8 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 extern bool saveADCsamplesflag;
 extern uint32_t  adcnominalfreq;
 
-const int transferSize = 131072;
-const int transferSamples = 131072 / sizeof(int16_t);
+const uint32_t transferSize = 131072;
+const uint32_t transferSamples = 131072 / sizeof(int16_t);
 
 const uint32_t DEFAULT_ADC_FREQ = 64000000;	// ADC sampling frequency
 

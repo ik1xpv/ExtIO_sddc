@@ -7,7 +7,7 @@
 #include <string.h>
 
 // use up to this many threads
-#define N_MAX_R2IQ_THREADS 4
+#define N_MAX_R2IQ_THREADS 1
 #define PRINT_INPUT_RANGE  0
 
 static const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
@@ -21,11 +21,10 @@ public:
 
     float setFreqOffset(float offset);
 
-    void Init(float gain, int16_t** buffers, float** obuffers);
+    void Init(float gain, ringbuffer<int16_t>* buffers, ringbuffer<float>* obuffers);
     void TurnOn();
     void TurnOff(void);
     bool IsOn(void);
-    void DataReady(void);
 
 protected:
 
@@ -77,10 +76,9 @@ protected:
     }
 
 private:
-    int16_t** buffers;    // pointer to input buffers
-    float** obuffers;   // pointer to output buffers
+    ringbuffer<int16_t>* inputbuffer;    // pointer to input buffers
+    ringbuffer<float>* outputbuffer;    // pointer to ouput buffers
     int bufIdx;         // index to next buffer to be processed
-    volatile std::atomic<int> cntr;           // counter of input buffer to be processed
     r2iqThreadArg* lastThread;
 
     float GainScale;
@@ -102,7 +100,6 @@ private:
 
     uint32_t processor_count;
     r2iqThreadArg* threadArgs[N_MAX_R2IQ_THREADS];
-    std::condition_variable cvADCbufferAvailable;  // unlock when a sample buffer is ready
     std::mutex mutexR2iqControl;                   // r2iq control lock
     std::thread r2iq_thread[N_MAX_R2IQ_THREADS]; // thread pointers
 };

@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <functional>
 #include "../Interface.h"
+#include "dsp/ringbuffer.h"
 
 class fx3class
 {
@@ -26,7 +27,7 @@ public:
 	virtual bool SetArgument(uint16_t index, uint16_t value) = 0;
 	virtual bool GetHardwareInfo(uint32_t* data) = 0;
 	virtual bool ReadDebugTrace(uint8_t* pdata, uint8_t len) = 0;
-	virtual void StartStream(const std::function<void( void* )> &f, size_t readsize, int numofblock) = 0;
+	virtual void StartStream(ringbuffer<int16_t>& input, int numofblock) = 0;
 	virtual void StopStream() = 0;
 
 };

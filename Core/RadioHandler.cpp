@@ -19,24 +19,22 @@ using namespace std::chrono;
 
 unsigned long Failures = 0;
 
-void RadioHandlerClass::OnDataPacket(void* buf)
+void RadioHandlerClass::OnDataPacket()
 {
-	int buf_idx = count % QUEUE_SIZE;
-	int rd = r2iqCntrl->getRatio();
-	// submit result to SDR application before processing next packet
-	++count;
+	auto len = outputbuffer.getBlockSize() / 2 / sizeof(float);
 
-	if (buf == nullptr)
+	while(run)
 	{
-		// error case
-		Callback(NULL, 0);
-		run = false;
+		auto buf = outputbuffer.getReadPtr();
 
-		return;
-	}
+		if (!run)
+			break;
 
-	buffers[buf_idx] = (int16_t*)buf;
-	BytesXferred += transferSize;
+		if (fc != 0.0f)
+		{
+			std::unique_lock<std::mutex> lk(fc_mutex);
+			shift_limited_unroll_C_sse_inp_c((complexf*)buf, len, stateFineTune);
+		}
 
 #ifdef _DEBUG		//PScope buffer screenshot
 		if (saveADCsamplesflag == true)
@@ -50,23 +48,12 @@ void RadioHandlerClass::OnDataPacket(void* buf)
 		}
 #endif
 
-	if (run &&						// app is running
-		count > QUEUE_SIZE &&		// skip first batch
-		(buf_idx % rd == 0))		// if decimate, every *rd* packages
-	{
-		int oidx = buf_idx / rd;
-		std::unique_lock<std::mutex> lk(fc_mutex);
-		if (fc != 0.0f)
-		{
-			shift_limited_unroll_C_sse_inp_c((complexf*)obuffers[oidx], EXT_BLOCKLEN, stateFineTune);
-		}
+    	Callback(buf, len);
 
-    	Callback(obuffers[oidx], EXT_BLOCKLEN);
+		outputbuffer.ReadDone();
 
-		SamplesXIF += EXT_BLOCKLEN;
+		SamplesXIF += len;
 	}
-
-	r2iqCntrl->DataReady();   // inform r2iq buffer ready
 }
 
 RadioHandlerClass::RadioHandlerClass() :
@@ -80,28 +67,18 @@ RadioHandlerClass::RadioHandlerClass() :
 	firmware(0),
 	modeRF(NOMODE),
 	adcrate(DEFAULT_ADC_FREQ),
+	GetConsoleIn(nullptr),
 	fc(0.0f),
 	hardware(new DummyRadio(nullptr))
 {
-	for (int i = 0; i < QUEUE_SIZE; i++) {
-		// Allocate the buffers for the output queue
-		obuffers[i] = new float[transferSize / 2];
-	}
+	inputbuffer.setBlockSize(transferSamples);
 
 	stateFineTune = new shift_limited_unroll_C_sse_data_t();
 }
 
 RadioHandlerClass::~RadioHandlerClass()
 {
-	for (int n = 0; n < QUEUE_SIZE; n++) {
-		delete[] obuffers[n];
-	}
-
-	if (r2iqCntrl)
-		delete r2iqCntrl;
-
 	delete stateFineTune;
-	delete hardware;
 }
 
 const char *RadioHandlerClass::getName()
@@ -109,7 +86,7 @@ const char *RadioHandlerClass::getName()
 	return hardware->getName();
 }
 
-bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), r2iqControlClass *r2iqCntrl)
+bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(const float*, uint32_t), r2iqControlClass *r2iqCntrl)
 {
 	uint8_t rdata[4];
 	this->fx3 = Fx3;
@@ -163,7 +140,7 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(float*, uint32_t), 
 	hardware->Initialize(adcnominalfreq);
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
 	this->r2iqCntrl = r2iqCntrl;
-	r2iqCntrl->Init(hardware->getGain(), buffers, obuffers);
+	r2iqCntrl->Init(hardware->getGain(), &inputbuffer, &outputbuffer);
 
 	return true;
 }
@@ -186,12 +163,17 @@ bool RadioHandlerClass::Start(int srate_idx)
 
 	hardware->FX3producerOn();  // FX3 start the producer
 
+	outputbuffer.setBlockSize(EXT_BLOCKLEN * 2 * sizeof(float));
+
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
 	r2iqCntrl->setDecimate(decimate);
 	r2iqCntrl->TurnOn();
-	fx3->StartStream([this](void* buf) {
-		this->OnDataPacket(buf);
-	}, transferSize, QUEUE_SIZE);
+	fx3->StartStream(inputbuffer, QUEUE_SIZE);
+
+	submit_thread = std::thread(
+		[this]() {
+			this->OnDataPacket();
+		});
 
 	show_stats_thread = std::thread([this](void*) {
 		this->CaculateStats();
@@ -206,13 +188,19 @@ bool RadioHandlerClass::Stop()
 	DbgPrintf("RadioHandlerClass::Stop %d\n", run);
 	if (run)
 	{
+		run = false; // now waits for threads
+
 		r2iqCntrl->TurnOff();
 
 		fx3->StopStream();
 
 		run = false; // now waits for threads
+
 		show_stats_thread.join(); //first to be joined
 		DbgPrintf("show_stats_thread join2\n");
+
+		submit_thread.join();
+		DbgPrintf("submit_thread join1\n");
 
 		hardware->FX3producerOff();     //FX3 stop the producer
 	}

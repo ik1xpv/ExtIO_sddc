@@ -391,7 +391,8 @@ void fx3handler::AdcSamplesProcess()
 
 	// Queue-up the first batch of transfer requests
 	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
-		if (!BeginDataXfer((uint8_t*)buffers[n], transferSize, &contexts[n])) {
+		auto ptr = inputbuffer->peekWritePtr(n);
+		if (!BeginDataXfer((uint8_t*)ptr, transferSize, &contexts[n])) {
 			DbgPrintf("Xfer request rejected.\n");
 			return;
 		}
@@ -406,10 +407,11 @@ void fx3handler::AdcSamplesProcess()
 			break;
 		}
 
-		this->Callback(buffers[buf_idx]);
+		inputbuffer->WriteDone();
 
 		// Re-submit this queue element to keep the queue full
-		if (!BeginDataXfer((uint8_t*)buffers[buf_idx], transferSize, &contexts[read_idx])) { // BeginDataXfer failed
+		auto ptr = inputbuffer->peekWritePtr(USB_READ_CONCURRENT - 1);
+		if (!BeginDataXfer((uint8_t*)ptr, transferSize, &contexts[read_idx])) { // BeginDataXfer failed
 			DbgPrintf("Xfer request rejected.\n");
 			break;
 		}
@@ -426,16 +428,11 @@ void fx3handler::AdcSamplesProcess()
 	return;  // void *
 }
 
-void fx3handler::StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock)
+void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 {
 	// Allocate the context and buffers
-	buffers = new int16_t*[numofblock];
-	Callback = callback;
+	inputbuffer = &input;
 
-	for (int i = 0; i < numofblock; i++)
-	{
-		buffers[i] = new int16_t[ readsize / sizeof(int16_t)];
-	}
 	// create the thread
 	this->numofblock = numofblock;
 	run = true;
@@ -453,12 +450,7 @@ void fx3handler::StopStream()
 	adc_samples_thread->join();
 
 	// force exit the thread
-	for (int i = 0; i < numofblock; i++)
-	{
-		delete[] buffers[i];
-	}
-
-	delete[] buffers;
+	inputbuffer = nullptr;
 
 	delete adc_samples_thread;
 }

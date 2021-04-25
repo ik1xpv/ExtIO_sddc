@@ -18,6 +18,8 @@
 #include <time.h>
 #include "config.h"
 
+#include "dsp/ringbuffer.h"
+
 #define	VENDOR_ID     (0x04B4)
 #define	STREAMER_ID   (0x00F1)
 #define	BOOTLOADER_ID (0x00F3)
@@ -40,7 +42,7 @@ public:
 	bool SetArgument(uint16_t index, uint16_t value);
 	bool GetHardwareInfo(uint32_t* data);
 	bool ReadDebugTrace(uint8_t* pdata, uint8_t len);
-	void StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock);
+	void StartStream(ringbuffer<int16_t>& input, int numofblock);
 	void StopStream();
 
 private:
@@ -62,10 +64,9 @@ private:
 	bool Close(void);
 	void AdcSamplesProcess();
 
-	int16_t **buffers;
+	ringbuffer<int16_t> *inputbuffer;
 	int numofblock;
 	bool run;
-	std::function<void( void* )> Callback;
 };
 
 
