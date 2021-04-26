@@ -6,8 +6,6 @@
 #include <algorithm>
 #include <string.h>
 
-// use up to this many threads
-#define N_MAX_R2IQ_THREADS 1
 #define PRINT_INPUT_RANGE  0
 
 static const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
@@ -79,7 +77,6 @@ private:
     ringbuffer<int16_t>* inputbuffer;    // pointer to input buffers
     ringbuffer<float>* outputbuffer;    // pointer to ouput buffers
     int bufIdx;         // index to next buffer to be processed
-    r2iqThreadArg* lastThread;
 
     float GainScale;
     int mfftdim [NDECIDX]; // FFT N dimensions: mfftdim[k] = halfFft / 2^k
@@ -98,10 +95,9 @@ private:
 	fftwf_plan *plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
 	fftwf_plan plans_f2t_c2c[NDECIDX];
 
-    uint32_t processor_count;
-    r2iqThreadArg* threadArgs[N_MAX_R2IQ_THREADS];
+    r2iqThreadArg* threadArg;
     std::mutex mutexR2iqControl;                   // r2iq control lock
-    std::thread r2iq_thread[N_MAX_R2IQ_THREADS]; // thread pointers
+    std::thread r2iq_thread; // thread pointers
 };
 
 // assure, that ADC is not oversteered?

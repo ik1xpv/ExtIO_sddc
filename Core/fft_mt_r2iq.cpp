@@ -87,14 +87,7 @@ fft_mt_r2iq::~fft_mt_r2iq()
 		fftwf_destroy_plan(plans_f2t_c2c[d]);
 	}
 
-	for (unsigned t = 0; t < processor_count; t++) {
-		auto th = threadArgs[t];
-		fftwf_free(th->ADCinTime);
-		fftwf_free(th->ADCinFreq);
-		fftwf_free(th->inFreqTmp);
-
-		delete threadArgs[t];
-	}
+	delete threadArg;
 }
 
 
@@ -112,13 +105,9 @@ void fft_mt_r2iq::TurnOn(ringbuffer<int16_t> &input) {
 	this->inputbuffer = &input;    // set to the global exported by main_loop
 	this->r2iqOn = true;
 	this->bufIdx = 0;
-	this->lastThread = threadArgs[0];
 
-	for (unsigned t = 0; t < processor_count; t++) {
-		r2iq_thread[t] = std::thread(
-			[this] (void* arg)
-				{ return this->r2iqThreadf((r2iqThreadArg*)arg); }, (void*)threadArgs[t]);
-	}
+	r2iq_thread = std::thread(
+		[this](void *arg) { return this->r2iqThreadf((r2iqThreadArg *)arg); }, (void *)threadArg);
 }
 
 void fft_mt_r2iq::TurnOff(void) {
@@ -126,9 +115,7 @@ void fft_mt_r2iq::TurnOff(void) {
 
 	inputbuffer->Stop();
 	outputbuffer->Stop();
-	for (unsigned t = 0; t < processor_count; t++) {
-		r2iq_thread[t].join();
-	}
+	r2iq_thread.join();
 }
 
 bool fft_mt_r2iq::IsOn(void) { return(this->r2iqOn); }
@@ -140,13 +127,6 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<float>* obuffers)
 	this->GainScale = gain;
 
 	fftwf_import_wisdom_from_filename("wisdom");
-
-	// Get the processor count
-	processor_count = std::thread::hardware_concurrency() - 1;
-	if (processor_count == 0)
-		processor_count = 1;
-	if (processor_count > N_MAX_R2IQ_THREADS)
-		processor_count = N_MAX_R2IQ_THREADS;
 
 	{
 		fftwf_plan filterplan_t2f_c2c; // time to frequency fft
@@ -196,20 +176,18 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<float>* obuffers)
 		fftwf_destroy_plan(filterplan_t2f_c2c);
 		fftwf_free(pfilterht);
 
-		for (unsigned t = 0; t < processor_count; t++) {
-			r2iqThreadArg *th = new r2iqThreadArg();
-			threadArgs[t] = th;
+		r2iqThreadArg *th = new r2iqThreadArg();
+		threadArg = th;
 
-			th->ADCinTime = (float*)fftwf_malloc(sizeof(float) * (halfFft + transferSize / 2));                 // 2048
+		th->ADCinTime = (float*)fftwf_malloc(sizeof(float) * (halfFft + transferSize / 2));                 // 2048
 
-			th->ADCinFreq = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft + 1)); // 1024+1
-			th->inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
-		}
+		th->ADCinFreq = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft + 1)); // 1024+1
+		th->inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
 
-		plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, threadArgs[0]->ADCinTime, threadArgs[0]->ADCinFreq, FFTW_MEASURE);
+		plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, threadArg->ADCinTime, threadArg->ADCinFreq, FFTW_MEASURE);
 		for (int d = 0; d < NDECIDX; d++)
 		{
-			plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], threadArgs[0]->inFreqTmp, threadArgs[0]->inFreqTmp, FFTW_BACKWARD, FFTW_MEASURE);
+			plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], threadArg->inFreqTmp, threadArg->inFreqTmp, FFTW_BACKWARD, FFTW_MEASURE);
 		}
 	}
 }
