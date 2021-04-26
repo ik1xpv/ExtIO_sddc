@@ -5,7 +5,7 @@
 #include <condition_variable>
 
 const int default_count = 64;
-const int spin_count = 1000000;
+const int spin_count = 100;
 #define ALIGN (8)
 
 class ringbufferbase {
