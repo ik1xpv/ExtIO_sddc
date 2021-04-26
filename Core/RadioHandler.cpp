@@ -58,6 +58,7 @@ void RadioHandlerClass::OnDataPacket()
 
 RadioHandlerClass::RadioHandlerClass() :
 	DbgPrintFX3(nullptr),
+	GetConsoleIn(nullptr),
 	run(false),
 	pga(false),
 	dither(false),
@@ -67,7 +68,6 @@ RadioHandlerClass::RadioHandlerClass() :
 	firmware(0),
 	modeRF(NOMODE),
 	adcrate(DEFAULT_ADC_FREQ),
-	GetConsoleIn(nullptr),
 	fc(0.0f),
 	hardware(new DummyRadio(nullptr))
 {
