@@ -46,10 +46,8 @@ private:
 
 	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
 	fftwf_plan *plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
-	fftwf_plan plans_f2t_c2c[NDECIDX];
 
     r2iqThreadArg* threadArg;
-    std::mutex mutexR2iqControl;                   // r2iq control lock
     std::thread r2iq_thread; // thread pointers
 };
 
@@ -67,7 +65,6 @@ struct r2iqThreadArg {
 
 	float *ADCinTime;                // point to each threads input buffers [nftt][n]
 	fftwf_complex *ADCinFreq;         // buffers in frequency
-	fftwf_complex *inFreqTmp;         // tmp decimation output buffers (after tune shift)
 #if PRINT_INPUT_RANGE
 	int MinMaxBlockCount;
 	int16_t MinValue;

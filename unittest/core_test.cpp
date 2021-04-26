@@ -50,9 +50,11 @@ class fx3handler : public fx3class
 
     std::thread emuthread;
     bool run;
+    ringbuffer<int16_t> *input;
     void StartStream(ringbuffer<int16_t>& input, int numofblock)
     {
         run = true;
+        this->input = &input;
         emuthread = std::thread([&input, this]{
             while(run)
             {
@@ -65,6 +67,7 @@ class fx3handler : public fx3class
     }
 
 	void StopStream() {
+        input->ReadDone();
         run = false;
         emuthread.join();
     }

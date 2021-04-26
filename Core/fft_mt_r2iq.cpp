@@ -82,10 +82,6 @@ fft_mt_r2iq::~fft_mt_r2iq()
 	fftwf_free(filterHw);
 
 	fftwf_destroy_plan(plan_t2f_r2c);
-	for (int d = 0; d < NDECIDX; d++)
-	{
-		fftwf_destroy_plan(plans_f2t_c2c[d]);
-	}
 
 	delete threadArg;
 }
@@ -182,13 +178,8 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<float>* obuffers)
 		th->ADCinTime = (float*)fftwf_malloc(sizeof(float) * (halfFft + transferSize / 2));                 // 2048
 
 		th->ADCinFreq = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft + 1)); // 1024+1
-		th->inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
 
 		plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, threadArg->ADCinTime, threadArg->ADCinFreq, FFTW_MEASURE);
-		for (int d = 0; d < NDECIDX; d++)
-		{
-			plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], threadArg->inFreqTmp, threadArg->inFreqTmp, FFTW_BACKWARD, FFTW_MEASURE);
-		}
 	}
 }
 

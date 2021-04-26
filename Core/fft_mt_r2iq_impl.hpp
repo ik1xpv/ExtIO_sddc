@@ -1,12 +1,17 @@
 
 {
+	fftwf_complex *inFreqTmp;         // tmp decimation output buffers (after tune shift)
+
 	const int decimate = this->mdecimation;
 	const int mfft = this->mfftdim[decimate];	// = halfFft / 2^mdecimation
 	const fftwf_complex* filter = filterHw[decimate];
 	const bool lsb = this->getSideband();
 	const auto filter2 = &filter[halfFft - mfft / 2];
 
-	plan_f2t_c2c = &plans_f2t_c2c[decimate];
+	inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
+
+	fftwf_plan plan_f2t_c2c = fftwf_plan_dft_1d(mfftdim[decimate], inFreqTmp, inFreqTmp, FFTW_BACKWARD, FFTW_MEASURE);
+
 	fftwf_complex* pout = nullptr;
 	int decimate_count = 0;
 
@@ -16,17 +21,14 @@
 
 		const int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 
-		{
-			std::unique_lock<std::mutex> lk(mutexR2iqControl);
-			dataADC = inputbuffer->getReadPtr();
+		dataADC = inputbuffer->getReadPtr();
 
-			if (!r2iqOn)
-				return 0;
+		if (!r2iqOn)
+			return 0;
 
-			this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;
+		this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;
 
-			endloop = inputbuffer->peekReadPtr(-1) + transferSamples - halfFft;
-		}
+		endloop = inputbuffer->peekReadPtr(-1) + transferSamples - halfFft;
 
 		auto inloop = th->ADCinTime;
 
@@ -85,7 +87,7 @@
 		// Calculate the parameters for the second half
 		const auto start = std::max(0, mfft / 2 - _mtunebin);
 		const auto source2 = &th->ADCinFreq[_mtunebin - mfft / 2];
-		const auto dest = &th->inFreqTmp[mfft / 2];
+		const auto dest = &inFreqTmp[mfft / 2];
 		for (int k = 0; k < fftPerBuf; k++)
 		{
 			// core of fast convolution including filter and decimation
@@ -99,22 +101,22 @@
 
 				// circular shift (mixing in full bins) and low/bandpass filtering (complex multiplication)
 				{
-					// circular shift tune fs/2 first half array into th->inFreqTmp[]
-					shift_freq(th->inFreqTmp, source, filter, 0, count);
+					// circular shift tune fs/2 first half array into inFreqTmp[]
+					shift_freq(inFreqTmp, source, filter, 0, count);
 					if (mfft / 2 != count)
-						memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
+						memset(inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
 
 					// circular shift tune fs/2 second half array
 					shift_freq(dest, source2, filter2, start, mfft/2);
 					if (start != 0)
-						memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
+						memset(inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 				}
-				// result now in th->inFreqTmp[]
+				// result now in inFreqTmp[]
 
 				// 'shorter' inverse FFT transform (decimation); frequency (back) to COMPLEX time domain
 				// transform size: mfft = mfftdim[k] = halfFft / 2^k with k = mdecimation
-				fftwf_execute_dft(*plan_f2t_c2c, th->inFreqTmp, th->inFreqTmp);     //  c2c decimation
-				// result now in th->inFreqTmp[]
+				fftwf_execute_dft(plan_f2t_c2c, inFreqTmp, inFreqTmp);     //  c2c decimation
+				// result now in inFreqTmp[]
 			}
 
 			// postprocessing
@@ -136,22 +138,22 @@
 				// mirror just by negating the imaginary Q of complex I/Q
 				if (k == 0)
 				{
-					copy<true>(pout, &th->inFreqTmp[mfft / 4], mfft/2);
+					copy<true>(pout, &inFreqTmp[mfft / 4], mfft/2);
 				}
 				else
 				{
-					copy<true>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->inFreqTmp[0], (3 * mfft / 4));
+					copy<true>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &inFreqTmp[0], (3 * mfft / 4));
 				}
 			}
 			else // upper sideband
 			{
 				if (k == 0)
 				{
-					copy<false>(pout, &th->inFreqTmp[mfft / 4], mfft/2);
+					copy<false>(pout, &inFreqTmp[mfft / 4], mfft/2);
 				}
 				else
 				{
-					copy<false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->inFreqTmp[0], (3 * mfft / 4));
+					copy<false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &inFreqTmp[0], (3 * mfft / 4));
 				}
 			}
 			// result now in this->obuffers[]
@@ -167,5 +169,8 @@
 		}
 	} // while(run)
 //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
+
+	fftwf_free(inFreqTmp);
+	fftwf_destroy_plan(plan_f2t_c2c);
 	return 0;
 }
