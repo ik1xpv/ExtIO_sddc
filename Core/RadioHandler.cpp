@@ -140,7 +140,7 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(const float*, uint3
 	hardware->Initialize(adcnominalfreq);
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
 	this->r2iqCntrl = r2iqCntrl;
-	r2iqCntrl->Init(hardware->getGain(), &inputbuffer, &outputbuffer);
+	r2iqCntrl->Init(hardware->getGain(), &outputbuffer);
 
 	return true;
 }
@@ -167,7 +167,7 @@ bool RadioHandlerClass::Start(int srate_idx)
 
 	// 0,1,2,3,4 => 32,16,8,4,2 MHz
 	r2iqCntrl->setDecimate(decimate);
-	r2iqCntrl->TurnOn();
+	r2iqCntrl->TurnOn(inputbuffer);
 	fx3->StartStream(inputbuffer, QUEUE_SIZE);
 
 	submit_thread = std::thread(

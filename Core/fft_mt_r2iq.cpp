@@ -108,7 +108,8 @@ float fft_mt_r2iq::setFreqOffset(float offset)
 	return ret;
 }
 
-void fft_mt_r2iq::TurnOn() {
+void fft_mt_r2iq::TurnOn(ringbuffer<int16_t> &input) {
+	this->inputbuffer = &input;    // set to the global exported by main_loop
 	this->r2iqOn = true;
 	this->bufIdx = 0;
 	this->lastThread = threadArgs[0];
@@ -132,9 +133,8 @@ void fft_mt_r2iq::TurnOff(void) {
 
 bool fft_mt_r2iq::IsOn(void) { return(this->r2iqOn); }
 
-void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>* obuffers)
+void fft_mt_r2iq::Init(float gain, ringbuffer<float>* obuffers)
 {
-	this->inputbuffer = input;    // set to the global exported by main_loop
 	this->outputbuffer = obuffers;  // set to the global exported by main_loop
 
 	this->GainScale = gain;

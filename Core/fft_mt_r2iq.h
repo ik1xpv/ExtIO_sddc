@@ -21,8 +21,8 @@ public:
 
     float setFreqOffset(float offset);
 
-    void Init(float gain, ringbuffer<int16_t>* buffers, ringbuffer<float>* obuffers);
-    void TurnOn();
+    void Init(float gain, ringbuffer<float>* obuffers);
+    void TurnOn(ringbuffer<int16_t>& buffers);
     void TurnOff(void);
     bool IsOn(void);
 

@@ -22,12 +22,12 @@ static void Callback(const float* data, uint32_t len)
 }
 
 class rawdata : public r2iqControlClass {
-    void Init(float gain, ringbuffer<int16_t>* buffers, ringbuffer<float>* obuffers) override
+    void Init(float gain, ringbuffer<float>* obuffers) override
     {
         idx = 0;
     }
 
-    void TurnOn() override
+    void TurnOn(ringbuffer<int16_t>& buffers) override
     {
         this->r2iqOn = true;
         idx = 0;

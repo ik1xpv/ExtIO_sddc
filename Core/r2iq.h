@@ -28,11 +28,10 @@ public:
 
     void setDecimate(int dec) {this->mdecimation = dec; }
 
-    virtual void Init(float gain, ringbuffer<int16_t>* input, ringbuffer<float>* obuffers) {}
-    virtual void TurnOn() { this->r2iqOn = true; }
+    virtual void Init(float gain, ringbuffer<float>* obuffers) {}
+    virtual void TurnOn(ringbuffer<int16_t>& buffers) { this->r2iqOn = true; }
     virtual void TurnOff(void) { this->r2iqOn = false; }
     virtual bool IsOn(void) { return this->r2iqOn; }
-    virtual void DataReady(void) {}
     virtual float setFreqOffset(float offset) { return 0; };
 
 protected:
