@@ -164,7 +164,7 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<float>* obuffers)
 			{
 				pfilterht[t][0] = pfilterht[t][1]= 0.0F;
 			}
-		
+
 			for (int t = 0; t < (halfFft/4+1); t++)
 			{
 				pfilterht[halfFft-1-t][0] = gainadj * pht[t];
