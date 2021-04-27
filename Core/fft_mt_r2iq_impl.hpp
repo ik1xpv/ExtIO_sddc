@@ -8,14 +8,10 @@
 	const bool lsb = this->getSideband();
 	const auto filter2 = &filter[halfFft - mfft / 2];
 
-	inFreqTmp = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft));    // 1024
 
 	fftwf_plan plan_f2t_c2c = fftwf_plan_dft_1d(mfftdim[decimate], inFreqTmp, inFreqTmp, FFTW_BACKWARD, FFTW_MEASURE);
 
 	fftwf_complex* pout = nullptr;
-	int decimate_count = 0;
-
-	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
 		const int16_t *endloop;    // pointer to end data to be copied to beginning
 
