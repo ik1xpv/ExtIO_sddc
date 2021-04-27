@@ -110,7 +110,6 @@ float fft_mt_r2iq::setFreqOffset(float offset)
 
 void fft_mt_r2iq::TurnOn() {
 	this->r2iqOn = true;
-	this->cntr = 0;
 	this->bufIdx = 0;
 	this->lastThread = threadArgs[0];
 
@@ -123,8 +122,9 @@ void fft_mt_r2iq::TurnOn() {
 
 void fft_mt_r2iq::TurnOff(void) {
 	this->r2iqOn = false;
-	this->cntr = 100;
-	cvADCbufferAvailable.notify_all();
+
+	inputbuffer->Stop();
+	outputbuffer->Stop();
 	for (unsigned t = 0; t < processor_count; t++) {
 		r2iq_thread[t].join();
 	}
@@ -132,23 +132,10 @@ void fft_mt_r2iq::TurnOff(void) {
 
 bool fft_mt_r2iq::IsOn(void) { return(this->r2iqOn); }
 
-void fft_mt_r2iq::DataReady()
-{ // signals new sample buffer arrived
-	if (!this->r2iqOn)
-		return;
-
-	auto pending = std::atomic_fetch_add(&this->cntr, 1);
-
-	if (pending == 0)
-		cvADCbufferAvailable.notify_one(); // signal data available
-	else
-		cvADCbufferAvailable.notify_all(); // signal data available
-}
-
-void fft_mt_r2iq::Init(float gain, int16_t **buffers, float** obuffers)
+void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>* obuffers)
 {
-	this->buffers = buffers;    // set to the global exported by main_loop
-	this->obuffers = obuffers;  // set to the global exported by main_loop
+	this->inputbuffer = input;    // set to the global exported by main_loop
+	this->outputbuffer = obuffers;  // set to the global exported by main_loop
 
 	this->GainScale = gain;
 

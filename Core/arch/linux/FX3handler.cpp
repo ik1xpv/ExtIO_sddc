@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "FX3handler.h"
 #include "usb_device.h"
 
@@ -47,9 +49,10 @@ bool fx3handler::GetHardwareInfo(uint32_t* data)
     return usb_device_control(this->dev, TESTFX3, 0, 0, (uint8_t *) data, sizeof(*data), 1) == 0;
 }
 
-void fx3handler::StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock)
+void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 {
-    this->Callback = callback;
+    inputbuffer = &input;
+    auto readsize = input.getWriteCount() * sizeof(uint16_t);
     stream = streaming_open_async(this->dev, readsize, numofblock, PacketRead, this);
 
     // Start background thread to poll the events
@@ -81,7 +84,9 @@ void fx3handler::PacketRead(uint32_t data_size, uint8_t *data, void *context)
 {
     fx3handler *handler = (fx3handler*)context;
 
-    handler->Callback(data);
+    auto *ptr = handler->inputbuffer->getWritePtr();
+    memcpy(ptr, data, data_size);
+    handler->inputbuffer->WriteDone();
 }
 
 bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)

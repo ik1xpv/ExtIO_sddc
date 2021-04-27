@@ -10,6 +10,7 @@
 #include "FX3Class.h"
 #include "usb_device.h"
 #include "streaming.h"
+#include "dsp/ringbuffer.h"
 
 class fx3handler : public fx3class
 {
@@ -23,8 +24,8 @@ public:
 	bool SetArgument(uint16_t index, uint16_t value) override;
 	bool GetHardwareInfo(uint32_t* data) override;
 	bool ReadDebugTrace(uint8_t* pdata, uint8_t len);
-	void StartStream(const std::function<void( void* )> &callback, size_t readsize, int numofblock) override;
-	void StopStream() override;
+	void StartStream(ringbuffer<int16_t>& input, int numofblock);
+	void StopStream();
 
 private:
 	bool ReadUsb(uint8_t command, uint16_t value, uint16_t index, uint8_t *data, size_t size);
@@ -34,7 +35,7 @@ private:
 
 	usb_device_t *dev;
 	streaming_t *stream;
-	std::function<void( void* )> Callback;
+	ringbuffer<int16_t> *inputbuffer;
     bool run;
     std::thread poll_thread;
 };

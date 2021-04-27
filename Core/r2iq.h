@@ -2,12 +2,14 @@
 #define R2IQ_H
 #include "license.txt" 
 
-#define NDECIDX 10  //number of srate
+#define NDECIDX 7  //number of srate
 
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+
+#include "dsp/ringbuffer.h"
 
 struct r2iqThreadArg;
 
@@ -26,7 +28,7 @@ public:
 
     void setDecimate(int dec) {this->mdecimation = dec; }
 
-    virtual void Init(float gain, int16_t** buffers, float** obuffers) {}
+    virtual void Init(float gain, ringbuffer<int16_t>* input, ringbuffer<float>* obuffers) {}
     virtual void TurnOn() { this->r2iqOn = true; }
     virtual void TurnOff(void) { this->r2iqOn = false; }
     virtual bool IsOn(void) { return this->r2iqOn; }
