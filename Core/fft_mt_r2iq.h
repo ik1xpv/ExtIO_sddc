@@ -35,33 +35,19 @@ private:
     int mfftdim [NDECIDX]; // FFT N dimensions: mfftdim[k] = halfFft / 2^k
     int mtunebin;
 
-    void *r2iqThreadf(r2iqThreadArg *th);   // thread function
+    void *r2iqThreadf();   // thread function
 
-    void * r2iqThreadf_def(r2iqThreadArg *th);
-    void * r2iqThreadf_avx(r2iqThreadArg *th);
-    void * r2iqThreadf_avx2(r2iqThreadArg *th);
-    void * r2iqThreadf_avx512(r2iqThreadArg *th);
+    void *r2iqThreadf_def();
+    void *r2iqThreadf_avx();
+    void *r2iqThreadf_avx2();
+    void *r2iqThreadf_avx512();
 
     fftwf_complex **filterHw;       // Hw complex to each decimation ratio
 
 	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
 	fftwf_plan *plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
 
-    r2iqThreadArg* threadArg;
     std::thread r2iq_thread; // thread pointers
-};
-
-// assure, that ADC is not oversteered?
-struct r2iqThreadArg {
-
-	r2iqThreadArg()
-	{
-#if PRINT_INPUT_RANGE
-		MinMaxBlockCount = 0;
-		MinValue = 0;
-		MaxValue = 0;
-#endif
-	}
 
 	float *ADCinTime;                // point to each threads input buffers [nftt][n]
 	fftwf_complex *ADCinFreq;         // buffers in frequency

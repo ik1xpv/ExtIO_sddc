@@ -30,7 +30,7 @@
 
 		endloop = inputbuffer->peekReadPtr(-1) + transferSamples - halfFft;
 
-		auto inloop = th->ADCinTime;
+		auto inloop = this->ADCinTime;
 
 		// @todo: move the following int16_t conversion to (32-bit) float
 		// directly inside the following loop (for "k < fftPerBuf")
@@ -56,19 +56,19 @@
 		}
 
 #if PRINT_INPUT_RANGE
-		th->MinValue = std::min(blockMinMax.first, th->MinValue);
-		th->MaxValue = std::max(blockMinMax.second, th->MaxValue);
-		++th->MinMaxBlockCount;
-		if (th->MinMaxBlockCount * processor_count / 3 >= DEFAULT_TRANSFERS_PER_SEC )
+		this->MinValue = std::min(blockMinMax.first, this->MinValue);
+		this->MaxValue = std::max(blockMinMax.second, this->MaxValue);
+		++this->MinMaxBlockCount;
+		if (this->MinMaxBlockCount * processor_count / 3 >= DEFAULT_TRANSFERS_PER_SEC )
 		{
-			float minBits = (th->MinValue < 0) ? (log10f((float)(-th->MinValue)) / log10f(2.0f)) : -1.0f;
-			float maxBits = (th->MaxValue > 0) ? (log10f((float)(th->MaxValue)) / log10f(2.0f)) : -1.0f;
+			float minBits = (this->MinValue < 0) ? (log10f((float)(-this->MinValue)) / log10f(2.0f)) : -1.0f;
+			float maxBits = (this->MaxValue > 0) ? (log10f((float)(this->MaxValue)) / log10f(2.0f)) : -1.0f;
 			printf("r2iq: min = %d (%.1f bits) %.2f%%, max = %d (%.1f bits) %.2f%%\n",
-				(int)th->MinValue, minBits, th->MinValue *-100.0f / 32768.0f,
-				(int)th->MaxValue, maxBits, th->MaxValue * 100.0f / 32768.0f);
-			th->MinValue = 0;
-			th->MaxValue = 0;
-			th->MinMaxBlockCount = 0;
+				(int)this->MinValue, minBits, this->MinValue *-100.0f / 32768.0f,
+				(int)this->MaxValue, maxBits, this->MaxValue * 100.0f / 32768.0f);
+			this->MinValue = 0;
+			this->MaxValue = 0;
+			this->MinMaxBlockCount = 0;
 		}
 #endif
 		dataADC = nullptr;
@@ -82,11 +82,11 @@
 
 		// Calculate the parameters for the first half
 		const auto count = std::min(mfft/2, halfFft - _mtunebin);
-		const auto source = &th->ADCinFreq[_mtunebin];
+		const auto source = &this->ADCinFreq[_mtunebin];
 
 		// Calculate the parameters for the second half
 		const auto start = std::max(0, mfft / 2 - _mtunebin);
-		const auto source2 = &th->ADCinFreq[_mtunebin - mfft / 2];
+		const auto source2 = &this->ADCinFreq[_mtunebin - mfft / 2];
 		const auto dest = &inFreqTmp[mfft / 2];
 		for (int k = 0; k < fftPerBuf; k++)
 		{
@@ -96,8 +96,8 @@
 			{
 				// FFT first stage: time to frequency, real to complex
 				// 'full' transformation size: 2 * halfFft
-				fftwf_execute_dft_r2c(plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
-				// result now in th->ADCinFreq[]
+				fftwf_execute_dft_r2c(plan_t2f_r2c, this->ADCinTime + (3 * halfFft / 2) * k, this->ADCinFreq);
+				// result now in this->ADCinFreq[]
 
 				// circular shift (mixing in full bins) and low/bandpass filtering (complex multiplication)
 				{
@@ -168,7 +168,7 @@
 			pout += mfft / 2 + (3 * mfft / 4) * (fftPerBuf - 1);
 		}
 	} // while(run)
-//    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
+//    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)this->t, pthread_self());
 
 	fftwf_free(inFreqTmp);
 	fftwf_destroy_plan(plan_f2t_c2c);

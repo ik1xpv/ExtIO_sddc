@@ -48,6 +48,12 @@ fft_mt_r2iq::fft_mt_r2iq() :
 	}
 	GainScale = 0.0f;
 
+#if PRINT_INPUT_RANGE
+		MinMaxBlockCount = 0;
+		MinValue = 0;
+		MaxValue = 0;
+#endif
+
 #ifndef NDEBUG
 	int mratio = 1;  // 1,2,4,8,16,..
 	const float Astop = 120.0f;
@@ -82,8 +88,6 @@ fft_mt_r2iq::~fft_mt_r2iq()
 	fftwf_free(filterHw);
 
 	fftwf_destroy_plan(plan_t2f_r2c);
-
-	delete threadArg;
 }
 
 
@@ -103,7 +107,9 @@ void fft_mt_r2iq::TurnOn(ringbuffer<int16_t> &input) {
 	this->bufIdx = 0;
 
 	r2iq_thread = std::thread(
-		[this](void *arg) { return this->r2iqThreadf((r2iqThreadArg *)arg); }, (void *)threadArg);
+		[this]() {
+			return this->r2iqThreadf();
+		});
 }
 
 void fft_mt_r2iq::TurnOff(void) {
@@ -172,14 +178,11 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<float>* obuffers)
 		fftwf_destroy_plan(filterplan_t2f_c2c);
 		fftwf_free(pfilterht);
 
-		r2iqThreadArg *th = new r2iqThreadArg();
-		threadArg = th;
+		ADCinTime = (float*)fftwf_malloc(sizeof(float) * (halfFft + transferSize / 2));                 // 2048
 
-		th->ADCinTime = (float*)fftwf_malloc(sizeof(float) * (halfFft + transferSize / 2));                 // 2048
+		ADCinFreq = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft + 1)); // 1024+1
 
-		th->ADCinFreq = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*(halfFft + 1)); // 1024+1
-
-		plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, threadArg->ADCinTime, threadArg->ADCinFreq, FFTW_MEASURE);
+		plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, ADCinTime, ADCinFreq, FFTW_MEASURE);
 	}
 }
 
@@ -193,7 +196,7 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<float>* obuffers)
 	#define cpuid(info, x)  __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
 #endif
 
-void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th)
+void * fft_mt_r2iq::r2iqThreadf()
 {
 #ifdef NO_SIMD_OPTIM
 	DbgPrintf("Hardware Capability: all SIMD features (AVX, AVX2, AVX512) deactivated\n");
@@ -221,12 +224,12 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th)
 	DbgPrintf("Hardware Capability: AVX:%d AVX2:%d AVX512:%d\n", HW_AVX, HW_AVX2, HW_AVX512F);
 
 	if (HW_AVX512F)
-		return r2iqThreadf_avx512(th);
+		return r2iqThreadf_avx512();
 	else if (HW_AVX2)
-		return r2iqThreadf_avx2(th);
+		return r2iqThreadf_avx2();
 	else if (HW_AVX)
-		return r2iqThreadf_avx(th);
+		return r2iqThreadf_avx();
 	else
-		return r2iqThreadf_def(th);
+		return r2iqThreadf_def();
 #endif
 }
