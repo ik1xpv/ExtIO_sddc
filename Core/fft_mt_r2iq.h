@@ -45,7 +45,6 @@ private:
     fftwf_complex **filterHw;       // Hw complex to each decimation ratio
 
 	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
-	fftwf_plan *plan_f2t_c2c;          // fftw plan buffers Time to Freq real to complex per buffer
 
     std::thread r2iq_thread; // thread pointers
 
