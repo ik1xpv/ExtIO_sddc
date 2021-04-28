@@ -36,6 +36,7 @@ private:
     int mtunebin;
 
     void *r2iqThreadf();   // thread function
+    void *receiverf();
 
     void *r2iqThreadf_def();
     void *r2iqThreadf_avx();
@@ -47,9 +48,10 @@ private:
 	fftwf_plan plan_t2f_r2c;          // fftw plan buffers Freq to Time complex to complex per decimation ratio
 
     std::thread r2iq_thread; // thread pointers
+    std::thread freq2time_thread;
 
 	float *ADCinTime;                // point to each threads input buffers [nftt][n]
-	fftwf_complex *ADCinFreq;         // buffers in frequency
+    ringbuffer<fftwf_complex> freqdomain;
 #if PRINT_INPUT_RANGE
 	int MinMaxBlockCount;
 	int16_t MinValue;
