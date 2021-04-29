@@ -106,6 +106,9 @@ void fft_mt_r2iq::TurnOn(ringbuffer<int16_t> &input) {
 	this->r2iqOn = true;
 	this->bufIdx = 0;
 
+	this->outputbuffer->Start();
+	this->freqdomain.Start();
+
 	r2iq_thread = std::thread(
 		[this]() {
 			return this->r2iqThreadf();

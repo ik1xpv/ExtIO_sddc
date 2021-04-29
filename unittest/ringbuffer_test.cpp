@@ -16,6 +16,7 @@ TEST_CASE(RingBufferFixture, BasicTest)
     ringbuf->setBlockSize(128 * 1024);
 
     REQUIRE_EQUAL(ringbuf->getBlockSize(), 128*1024);
+    ringbuf->Start();
     auto ptr = ringbuf->getWritePtr();
     memset(ptr, 0x5A, ringbuf->getBlockSize() * sizeof(int16_t));
     ringbuf->WriteDone();
@@ -29,6 +30,7 @@ TEST_CASE(RingBufferFixture, TwoThreadsTest)
 {
     auto buffer = ringbuffer<int16_t>(2);
     buffer.setBlockSize(1024);
+    buffer.Start();
     auto thread1 = std::thread(
         [&buffer](){
             for(int i = 0; i < 1000; i++) {
@@ -58,6 +60,7 @@ TEST_CASE(RingBufferFixture, TwoThreadsLargeBufferTest)
 {
     auto buffer = ringbuffer<int16_t>(128);
     buffer.setBlockSize(1024);
+    buffer.Start();
     auto thread1 = std::thread(
         [&buffer](){
             for(int i = 0; i < 1000; i++) {
@@ -87,6 +90,7 @@ TEST_CASE(RingBufferFixture, TwoThreadsTwoBufferTest)
 {
     auto buffer = ringbuffer<int16_t>(2);
     buffer.setBlockSize(1024);
+    buffer.Start();
     auto thread1 = std::thread(
         [&buffer](){
             for(int i = 0; i < 1000; i++) {
@@ -112,11 +116,12 @@ TEST_CASE(RingBufferFixture, TwoThreadsTwoBufferTest)
 }
 
 
-TEST_CASE(RingBufferFixture, StopTest)
+TEST_CASE(RingBufferFixture, StartStopTest)
 {
     bool run = true;
     auto buffer = ringbuffer<int16_t>(128);
     buffer.setBlockSize(1024);
+    buffer.Start();
     auto thread1 = std::thread(
         [&buffer, &run, this](){
             for(int i = 0; i < 1000 && run; i++) {
@@ -155,6 +160,7 @@ TEST_CASE(RingBufferFixture, PeekTest)
 {
     auto buffer = ringbuffer<int16_t>(128);
 
+    buffer.Start();
     auto wptr0 = buffer.getWritePtr();
     auto wptr1 = buffer.peekWritePtr(0);
 
@@ -174,4 +180,20 @@ TEST_CASE(RingBufferFixture, PeekTest)
 
     auto rptr2 = buffer.peekReadPtr(-1);
     CHECK_EQUAL(rptr0, rptr2);
+}
+
+
+TEST_CASE(RingBufferFixture, StopTest)
+{
+    auto buffer = ringbuffer<int16_t>(128);
+
+    buffer.Start();
+    auto wptr0 = buffer.getWritePtr();
+    buffer.Stop();
+
+    buffer.Start();
+    auto wptr1 = buffer.getWritePtr();
+    buffer.Stop();
+
+    CHECK_EQUAL(wptr0, wptr1);
 }

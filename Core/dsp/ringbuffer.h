@@ -55,6 +55,15 @@ public:
         writeCount++;
     }
 
+    void Start()
+    {
+        read_index = 0;
+        write_index = 0;
+        emptyCount = 0;
+        fullCount = 0;
+        writeCount = 0;
+    }
+
     void Stop()
     {
         std::unique_lock<std::mutex> lk(mutex);

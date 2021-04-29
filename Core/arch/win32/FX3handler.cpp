@@ -435,6 +435,7 @@ void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 
 	// create the thread
 	this->numofblock = numofblock;
+	input.Start();
 	run = true;
 	adc_samples_thread = new std::thread(
 		[this]() {
