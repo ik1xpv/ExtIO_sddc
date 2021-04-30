@@ -164,6 +164,9 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<float>* obuffers)
 		const float Astop = 120.0f;
 		const float relPass = 0.85f;  // 85% of Nyquist should be usable
 		const float relStop = 1.1f;   // 'some' alias back into transition band is OK
+
+		fftwf_complex *inFreqTmp = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (halfFft)); // 1024
+
 		for (int d = 0; d < NDECIDX; d++)	// @todo when increasing NDECIDX
 		{
 			// @todo: have dynamic bandpass filter size - depending on decimation
@@ -185,8 +188,12 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<float>* obuffers)
 			}
 
 			fftwf_execute_dft(filterplan_t2f_c2c, pfilterht, filterHw[d]);
+
+			// Create iFFT
+			plans_f2t_c2c[d] = fftwf_plan_dft_1d(mfftdim[d], inFreqTmp, inFreqTmp, FFTW_BACKWARD, FFTW_MEASURE);
 		}
 		delete[] pht;
+		fftwf_free(inFreqTmp);
 		fftwf_destroy_plan(filterplan_t2f_c2c);
 		fftwf_free(pfilterht);
 
@@ -257,9 +264,9 @@ void* fft_mt_r2iq::receiverf()
 	const auto filter2 = &filter[halfFft - mfft / 2];
 
 	inFreqTmp = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (halfFft)); // 1024
-	fftwf_plan plan_f2t_c2c = fftwf_plan_dft_1d(mfftdim[decimate], inFreqTmp, inFreqTmp, FFTW_BACKWARD, FFTW_MEASURE);
 
 	int decimate_count = 0;
+	auto plan_f2t_c2c = plans_f2t_c2c[decimate];
 	fftwf_complex *pout = nullptr;
 
 	while (r2iqOn)
@@ -282,7 +289,6 @@ void* fft_mt_r2iq::receiverf()
 
 			if (!r2iqOn)
 				return 0;
-
 
 			// Calculate the parameters for the first half
 			const auto source = &ADCinFreq[_mtunebin];
@@ -363,7 +369,6 @@ void* fft_mt_r2iq::receiverf()
 	  //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)this->t, pthread_self());
 
 	fftwf_free(inFreqTmp);
-	fftwf_destroy_plan(plan_f2t_c2c);
 
 	return 0;
 }
