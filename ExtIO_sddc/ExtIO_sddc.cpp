@@ -126,6 +126,13 @@ static bool GetConsoleInput(char* buf, int maxlen)
 	return rc;
 }
 
+static int GetDecimante()
+{
+	int srate_idx = ExtIoGetActualSrateIdx();
+
+	return srate_idx;
+}
+
 //---------------------------------------------------------------------------
 
 HMODULE hInst;
@@ -317,7 +324,7 @@ int EXTIO_API StartHWdbl(double LOfreq)
 	if (!gbInitHW)
 		return 0;
 
-	RadioHandler.Start(ExtIoGetActualSrateIdx());
+	RadioHandler.Start(GetDecimante());
 	SetHWLOdbl(LOfreq);
 
 	if (RadioHandler.IsReady()) //  HF103 connected
@@ -767,13 +774,10 @@ extern "C"
 int EXTIO_API ExtIoGetSrates(int srate_idx, double * samplerate)
 {
 	EnterFunction1(srate_idx);
-	double div = pow(2.0, srate_idx);
-	double srateM = div * 2.0;
-	double bwmin = adcnominalfreq / 64.0;
-	if (adcnominalfreq > N2_BANDSWITCH) bwmin /= 2.0;
-	double srate = bwmin * srateM;
 
-	if (srate / adcnominalfreq * 2.0 > 1.1)
+	double srate = adcnominalfreq / 2 / pow(2, srate_idx);
+
+	if (srate_idx > NDECIDX)
 		return -1;
 
 	*samplerate = srate * FreqCorrectionFactor();
@@ -785,14 +789,12 @@ extern "C"
 int EXTIO_API ExtIoSrateSelText(int srate_idx, char* text)
 {
 	EnterFunction1(srate_idx);
-	double div = pow(2.0, srate_idx);
-	double srateM = div * 2.0;
-	double bwmin = adcnominalfreq / 64.0;
-	if (adcnominalfreq > N2_BANDSWITCH) bwmin /= 2.0;
-	double srate = bwmin * srateM;
-	if ((srate / adcnominalfreq) * 2.0 > 1.1)
-		return -1;
-	snprintf(text, 15, "%.1lf MHz", srate/1000000);
+	double srate = adcnominalfreq / 2 / pow(2, srate_idx);
+
+	if (srate > 1000000)
+		snprintf(text, 15, "%.1lf MHz", srate/1000000);
+	else
+		snprintf(text, 15, "%.1lf KHz", srate/1000);
 	return 0;	// return != 0 on error
 }
 
@@ -851,7 +853,7 @@ int SetOverclock(uint32_t adcfreq)
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
 
-	RadioHandler.Start(ExtIoGetActualSrateIdx());
+	RadioHandler.Start(GetDecimante());
 	double internal_LOfreq = gfLOfreq / FreqCorrectionFactor();
 	RadioHandler.TuneLO(internal_LOfreq);
 	return 0;

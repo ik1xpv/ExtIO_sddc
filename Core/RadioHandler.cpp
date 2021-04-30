@@ -145,19 +145,11 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(const float*, uint3
 	return true;
 }
 
-bool RadioHandlerClass::Start(int srate_idx)
+bool RadioHandlerClass::Start(int decimate)
 {
 	Stop();
 	DbgPrintf("RadioHandlerClass::Start\n");
 
-	int	decimate = 4 - srate_idx;   // 5 IF bands
-	if (adcnominalfreq > N2_BANDSWITCH) 
-		decimate = 5 - srate_idx;   // 6 IF bands
-	if (decimate < 0)
-	{
-		decimate = 0;
-		DbgPrintf("WARNING decimate mismatch at srate_idx = %d\n", srate_idx);
-	}
 	run = true;
 	count = 0;
 
