@@ -14,7 +14,7 @@ TEST_CASE(DspFixture, BasicTest)
 {
     ringbuffer<int16_t> input;
     r2freq c;
-    c.Initialize(input);
+    c.Initialize(&input);
 
     auto output = c.getOutput();
 
@@ -29,7 +29,7 @@ TEST_CASE(DspFixture, BasicTest2)
     ringbuffer<fftwf_complex> input;
     input.setBlockSize(sizeof(fftwf_complex) * (halfFft + 1));
     freq2iq c(0.01f, 3);
-    c.Initialize(input);
+    c.Initialize(&input);
 
     auto output = c.getOutput();
 
