@@ -174,6 +174,18 @@ static void Callback()
 		if (!RadioHandler.isRunning())
 			return;
 
+#ifdef _DEBUG		//PScope buffer screenshot
+		if (saveADCsamplesflag == true)
+		{
+			saveADCsamplesflag = false; // do it once
+			unsigned int numsamples = transferSize / sizeof(int16_t);
+			float samplerate  = RadioHandler.getSampleRate();
+			PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
+				"ADCrealsamples.adc input real ADC 16 bit samples",
+				(short*)data, samplerate, numsamples);
+		}
+#endif
+
 		pfnCallback(output->getBlockSize(), 0, 0.0F, (void*)data);
 		output->ReadDone();
 	}
