@@ -9,9 +9,9 @@ namespace dsp
     class input_block
     {
     public:
-        void Initialize(ringbuffer<TIN> &input)
+        void Initialize(ringbuffer<TIN> *input)
         {
-            this->input = &input;
+            this->input = input;
         }
 
     protected:

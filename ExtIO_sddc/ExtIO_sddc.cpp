@@ -16,6 +16,8 @@
 #include "splashwindow.h"
 #include "PScope_uti.h"
 
+#include <thread>
+
 #include "dsp/r2freq.h"
 #include "dsp/freq2iq.h"
 
@@ -52,6 +54,10 @@ HWND Hconsole;
 static bool gshdwn;
 
 RadioHandlerClass RadioHandler;
+r2freq *r2freq_i = nullptr;
+freq2iq *freq2iq_i = nullptr;
+
+std::thread uploadThread;
 
 // Dialog callback
 
@@ -96,8 +102,6 @@ static bool GetConsoleInput(char* buf, int maxlen)
 {
 	DWORD nevents = 0;
 	INPUT_RECORD irInBuf[128];
-	KEY_EVENT_RECORD key;
-	int i;
 	bool rc = false;
 	int counter = 0;
 	if (Hconsole == nullptr) return rc;
@@ -111,7 +115,7 @@ static bool GetConsoleInput(char* buf, int maxlen)
 				dbgprintf("ReadConsoleInput error\n");
 				return rc;
 			}
-			for (i = 0; i < nevents; i++)
+			for (DWORD i = 0; i < nevents; i++)
 			{
 				if (irInBuf[i].EventType == KEY_EVENT)
 				{
@@ -161,16 +165,27 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
-static void Callback(const float* data, uint32_t len)
+static void Callback()
 {
-	if (data)
+	auto output = freq2iq_i->getOutput();
+	while(RadioHandler.isRunning())
 	{
-		pfnCallback(len, 0, 0.0F, (void*)data);
+		auto data = output->getReadPtr();
+		if (!RadioHandler.isRunning())
+			return;
+
+		pfnCallback(output->getBlockSize(), 0, 0.0F, (void*)data);
 	}
-	else
-	{
-		pfnCallback(-1, extHw_Stop, 0.0F, 0); // Stop realtime see Failures
-	}
+}
+
+static void RadioTuneLO(uint64_t freq)
+{
+	auto hardwareLO = RadioHandler.TuneLO(freq);
+	float offset = (freq - hardwareLO) * 1.0f / (RadioHandler.getSampleRate() / 2);
+
+	freq2iq_i->SetChannel(0, GetDecimante(), offset,
+		RadioHandler.GetmodeRF() == VHFMODE? true : false
+	);
 }
 
 //---------------------------------------------------------------------------
@@ -226,7 +241,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 				   RadioHandler.Init(Fx3); // Check if it there hardware
 #ifdef _DEBUG
 		RadioHandler.EnableDebug( printf_USB_cb , GetConsoleInput);
-#endif 
+#endif
 
 		if (!gbInitHW)
 		{
@@ -261,6 +276,13 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_READY);
 
+	r2freq_i = new r2freq();
+	// only one channel
+	freq2iq_i = new freq2iq(RadioHandler.GetGain(), 1);
+
+	r2freq_i->Initialize(RadioHandler.getOutput());
+	freq2iq_i->Initialize(r2freq_i->getOutput());
+
 	return gbInitHW;
 }
 
@@ -279,7 +301,7 @@ bool EXTIO_API OpenHW(void)
 
 	splashW.destroySplashWindow();
 	// do initialization
-//   verify if HDSDR host name 
+	// verify if HDSDR host name
 	if (strstr(SDR_progname, "HDSDR") == nullptr)
 	{
 		h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_MAIN), NULL, (DLGPROC)&DlgMainFn);
@@ -339,6 +361,12 @@ int EXTIO_API StartHWdbl(double LOfreq)
 	SetWindowText(h_dialog, ebuffer);
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_RUNNING);
 
+	uploadThread = std::thread(
+		[]() {
+			Callback();
+		}
+	);
+
 	// number of complex elements returned each
 	// invocation of the callback routine
 	return (int64_t) (EXT_BLOCKLEN);
@@ -351,6 +379,10 @@ void EXTIO_API StopHW(void)
 {
     EnterFunction();
 	RadioHandler.Stop();
+
+	if (uploadThread.joinable())
+		uploadThread.join();
+
 	if (Failures > 0)
 	{
 		MessageBox(NULL, "Please close box\r\nand press Start",
@@ -488,7 +520,7 @@ double EXTIO_API SetHWLOdbl(double LOfreq)
 	}
 
 	double internal_LOfreq = LOfreq / FreqCorrectionFactor();
-	internal_LOfreq = RadioHandler.TuneLO(internal_LOfreq);
+	RadioTuneLO(internal_LOfreq);
 	gfLOfreq = LOfreq = internal_LOfreq * FreqCorrectionFactor();
 	if (wishedLO != LOfreq)
 	{
@@ -849,7 +881,7 @@ int SetOverclock(uint32_t adcfreq)
 
 	RadioHandler.Start(adcfreq);
 	double internal_LOfreq = gfLOfreq / FreqCorrectionFactor();
-	RadioHandler.TuneLO(internal_LOfreq);
+	RadioTuneLO(internal_LOfreq);
 	return 0;
 }
 

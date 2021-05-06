@@ -91,6 +91,11 @@ bool RadioHandlerClass::Init(fx3class* Fx3)
 	return true;
 }
 
+float  RadioHandlerClass::GetGain()
+{
+	return hardware->getGain();
+}
+
 bool RadioHandlerClass::Start(uint32_t adcrate)
 {
 	Stop();

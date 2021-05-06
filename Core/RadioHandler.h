@@ -39,6 +39,8 @@ public:
     int GetIFGainSteps(const float **steps);
     int UpdateIFGain(int attIdx);
 
+    float GetGain();
+
     bool UpdatemodeRF(rf_mode mode);
     rf_mode GetmodeRF(){return (rf_mode)modeRF;}
     bool UptDither (bool b);
