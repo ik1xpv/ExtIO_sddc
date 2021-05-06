@@ -91,9 +91,7 @@ void freq2iq::InitFilter(float gain)
     fftwf_free(pfilterht);
 }
 
-#define round(number) ((number > 0.0f) ? floorf(number + 0.5f) : ceilf(number - 0.5f))
-
-bool freq2iq::SetChannel(unsigned channel, int decimate, float offsetbin, bool sideband)
+bool freq2iq::SetChannel(unsigned channel, int decimate, float offset, bool sideband)
 {
     if (channel >= channels.size())
         return false;
@@ -108,10 +106,11 @@ bool freq2iq::SetChannel(unsigned channel, int decimate, float offsetbin, bool s
     else
     {
         chan.decimation = decimate;
-        chan.tunebin = round(offsetbin);
+        chan.tunebin = int(offset * halfFft / 4) * 4;
         chan.sideband = sideband;
 
-        chan.fc = offsetbin - chan.tunebin;
+        chan.fc = (((float)chan.tunebin / halfFft) - offset) * mratio[decimate];
+
         if (chan.output == nullptr)
             chan.output = new ringbuffer<float>();
 
@@ -120,6 +119,8 @@ bool freq2iq::SetChannel(unsigned channel, int decimate, float offsetbin, bool s
 
         if (chan.fc != 0)
         {
+            if (sideband)
+                chan.fc = -chan.fc;
             chan.stateFineTune = shift_limited_unroll_C_sse_init(chan.fc, 0.0F);
         }
         return true;
