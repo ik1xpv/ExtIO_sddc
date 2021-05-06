@@ -28,7 +28,7 @@ public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
     bool Init(fx3class* Fx3);
-    bool Start(int srate_idx);
+    bool Start(uint32_t srate);
     bool Stop();
     bool Close();
     bool isRunning(){return run;}
@@ -50,7 +50,6 @@ public:
     uint16_t GetFirmware() { return firmware; }
 
     uint32_t getSampleRate() { return adcrate; }
-    bool UpdateSampleRate(uint32_t samplerate);
 
     const char* getName();
     RadioModel getModel() { return radio; }
@@ -102,7 +101,6 @@ private:
     fx3class *fx3;
     uint32_t adcrate;
 
-    std::mutex fc_mutex;
     std::mutex stop_mutex;
     RadioHardware* hardware;
 };

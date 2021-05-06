@@ -86,13 +86,12 @@ bool RadioHandlerClass::Init(fx3class* Fx3)
 		DbgPrintf("WARNING no SDR connected\n");
 		break;
 	}
-	adcrate = adcnominalfreq;
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
 
 	return true;
 }
 
-bool RadioHandlerClass::Start(int decimate)
+bool RadioHandlerClass::Start(uint32_t adcrate)
 {
 	Stop();
 	DbgPrintf("RadioHandlerClass::Start\n");
@@ -100,6 +99,7 @@ bool RadioHandlerClass::Start(int decimate)
 	run = true;
 	count = 0;
 
+	this->adcrate = adcrate;
 	hardware->Initialize(adcrate);
 
 	hardware->FX3producerOn();  // FX3 start the producer
@@ -133,15 +133,6 @@ bool RadioHandlerClass::Close()
 	hardware = nullptr;
 
 	return true;
-}
-
-bool RadioHandlerClass::UpdateSampleRate(uint32_t samplefreq)
-{
-	hardware->Initialize(samplefreq);
-
-	this->adcrate = samplefreq;
-
-	return 0;
 }
 
 // attenuator RF used in HF

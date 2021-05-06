@@ -327,7 +327,7 @@ int EXTIO_API StartHWdbl(double LOfreq)
 	if (!gbInitHW)
 		return 0;
 
-	RadioHandler.Start(GetDecimante());
+	RadioHandler.Start(adcnominalfreq);
 	SetHWLOdbl(LOfreq);
 
 	char ebuffer[64];
@@ -835,7 +835,6 @@ extern "C"
 int SetOverclock(uint32_t adcfreq)
 {
 	adcnominalfreq = adcfreq;
-	RadioHandler.UpdateSampleRate(adcfreq);
 	int index = ExtIoGetActualSrateIdx();
 	double rate;
 	while (ExtIoGetSrates(index, &rate) == -1)
@@ -848,7 +847,7 @@ int SetOverclock(uint32_t adcfreq)
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SampleRate);
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_Changed_SRATES);
 
-	RadioHandler.Start(GetDecimante());
+	RadioHandler.Start(adcfreq);
 	double internal_LOfreq = gfLOfreq / FreqCorrectionFactor();
 	RadioHandler.TuneLO(internal_LOfreq);
 	return 0;
