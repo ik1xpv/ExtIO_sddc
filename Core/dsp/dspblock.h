@@ -23,6 +23,7 @@ namespace dsp
     class output_block
     {
     public:
+        output_block() : output(1024) {}
         ringbuffer<TOUT> *getOutput(){return &this->output;};
 
     protected:
@@ -32,21 +33,27 @@ namespace dsp
     template <typename TIN, typename TOUT>
     class dsp_block : public input_block<TIN>, public output_block<TOUT>
     {
+    protected:
+        ~dsp_block() {}
+
     public:
         virtual void Start()
         {
+            Stop(); // make sure we really stopped
             running = true;
+            this->input->Start();
+            this->output.Start();
             process_thread = std::thread(
                 [this]() {
                     this->DataProcessor();
                 });
         }
 
-        void Stop()
+        virtual void Stop()
         {
-            input->Stop();
-            output.Stop();
             running = false;
+            this->input->Stop();
+            this->output.Stop();
             if (process_thread.joinable())
                 process_thread.join();
         }

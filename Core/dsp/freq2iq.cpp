@@ -1,3 +1,5 @@
+
+#include <string.h>
 #include "config.h"
 #include "freq2iq.h"
 #include "simd.h"
@@ -98,7 +100,7 @@ bool freq2iq::SetChannel(unsigned channel, int decimate, float offset, bool side
 
     ChannelType &chan = channels[channel];
 
-    if (decimate < 0)
+    if (decimate < 0 || fabsf(offset) > 1.0f)
     {
         chan.enabled = false;
         return false;
@@ -116,6 +118,7 @@ bool freq2iq::SetChannel(unsigned channel, int decimate, float offset, bool side
 
         chan.output->setBlockSize(EXT_BLOCKLEN * 2 * sizeof(float));
         chan.enabled = true;
+        chan.decimate_count = 0;
 
         if (chan.fc != 0)
         {
@@ -123,6 +126,10 @@ bool freq2iq::SetChannel(unsigned channel, int decimate, float offset, bool side
                 chan.fc = -chan.fc;
             chan.stateFineTune = shift_limited_unroll_C_sse_init(chan.fc, 0.0F);
         }
+
+        DbgPrintf("Tune to LO Freq: %f -> tubebin %d fc %f\n", offset, chan.tunebin, chan.fc);
+
+        chan.output->Start();
         return true;
     }
 }
@@ -132,14 +139,39 @@ bool freq2iq::GetChannel(unsigned channel, int &decimate, float &offsetbin, bool
     if (channel >= channels.size())
         return false;
 
-    if (!channels[channel].enabled)
+    ChannelType &chan = channels[channel];
+    if (!chan.enabled)
         return false;
 
-    decimate = channels[channel].decimation;
-    offsetbin = channels[channel].tunebin;
-    sideband = channels[channel].sideband;
+    decimate = chan.decimation;
+    offsetbin = (chan.tunebin * 1.0f / halfFft) + chan.fc;
+    sideband = chan.sideband;
 
     return true;
+}
+
+ringbuffer<float> *freq2iq::getChannelOutput(unsigned channel)
+{
+    if (channel >= channels.size())
+        return nullptr;
+
+    ChannelType &chan = channels[channel];
+    if (!chan.enabled)
+        return nullptr;
+
+    return chan.output;
+}
+
+void freq2iq::Stop()
+{
+    for (size_t i = 0; i < channels.size(); i++)
+    {
+        ChannelType &chan = channels[i];
+        if (chan.enabled)
+            chan.output->Stop();
+    }
+
+    dsp_block::Stop();
 }
 
 void freq2iq::DataProcessor()
@@ -148,47 +180,51 @@ void freq2iq::DataProcessor()
 
     inFreqTmp = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * (halfFft)); // 1024
 
-    fftwf_complex *pout = nullptr;
-
     while (this->isRunning())
     {
+
         for (int k = 0; k < fftPerBuf; k++)
         {
             const fftwf_complex *ADCinFreq; // buffers in frequency
 
-            ADCinFreq = input->getReadPtr();
+            ADCinFreq = this->input->getReadPtr();
 
             if (!this->isRunning())
                 return;
 
             for (size_t i = 0; i < channels.size(); i++)
             {
-                auto c = channels[i];
-
-                if (!c.enabled)
+                ChannelType &chan = channels[i];
+                if (!chan.enabled)
                     continue;
+                const int decimate = chan.decimation;
 
-                const int decimate = c.decimation;
+                if (k == 0)
+                {
+                    if (chan.decimate_count == 0)
+                        chan.pout = (fftwf_complex *)chan.output->getWritePtr();
+
+                    chan.decimate_count = (chan.decimate_count + 1) & ((1 << decimate) - 1);
+                }
+
                 const int mfft = this->mfftdim[decimate]; // = halfFft / 2^mdecimation
                 const fftwf_complex *filter = filterHw[decimate];
-                const bool lsb = c.sideband;
+                const bool lsb = chan.sideband;
                 const auto filter2 = &filter[halfFft - mfft / 2];
-                const int mtunebin = c.tunebin; // Update LO tune is possible during run
-                auto plan_f2t_c2c = plans_f2t_c2c[decimate];
 
-                if (c.decimate_count == 0)
-                    c.pout = (fftwf_complex *)c.output->getWritePtr();
+                fftwf_plan plan_f2t_c2c = plans_f2t_c2c[decimate];
 
-                c.decimate_count = (c.decimate_count + 1) & ((1 << decimate) - 1);
-                const auto count = std::min(mfft / 2, halfFft - mtunebin);
-                const auto start = std::max(0, mfft / 2 - mtunebin);
+                const int _mtunebin = chan.tunebin; // Update LO tune is possible during run
+
+                const auto count = std::min(mfft / 2, halfFft - _mtunebin);
+                const auto start = std::max(0, mfft / 2 - _mtunebin);
                 const auto dest = &inFreqTmp[mfft / 2];
 
                 // Calculate the parameters for the first half
-                const auto source = &ADCinFreq[mtunebin];
+                const auto source = &ADCinFreq[_mtunebin];
 
                 // Calculate the parameters for the second half
-                const auto source2 = &ADCinFreq[mtunebin - mfft / 2];
+                const auto source2 = &ADCinFreq[_mtunebin - mfft / 2];
                 // circular shift (mixing in full bins) and low/bandpass filtering (complex multiplication)
                 {
                     // circular shift tune fs/2 first half array into inFreqTmp[]
@@ -227,47 +263,47 @@ void freq2iq::DataProcessor()
                     // mirror just by negating the imaginary Q of complex I/Q
                     if (k == 0)
                     {
-                        copy<true>(c.pout, &inFreqTmp[mfft / 4], mfft / 2);
-                        c.pout += mfft / 2;
+                        copy<true>(chan.pout, &inFreqTmp[mfft / 4], mfft / 2);
                     }
                     else
                     {
-                        copy<true>(c.pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &inFreqTmp[0], (3 * mfft / 4));
-                        c.pout += 3 * mfft / 4;
+                        copy<true>(chan.pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &inFreqTmp[0], (3 * mfft / 4));
                     }
                 }
                 else // upper sideband
                 {
                     if (k == 0)
                     {
-                        copy<false>(c.pout, &inFreqTmp[mfft / 4], mfft / 2);
-                        c.pout += mfft / 2;
+                        copy<false>(chan.pout, &inFreqTmp[mfft / 4], mfft / 2);
                     }
                     else
                     {
-                        copy<false>(c.pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &inFreqTmp[0], (3 * mfft / 4));
-                        c.pout += 3 * mfft / 4;
+                        copy<false>(chan.pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &inFreqTmp[0], (3 * mfft / 4));
                     }
                 }
                 // result now in this->obuffers[]
 
-                if (c.decimate_count == 0)
+                if (k == fftPerBuf - 1)
                 {
-                    if (c.fc != 0)
+                    if (chan.decimate_count == 0)
                     {
-                        // fine tune
-                        shift_limited_unroll_C_sse_inp_c((complexf *)c.output->getWritePtr(), mfft / 2 + (3 * mfft / 4) * fftPerBuf, &c.stateFineTune);
+                        chan.output->WriteDone();
+                        chan.pout = nullptr;
                     }
-                    c.output->WriteDone();
+                    else
+                    {
+                        chan.pout += mfft / 2 + (3 * mfft / 4) * (fftPerBuf - 1);
+                    }
                 }
-            } // for
+            }
 
-            input->ReadDone();
-        } // while(run)
-          //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)this->t, pthread_self());
+            this->input->ReadDone();
+        }
 
-        fftwf_free(inFreqTmp);
+    } // while(run)
+      //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)this->t, pthread_self());
 
-        return;
-    }
+    fftwf_free(inFreqTmp);
+
+    return;
 }

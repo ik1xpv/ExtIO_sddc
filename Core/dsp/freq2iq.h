@@ -37,9 +37,10 @@ public:
     bool SetChannel(unsigned channel, int decimate, float offset, bool sideband);
     bool GetChannel(unsigned channel, int& decimate, float& offset, bool& sideband);
 
-    ringbuffer<float> getChannelOutput(int channel);
+    ringbuffer<float> *getChannelOutput(unsigned channel);
 
     void DataProcessor() override;
+    void Stop() override;
 
 private:
     void InitFilter(float gain);

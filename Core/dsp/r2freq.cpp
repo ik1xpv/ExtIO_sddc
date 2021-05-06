@@ -1,3 +1,4 @@
+#include <algorithm>
 
 #include "config.h"
 #include "r2freq.h"
@@ -30,7 +31,7 @@ void r2freq::DataProcessor()
 		dataADC = input->getReadPtr();
 
 		if (!this->isRunning())
-			return;
+			goto exit;
 
 		endloop = input->peekReadPtr(-1) + transferSamples - halfFft;
 
@@ -63,7 +64,7 @@ void r2freq::DataProcessor()
 		this->MinValue = std::min(blockMinMax.first, this->MinValue);
 		this->MaxValue = std::max(blockMinMax.second, this->MaxValue);
 		++this->MinMaxBlockCount;
-		if (this->MinMaxBlockCount * processor_count / 3 >= DEFAULT_TRANSFERS_PER_SEC)
+		if (this->MinMaxBlockCount / 3 >= DEFAULT_TRANSFERS_PER_SEC)
 		{
 			float minBits = (this->MinValue < 0) ? (log10f((float)(-this->MinValue)) / log10f(2.0f)) : -1.0f;
 			float maxBits = (this->MaxValue > 0) ? (log10f((float)(this->MaxValue)) / log10f(2.0f)) : -1.0f;
@@ -95,5 +96,6 @@ void r2freq::DataProcessor()
 		}
 	}
 
+exit:
 	return;
 }

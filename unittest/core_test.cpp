@@ -133,7 +133,6 @@ TEST_CASE(CoreFixture, R2IQTest)
 
             while (radio->isRunning())
             {
-                auto ptr = out->getReadPtr();
                 count++;
                 totalsize += out->getBlockSize() / sizeof(int16_t);
                 out->ReadDone();

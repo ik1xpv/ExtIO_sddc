@@ -167,7 +167,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 static void Callback()
 {
-	auto output = freq2iq_i->getOutput();
+	auto output = freq2iq_i->getChannelOutput(0);
 	while(RadioHandler.isRunning())
 	{
 		auto data = output->getReadPtr();
@@ -175,6 +175,7 @@ static void Callback()
 			return;
 
 		pfnCallback(output->getBlockSize(), 0, 0.0F, (void*)data);
+		output->ReadDone();
 	}
 }
 
@@ -183,9 +184,9 @@ static void RadioTuneLO(uint64_t freq)
 	auto hardwareLO = RadioHandler.TuneLO(freq);
 	float offset = (freq - hardwareLO) * 1.0f / (RadioHandler.getSampleRate() / 2);
 
+	DbgPrintf("Tune to LO Freq: %lld\n", freq);
 	freq2iq_i->SetChannel(0, GetDecimante(), offset,
-		RadioHandler.GetmodeRF() == VHFMODE? true : false
-	);
+						  RadioHandler.GetmodeRF() == VHFMODE ? true : false);
 }
 
 //---------------------------------------------------------------------------
@@ -361,8 +362,12 @@ int EXTIO_API StartHWdbl(double LOfreq)
 	SetWindowText(h_dialog, ebuffer);
 	EXTIO_STATUS_CHANGE(pfnCallback, extHw_RUNNING);
 
+	r2freq_i->Start();
+	freq2iq_i->Start();
+
+	RadioTuneLO(gfLOfreq);
 	uploadThread = std::thread(
-		[]() {
+		[](){
 			Callback();
 		}
 	);
@@ -379,6 +384,8 @@ void EXTIO_API StopHW(void)
 {
     EnterFunction();
 	RadioHandler.Stop();
+	r2freq_i->Stop();
+	freq2iq_i->Stop();
 
 	if (uploadThread.joinable())
 		uploadThread.join();
@@ -403,6 +410,7 @@ void EXTIO_API CloseHW(void)
 {
     EnterFunction();
 	// ..... here you can shutdown your graphical interface, if any............
+
 	if (h_dialog != NULL)
 		DestroyWindow(h_dialog);
 	if (gbInitHW)
