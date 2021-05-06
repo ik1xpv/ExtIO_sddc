@@ -2,6 +2,7 @@
 
 #define EXTIO_EXPORTS
 
+#include "config.h"
 #include "framework.h"
 #include <string.h>
 #include <stdio.h>
@@ -14,7 +15,9 @@
 #include "tdialog.h"
 #include "splashwindow.h"
 #include "PScope_uti.h"
-#include "r2iq.h"
+
+#include "dsp/r2freq.h"
+#include "dsp/freq2iq.h"
 
 #define   snprintf	_snprintf
 
@@ -220,9 +223,9 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 
 		auto Fx3 = CreateUsbHandler();
 		gbInitHW = Fx3->Open(res_data, res_size) &&
-				   RadioHandler.Init(Fx3, Callback ); // Check if it there hardware
+				   RadioHandler.Init(Fx3); // Check if it there hardware
 #ifdef _DEBUG
-			RadioHandler.EnableDebug( printf_USB_cb , GetConsoleInput);
+		RadioHandler.EnableDebug( printf_USB_cb , GetConsoleInput);
 #endif 
 
 		if (!gbInitHW)
@@ -327,30 +330,22 @@ int EXTIO_API StartHWdbl(double LOfreq)
 	RadioHandler.Start(GetDecimante());
 	SetHWLOdbl(LOfreq);
 
-	if (RadioHandler.IsReady()) //  HF103 connected
-	{
-		char ebuffer[64];
-		uint16_t fw = RadioHandler.GetFirmware();
-		uint8_t hb, lb;
-		hb = fw >> 8;
-		lb = (uint8_t) fw;
-		sprintf(ebuffer, "%s v%s | FX3 v%d.%02d | %s ",SWNAME, SWVERSION ,hb,lb, RadioHandler.getName() );
-		SetWindowText(h_dialog, ebuffer);
-		EXTIO_STATUS_CHANGE(pfnCallback, extHw_RUNNING);
-	}
-	else
-	{
-		MessageBox(NULL, "HDSDR will exit\r\nPlease verify USB connection\r\nand restart",
-				"WARNING SDR not found", MB_OK | MB_ICONWARNING);
-		EXTIO_STATUS_CHANGE(pfnCallback, extHw_Disconnected);
-		SendF4();
-	}
+	char ebuffer[64];
+	uint16_t fw = RadioHandler.GetFirmware();
+	uint8_t hb, lb;
+	hb = fw >> 8;
+	lb = (uint8_t) fw;
+	sprintf(ebuffer, "%s v%s | FX3 v%d.%02d | %s ", SWNAME, SWVERSION, hb, lb, RadioHandler.getName());
+	SetWindowText(h_dialog, ebuffer);
+	EXTIO_STATUS_CHANGE(pfnCallback, extHw_RUNNING);
+
 	// number of complex elements returned each
 	// invocation of the callback routine
 	return (int64_t) (EXT_BLOCKLEN);
 }
 
 //---------------------------------------------------------------------------
+int Failures = 0;
 extern "C"
 void EXTIO_API StopHW(void)
 {

@@ -1,7 +1,7 @@
 #ifndef RADIOHANDLER_H
 #define RADIOHANDLER_H
 
-#include "license.txt" 
+#include "license.txt"
 
 #include "config.h"
 #include <stdio.h>
@@ -23,18 +23,15 @@ enum {
     RESULT_NOT_POSSIBLE
 };
 
-struct shift_limited_unroll_C_sse_data_s;
-typedef struct shift_limited_unroll_C_sse_data_s shift_limited_unroll_C_sse_data_t;
-
 class RadioHandlerClass {
 public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
-    bool Init(fx3class* Fx3, void (*callback)(const float*, uint32_t), r2iqControlClass *r2iqCntrl = nullptr);
+    bool Init(fx3class* Fx3);
     bool Start(int srate_idx);
     bool Stop();
     bool Close();
-    bool IsReady(){return true;}
+    bool isRunning(){return run;}
 
     int GetRFAttSteps(const float **steps);
     int UpdateattRF(int attIdx);
@@ -55,9 +52,6 @@ public:
     uint32_t getSampleRate() { return adcrate; }
     bool UpdateSampleRate(uint32_t samplerate);
 
-    float getBps() const { return mBps; }
-    float getSpsIF() const {return mSpsIF; }
-
     const char* getName();
     RadioModel getModel() { return radio; }
 
@@ -71,22 +65,22 @@ public:
 
     void uptLed(int led, bool on);
 
-    void EnableDebug(void (*dbgprintFX3)(const char* fmt, ...), bool (*getconsolein)(char* buf, int maxlen)) 
-        { 
-          this->DbgPrintFX3 = dbgprintFX3; 
-          this->GetConsoleIn = getconsolein;
-        };
+    void EnableDebug(void (*dbgprintFX3)(const char *fmt, ...), bool (*getconsolein)(char *buf, int maxlen))
+    {
+        this->DbgPrintFX3 = dbgprintFX3;
+        this->GetConsoleIn = getconsolein;
+    };
 
     bool ReadDebugTrace(uint8_t* pdata, uint8_t len) { return fx3->ReadDebugTrace(pdata, len); }
+
+    ringbuffer<int16_t> *getOutput() { return &inputbuffer; }
 
 private:
     void AdcSamplesProcess();
     void AbortXferLoop(int qidx);
     void CaculateStats();
     void OnDataPacket();
-    r2iqControlClass* r2iqCntrl;
 
-    void (*Callback)(const float *data, uint32_t length);
     void (*DbgPrintFX3)(const char* fmt, ...);
     bool (*GetConsoleIn)(char* buf, int maxlen);
 
@@ -104,29 +98,14 @@ private:
 
     // transfer variables
     ringbuffer<int16_t> inputbuffer;
-    ringbuffer<float> outputbuffer;
-
-    // threads
-    std::thread show_stats_thread;
-    std::thread submit_thread;
-
-    // stats
-    unsigned long BytesXferred;
-    unsigned long SamplesXIF;
-    float	mBps;
-    float	mSpsIF;
 
     fx3class *fx3;
     uint32_t adcrate;
 
     std::mutex fc_mutex;
     std::mutex stop_mutex;
-    float fc;
     RadioHardware* hardware;
-    shift_limited_unroll_C_sse_data_t* stateFineTune;
 };
-
-extern unsigned long Failures;
 
 class RadioHardware {
 public:

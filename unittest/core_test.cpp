@@ -1,4 +1,3 @@
-#include "r2iq.h"
 #include "FX3Class.h"
 #include "CppUnitTestFramework.hpp"
 #include <thread>
@@ -76,12 +75,6 @@ class fx3handler : public fx3class
 static uint32_t count;
 static uint64_t totalsize;
 
-static void Callback(const float* data, uint32_t len)
-{
-    count++;
-    totalsize += len;
-}
-
 namespace {
     struct CoreFixture {};
 }
@@ -92,7 +85,7 @@ TEST_CASE(CoreFixture, BasicTest)
 
     auto radio = new RadioHandlerClass();
 
-    radio->Init(usb, Callback);
+    radio->Init(usb);
 
     REQUIRE_EQUAL(radio->getModel(), NORADIO);
     REQUIRE_EQUAL(radio->getName(), "Dummy");
@@ -131,20 +124,32 @@ TEST_CASE(CoreFixture, R2IQTest)
 
     auto radio = new RadioHandlerClass();
 
-    radio->Init(usb, Callback);
+    radio->Init(usb);
 
-    for (int decimate = 0; decimate < 5; decimate++)
-    {
-        count = 0;
-        totalsize = 0;
-        radio->Start(decimate); // full bandwidth
-        std::this_thread::sleep_for(0.5s);
-        radio->Stop();
+    std::thread t = std::thread(
+        [](RadioHandlerClass *radio) {
+            auto out = radio->getOutput();
 
-        REQUIRE_TRUE(count > 0);
-        REQUIRE_TRUE(totalsize > 0);
-        REQUIRE_EQUAL(totalsize / count, transferSamples / 2);
-    }
+            while (radio->isRunning())
+            {
+                auto ptr = out->getReadPtr();
+                count++;
+                totalsize += out->getBlockSize() / sizeof(int16_t);
+                out->ReadDone();
+            }
+        },
+        radio);
+
+    count = 0;
+    totalsize = 0;
+    radio->Start(0); // full bandwidth
+    std::this_thread::sleep_for(0.5s);
+    radio->Stop();
+    t.join();
+
+    REQUIRE_TRUE(count > 0);
+    REQUIRE_TRUE(totalsize > 0);
+    REQUIRE_EQUAL(totalsize / count, transferSamples / 2);
 
     delete radio;
     delete usb;
@@ -156,7 +161,7 @@ TEST_CASE(CoreFixture, TuneTest)
 
     auto radio = new RadioHandlerClass();
 
-    radio->Init(usb, Callback);
+    radio->Init(usb);
 
     radio->Start(1); // full bandwidth
 

@@ -6,7 +6,6 @@
 #include "pf_mixer.h"
 #include "RadioHandler.h"
 #include "config.h"
-#include "fft_mt_r2iq.h"
 #include "config.h"
 #include "PScope_uti.h"
 #include "../Interface.h"
@@ -14,47 +13,6 @@
 #include <chrono>
 
 using namespace std::chrono;
-
-// transfer variables
-
-unsigned long Failures = 0;
-
-void RadioHandlerClass::OnDataPacket()
-{
-	auto len = outputbuffer.getBlockSize() / 2 / sizeof(float);
-
-	while(run)
-	{
-		auto buf = outputbuffer.getReadPtr();
-
-		if (!run)
-			break;
-
-		if (fc != 0.0f)
-		{
-			std::unique_lock<std::mutex> lk(fc_mutex);
-			shift_limited_unroll_C_sse_inp_c((complexf*)buf, len, stateFineTune);
-		}
-
-#ifdef _DEBUG		//PScope buffer screenshot
-		if (saveADCsamplesflag == true)
-		{
-			saveADCsamplesflag = false; // do it once
-			unsigned int numsamples = transferSize / sizeof(int16_t);
-			float samplerate  = (float) getSampleRate();
-			PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
-				"ADCrealsamples.adc input real ADC 16 bit samples",
-				(short*)buf, samplerate, numsamples);
-		}
-#endif
-
-    	Callback(buf, len);
-
-		outputbuffer.ReadDone();
-
-		SamplesXIF += len;
-	}
-}
 
 RadioHandlerClass::RadioHandlerClass() :
 	DbgPrintFX3(nullptr),
@@ -68,17 +26,13 @@ RadioHandlerClass::RadioHandlerClass() :
 	firmware(0),
 	modeRF(NOMODE),
 	adcrate(DEFAULT_ADC_FREQ),
-	fc(0.0f),
 	hardware(new DummyRadio(nullptr))
 {
 	inputbuffer.setBlockSize(transferSamples);
-
-	stateFineTune = new shift_limited_unroll_C_sse_data_t();
 }
 
 RadioHandlerClass::~RadioHandlerClass()
 {
-	delete stateFineTune;
 }
 
 const char *RadioHandlerClass::getName()
@@ -86,14 +40,10 @@ const char *RadioHandlerClass::getName()
 	return hardware->getName();
 }
 
-bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(const float*, uint32_t), r2iqControlClass *r2iqCntrl)
+bool RadioHandlerClass::Init(fx3class* Fx3)
 {
 	uint8_t rdata[4];
 	this->fx3 = Fx3;
-	this->Callback = callback;
-
-	if (r2iqCntrl == nullptr)
-		r2iqCntrl = new fft_mt_r2iq();
 
 	Fx3->GetHardwareInfo((uint32_t*)rdata);
 
@@ -137,10 +87,7 @@ bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(const float*, uint3
 		break;
 	}
 	adcrate = adcnominalfreq;
-	hardware->Initialize(adcnominalfreq);
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
-	this->r2iqCntrl = r2iqCntrl;
-	r2iqCntrl->Init(hardware->getGain(), &outputbuffer);
 
 	return true;
 }
@@ -153,23 +100,11 @@ bool RadioHandlerClass::Start(int decimate)
 	run = true;
 	count = 0;
 
+	hardware->Initialize(adcrate);
+
 	hardware->FX3producerOn();  // FX3 start the producer
 
-	outputbuffer.setBlockSize(EXT_BLOCKLEN * 2 * sizeof(float));
-
-	// 0,1,2,3,4 => 32,16,8,4,2 MHz
-	r2iqCntrl->setDecimate(decimate);
-	r2iqCntrl->TurnOn(inputbuffer);
 	fx3->StartStream(inputbuffer, QUEUE_SIZE);
-
-	submit_thread = std::thread(
-		[this]() {
-			this->OnDataPacket();
-		});
-
-	show_stats_thread = std::thread([this](void*) {
-		this->CaculateStats();
-	}, nullptr);
 
 	return true;
 }
@@ -182,19 +117,11 @@ bool RadioHandlerClass::Stop()
 	{
 		run = false; // now waits for threads
 
-		r2iqCntrl->TurnOff();
-
 		fx3->StopStream();
 
-		run = false; // now waits for threads
-
-		show_stats_thread.join(); //first to be joined
-		DbgPrintf("show_stats_thread join2\n");
-
-		submit_thread.join();
-		DbgPrintf("submit_thread join1\n");
-
 		hardware->FX3producerOff();     //FX3 stop the producer
+
+		this->inputbuffer.Stop();
 	}
 	return true;
 }
@@ -255,11 +182,6 @@ bool RadioHandlerClass::UpdatemodeRF(rf_mode mode)
 		DbgPrintf("Switch to mode: %d\n", modeRF);
 
 		hardware->UpdatemodeRF(mode);
-
-		if (mode == VHFMODE)
-			r2iqCntrl->setSideband(true);
-		else
-			r2iqCntrl->setSideband(false);
 	}
 	return true;
 }
@@ -274,7 +196,7 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 	uint64_t actLo;
 
 	actLo = hardware->TuneLo(wishedFreq);
-
+#if 0
 	// we need shift the samples
 	int64_t offset = wishedFreq - actLo;
 	DbgPrintf("Offset freq %" PRIi64 "\n", offset);
@@ -287,7 +209,7 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 		*stateFineTune = shift_limited_unroll_C_sse_init(fc, 0.0F);
 		this->fc = fc;
 	}
-
+#endif
 	return wishedFreq;
 }
 
@@ -318,12 +240,12 @@ bool RadioHandlerClass::UptRand(bool b)
 		hardware->FX3SetGPIO(RANDO);
 	else
 		hardware->FX3UnsetGPIO(RANDO);
-	r2iqCntrl->updateRand(randout);
 	return randout;
 }
 
 void RadioHandlerClass::CaculateStats()
 {
+	#if 0
 	high_resolution_clock::time_point EndingTime;
 	float kbRead = 0;
 	float kSReadIF = 0;
@@ -386,6 +308,7 @@ void RadioHandlerClass::CaculateStats()
 #endif
 	}
 	return;
+#endif
 }
 
 void RadioHandlerClass::UpdBiasT_HF(bool flag) 

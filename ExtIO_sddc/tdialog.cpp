@@ -130,10 +130,10 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			cntime = 5;
 			sprintf(lbuffer, "%3.1fMsps",  RadioHandler.getSampleRate() / 1000000.0f);
 			SetWindowText(GetDlgItem(hWnd, IDC_STATIC13), lbuffer);
-			sprintf(lbuffer, "%3.1fMsps", RadioHandler.getBps());
-			SetWindowText(GetDlgItem(hWnd, IDC_STATIC14), lbuffer);
-			sprintf(lbuffer, "%3.1fMsps", RadioHandler.getSpsIF());
-			SetWindowText(GetDlgItem(hWnd, IDC_STATIC16), lbuffer);
+			//sprintf(lbuffer, "%3.1fMsps", RadioHandler.getBps());
+			//SetWindowText(GetDlgItem(hWnd, IDC_STATIC14), lbuffer);
+			//sprintf(lbuffer, "%3.1fMsps", RadioHandler.getSpsIF());
+			//SetWindowText(GetDlgItem(hWnd, IDC_STATIC16), lbuffer);
 		}
 
 		if (!Support128M()) {

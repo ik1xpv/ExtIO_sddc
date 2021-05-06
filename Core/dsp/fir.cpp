@@ -70,7 +70,7 @@ int KaiserWindow(int num_taps, float Astop, float normFpass, float normFstop, fl
     */
 
     // now estimate number of filter taps required based on filter specs
-    int m_NumTaps = (Astop - 8.0) / (2.285*K_2PI*(normFstop - normFpass) ) + 1;
+    int m_NumTaps = int((Astop - 8.0) / (2.285*K_2PI*(normFstop - normFpass) )) + 1;
 
     // clamp range of filter taps
     if (num_taps < 0 && m_NumTaps > -num_taps)

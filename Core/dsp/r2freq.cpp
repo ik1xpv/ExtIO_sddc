@@ -1,18 +1,38 @@
 
+#include "config.h"
+#include "r2freq.h"
+#include "simd.h"
+
+static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
+
+r2freq::r2freq() : randADC(false)
 {
-	while (r2iqOn)
+	ADCinTime = (float *)fftwf_malloc(sizeof(float) * (halfFft + transferSize / 2)); // 2048
+
+	output.setBlockSize(sizeof(fftwf_complex) * (halfFft + 1));
+
+	plan_t2f_r2c = fftwf_plan_dft_r2c_1d(2 * halfFft, ADCinTime, output.peekWritePtr(0), FFTW_MEASURE);
+}
+
+r2freq::~r2freq()
+{
+	fftwf_free(ADCinTime);
+	fftwf_destroy_plan(plan_t2f_r2c);
+}
+
+void r2freq::DataProcessor()
+{
+	while (this->isRunning())
 	{
 		const int16_t *dataADC; // pointer to input data
 		const int16_t *endloop; // pointer to end data to be copied to beginning
 
-		dataADC = inputbuffer->getReadPtr();
+		dataADC = input->getReadPtr();
 
-		if (!r2iqOn)
-			return 0;
+		if (!this->isRunning())
+			return;
 
-		this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;
-
-		endloop = inputbuffer->peekReadPtr(-1) + transferSamples - halfFft;
+		endloop = input->peekReadPtr(-1) + transferSamples - halfFft;
 
 		auto inloop = this->ADCinTime;
 
@@ -56,24 +76,24 @@
 		}
 #endif
 		dataADC = nullptr;
-		inputbuffer->ReadDone();
+		input->ReadDone();
 
 		for (int k = 0; k < fftPerBuf; k++)
 		{
-			fftwf_complex *ADCinFreq;         // buffers in frequency
+			fftwf_complex *ADCinFreq; // buffers in frequency
 
 			// core of fast convolution including filter and decimation
 			//   main part is 'overlap-scrap' (IMHO better name for 'overlap-save'), see
 			//   https://en.wikipedia.org/wiki/Overlap%E2%80%93save_method
-			ADCinFreq = freqdomain.getWritePtr();
+			ADCinFreq = output.getWritePtr();
 
 			// FFT first stage: time to frequency, real to complex
 			// 'full' transformation size: 2 * halfFft
 			fftwf_execute_dft_r2c(plan_t2f_r2c, this->ADCinTime + (3 * halfFft / 2) * k, ADCinFreq);
 			// result now in ADCinFreq[]
-			freqdomain.WriteDone();
+			output.WriteDone();
 		}
 	}
 
-	return 0;
+	return;
 }
