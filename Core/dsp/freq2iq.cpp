@@ -287,6 +287,10 @@ void freq2iq::DataProcessor()
                 {
                     if (chan.decimate_count == 0)
                     {
+                        if (chan.fc != 0.0f)
+                        {
+                            shift_limited_unroll_C_sse_inp_c((complexf*)chan.output->getWritePtr(), EXT_BLOCKLEN, &chan.stateFineTune);
+                        }
                         chan.output->WriteDone();
                         chan.pout = nullptr;
                     }
