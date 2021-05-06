@@ -1,6 +1,5 @@
 #include "libsddc.h"
 #include "config.h"
-#include "r2iq.h"
 #include "RadioHandler.h"
 
 struct sddc
@@ -16,26 +15,6 @@ struct sddc
 };
 
 sddc_t *current_running;
-
-static void Callback(const float* data, uint32_t len)
-{
-}
-
-class rawdata : public r2iqControlClass {
-    void Init(float gain, ringbuffer<float>* obuffers) override
-    {
-        idx = 0;
-    }
-
-    void TurnOn(ringbuffer<int16_t>& buffers) override
-    {
-        this->r2iqOn = true;
-        idx = 0;
-    }
-
-private:
-    int idx;
-};
 
 int sddc_get_device_count()
 {
@@ -94,7 +73,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
 
     ret_val->handler = new RadioHandlerClass();
 
-    if (ret_val->handler->Init(fx3, Callback, new rawdata()))
+    if (ret_val->handler->Init(fx3))
     {
         ret_val->status = SDDC_STATUS_READY;
         ret_val->samplerateidx = 0;
@@ -277,7 +256,7 @@ double sddc_get_tuner_frequency(sddc_t *t)
 
 int sddc_set_tuner_frequency(sddc_t *t, double frequency)
 {
-    t->freq = t->handler->TuneLO((int64_t)frequency);
+    t->freq = t->handler->TuneLO((uint64_t)frequency);
 
     return 0;
 }
