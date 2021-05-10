@@ -9,13 +9,14 @@
 
 #include "pffft/pf_mixer.h"
 
-#define NDECIDX 10
+#define NDECIDX 11
 
 struct ChannelType
 {
     bool enabled;
     int decimation;
     int tunebin;
+    int sampleperblock;
     bool sideband;
 
     int decimate_count;
@@ -34,7 +35,7 @@ public:
     freq2iq(float gain, int channel_num = 1);
     ~freq2iq();
 
-    bool SetChannel(unsigned channel, int decimate, float offset, bool sideband);
+    bool SetChannel(unsigned channel, int decimate, float offset, bool sideband, int sampleperblock);
     bool GetChannel(unsigned channel, int& decimate, float& offset, bool& sideband);
 
     ringbuffer<float> *getChannelOutput(unsigned channel);

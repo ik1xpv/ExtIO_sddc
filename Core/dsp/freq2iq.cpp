@@ -93,7 +93,7 @@ void freq2iq::InitFilter(float gain)
     fftwf_free(pfilterht);
 }
 
-bool freq2iq::SetChannel(unsigned channel, int decimate, float offset, bool sideband)
+bool freq2iq::SetChannel(unsigned channel, int decimate, float offset, bool sideband, int sampleperblock)
 {
     if (channel >= channels.size())
         return false;
@@ -110,13 +110,14 @@ bool freq2iq::SetChannel(unsigned channel, int decimate, float offset, bool side
         chan.decimation = decimate;
         chan.tunebin = int(offset * halfFft / 4) * 4;
         chan.sideband = sideband;
+        chan.sampleperblock = sampleperblock;
 
         chan.fc = (((float)chan.tunebin / halfFft) - offset) * mratio[decimate];
 
         if (chan.output == nullptr)
             chan.output = new ringbuffer<float>();
 
-        chan.output->setBlockSize(EXT_BLOCKLEN * 2 * sizeof(float));
+        chan.output->setBlockSize(sampleperblock * 2 * sizeof(float));
         chan.enabled = true;
         chan.decimate_count = 0;
 
@@ -289,7 +290,7 @@ void freq2iq::DataProcessor()
                     {
                         if (chan.fc != 0.0f)
                         {
-                            shift_limited_unroll_C_sse_inp_c((complexf*)chan.output->getWritePtr(), EXT_BLOCKLEN, &chan.stateFineTune);
+                            shift_limited_unroll_C_sse_inp_c((complexf*)chan.output->getWritePtr(), chan.sampleperblock, &chan.stateFineTune);
                         }
                         chan.output->WriteDone();
                         chan.pout = nullptr;

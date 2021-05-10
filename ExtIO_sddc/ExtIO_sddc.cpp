@@ -25,6 +25,8 @@
 
 #define DEFAULT_TUNE_FREQ	999000.0	/* Turin MW broadcast ! */
 
+#define EXT_BLOCKLEN		512	* 64	/* 32768 only multiples of 512 */
+
 static bool SDR_settings_valid = false;		// assume settings are for some other ExtIO
 static char SDR_progname[2048 + 1] = "\0";
 static int  SDR_ver_major = -1;
@@ -198,7 +200,7 @@ static void RadioTuneLO(uint64_t freq)
 
 	DbgPrintf("Tune to LO Freq: %lld\n", freq);
 	freq2iq_i->SetChannel(0, GetDecimante(), offset,
-						  RadioHandler.GetmodeRF() == VHFMODE ? true : false);
+						  RadioHandler.GetmodeRF() == VHFMODE ? true : false, EXT_BLOCKLEN);
 }
 
 //---------------------------------------------------------------------------
