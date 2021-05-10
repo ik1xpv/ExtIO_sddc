@@ -21,6 +21,8 @@
 #include "dsp/r2freq.h"
 #include "dsp/freq2iq.h"
 
+#include <chrono>
+
 #define   snprintf	_snprintf
 
 #define DEFAULT_TUNE_FREQ	999000.0	/* Turin MW broadcast ! */
@@ -34,6 +36,10 @@ static int  SDR_ver_minor = -1;
 static const int	gHwType = exthwUSBfloat32;
 int  giExtSrateIdxVHF = 4;
 int  giExtSrateIdxHF = 4;
+
+// Global stats
+float mBps;
+float mSpsIF;
 
 bool bSupportDynamicSRate;
 
@@ -60,6 +66,7 @@ r2freq *r2freq_i = nullptr;
 freq2iq *freq2iq_i = nullptr;
 
 std::thread uploadThread;
+std::thread statsThread;
 
 // Dialog callback
 
@@ -140,6 +147,45 @@ static int GetDecimante()
 	int srate_idx = ExtIoGetActualSrateIdx();
 
 	return srate_idx;
+}
+
+using namespace std::chrono;
+static void CaculateStats()
+{
+	high_resolution_clock::time_point EndingTime;
+	float kbRead = 0;
+	float kSReadIF = 0;
+
+	kbRead = 0; // zeros the kilobytes counter
+	kSReadIF = 0;
+
+	uint32_t lastADCCount = 0;
+	uint32_t lastIFCount = 0;
+
+	uint8_t  debdata[MAXLEN_D_USB];
+	memset(debdata, 0, MAXLEN_D_USB);
+
+	auto StartingTime = high_resolution_clock::now();
+
+	while (RadioHandler.isRunning()) {
+		kbRead = float((RadioHandler.getOutput()->getWriteCount() - lastADCCount) * RadioHandler.getOutput()->getBlockSize()) / 1000.0f;
+		kSReadIF = float((freq2iq_i->getChannelOutput(0)->getWriteCount() - lastIFCount) * freq2iq_i->getChannelOutput(0)->getBlockSize()) / 1000.0f;
+
+		EndingTime = high_resolution_clock::now();
+
+		duration<float,std::ratio<1,1>> timeElapsed(EndingTime-StartingTime);
+
+		mBps = (float)kbRead / timeElapsed.count() / 1000 / sizeof(int16_t);
+		mSpsIF = (float)kSReadIF / timeElapsed.count() / 1000;
+
+		lastADCCount = RadioHandler.getOutput()->getWriteCount();
+		lastIFCount = freq2iq_i->getChannelOutput(0)->getWriteCount();
+
+		StartingTime = high_resolution_clock::now();
+
+		std::this_thread::sleep_for(0.5s);
+	}
+	return;
 }
 
 //---------------------------------------------------------------------------
@@ -381,10 +427,14 @@ int EXTIO_API StartHWdbl(double LOfreq)
 
 	RadioTuneLO(gfLOfreq);
 	uploadThread = std::thread(
-		[](){
+		[]() {
 			Callback();
-		}
-	);
+		});
+
+	statsThread = std::thread(
+		[] {
+			CaculateStats();
+		});
 
 	// number of complex elements returned each
 	// invocation of the callback routine
@@ -403,6 +453,9 @@ void EXTIO_API StopHW(void)
 
 	if (uploadThread.joinable())
 		uploadThread.join();
+
+	if (statsThread.joinable())
+		statsThread.join();
 
 	if (Failures > 0)
 	{

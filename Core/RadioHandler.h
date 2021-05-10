@@ -3,6 +3,7 @@
 
 #include "license.txt"
 
+#include <thread>
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,10 +78,9 @@ public:
     ringbuffer<int16_t> *getOutput() { return &inputbuffer; }
 
 private:
-    void AdcSamplesProcess();
-    void AbortXferLoop(int qidx);
-    void CaculateStats();
-    void OnDataPacket();
+    bool debug_thread_run;
+    void DebugConsole();
+    std::thread debug_thread;
 
     void (*DbgPrintFX3)(const char* fmt, ...);
     bool (*GetConsoleIn)(char* buf, int maxlen);

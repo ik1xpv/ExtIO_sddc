@@ -15,6 +15,7 @@
 using namespace std::chrono;
 
 RadioHandlerClass::RadioHandlerClass() :
+	debug_thread_run(false),
 	DbgPrintFX3(nullptr),
 	GetConsoleIn(nullptr),
 	run(false),
@@ -33,6 +34,9 @@ RadioHandlerClass::RadioHandlerClass() :
 
 RadioHandlerClass::~RadioHandlerClass()
 {
+	debug_thread_run = false;
+	if (debug_thread.joinable())
+		debug_thread.join();
 }
 
 const char *RadioHandlerClass::getName()
@@ -87,6 +91,13 @@ bool RadioHandlerClass::Init(fx3class* Fx3)
 		break;
 	}
 	DbgPrintf("%s | firmware %x\n", hardware->getName(), firmware);
+
+	debug_thread_run = true;
+	debug_thread = std::thread(
+		[this](){
+			DebugConsole();
+		}
+	);
 
 	return true;
 }
@@ -222,75 +233,44 @@ bool RadioHandlerClass::UptRand(bool b)
 	return randout;
 }
 
-void RadioHandlerClass::CaculateStats()
+void RadioHandlerClass::DebugConsole()
 {
-	#if 0
-	high_resolution_clock::time_point EndingTime;
-	float kbRead = 0;
-	float kSReadIF = 0;
-
-	kbRead = 0; // zeros the kilobytes counter
-	kSReadIF = 0;
-
-	BytesXferred = 0;
-	SamplesXIF = 0;
-
-	uint8_t  debdata[MAXLEN_D_USB];
+	uint8_t debdata[MAXLEN_D_USB];
 	memset(debdata, 0, MAXLEN_D_USB);
 
-	auto StartingTime = high_resolution_clock::now();
-
-	while (run) {
-		kbRead = float(BytesXferred) / 1000.0f;
-		kSReadIF = float(SamplesXIF) / 1000.0f;
-
-		EndingTime = high_resolution_clock::now();
-
-		duration<float,std::ratio<1,1>> timeElapsed(EndingTime-StartingTime);
-
-		mBps = (float)kbRead / timeElapsed.count() / 1000 / sizeof(int16_t);
-		mSpsIF = (float)kSReadIF / timeElapsed.count() / 1000;
-
-		BytesXferred = 0;
-		SamplesXIF = 0;
-
-		StartingTime = high_resolution_clock::now();
-	
-#ifdef _DEBUG  
+	while (debug_thread_run)
+	{
 		int nt = 10;
 		while (nt-- > 0)
 		{
 			std::this_thread::sleep_for(0.05s);
-			debdata[0] = 0; //clean buffer 
+			debdata[0] = 0; //clean buffer
 			if (GetConsoleIn != nullptr)
 			{
 				GetConsoleIn((char *)debdata, MAXLEN_D_USB);
-				if (debdata[0] !=0) 
-					DbgPrintf("%s", (char*)debdata);
+				if (debdata[0] != 0)
+					DbgPrintf("%s", (char *)debdata);
 			}
 
 			if (hardware->ReadDebugTrace(debdata, MAXLEN_D_USB) == true) // there are message from FX3 ?
 			{
-				int len = strlen((char*)debdata);
-				if (len > MAXLEN_D_USB - 1) len = MAXLEN_D_USB - 1;
+				int len = strlen((char *)debdata);
+				if (len > MAXLEN_D_USB - 1)
+					len = MAXLEN_D_USB - 1;
 				debdata[len] = 0;
-				if ((len > 0)&&(DbgPrintFX3 != nullptr))
+				if ((len > 0) && (DbgPrintFX3 != nullptr))
 				{
-					DbgPrintFX3("%s", (char*)debdata);
+					DbgPrintFX3("%s", (char *)debdata);
 					memset(debdata, 0, sizeof(debdata));
 				}
 			}
-			
 		}
-#else
-		std::this_thread::sleep_for(0.5s);
-#endif
 	}
+
 	return;
-#endif
 }
 
-void RadioHandlerClass::UpdBiasT_HF(bool flag) 
+void RadioHandlerClass::UpdBiasT_HF(bool flag)
 {
 	biasT_HF = flag;
 
