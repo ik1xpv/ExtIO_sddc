@@ -30,7 +30,7 @@ struct ChannelType
 
     std::mutex *mutex; // protect output
 
-    ChannelType(){
+    ChannelType() : enabled(false), output(nullptr) {
         output = new ringbuffer<float>(32);
         mutex = new std::mutex();
     }

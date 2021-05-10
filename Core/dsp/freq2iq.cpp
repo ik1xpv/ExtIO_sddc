@@ -12,10 +12,6 @@ static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 
 freq2iq::freq2iq(float gain, int channel_num)
 {
     channels.resize(channel_num);
-    for (int i = 0; i < channel_num; i++)
-    {
-        channels[i].enabled = false;
-    }
 
     mfftdim[0] = halfFft;
     for (int i = 1; i < NDECIDX; i++)
