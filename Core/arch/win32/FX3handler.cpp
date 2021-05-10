@@ -437,7 +437,7 @@ void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 	this->numofblock = numofblock;
 	input.Start();
 	run = true;
-	adc_samples_thread = new std::thread(
+	adc_samples_thread = std::thread(
 		[this]() {
 			this->AdcSamplesProcess();
 		}
@@ -448,10 +448,8 @@ void fx3handler::StopStream()
 {
 	// set the flag
 	run = false;
-	adc_samples_thread->join();
+	adc_samples_thread.join();
 
 	// force exit the thread
 	inputbuffer = nullptr;
-
-	delete adc_samples_thread;
 }

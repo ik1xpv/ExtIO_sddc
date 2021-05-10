@@ -30,9 +30,9 @@ TEST_CASE(DspFixture, BasicTest2)
     freq2iq c(0.01f, 3);
     c.Initialize(&input);
 
-    c.SetChannel(0, 1, 0.001f, true);
-    c.SetChannel(1, 0, -0.003f, false);
-    c.SetChannel(2, 8, 0.025f, false);
+    c.SetChannel(0, 1, -0.0001f, true, 512 * 32);
+    c.SetChannel(1, 0, -0.0003f, false, 512 * 64);
+    c.SetChannel(2, 8, -0.0025f, false, 512);
     c.Start();
 
     input.WriteDone();

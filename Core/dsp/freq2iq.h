@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <mutex>
 #include <tuple>
 
 #include "config.h"
@@ -19,7 +20,6 @@ struct ChannelType
     int sampleperblock;
     bool sideband;
 
-    int decimate_count;
     fftwf_complex* pout;
 
     // finetune the frequence offset
@@ -27,6 +27,18 @@ struct ChannelType
     shift_limited_unroll_C_sse_data_t stateFineTune;
 
     ringbuffer<float> *output;
+
+    std::mutex *mutex; // protect output
+
+    ChannelType(){
+        output = new ringbuffer<float>(32);
+        mutex = new std::mutex();
+    }
+
+    ~ChannelType() {
+        delete output;
+        delete mutex;
+    }
 };
 
 class freq2iq : public dsp::dsp_block<fftwf_complex, float>

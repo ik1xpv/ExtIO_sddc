@@ -5,6 +5,7 @@
 #include "simd.h"
 
 #include "fir.h"
+#include <assert.h>
 
 static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
 
@@ -14,7 +15,6 @@ freq2iq::freq2iq(float gain, int channel_num)
     for (int i = 0; i < channel_num; i++)
     {
         channels[i].enabled = false;
-        channels[i].output = nullptr;
     }
 
     mfftdim[0] = halfFft;
@@ -34,12 +34,15 @@ freq2iq::freq2iq(float gain, int channel_num)
 
 freq2iq::~freq2iq()
 {
-    for (size_t i = 0; i < channels.size(); i++)
+    for (int i = 1; i < NDECIDX; i++)
     {
-        if (channels[i].output)
-            delete channels[i].output;
+        fftwf_destroy_plan(plans_f2t_c2c[i]);
     }
 
+    for (int d = 0; d < NDECIDX; d++)
+    {
+        fftwf_free(filterHw[d]);
+    }
     fftwf_free(filterHw);
 }
 
@@ -107,19 +110,19 @@ bool freq2iq::SetChannel(unsigned channel, int decimate, float offset, bool side
     }
     else
     {
+        std::unique_lock<std::mutex> lk(*chan.mutex);
+
+        const int mfft = this->mfftdim[decimate]; // = halfFft / 2^mdecimation
         chan.decimation = decimate;
         chan.tunebin = int(offset * halfFft / 4) * 4;
         chan.sideband = sideband;
         chan.sampleperblock = sampleperblock;
 
+        DbgPrintf("Pass in %d, expect %d * N\n", sampleperblock, mfft / 2 + (fftPerBuf - 1) * 3 * (mfft / 4));
+
         chan.fc = (((float)chan.tunebin / halfFft) - offset) * mratio[decimate];
 
-        if (chan.output == nullptr)
-            chan.output = new ringbuffer<float>();
-
         chan.output->setBlockSize(sampleperblock * 2 * sizeof(float));
-        chan.enabled = true;
-        chan.decimate_count = 0;
 
         if (chan.fc != 0)
         {
@@ -130,7 +133,12 @@ bool freq2iq::SetChannel(unsigned channel, int decimate, float offset, bool side
 
         DbgPrintf("Tune to LO Freq: %f -> tubebin %d fc %f\n", offset, chan.tunebin, chan.fc);
 
-        chan.output->Start();
+        if (!chan.enabled)
+        {
+            chan.pout = nullptr;
+            chan.enabled = true;
+            chan.output->Start();
+        }
         return true;
     }
 }
@@ -198,16 +206,21 @@ void freq2iq::DataProcessor()
                 ChannelType &chan = channels[i];
                 if (!chan.enabled)
                     continue;
-                const int decimate = chan.decimation;
 
+                std::unique_lock<std::mutex> lk(*chan.mutex);
                 if (k == 0)
                 {
-                    if (chan.decimate_count == 0)
-                        chan.pout = (fftwf_complex *)chan.output->getWritePtr();
-
-                    chan.decimate_count = (chan.decimate_count + 1) & ((1 << decimate) - 1);
+                    if (chan.pout == nullptr)
+                      chan.pout = (fftwf_complex *)chan.output->getWritePtr();
+                }
+                else
+                {
+                    // newly enabled channel, wait for k = 0 to start with
+                    if (chan.pout == nullptr)
+                        continue;
                 }
 
+                const int decimate = chan.decimation;
                 const int mfft = this->mfftdim[decimate]; // = halfFft / 2^mdecimation
                 const fftwf_complex *filter = filterHw[decimate];
                 const bool lsb = chan.sideband;
@@ -265,10 +278,12 @@ void freq2iq::DataProcessor()
                     if (k == 0)
                     {
                         copy<true>(chan.pout, &inFreqTmp[mfft / 4], mfft / 2);
+                        chan.pout += mfft / 2;
                     }
                     else
                     {
-                        copy<true>(chan.pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &inFreqTmp[0], (3 * mfft / 4));
+                        copy<true>(chan.pout, &inFreqTmp[0], 3 * mfft / 4);
+                        chan.pout += 3 * mfft / 4;
                     }
                 }
                 else // upper sideband
@@ -276,29 +291,25 @@ void freq2iq::DataProcessor()
                     if (k == 0)
                     {
                         copy<false>(chan.pout, &inFreqTmp[mfft / 4], mfft / 2);
+                        chan.pout += mfft / 2;
                     }
                     else
                     {
-                        copy<false>(chan.pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &inFreqTmp[0], (3 * mfft / 4));
+                        copy<false>(chan.pout, &inFreqTmp[0], 3 * mfft / 4);
+                        chan.pout += 3 * mfft / 4;
                     }
                 }
                 // result now in this->obuffers[]
 
-                if (k == fftPerBuf - 1)
+                // enough samples
+                if ((void*)(chan.pout + 3 * mfft / 4) > (void*)(chan.output->peekWritePtr(0) + chan.sampleperblock * 2))
                 {
-                    if (chan.decimate_count == 0)
-                    {
-                        if (chan.fc != 0.0f)
-                        {
-                            shift_limited_unroll_C_sse_inp_c((complexf*)chan.output->getWritePtr(), chan.sampleperblock, &chan.stateFineTune);
-                        }
-                        chan.output->WriteDone();
-                        chan.pout = nullptr;
-                    }
-                    else
-                    {
-                        chan.pout += mfft / 2 + (3 * mfft / 4) * (fftPerBuf - 1);
-                    }
+                      if (chan.fc != 0.0f)
+                      {
+                          shift_limited_unroll_C_sse_inp_c((complexf*)chan.output->peekWritePtr(0), chan.sampleperblock, &chan.stateFineTune);
+                      }
+                      chan.output->WriteDone();
+                      chan.pout = (fftwf_complex *)chan.output->getWritePtr();
                 }
             }
 

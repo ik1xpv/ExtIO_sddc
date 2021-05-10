@@ -56,7 +56,7 @@ private:
 	CCyFX3Device* fx3dev;
 	CCyUSBEndPoint* EndPt;
 
-    std::thread *adc_samples_thread;
+    std::thread adc_samples_thread;
 
 	bool GetFx3Device();
 	bool GetFx3DeviceStreamer();

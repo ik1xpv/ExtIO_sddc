@@ -4,7 +4,7 @@
 #include <mutex>
 #include <condition_variable>
 
-const int default_count = 64;
+const int default_count = 128;
 const int spin_count = 100;
 #define ALIGN (8)
 
@@ -57,6 +57,7 @@ public:
 
     void Start()
     {
+        std::unique_lock<std::mutex> lk(mutex);
         read_index = 0;
         write_index = 0;
         emptyCount = 0;
@@ -160,6 +161,7 @@ public:
             int aligned_block_size = (block_size + ALIGN - 1) & (~(ALIGN - 1));
 
             auto data = new T[max_count * aligned_block_size];
+            memset(data, 0, sizeof(T) *max_count * aligned_block_size);
 
             for (int i = 0; i < max_count; ++i)
             {
