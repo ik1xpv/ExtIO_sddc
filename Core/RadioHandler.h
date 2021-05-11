@@ -77,6 +77,8 @@ public:
 
     ringbuffer<int16_t> *getOutput() { return &inputbuffer; }
 
+    uint64_t GetSerialNumber();
+
 private:
     bool debug_thread_run;
     void DebugConsole();
@@ -131,6 +133,8 @@ public:
 
     bool FX3SetGPIO(uint32_t mask);
     bool FX3UnsetGPIO(uint32_t mask);
+
+    uint64_t GetSerialNumber();
 
 protected:
     fx3class* Fx3;

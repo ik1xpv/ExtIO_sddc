@@ -20,3 +20,11 @@ RadioHardware::~RadioHardware()
         FX3SetGPIO(SHDWN);
     }
 }
+
+uint64_t RadioHardware::GetSerialNumber()
+{
+    uint64_t value;
+    Fx3->ReadSerialNumber(&value);
+
+    return value;
+}

@@ -29,6 +29,7 @@ public:
 	virtual bool ReadDebugTrace(uint8_t* pdata, uint8_t len) = 0;
 	virtual void StartStream(ringbuffer<int16_t>& input, int numofblock) = 0;
 	virtual void StopStream() = 0;
+	virtual bool ReadSerialNumber(uint64_t* pdata) = 0;
 
 };
 

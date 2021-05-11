@@ -1,7 +1,7 @@
 #pragma once
 
 #define FIRMWARE_VER_MAJOR 2
-#define FIRMWARE_VER_MINOR 1
+#define FIRMWARE_VER_MINOR 2
 
 // HF103 commands !!!
 enum FX3Command {
@@ -65,6 +65,10 @@ enum FX3Command {
     // Read Debug string if any
     // READ:
     READINFODEBUG = 0xBA,
+
+    // read serial number of the device
+    // READ: 4 bytes data
+    SERIALNUM = 0xC0,
 };
 
 #define OUTXIO0 (1U << 0) 	// ATT_LE

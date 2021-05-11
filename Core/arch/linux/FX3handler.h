@@ -26,6 +26,7 @@ public:
 	bool ReadDebugTrace(uint8_t* pdata, uint8_t len);
 	void StartStream(ringbuffer<int16_t>& input, int numofblock);
 	void StopStream();
+	bool ReadSerialNumber(uint64_t* pdata);
 
 private:
 	bool ReadUsb(uint8_t command, uint16_t value, uint16_t index, uint8_t *data, size_t size);

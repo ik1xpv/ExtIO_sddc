@@ -44,6 +44,12 @@ const char *RadioHandlerClass::getName()
 	return hardware->getName();
 }
 
+uint64_t RadioHandlerClass::GetSerialNumber()
+{
+	return this->hardware->GetSerialNumber();
+}
+
+
 bool RadioHandlerClass::Init(fx3class* Fx3)
 {
 	uint8_t rdata[4];
@@ -260,7 +266,7 @@ void RadioHandlerClass::DebugConsole()
 				debdata[len] = 0;
 				if ((len > 0) && (DbgPrintFX3 != nullptr))
 				{
-					DbgPrintFX3("%s", (char *)debdata);
+					DbgPrintFX3("[Firmware] %s", (char *)debdata);
 					memset(debdata, 0, sizeof(debdata));
 				}
 			}

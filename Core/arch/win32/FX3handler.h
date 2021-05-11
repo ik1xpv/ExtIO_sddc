@@ -42,6 +42,7 @@ public:
 	bool SetArgument(uint16_t index, uint16_t value);
 	bool GetHardwareInfo(uint32_t* data);
 	bool ReadDebugTrace(uint8_t* pdata, uint8_t len);
+	bool ReadSerialNumber(uint64_t* pdata);
 	void StartStream(ringbuffer<int16_t>& input, int numofblock);
 	void StopStream();
 

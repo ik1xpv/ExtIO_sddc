@@ -93,3 +93,8 @@ bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 {
 	return true;
 }
+
+bool fx3handler::ReadSerialNumber(uint64_t* pdata)
+{
+    return usb_device_control(this->dev, SERIALNUM, 0, 0, (uint8_t *)&pdata, sizeof(*pdata), 0) == 0;
+}

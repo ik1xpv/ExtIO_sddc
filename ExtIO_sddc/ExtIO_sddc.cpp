@@ -312,6 +312,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			return gbInitHW;
 		}
 
+		DbgPrintf("Serial#: %llx\n", RadioHandler.GetSerialNumber());
 		strcpy(name, RadioHandler.getName());
 		strcpy(model, RadioHandler.getName());
 

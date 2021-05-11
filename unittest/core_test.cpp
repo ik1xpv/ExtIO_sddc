@@ -34,6 +34,12 @@ class fx3handler : public fx3class
         return true;
     }
 
+    bool ReadSerialNumber(uint64_t* pdata)
+    {
+        *pdata = 0x1122334455667788;
+        return true;
+    }
+
 	bool GetHardwareInfo(uint32_t* data) {
         const uint8_t d[4] = {
             0, FIRMWARE_VER_MAJOR, FIRMWARE_VER_MINOR, 0

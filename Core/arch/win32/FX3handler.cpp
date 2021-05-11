@@ -263,6 +263,16 @@ bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 	return r;
 }
 
+bool fx3handler::ReadSerialNumber(uint64_t* pdata)
+{
+	long lgt = 8;
+	bool r;
+	fx3dev->ControlEndPt->ReqCode = SERIALNUM;
+	fx3dev->ControlEndPt->Value = (USHORT) pdata[0]; // upstream char
+	r = fx3dev->ControlEndPt->Read((PUCHAR)pdata, lgt);
+	return r;
+}
+
 bool fx3handler::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
 {
 	bool r = false;

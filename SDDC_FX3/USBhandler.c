@@ -11,6 +11,7 @@
  */
 
 #include "Application.h"
+#include "cyu3utils.h"
 
 #include "tuner_r82xx.h"
 #include "adf4351.h"
@@ -42,6 +43,8 @@ extern uint8_t bufdebug[MAXLEN_D_USB];
 // r820xx data
 struct r82xx_priv tuner;
 struct r82xx_config tuner_config;
+
+static uint32_t *EFUSE_DIE_ID = ((uint32_t *)0xE0055010);
 
 extern int set_all_gains(struct r82xx_priv *priv, UINT8 gain_index);
 extern int set_vga_gain(struct r82xx_priv *priv, UINT8 gain_index);
@@ -491,60 +494,70 @@ CyFxSlFifoApplnUSBSetupCB (
 					CyU3PDeviceReset(CyFalse);
 					break;
 
-            		case TESTFX3:
+			case TESTFX3:
 					glEp0Buffer[0] =  HWconfig;
 					glEp0Buffer[1] = (uint8_t) (FWconfig >> 8);
 					glEp0Buffer[2] = (uint8_t) FWconfig;
 					glEp0Buffer[3] = vendorRqtCnt;
-					CyU3PUsbSendEP0Data (4, glEp0Buffer);
+					CyU3PUsbSendEP0Data (8, glEp0Buffer);
 					flagdebug = (wValue == 1); // debug mode 
 					vendorRqtCnt++;
 					isHandled = CyTrue;
 					break;
 
-
-	   case READINFODEBUG:	
+			case SERIALNUM:
 					{
-					if (wValue >0)
-					{
-						char InputChar = (char) wValue;
-					 	if (InputChar  == 0x0d)
-						{
-							Qevent = USER_COMMAND_AVAILABLE << 24;
-							CyU3PQueueSend(&EventAvailable, &Qevent, CYU3P_NO_WAIT);
-						}
-						else
-						{
-							ConsoleInBuffer[ConsoleInIndex] = InputChar | 0x20;		// Save character as lower case (for compares)
-							if (ConsoleInIndex++ < sizeof(ConsoleInBuffer)) ConsoleInBuffer[ConsoleInIndex] = 0;
-							else ConsoleInIndex--;
-						}			
+					CyU3PReadDeviceRegisters(EFUSE_DIE_ID, 2, (uint32_t *)glEp0Buffer);
+					CyU3PUsbSendEP0Data (8, glEp0Buffer);
+					vendorRqtCnt++;
+					isHandled = CyTrue;
 					}
-					if (debtxtlen > 0) 
+					break;
+
+			case READINFODEBUG:
+					{
+						if (wValue > 0)
+						{
+							char InputChar = (char)wValue;
+							if (InputChar == 0x0d)
+							{
+								Qevent = USER_COMMAND_AVAILABLE << 24;
+								CyU3PQueueSend(&EventAvailable, &Qevent, CYU3P_NO_WAIT);
+							}
+							else
+							{
+								ConsoleInBuffer[ConsoleInIndex] = InputChar | 0x20; // Save character as lower case (for compares)
+								if (ConsoleInIndex++ < sizeof(ConsoleInBuffer))
+									ConsoleInBuffer[ConsoleInIndex] = 0;
+								else
+									ConsoleInIndex--;
+							}
+						}
+						if (debtxtlen > 0)
 						{
 							uint16_t len = debtxtlen;
 							memcpy(glEp0Buffer, bufdebug, len);
-							debtxtlen=0;
-							glEp0Buffer[len-1] = 0;
-							CyU3PUsbSendEP0Data (len, glEp0Buffer);
+							debtxtlen = 0;
+							glEp0Buffer[len - 1] = 0;
+							CyU3PUsbSendEP0Data(len, glEp0Buffer);
 							vendorRqtCnt++;
 							isHandled = CyTrue;
 						}
-					else
+						else
 						{
 							isHandled = CyTrue;
-							CyU3PUsbStall (0, CyTrue, CyFalse);
+							CyU3PUsbStall(0, CyTrue, CyFalse);
 						}
 					}
 
 					break;
 
-            default: /* unknown request, stall the endpoint. */
+					default: /* unknown request, stall the endpoint. */
 
-					isHandled = CyFalse;
-					CyU3PDebugPrint (4, "STALL EP0 V.REQ %x\n",bRequest);
-					CyU3PUsbStall (0, CyTrue, CyFalse);
-					break;
+						isHandled = CyFalse;
+						CyU3PDebugPrint(4, "STALL EP0 V.REQ %x\n", bRequest);
+						CyU3PUsbStall(0, CyTrue, CyFalse);
+						break;
     	}
     	TraceSerial( bRequest, (uint8_t *) &glEp0Buffer[0], wValue, wIndex);
     }
