@@ -24,7 +24,10 @@ RadioHardware::~RadioHardware()
 uint64_t RadioHardware::GetSerialNumber()
 {
     uint64_t value;
-    Fx3->ReadSerialNumber(&value);
+    if (Fx3)
+        Fx3->ReadSerialNumber(&value);
+    else
+        value = 0x1122334566;
 
     return value;
 }

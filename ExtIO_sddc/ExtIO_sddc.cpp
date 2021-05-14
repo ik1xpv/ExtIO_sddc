@@ -153,23 +153,15 @@ using namespace std::chrono;
 static void CaculateStats()
 {
 	high_resolution_clock::time_point EndingTime;
-	float kbRead = 0;
-	float kSReadIF = 0;
-
-	kbRead = 0; // zeros the kilobytes counter
-	kSReadIF = 0;
 
 	uint32_t lastADCCount = 0;
 	uint32_t lastIFCount = 0;
 
-	uint8_t  debdata[MAXLEN_D_USB];
-	memset(debdata, 0, MAXLEN_D_USB);
-
 	auto StartingTime = high_resolution_clock::now();
 
 	while (RadioHandler.isRunning()) {
-		kbRead = float((RadioHandler.getOutput()->getWriteCount() - lastADCCount) * RadioHandler.getOutput()->getBlockSize()) / 1000.0f;
-		kSReadIF = float((freq2iq_i->getChannelOutput(0)->getWriteCount() - lastIFCount) * freq2iq_i->getChannelOutput(0)->getBlockSize()) / 1000.0f;
+		float kbRead = float((RadioHandler.getOutput()->getWriteCount() - lastADCCount) * RadioHandler.getOutput()->getBlockSize()) / 1000.0f;
+		float kSReadIF = float((freq2iq_i->getChannelOutput(0)->getWriteCount() - lastIFCount) * freq2iq_i->getChannelOutput(0)->getBlockSize()) / 1000.0f;
 
 		EndingTime = high_resolution_clock::now();
 
@@ -227,7 +219,7 @@ static void Callback()
 		{
 			saveADCsamplesflag = false; // do it once
 			unsigned int numsamples = transferSize / sizeof(int16_t);
-			float samplerate  = RadioHandler.getSampleRate();
+			float samplerate = RadioHandler.getSampleRate();
 			PScopeShot("ADCrealsamples.adc", "ExtIO_sddc.dll",
 				"ADCrealsamples.adc input real ADC 16 bit samples",
 				(short*)data, samplerate, numsamples);
