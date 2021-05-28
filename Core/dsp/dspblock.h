@@ -23,7 +23,7 @@ namespace dsp
     class output_block
     {
     public:
-        output_block() : output(1024) {}
+        output_block() : output() {}
         ringbuffer<TOUT> *getOutput(){return &this->output;};
 
     protected:

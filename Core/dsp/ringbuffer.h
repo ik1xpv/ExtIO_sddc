@@ -114,15 +114,15 @@ protected:
         }
     }
 
-    int max_count;
+    size_t max_count;
 
-    volatile int read_index;
-    volatile int write_index;
+    volatile size_t read_index;
+    volatile size_t write_index;
 
 private:
-    int emptyCount;
-    int fullCount;
-    int writeCount;
+    size_t emptyCount;
+    size_t fullCount;
+    size_t writeCount;
 
     std::mutex mutex;
     std::condition_variable nonemptyCV;
@@ -149,7 +149,7 @@ public:
         delete[] buffers;
     }
 
-    void setBlockSize(int size)
+    void setBlockSize(size_t size)
     {
         if (block_size != size)
         {
@@ -158,23 +158,23 @@ public:
             if (buffers[0])
                 delete[] buffers[0];
 
-            int aligned_block_size = (block_size + ALIGN - 1) & (~(ALIGN - 1));
+            size_t aligned_block_size = (block_size + ALIGN - 1) & (~(ALIGN - 1));
 
             auto data = new T[max_count * aligned_block_size];
 
-            for (int i = 0; i < max_count; ++i)
+            for (size_t i = 0; i < max_count; ++i)
             {
                 buffers[i] = &data[i * aligned_block_size];
             }
         }
     }
 
-    T* peekWritePtr(int offset)
+    T* peekWritePtr(size_t offset)
     {
         return buffers[(write_index + max_count + offset) % max_count];
     }
 
-    T* peekReadPtr(int offset)
+    T* peekReadPtr(size_t offset)
     {
         return buffers[(read_index + max_count + offset) % max_count];
     }
@@ -193,10 +193,10 @@ public:
         return buffers[read_index];
     }
 
-    int getBlockSize() const { return block_size; }
+    size_t getBlockSize() const { return block_size; }
 
 private:
-    int block_size;
+    size_t block_size;
 
     TPtr* buffers;
 };
