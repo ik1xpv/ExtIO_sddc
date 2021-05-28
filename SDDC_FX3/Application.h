@@ -81,6 +81,8 @@ extern void DebugPrint2USB ( uint8_t priority, char *msg, ...);
 #define GPIO50			(50) // sense BBRF103
 #define GPIO52			(52) // sense RXLUCY
 #define GPIO53			(53) // sense RXLUCY
+#define GPIO36			(36) // sense RX888R2
+#define GPIO45			(45) // sense RX888
 
 typedef struct outxio_t
 {

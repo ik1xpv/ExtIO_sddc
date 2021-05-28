@@ -148,6 +148,7 @@ void ApplicationThread ( uint32_t input)
 #endif
 	uint32_t nline;
 	CyBool_t measure;
+	CyBool_t measure2;
     CyU3PReturnStatus_t Status;
     HWconfig = 0;
 
@@ -179,26 +180,44 @@ void ApplicationThread ( uint32_t input)
 		else
 		{
 			ConfGPIOsimpleinputPU(GPIO50);
+			ConfGPIOsimpleinputPU(GPIO45);
+			ConfGPIOsimpleinputPU(GPIO36);
+
 			si5351aSetFrequencyB(16000000);
 			uint8_t identity;
 			if (I2cTransfer(0, R820T_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
 			{
 				// check if BBRF103 or RX888 (RX666 ?)
 				CyU3PGpioSimpleGetValue ( GPIO50, &measure);
-				if(!measure) { 
+				CyU3PGpioSimpleGetValue ( GPIO45, &measure2);
+
+				if(!measure) {
 					HWconfig = BBRF103;
 					DebugPrint(4, "R820T Detectedinitialize. BBRF103 detected.");
 				}
-				else
+				else if (!measure2)
 				{
 					HWconfig = RX888;
 					DebugPrint(4, "R820T Detectedinitialize. RX888 detected.");
 				}
+				else
+				{
+					HWconfig = NORADIO;
+				}
 			}
 			else if (I2cTransfer(0, R828D_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
 			{
-				HWconfig = RX888r2;
-				DebugPrint(4, "R828D Detectedinitialize. RX888r2 detected.");
+				CyU3PGpioSimpleGetValue ( GPIO36, &measure);
+
+				if (!measure)
+				{
+					HWconfig = RX888r2;
+					DebugPrint(4, "R828D Detectedinitialize. RX888r2 detected.");
+				}
+				else
+				{
+					HWconfig = NORADIO;
+				}
 			}
 			else if (I2cTransfer(0, RD5812_I2C_ADDR, 1, &identity, true) == CY_U3P_SUCCESS)
 			{
