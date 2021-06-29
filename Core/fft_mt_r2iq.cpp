@@ -218,12 +218,23 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 	//  Windows, assumed MSVC
 	#include <intrin.h>
 	#define cpuid(info, x)    __cpuidex(info, x, 0)
+	#define DETECT_AVX
 #elif defined(__i386__)
 	//  GCC Intrinsics, x86 only
 	#include <cpuid.h>
 	#define cpuid(info, x)  __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
+	#define DETECT_AVX
+#elif defined(__arm__)
+	#define DETECT_NEON
+	#include <sys/auxv.h>
+	#include <asm/hwcap.h>
+	static bool detect_neon()
+	{
+		unsigned long caps = getauxval(AT_HWCAP);
+		return (caps & HWCAP_NEON);
+	}
 #else
-	#define cpuid(info, x)  { info[0]=info[1]=info[2]=info[3]=0; }
+#error Compiler does not identify an x86 or ARM core..
 #endif
 
 void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th)
@@ -232,6 +243,7 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th)
 	DbgPrintf("Hardware Capability: all SIMD features (AVX, AVX2, AVX512) deactivated\n");
 	return r2iqThreadf_def(th);
 #else
+#if defined(DETECT_AVX)
 	int info[4];
 	bool HW_AVX = false;
 	bool HW_AVX2 = false;
@@ -261,5 +273,13 @@ void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th)
 		return r2iqThreadf_avx(th);
 	else
 		return r2iqThreadf_def(th);
+#elif defined(DETECT_NEON)
+	bool NEON = detect_neon();
+	DbgPrintf("Hardware Capability: NEON:%d\n", NEON);
+	if (NEON)
+		return r2iqThreadf_neon(th);
+	else
+		return r2iqThreadf_def(th);
+#endif
 #endif
 }
