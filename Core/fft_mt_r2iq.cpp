@@ -215,13 +215,15 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 }
 
 #ifdef _WIN32
-	//  Windows
+	//  Windows, assumed MSVC
 	#include <intrin.h>
 	#define cpuid(info, x)    __cpuidex(info, x, 0)
-#else
-	//  GCC Intrinsics
+#elif defined(__i386__)
+	//  GCC Intrinsics, x86 only
 	#include <cpuid.h>
 	#define cpuid(info, x)  __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
+#else
+	#define cpuid(info, x)  { info[0]=info[1]=info[2]=info[3]=0; }
 #endif
 
 void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th)

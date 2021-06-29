@@ -11,13 +11,22 @@ file(GLOB SRC "*.cpp" "radio/*.cpp" "pffft/*.cpp" ${ARCH_SRC})
 include_directories("." "CyAPI/" "pffft/")
 
 if (MSVC)
+    # Assume Windows/x86 target ;)
     set_source_files_properties(fft_mt_r2iq_avx.cpp PROPERTIES COMPILE_FLAGS /arch:AVX)
     set_source_files_properties(fft_mt_r2iq_avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX2)
     set_source_files_properties(fft_mt_r2iq_avx512.cpp PROPERTIES COMPILE_FLAGS /arch:AVX512)
 else()
+    # Assume GCC, check target CPU/FPU
+    if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
     set_source_files_properties(fft_mt_r2iq_avx.cpp PROPERTIES COMPILE_FLAGS -mavx)
     set_source_files_properties(fft_mt_r2iq_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
     set_source_files_properties(fft_mt_r2iq_avx512.cpp PROPERTIES COMPILE_FLAGS -mavx512f)
+    elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
+    # We have Neon..
+    message(STATUS "Compiling for Neon")
+    add_compile_definitions(PFFFT_ENABLE_NEON)
+    add_compile_options(-mfpu=neon-vfpv4 -Wno-strict-aliasing)
+    endif()
 
     include_directories(${LIBUSB_INCLUDE_DIRS})
 endif (MSVC)
