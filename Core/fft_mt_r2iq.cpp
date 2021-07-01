@@ -219,7 +219,7 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 	#include <intrin.h>
 	#define cpuid(info, x)    __cpuidex(info, x, 0)
 	#define DETECT_AVX
-#elif defined(__i386__)
+#elif defined(__x86_64__)
 	//  GCC Intrinsics, x86 only
 	#include <cpuid.h>
 	#define cpuid(info, x)  __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
