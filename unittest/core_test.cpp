@@ -141,7 +141,7 @@ TEST_CASE(CoreFixture, R2IQTest)
         count = 0;
         totalsize = 0;
         radio->Start(decimate); // full bandwidth
-        std::this_thread::sleep_for(10s);
+        std::this_thread::sleep_for(1s);
         radio->Stop();
 
         REQUIRE_TRUE(count > 0);
