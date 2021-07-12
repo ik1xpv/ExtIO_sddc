@@ -47,6 +47,9 @@ pfnExtIOCallback	pfnCallback = 0;
 HWND Hconsole;
 
 static bool gshdwn;
+static bool needSaveSettings;
+const char RegKeyName[] = "SOFTWARE\\SDDC";
+
 
 RadioHandlerClass RadioHandler;
 
@@ -61,6 +64,9 @@ SplashWindow  splashW;
 #define IDD_SDDC_SETTINGS	100
 
 static int SetSrateInternal(int srate_idx, bool internal_call = true);
+
+static void LoadSettings();
+static void SaveSettings();
 
 static inline
 double FreqCorrectionFactor()
@@ -301,6 +307,10 @@ bool EXTIO_API OpenHW(void)
 			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_HDSDR281), NULL, (DLGPROC)&DlgMainFn);
 		else
 			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_HDSDR), NULL, (DLGPROC)&DlgMainFn);
+
+		// load system settings
+		needSaveSettings = true;
+		LoadSettings();
 	}
 	RECT rect;
 	GetWindowRect(h_dialog, &rect);
@@ -396,6 +406,12 @@ void EXTIO_API CloseHW(void)
 	{
 		RadioHandler.Close();
 	}
+
+	if (needSaveSettings)
+	{
+		SaveSettings();
+	}
+
 	gbInitHW = false;
 }
 
@@ -1023,5 +1039,53 @@ void EXTIO_API ExtIoSetSetting(int idx, const char * value)
 }
 
 
+void SaveSettings()
+{
+	HKEY handle;
+	DWORD diposition;
+	RegCreateKeyEx(HKEY_CURRENT_USER, RegKeyName, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &handle, &diposition);
+
+	// enum all the settings
+	int idx = 0;
+	char desc[256];
+	char value[1024];
+	int ret = ExtIoGetSetting(idx, desc, value);
+	while(ret == 0)
+	{
+		char idxvalue[10];
+		sprintf(idxvalue, "%d", idx);
+		// write the value
+		RegSetValueEx(handle, idxvalue, 0, REG_SZ, (const BYTE*)value, strlen(value));
+		// fetch next
+		idx++;
+		ret = ExtIoGetSetting(idx, desc, value);
+	}
+}
+
+void LoadSettings()
+{
+	HKEY handle;
+	DWORD diposition;
+	RegCreateKeyEx(HKEY_CURRENT_USER, RegKeyName, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &handle, &diposition);
+
+	// enum all the settings
+	int idx = 0;
+	char value[1024];
+	char idxvalue[10];
+	DWORD len;
+	DWORD type;
+	sprintf(idxvalue, "%d", idx);
+	LSTATUS status = RegQueryValueEx(handle, idxvalue, 0, &type, (BYTE*)value, &len);
+
+	while(status == ERROR_SUCCESS && type == REG_SZ)
+	{
+		ExtIoSetSetting(idx, value);
+
+		// next setting
+		idx++;
+		sprintf(idxvalue, "%d", idx);
+		status = RegQueryValueEx(handle, idxvalue, 0, &type, (BYTE*)value, &len);
+	}
+}
 
 //---------------------------------------------------------------------------
