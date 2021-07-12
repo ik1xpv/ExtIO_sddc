@@ -265,3 +265,6 @@ __pycache__/
 /bugz03.png
 /bugz04.png
 *.png
+
+# FFTW wisdom files
+wisdom*

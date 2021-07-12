@@ -146,15 +146,9 @@ TEST_CASE(CoreFixture, R2IQTest)
 
         REQUIRE_TRUE(count > 0);
         REQUIRE_TRUE(totalsize > 0);
-<<<<<<< HEAD
         REQUIRE_EQUAL(totalsize / count, transferSamples / 2);
-        printf("decimate=%d nxfers=%ld count=%u totalsize=%llu\n",
+        printf("decimate=%d nxfers=%ld count=%u totalsize=%" PRIu64 "\n",
             decimate, usb->Xfers(true), count, totalsize);
-=======
-        REQUIRE_TRUE(totalsize / count == transferSamples / 2);
-    printf("decimate=%d nxfers=%ld mindelay=%ld count=%u totalsize=%" PRIu64 "\n",
-        decimate, usb->Xfers(true), usb->MinDelay(true), count, totalsize);
->>>>>>> X86_64 testing, portable printf format
     }
 
     delete radio;
