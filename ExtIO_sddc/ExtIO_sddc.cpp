@@ -300,6 +300,10 @@ bool EXTIO_API OpenHW(void)
 	if (strstr(SDR_progname, "HDSDR") == nullptr)
 	{
 		h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_MAIN), NULL, (DLGPROC)&DlgMainFn);
+
+		// load system settings
+		needSaveSettings = true;
+		LoadSettings();
 	}
 	else
 	{
@@ -307,10 +311,6 @@ bool EXTIO_API OpenHW(void)
 			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_HDSDR281), NULL, (DLGPROC)&DlgMainFn);
 		else
 			h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DLG_HDSDR), NULL, (DLGPROC)&DlgMainFn);
-
-		// load system settings
-		needSaveSettings = true;
-		LoadSettings();
 	}
 	RECT rect;
 	GetWindowRect(h_dialog, &rect);
@@ -1052,14 +1052,20 @@ void SaveSettings()
 	int ret = ExtIoGetSetting(idx, desc, value);
 	while(ret == 0)
 	{
-		char idxvalue[10];
-		sprintf(idxvalue, "%d", idx);
+		char idxvalue[30];
+		sprintf(idxvalue, "%03d_Value", idx);
 		// write the value
 		RegSetValueEx(handle, idxvalue, 0, REG_SZ, (const BYTE*)value, strlen(value));
+
+		sprintf(idxvalue, "%03d_Description", idx);
+		// write the value
+		RegSetValueEx(handle, idxvalue, 0, REG_SZ, (const BYTE*)desc, strlen(desc));
 		// fetch next
 		idx++;
 		ret = ExtIoGetSetting(idx, desc, value);
 	}
+
+	CloseHandle(handle);
 }
 
 void LoadSettings()
@@ -1071,10 +1077,10 @@ void LoadSettings()
 	// enum all the settings
 	int idx = 0;
 	char value[1024];
-	char idxvalue[10];
+	char idxvalue[30];
 	DWORD len;
 	DWORD type;
-	sprintf(idxvalue, "%d", idx);
+	sprintf(idxvalue, "%03d_Value", idx);
 	LSTATUS status = RegQueryValueEx(handle, idxvalue, 0, &type, (BYTE*)value, &len);
 
 	while(status == ERROR_SUCCESS && type == REG_SZ)
@@ -1083,9 +1089,13 @@ void LoadSettings()
 
 		// next setting
 		idx++;
-		sprintf(idxvalue, "%d", idx);
+		sprintf(idxvalue, "%03d_Value", idx);
+
+		len = 1023;
 		status = RegQueryValueEx(handle, idxvalue, 0, &type, (BYTE*)value, &len);
 	}
+
+	CloseHandle(handle);
 }
 
 //---------------------------------------------------------------------------
