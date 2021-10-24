@@ -67,6 +67,7 @@ private:
 	ringbuffer<int16_t> *inputbuffer;
 	int numofblock;
 	bool run;
+	UCHAR devidx;
 };
 
 

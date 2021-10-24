@@ -21,7 +21,8 @@ fx3class* CreateUsbHandler()
 
 fx3handler::fx3handler():
 	fx3dev (nullptr),
-	Fx3IsOn (false)
+	Fx3IsOn (false),
+	devidx (0)
 {
 
 }
@@ -36,44 +37,37 @@ fx3handler::~fx3handler() // reset USB device and exit
 bool fx3handler::GetFx3Device() { 
 	bool r = false;
 	if (fx3dev == nullptr) return r; // no device
-	int n = fx3dev->DeviceCount();
+	int n = fx3dev->DeviceCount(); // n is the number of compatible devices 
 	if (n == 0)  return r;   // no one
-
-    // Walk through all devices looking for VENDOR_ID/STREAMER_ID	
-	for (int i = 0; i <= n; i++) {
-		fx3dev->Open(i); // go down the list of devices to find our device
-		if ((fx3dev->VendorID == VENDOR_ID) && (fx3dev->ProductID == STREAMER_ID))
+	devidx = 0; // default index of device
+	// tentative patch to test the use of two SDR on the same PC
+	if (n > 1)
+	{
+		int msgboxID = MessageBox(
+			NULL,
+			"FX3 device 1,\nFX3 device 2\n\nSelect device 1 ?",
+			"Multiple devices",
+			MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON1
+		);
+		switch (msgboxID)
 		{
-			r = true;
+		case IDYES:
+			devidx = 0;
 			break;
-		}
-
-		if ((fx3dev->VendorID == VENDOR_ID) && (fx3dev->ProductID == BOOTLOADER_ID))
-		{
-			r = true;
+		case IDNO:
+			devidx = 1;
 			break;
 		}
 	}
-	if (r == false)
-		fx3dev->Close();
+    r = fx3dev->Open(devidx);
 	return r;
 }
 
-bool fx3handler::GetFx3DeviceStreamer(void) {   // open class 
+bool fx3handler::GetFx3DeviceStreamer() {   // open class 
 	bool r = false;
 	if (fx3dev == NULL) return r;
-	int n = fx3dev->DeviceCount();
-	// Walk through all devices looking for VENDOR_ID/STREAMER_ID
-	if (n == 0) return r; 
-	// go down the list of devices to find STREAMER_ID device
-	for (int i = 0; i <= n; i++) {
-		fx3dev->Open(i);
-		if ((fx3dev->VendorID == VENDOR_ID) && (fx3dev->ProductID == STREAMER_ID))
-		{
-			r = true;
-			break;
-		}
-	}
+	fx3dev->Open(devidx);
+	if ((fx3dev->VendorID == VENDOR_ID) && (fx3dev->ProductID == STREAMER_ID)) r = true;
 	if (r == false)
 		fx3dev->Close();
 	return r;
