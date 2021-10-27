@@ -40,14 +40,14 @@ bool fx3handler::GetFx3Device() {
 	int n = fx3dev->DeviceCount(); // n is the number of compatible devices 
 	if (n == 0)  return r;   // no one
 	devidx = 0; // default index of device
-	// tentative patch to test the use of two SDR on the same PC
+	// messageBox patch to test the use of two SDR on the same PC in Win32
 	if (n > 1)
 	{
 		int msgboxID = MessageBox(
 			NULL,
-			"FX3 device 1,\nFX3 device 2\n\nSelect device 1 ?",
-			"Multiple devices",
-			MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON1
+			"Select device\n YES = 1  NO = 2",
+			"Many FX03 devices",
+			 MB_YESNO | MB_DEFBUTTON1 | MB_ICONQUESTION
 		);
 		switch (msgboxID)
 		{
