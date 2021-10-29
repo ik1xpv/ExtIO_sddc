@@ -85,8 +85,10 @@ bool  fx3handler::Open(uint8_t* fw_data, uint32_t fw_size) {
 	{
 		fx3dev->Open(k);
 		if (fx3dev->IsBootLoaderRunning())
-			if (fx3dev->DownloadFwToRam(fw_data, fw_size)!=SUCCESS)
-				DbgPrintf("Failed to DownloadFwToRam device(%x)\n",k);
+			if (fx3dev->DownloadFwToRam(fw_data, fw_size) != SUCCESS)
+				DbgPrintf("Failed to DownloadFwToRam device(%x)\n", k);
+			else
+				Sleep(800);   // wait after firmware change ??
 		fx3dev->Close();
 	}
 
