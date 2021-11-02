@@ -33,6 +33,24 @@ fx3handler::~fx3handler() // reset USB device and exit
 	DbgPrintf("\r\n~fx3handler\r\n");
 	Close();
 }
+/*
+void wchar2char(uint16_t* wcp, char* cp, int len)
+{
+	int j;
+	for ( j = 0; j < len; j++)
+		cp[j] = (char) wcp[j];
+	cp[j] = 0;
+}
+*/
+char* wchar2char(const wchar_t* wchar)
+{
+	char* m_char;
+	int len = WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), NULL, 0, NULL, NULL);
+	m_char = new char[len + 1];
+	WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), m_char, len, NULL, NULL);
+	m_char[len] = '\0';
+	return m_char;
+}
 
 bool fx3handler::GetFx3Device() { 
 	bool r = false;
@@ -41,11 +59,27 @@ bool fx3handler::GetFx3Device() {
 	if (n == 0)  return r;   // no one
 	devidx = 0; // default index of device
 	// messageBox patch to test the use of two SDR on the same PC in Win32
+	char dbuf[4][64];
+	char lbuf[256];
 	if (n > 1)
 	{
+		strcpy(lbuf, "");
+		for (int k = 0; k < n; k++)
+		{
+			fx3dev->Open(k);
+			//wchar2char((uint16_t*) fx3dev->DeviceName, &dname[k][0], 18);
+			strcpy(dbuf[k], fx3dev->DeviceName);
+			while (strlen(dbuf[k])<16)strcat(dbuf[k], " ");
+			strcat(dbuf[k], "\t sn:");
+			strcat(dbuf[k], wchar2char((wchar_t*)fx3dev->SerialNumber));
+			strcat(dbuf[k], "\n");
+			fx3dev->Close();
+			strcat(lbuf, dbuf[k]);
+		}
+		strcat(lbuf, "\n\nSelect device 1=Yes  2=No");
 		int msgboxID = MessageBox(
 			NULL,
-			"Select device\n YES = 1  NO = 2",
+			lbuf,
 			"Many FX03 devices",
 			 MB_YESNO | MB_DEFBUTTON1 | MB_ICONQUESTION
 		);
