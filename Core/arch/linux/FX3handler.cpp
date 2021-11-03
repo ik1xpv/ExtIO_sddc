@@ -94,7 +94,7 @@ bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 	return true;
 }
 
-bool fx3handler::Enumerate(unsigned char &idx, char *lbuf, uint8_t* fw_data, uint32_t fw_size);
+bool fx3handler::Enumerate(unsigned char &idx, char *lbuf, uint8_t* fw_data, uint32_t fw_size)
 {
 	return true; // TBD
 }
