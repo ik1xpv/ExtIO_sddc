@@ -12,4 +12,11 @@ extern void UpdatePPM(HWND hWnd);
 
 BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+BOOL CALLBACK DlgSelectDevice(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+struct DevContext 
+{
+	unsigned char numdev;
+	char dev[MAXNDEV][MAXDEVSTRLEN];
+};
 #endif // _TABDIALOGH_

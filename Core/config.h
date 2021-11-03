@@ -77,6 +77,9 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 #define URL_HDSR            "http://www.hdsdr.de/"
 #define URL_HDSDRA          "<a>http://www.hdsdr.de/</a>"
 
+#define MAXNDEV (4)  // max number of SDR device connected to PC
+#define MAXDEVSTRLEN (64)  //max char len of SDR device description
+
 extern bool saveADCsamplesflag;
 extern uint32_t  adcnominalfreq;
 

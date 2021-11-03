@@ -468,3 +468,61 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 
 }
+
+
+
+BOOL CALLBACK DlgSelectDevice(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	int selindex = 0;
+	DevContext* p_devicelist;
+
+	// check message type
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		p_devicelist = (DevContext*) lParam;
+		for (int i = 0; i < p_devicelist->numdev; i++) {
+			ListBox_AddString(GetDlgItem(hWnd, IDC_LISTDEV), p_devicelist->dev[i]);
+		}
+		break;
+
+	case WM_CTLCOLORDLG:
+	case WM_CTLCOLOREDIT:
+	case WM_CTLCOLORLISTBOX:
+	case WM_CTLCOLORSCROLLBAR:
+	case WM_CTLCOLORSTATIC:
+	{
+		HDC hDc = (HDC)wParam;
+		SetBkMode(hDc, TRANSPARENT);
+		return (LONG)g_hbrBackground;
+	}
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDOK: 
+	    case IDCANCEL:
+			selindex = ListBox_GetCurSel(GetDlgItem(hWnd, IDC_LISTDEV));
+			if (selindex < 0) selindex = 0; // if not selected select 0
+				EndDialog(hWnd, selindex);
+			break;
+
+		case IDC_LISTDEV:
+			switch (HIWORD(wParam))
+			{
+			    case LBN_SELCHANGE:
+					EnableWindow(GetDlgItem(hWnd, IDOK), TRUE);
+				break;
+			}
+			break;
+		}
+		break;
+
+
+	default:
+		// return zero if we do not process this message
+		return FALSE;
+	}
+
+	// return nonzero if we did process the message
+	return TRUE;
+}

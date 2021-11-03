@@ -33,15 +33,7 @@ fx3handler::~fx3handler() // reset USB device and exit
 	DbgPrintf("\r\n~fx3handler\r\n");
 	Close();
 }
-/*
-void wchar2char(uint16_t* wcp, char* cp, int len)
-{
-	int j;
-	for ( j = 0; j < len; j++)
-		cp[j] = (char) wcp[j];
-	cp[j] = 0;
-}
-*/
+
 char* wchar2char(const wchar_t* wchar)
 {
 	char* m_char;
@@ -50,50 +42,6 @@ char* wchar2char(const wchar_t* wchar)
 	WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), m_char, len, NULL, NULL);
 	m_char[len] = '\0';
 	return m_char;
-}
-
-bool fx3handler::GetFx3Device() { 
-	bool r = false;
-	if (fx3dev == nullptr) return r; // no device
-	int n = fx3dev->DeviceCount(); // n is the number of compatible devices 
-	if (n == 0)  return r;   // no one
-	devidx = 0; // default index of device
-	// messageBox patch to test the use of two SDR on the same PC in Win32
-	char dbuf[4][64];
-	char lbuf[256];
-	if (n > 1)
-	{
-		strcpy(lbuf, "");
-		for (int k = 0; k < n; k++)
-		{
-			fx3dev->Open(k);
-			//wchar2char((uint16_t*) fx3dev->DeviceName, &dname[k][0], 18);
-			strcpy(dbuf[k], fx3dev->DeviceName);
-			while (strlen(dbuf[k])<16)strcat(dbuf[k], " ");
-			strcat(dbuf[k], "\t sn:");
-			strcat(dbuf[k], wchar2char((wchar_t*)fx3dev->SerialNumber));
-			strcat(dbuf[k], "\n");
-			fx3dev->Close();
-			strcat(lbuf, dbuf[k]);
-		}
-		strcat(lbuf, "\n\nSelect device 1=Yes  2=No");
-		int msgboxID = MessageBox(
-			NULL,
-			lbuf,
-			"Many FX03 devices",
-			 MB_YESNO | MB_DEFBUTTON1 | MB_ICONQUESTION
-		);
-		switch (msgboxID)
-		{
-		case IDYES:
-			devidx = 0;
-			break;
-		case IDNO:
-			devidx = 1;
-			break;
-		}
-	}
-	return r;
 }
 
 bool fx3handler::GetFx3DeviceStreamer() {   // open class 
@@ -106,27 +54,35 @@ bool fx3handler::GetFx3DeviceStreamer() {   // open class
 	return r;
 }
 
+bool fx3handler::Enumerate(unsigned char& idx, char* lbuf, uint8_t* fw_data, uint32_t fw_size)
+{
+	bool r = false;
+	strcpy(lbuf, "");
+	if (fx3dev == nullptr)
+		fx3dev = new CCyFX3Device;              // instantiate the device
+	if (fx3dev == nullptr) return r;		// return if failed
+	if (!fx3dev->Open(idx)) return r;
+	if (fx3dev->IsBootLoaderRunning()) {
+		if (fx3dev->DownloadFwToRam(fw_data, fw_size) != SUCCESS) {
+			DbgPrintf("Failed to DownloadFwToRam device(%x)\n", idx);
+		}
+		else {
+			fx3dev->Close();
+			Sleep(800);					    // wait after firmware change ?
+			fx3dev->Open(idx);
+		}
+	}
+	strcpy (lbuf, fx3dev->DeviceName);
+	while (strlen(lbuf) < 18) strcat(lbuf, " ");
+	strcat(lbuf, "sn:");
+	strcat(lbuf, wchar2char((wchar_t*)fx3dev->SerialNumber));
+	fx3dev->Close();
+	devidx = idx;  // -> devidx
+	return true;
+}
+
 bool  fx3handler::Open(uint8_t* fw_data, uint32_t fw_size) {
 	bool r = false;
-	fx3dev = new CCyFX3Device;              // instantiate the device
-	if (fx3dev == nullptr) return r;        // return if failed
-	int n = fx3dev->DeviceCount();          
-	if (n > 2) n = 2;						// WARN
-	if (n == 0) return r;					// return if no devices connected
-
-	// initialize all the devices with bootstrap ID
-	for (int k = 0; k < n; k++)
-	{
-		fx3dev->Open(k);
-		if (fx3dev->IsBootLoaderRunning())
-			if (fx3dev->DownloadFwToRam(fw_data, fw_size) != SUCCESS)
-				DbgPrintf("Failed to DownloadFwToRam device(%x)\n", k);
-			else
-				Sleep(800);   // wait after firmware change ??
-		fx3dev->Close();
-	}
-
-	GetFx3Device();   // Select device
 
 	if (!GetFx3DeviceStreamer()) {
 		DbgPrintf("Failed to open device\n");

@@ -9,6 +9,7 @@
 #define IDB_BITMAP2                     106
 #define IDD_DLG_HDSDR                   107
 #define IDD_DLG_HDSDR281                108
+#define IDD_SELECTDEVICE				109
 #define IDC_LW                          1001
 #define IDC_HF                          1002
 #define IDC_VHF                         1003
@@ -30,6 +31,7 @@
 #define IDC_CORRUPDATE					1019
 #define IDC_FREQCANC					1020
 #define IDC_CORRCANC					1021
+#define IDC_LISTDEV						1030
 #define RES_BIN_FIRMWARE                2000
 #define IHK_CR                          5001
 #define IDE_EDIT_MAIN                   40002
