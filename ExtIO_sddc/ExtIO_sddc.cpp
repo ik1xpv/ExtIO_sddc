@@ -216,7 +216,14 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		auto Fx3 = CreateUsbHandler();
 		unsigned char idx = 0;
 		int selected = 0;
-		while (Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size) && (idx++ < MAXNDEV));
+		while (Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size) && (idx < MAXNDEV))
+		{
+			// https://en.wikipedia.org/wiki/West_Bridge
+			int retry = 2;
+			while ((strncmp("WestBridge", devicelist.dev[idx],sizeof("WestBridge")) != NULL) && retry-- > 0)
+				Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size); // if it enumerates as BootLoader retry
+			idx++;
+		}
 		devicelist.numdev = idx;
 		if (idx > 1){	
 			selected =  DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SELECTDEVICE), NULL, DlgSelectDevice, (LPARAM) &devicelist);

@@ -503,7 +503,7 @@ BOOL CALLBACK DlgSelectDevice(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	    case IDCANCEL:
 			selindex = ListBox_GetCurSel(GetDlgItem(hWnd, IDC_LISTDEV));
 			if (selindex < 0) selindex = 0; // if not selected select 0
-				EndDialog(hWnd, selindex);
+			EndDialog(hWnd, selindex);
 			break;
 
 		case IDC_LISTDEV:
@@ -511,6 +511,11 @@ BOOL CALLBACK DlgSelectDevice(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 			{
 			    case LBN_SELCHANGE:
 					EnableWindow(GetDlgItem(hWnd, IDOK), TRUE);
+				break;
+				case LBN_DBLCLK:
+					selindex = ListBox_GetCurSel(GetDlgItem(hWnd, IDC_LISTDEV));
+					if (selindex < 0) selindex = 0; // if not selected select 0
+					EndDialog(hWnd, selindex);
 				break;
 			}
 			break;
