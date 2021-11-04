@@ -54,6 +54,8 @@ RadioHandlerClass RadioHandler;
 
 HWND h_dialog = NULL;
 
+DevContext  devicelist; // list of FX3 devices
+
 SplashWindow  splashW;
 
 #define IDD_SDDC_SETTINGS	100
@@ -212,12 +214,31 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		}
 
 		auto Fx3 = CreateUsbHandler();
+		unsigned char idx = 0;
+		int selected = 0;
+		while (Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size) && (idx < MAXNDEV))
+		{
+			// https://en.wikipedia.org/wiki/West_Bridge
+			int retry = 2;
+			while ((strncmp("WestBridge", devicelist.dev[idx],sizeof("WestBridge")) != NULL) && retry-- > 0)
+				Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size); // if it enumerates as BootLoader retry
+			idx++;
+		}
+		devicelist.numdev = idx;
+		if (idx > 1){	
+			selected =  DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SELECTDEVICE), NULL, DlgSelectDevice, (LPARAM) &devicelist);
+		}
+		DbgPrintf("selected %d \n",selected);
+		idx = selected;
+		Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size);
+
 		gbInitHW = Fx3->Open(res_data, res_size) &&
-				   RadioHandler.Init(Fx3, Callback ); // Check if it there hardware
+				RadioHandler.Init(Fx3, Callback); // Check if it there hardware
+	
 #ifdef _DEBUG
 			RadioHandler.EnableDebug( printf_USB_cb , GetConsoleInput);
 #endif 
-
+  
 		if (!gbInitHW)
 		{
 			MessageBox(NULL, "Is SDR powered on and connected ?\r\n\r\nPlease start HDSDR again",

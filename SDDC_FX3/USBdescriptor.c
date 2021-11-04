@@ -10,6 +10,7 @@
  */
 
 #include "Application.h"
+#include "cyu3utils.h"
 
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
 
@@ -28,7 +29,7 @@ const uint8_t CyFxUSB30DeviceDscr[] __attribute__ ((aligned (32))) =
     0x00,0x00,                      /* Device release number */
     0x01,                           /* Manufacture string index */
     0x02,                           /* Product string index */
-    0x00,                           /* Serial number string index */
+    0x03,                           /* Serial number string index */
     0x01                            /* Number of configurations */
 };
 
@@ -207,27 +208,64 @@ const uint8_t CyFxUSBStringLangIDDscr[] __attribute__ ((aligned (32))) =
 /* Standard manufacturer string descriptor */
 const uint8_t CyFxUSBManufactureDscr[] __attribute__ ((aligned (32))) =
 {
-    58,                             /* Descriptor size */
+    32,                             /* Descriptor size */
     CY_U3P_USB_STRING_DESCR,        /* Device descriptor type */
     //http://sdr-prototypes.blogspot.com/
-    's',0,'d',0,'r',0,'-',0,'p',0,'r',0,'o',0,'t',0,'o',0,'t',0,'y',0,'p',0,'e',0,'s',0,'.',0,
-    'b',0,'l',0,'o',0,'g',0,'s',0,'p',0,'o',0,'t',0,'.',0,'c',0,'o',0,'m',0,
+    's',0,'d',0,'r',0,' ',0,'p',0,'r',0,'o',0,'t',0,
+    'o',0,'t',0,'y',0,'p',0,'e',0,'s',0
 };
 
 /* Standard product string descriptor */
 const uint8_t CyFxUSBProductDscr[] __attribute__ ((aligned (32))) =
 {
-    18,                           	/* Descriptor size */
+    8,                              /* Descriptor size */
     CY_U3P_USB_STRING_DESCR,        /* Device descriptor type */
-    'H',0,'F',0,'1',0,'0',0,'3',0,'r',0,'c',0,'1',0,
+    'S',0,'D',0,'R',0
 };
+
+const uint8_t CyFxUSBProductDscrHF103[] __attribute__ ((aligned (32))) =
+{
+    12,                             /* Descriptor size */
+    CY_U3P_USB_STRING_DESCR,        /* Device descriptor type */
+    'H',0,'F',0,'1',0,'0',0,'3',0
+};
+
+const uint8_t CyFxUSBProductDscrBBRF103[] __attribute__ ((aligned (32))) =
+{
+    16,                             /* Descriptor size */
+    CY_U3P_USB_STRING_DESCR,        /* Device descriptor type */
+    'B',0,'B',0,'R',0,'F',0,'1',0,'0',0,'3',0
+};
+
+const uint8_t CyFxUSBProductDscrRX888[] __attribute__ ((aligned (32))) =
+{
+    12,                             /* Descriptor size */
+    CY_U3P_USB_STRING_DESCR,        /* Device descriptor type */
+    'R',0,'X',0,'8',0,'8',0,'8',0,
+};
+
+const uint8_t CyFxUSBProductDscrRX888mk2[] __attribute__ ((aligned (32))) =
+{
+    18,                             /* Descriptor size */
+    CY_U3P_USB_STRING_DESCR,        /* Device descriptor type */
+    'R',0,'X',0,'8',0,'8',0,'8',0,'m',0,'k',0,'2',0
+};
+
 
 /* Microsoft OS Descriptor. */
 const uint8_t CyFxUsbOSDscr[] __attribute__ ((aligned (32))) =
 {
-    14,
+    16,
     CY_U3P_USB_STRING_DESCR,
     'O',0,'S',0,' ',0,'D',0,'e',0,'s',0,'c',0
+};
+
+/* Serial number string descriptor */
+uint8_t CyFxUSBSerialNumberDscr[] __attribute__ ((aligned (32))) =
+{
+    34,                           	/* Descriptor size */
+    CY_U3P_USB_STRING_DESCR,        /* Device descriptor type */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
 /* Place this buffer as the last buffer so that no other variable / code shares
@@ -236,29 +274,74 @@ const uint8_t CyFxUsbOSDscr[] __attribute__ ((aligned (32))) =
 const uint8_t CyFxUsbDscrAlignBuffer[32] __attribute__ ((aligned (32)));
 
 
-CyU3PReturnStatus_t SetUSBdescriptors(void)
+CyU3PReturnStatus_t SetUSBdescriptors(uint8_t hwconfig)
 {
 	CyU3PReturnStatus_t OverallStatus, Status;
 	OverallStatus = Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_SS_DEVICE_DESCR,(int) NULL, (uint8_t *)CyFxUSB30DeviceDscr);
-    CheckStatus("SET_SS_DEVICE_DESCR", Status);
-    OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_HS_DEVICE_DESCR,(int) NULL, (uint8_t *)CyFxUSB20DeviceDscr);
-    CheckStatus("SET_HS_DEVICE_DESCR", Status);
-    OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_SS_BOS_DESCR,(int) NULL, (uint8_t *)CyFxUSBBOSDscr);
-    CheckStatus("SET_SS_BOS_DESCR", Status);
-    OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_DEVQUAL_DESCR,(int) NULL, (uint8_t *)CyFxUSBDeviceQualDscr);
-    CheckStatus("SET_DEVQUAL_DESCR", Status);
-    OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_SS_CONFIG_DESCR,(int) NULL, (uint8_t *)CyFxUSBSSConfigDscr);
-    CheckStatus("SET_SS_CONFIG_DESCR", Status);
-    OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_HS_CONFIG_DESCR,(int) NULL, (uint8_t *)CyFxUSBHSConfigDscr);
-    CheckStatus("SET_HS_CONFIG_DESCR", Status);
-    OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_FS_CONFIG_DESCR,(int) NULL, (uint8_t *)CyFxUSBFSConfigDscr);
-    CheckStatus("SET_FS_CONFIG_DESCR", Status);
-    OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 0, (uint8_t *)CyFxUSBStringLangIDDscr);
-    CheckStatus("SET_STRING0_DESCR", Status);
-    OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 1, (uint8_t *)CyFxUSBManufactureDscr);
-    CheckStatus("SET_STRING1_DESCR", Status);
-    OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 2, (uint8_t *)CyFxUSBProductDscr);
-    CheckStatus("SET_STRING2_DESCR", Status);
-
-    return OverallStatus;
+	CheckStatus("SET_SS_DEVICE_DESCR", Status);
+	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_HS_DEVICE_DESCR,(int) NULL, (uint8_t *)CyFxUSB20DeviceDscr);
+	CheckStatus("SET_HS_DEVICE_DESCR", Status);
+	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_SS_BOS_DESCR,(int) NULL, (uint8_t *)CyFxUSBBOSDscr);
+	CheckStatus("SET_SS_BOS_DESCR", Status);
+	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_DEVQUAL_DESCR,(int) NULL, (uint8_t *)CyFxUSBDeviceQualDscr);
+	CheckStatus("SET_DEVQUAL_DESCR", Status);
+	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_SS_CONFIG_DESCR,(int) NULL, (uint8_t *)CyFxUSBSSConfigDscr);
+	CheckStatus("SET_SS_CONFIG_DESCR", Status);
+	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_HS_CONFIG_DESCR,(int) NULL, (uint8_t *)CyFxUSBHSConfigDscr);
+	CheckStatus("SET_HS_CONFIG_DESCR", Status);
+	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_FS_CONFIG_DESCR,(int) NULL, (uint8_t *)CyFxUSBFSConfigDscr);
+	CheckStatus("SET_FS_CONFIG_DESCR", Status);
+	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 0, (uint8_t *)CyFxUSBStringLangIDDscr);
+	CheckStatus("SET_STRING0_DESCR", Status);
+	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 1, (uint8_t *)CyFxUSBManufactureDscr);
+	CheckStatus("SET_STRING1_DESCR", Status);
+	switch(hwconfig)
+	{
+		case HF103:
+			OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 2, (uint8_t *)CyFxUSBProductDscrHF103);
+			break;
+		case BBRF103:
+			OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 2, (uint8_t *)CyFxUSBProductDscrBBRF103);
+			break;
+		case RX888:
+			OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 2, (uint8_t *)CyFxUSBProductDscrRX888);
+			break;
+		case RX888r2:
+			OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 2, (uint8_t *)CyFxUSBProductDscrRX888mk2);
+			break;
+		case RX888r3:
+		case RX999:
+		case RXLUCY:		
+	        default :
+	        	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 2, (uint8_t *)CyFxUSBProductDscr);
+	        	break;
+	}
+	CheckStatus("SET_STRING2_DESCR", Status);
+	
+	// serial number
+	uint32_t FX3_ID[2] = { 0 };
+	OverallStatus |= Status = CyU3PReadDeviceRegisters((uvint32_t *)0xE0055010, 2, FX3_ID);
+	CheckStatus("READ_FX3_ID", Status);
+	const uint8_t hexdigits[] = { '0', '1', '2', '3', '4', '5', '6', '7',
+		                  '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+	CyFxUSBSerialNumberDscr[32] = hexdigits[FX3_ID[0] & 0xf]; FX3_ID[0] >>= 4;
+	CyFxUSBSerialNumberDscr[30] = hexdigits[FX3_ID[0] & 0xf]; FX3_ID[0] >>= 4;
+	CyFxUSBSerialNumberDscr[28] = hexdigits[FX3_ID[0] & 0xf]; FX3_ID[0] >>= 4;
+	CyFxUSBSerialNumberDscr[26] = hexdigits[FX3_ID[0] & 0xf]; FX3_ID[0] >>= 4;
+	CyFxUSBSerialNumberDscr[24] = hexdigits[FX3_ID[0] & 0xf]; FX3_ID[0] >>= 4;
+	CyFxUSBSerialNumberDscr[22] = hexdigits[FX3_ID[0] & 0xf]; FX3_ID[0] >>= 4;
+	CyFxUSBSerialNumberDscr[20] = hexdigits[FX3_ID[0] & 0xf]; FX3_ID[0] >>= 4;
+	CyFxUSBSerialNumberDscr[18] = hexdigits[FX3_ID[0] & 0xf]; FX3_ID[0] >>= 4;
+	CyFxUSBSerialNumberDscr[16] = hexdigits[FX3_ID[1] & 0xf]; FX3_ID[1] >>= 4;
+	CyFxUSBSerialNumberDscr[14] = hexdigits[FX3_ID[1] & 0xf]; FX3_ID[1] >>= 4;
+	CyFxUSBSerialNumberDscr[12] = hexdigits[FX3_ID[1] & 0xf]; FX3_ID[1] >>= 4;
+	CyFxUSBSerialNumberDscr[10] = hexdigits[FX3_ID[1] & 0xf]; FX3_ID[1] >>= 4;
+	CyFxUSBSerialNumberDscr[ 8] = hexdigits[FX3_ID[1] & 0xf]; FX3_ID[1] >>= 4;
+	CyFxUSBSerialNumberDscr[ 6] = hexdigits[FX3_ID[1] & 0xf]; FX3_ID[1] >>= 4;
+	CyFxUSBSerialNumberDscr[ 4] = hexdigits[FX3_ID[1] & 0xf]; FX3_ID[1] >>= 4;
+	CyFxUSBSerialNumberDscr[ 2] = hexdigits[FX3_ID[1] & 0xf]; FX3_ID[1] >>= 4;
+	OverallStatus |= Status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 3, (uint8_t *)CyFxUSBSerialNumberDscr);
+	CheckStatus("SET_STRING3_DESCR", Status);
+	
+	return OverallStatus;
 }

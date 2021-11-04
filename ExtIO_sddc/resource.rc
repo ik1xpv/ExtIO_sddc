@@ -166,6 +166,21 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Dialog SELECT DEVICE
+//
+
+IDD_SELECTDEVICE DIALOG DISCARDABLE  0, 0, 200, 68
+STYLE DS_SETFONT | WS_CAPTION | WS_SYSMENU | DS_CENTER
+CAPTION "ExtIO_sddc.dll   Select FX3 Device"
+//FONT 8, "Ms Shell Dlg"
+FONT 10, "Lucida Console"
+BEGIN
+DEFPUSHBUTTON   "OK", IDOK, 80, 48, 40, 14, WS_DISABLED | WS_TABSTOP
+LISTBOX         IDC_LISTDEV, 5, 5, 190, 48, WS_TABSTOP
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // RT_MANIFEST
 //
 

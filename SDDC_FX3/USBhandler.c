@@ -23,7 +23,7 @@
 extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
 extern void StartApplication(void);
 extern void StopApplication(void);
-extern CyU3PReturnStatus_t SetUSBdescriptors(void);
+extern CyU3PReturnStatus_t SetUSBdescriptors(uint8_t hwconfig);
 extern void WriteAttenuator(uint8_t value);
 
 void si5351aSetFrequencyA(UINT32 freq);
@@ -604,7 +604,7 @@ CyBool_t  LPMRequest_Callback ( CyU3PUsbLinkPowerMode link_mode)
 
 
 // Spin up USB, let the USB driver handle enumeration
-CyU3PReturnStatus_t InitializeUSB(void)
+CyU3PReturnStatus_t InitializeUSB(uint8_t hwconfig)
 {
 	CyU3PReturnStatus_t Status;
 	CyBool_t NeedToRenumerate = CyTrue;
@@ -627,7 +627,7 @@ CyU3PReturnStatus_t InitializeUSB(void)
     CyU3PUsbRegisterLPMRequestCallback( LPMRequest_Callback );
 
     // Driver needs all of the descriptors so it can supply them to the host when requested
-    Status = SetUSBdescriptors();
+    Status = SetUSBdescriptors(hwconfig);
     CheckStatus("Set USB Descriptors", Status);
     // Connect the USB Pins with SuperSpeed operation enabled
     if (NeedToRenumerate)

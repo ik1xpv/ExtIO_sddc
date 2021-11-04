@@ -22,7 +22,7 @@ extern void CheckStatus(char* StringPtr, CyU3PReturnStatus_t Status);
 extern void CheckStatusSilent(char* StringPtr, CyU3PReturnStatus_t Status);
 extern CyU3PReturnStatus_t InitializeDebugConsole(void);
 extern void IndicateError(uint16_t ErrorCode);
-extern CyU3PReturnStatus_t InitializeUSB(void);
+extern CyU3PReturnStatus_t InitializeUSB(uint8_t hwconfig);
 extern void ParseCommand(void);
 
 // Declare external data
@@ -259,7 +259,7 @@ void ApplicationThread ( uint32_t input)
 	}
 
     // Spin up the USB Connection
-	Status = InitializeUSB();
+	Status = InitializeUSB(HWconfig);
 	CheckStatus("Initialize USB", Status);
 	if (Status == CY_U3P_SUCCESS)
 	    {
