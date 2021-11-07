@@ -66,6 +66,16 @@ make
 
 ## Change Logs
 
+### tag  v1.3.0RC1 Version "V1.2 RC1" date 4/11/2021
+- Use Ringbuffer for input and output #157
+- Delegate the VHF and HF decision to radio class #194
+- Debug trace via USB #195
+- Arm neon port #203
+- A dialogBox with SDR name and FX3 serial number allows selection of a device from many. #210
+
+ So far the known issues:
+- Al power up sometime FX3 is not enumerated as Cypress USB FX3 BootLoader Device. When it happens also Cypress USB Control Center app is not able to detect it and a hardware disconnect and reconnect maybe required to enumerate the unit.
+
 ### tag  v1.2.0 Version "V1.2.0" date 18/3/2021
 - Fix the crosstalk HF <-> VHF/UHF issue #177
 - When HDSDR's version >= HDSDR v2.81 beta3 (March 8, 2021) following an ADC's sampling rate change the new IF bandwidths are computed dynamically and restart of HDSDR in not required.
