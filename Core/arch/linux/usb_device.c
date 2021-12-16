@@ -502,7 +502,7 @@ static int transfer_image(const uint8_t *image,
         return -1;
       }
       if (!(ret == wLength)) {
-        fprintf(stderr, "ERROR - libusb_control_transfer() returned less bytes than expected - actual=%hu expected=%hu\n", ret, wLength);
+        fprintf(stderr, "ERROR - libusb_control_transfer() returned less bytes than expected - actual=%d expected=%hu\n", ret, wLength);
         return -1;
       }
       data += wLength;

@@ -586,7 +586,7 @@ int fx3_load_ram(libusb_device_handle *device, const char *image)
 	int ret = 0;
 	int offset = 0;
 
-	hBuf = image;
+	hBuf = (const unsigned char*)image;
 	offset += 4;
 	// check "CY" signature byte and format
 	if ((hBuf[0] != 'C') || (hBuf[1] != 'Y')) {
