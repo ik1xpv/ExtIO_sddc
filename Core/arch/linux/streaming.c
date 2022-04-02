@@ -138,6 +138,7 @@ streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
 
   /* allocate frames for zerocopy USB bulk transfers */
   uint8_t **frames = (uint8_t **) malloc(num_frames * sizeof(uint8_t *));
+#if defined (__linux__) && LIBUSB_API_VERSION >= 0x01000105
   for (uint32_t i = 0; i < num_frames; ++i) {
     frames[i] = libusb_dev_mem_alloc(usb_device->dev_handle, frame_size);
     if (frames[i] == 0) {
@@ -148,7 +149,13 @@ streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
       return ret_val;
     }
   }
-
+#else
+  for (uint32_t i = 0; i < num_frames; ++i) {
+    frames[i] = malloc(num_frames);
+    if (!frames[i])
+      log_error("Memory allocation failed", __func__, __FILE__, __LINE__);
+  }
+#endif
   /* we are good here - create and initialize the streaming */
   streaming_t *this = (streaming_t *) malloc(sizeof(streaming_t));
   this->status = STREAMING_STATUS_READY;
@@ -182,21 +189,32 @@ void streaming_close(streaming_t *this)
 {
   if (this->transfers) {
     for (uint32_t i = 0; i < this->num_frames; ++i) {
-      libusb_free_transfer(this->transfers[i]);
+      if (this->transfers[i]) {
+        libusb_free_transfer(this->transfers[i]);
+      }
     }
     free(this->transfers);
+    this->transfers = NULL;
   }
-  if (this->frames != 0) {
+
+  if (this->frames) {
     for (uint32_t i = 0; i < this->num_frames; ++i) {
-      libusb_dev_mem_free(this->usb_device->dev_handle, this->frames[i],
+      if (this->frames[i]) {
+#if defined (__linux__) && LIBUSB_API_VERSION >= 0x01000105
+        libusb_dev_mem_free(this->usb_device->dev_handle, this->frames[i],
                           this->frame_size);
+#else
+        free(this->frames[i]);
+#endif
+      }
     }
+
     free(this->frames);
-  }
-  free(this);
+    this->frames = NULL;  
+    free(this);
+  } 
   return;
 }
-
 
 int streaming_set_sample_rate(streaming_t *this, uint32_t sample_rate)
 {
