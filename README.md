@@ -54,6 +54,16 @@ cd SDDC_FX3
 make
 ```
 
+## Build Instruction for Linux
+
+1. Install development packages:
+```bash
+> sudo apt install libfftw3-dev
+```
+
+1. Follow Windows Build Instruction to run cmake to build Linux libaray
+
+
 ## Directory structure:
     \Core\           > Core logic of the component
         r2iq.cpp			> The logic to demodulize IQ from ADC real samples
