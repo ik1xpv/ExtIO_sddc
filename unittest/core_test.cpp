@@ -84,7 +84,7 @@ public:
 static uint32_t count;
 static uint64_t totalsize;
 
-static void Callback(const float* data, uint32_t len)
+static void Callback(void* context, const float* data, uint32_t len)
 {
     count++;
     totalsize += len;

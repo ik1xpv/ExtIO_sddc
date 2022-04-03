@@ -159,7 +159,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
-static void Callback(const float* data, uint32_t len)
+static void Callback(void* context, const float* data, uint32_t len)
 {
 	if (data)
 	{

@@ -8,8 +8,6 @@ endif (MSVC)
 
 file(GLOB SRC "*.cpp" "radio/*.cpp" "pffft/*.cpp" ${ARCH_SRC})
 
-include_directories("." "CyAPI/" "pffft/")
-
 if (MSVC)
     # Assume Windows/x86 target ;)
     set_source_files_properties(fft_mt_r2iq_avx.cpp PROPERTIES COMPILE_FLAGS /arch:AVX)
