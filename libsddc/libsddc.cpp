@@ -17,7 +17,7 @@ struct sddc
 
 sddc_t *current_running;
 
-static void Callback(const float* data, uint32_t len)
+static void Callback(void* context, const float* data, uint32_t len)
 {
 }
 
