@@ -40,7 +40,7 @@ fft_mt_r2iq::fft_mt_r2iq() :
 	r2iqControlClass(),
 	filterHw(nullptr)
 {
-	mtunebin = halfFft / 4;
+	memset(mtunebin, 0, sizeof(mtunebin));
 	mfftdim[0] = halfFft;
 	for (int i = 1; i < NDECIDX; i++)
 	{
@@ -98,13 +98,18 @@ fft_mt_r2iq::~fft_mt_r2iq()
 }
 
 
-float fft_mt_r2iq::setFreqOffset(float offset)
+float fft_mt_r2iq::setFreqOffset(float offset, int channel)
 {
 	// align to 1/4 of halfft
-	this->mtunebin = int(offset * halfFft / 4) * 4;  // mtunebin step 4 bin  ?
-	float delta = ((float)this->mtunebin  / halfFft) - offset;
+	if (channel > channel_num - 1)
+	{
+		return -1.0; // error
+	}
+
+	this->mtunebin[channel] = int(offset * halfFft / 4) * 4;  // mtunebin step 4 bin  ?
+	float delta = ((float)this->mtunebin[channel]  / halfFft) - offset;
 	float ret = delta * getRatio(); // ret increases with higher decimation
-	DbgPrintf("offset %f mtunebin %d delta %f (%f)\n", offset, this->mtunebin, delta, ret);
+	DbgPrintf("Channel: %d offset %f mtunebin %d delta %f (%f)\n", channel, offset, this->mtunebin[channel], delta, ret);
 	return ret;
 }
 
@@ -124,7 +129,10 @@ void fft_mt_r2iq::TurnOff(void) {
 	this->r2iqOn = false;
 
 	inputbuffer->Stop();
-	outputbuffer->Stop();
+	for(int i = 0; i< channel_num; i++)
+	{
+		outputbuffers[i]->Stop();
+	}
 	for (unsigned t = 0; t < processor_count; t++) {
 		r2iq_thread[t].join();
 	}
@@ -132,10 +140,23 @@ void fft_mt_r2iq::TurnOff(void) {
 
 bool fft_mt_r2iq::IsOn(void) { return(this->r2iqOn); }
 
-void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>* obuffers)
+void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>* obuffer)
+{
+	std::vector<ringbuffer<float>*> obuffers;
+
+	obuffers.push_back(obuffer);
+
+	Init(gain, input, obuffers);
+}
+
+void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, std::vector<ringbuffer<float>*> obuffers)
 {
 	this->inputbuffer = input;    // set to the global exported by main_loop
-	this->outputbuffer = obuffers;  // set to the global exported by main_loop
+	for(int i = 0; i < MAX_CHANNELS; i++)
+	{
+		this->outputbuffers[i] = obuffers[i];  // set to the global exported by main_loop
+	}
+	this->channel_num = obuffers.size();
 
 	this->GainScale = gain;
 
@@ -153,13 +174,12 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 
 		DbgPrintf((char *) "r2iqCntrl initialization\n");
 
+		// DbgPrintf((char *) "RandTable generated\n");
 
-		//        DbgPrintf((char *) "RandTable generated\n");
-
-		   // filters
-		fftwf_complex *pfilterht;       // time filter ht
-		pfilterht = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // halfFft
-		filterHw = (fftwf_complex**)fftwf_malloc(sizeof(fftwf_complex*)*NDECIDX);
+		// filters
+		fftwf_complex *pfilterht;													// time filter ht
+		pfilterht = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * halfFft); // halfFft
+		filterHw = (fftwf_complex **)fftwf_malloc(sizeof(fftwf_complex *) * NDECIDX);
 		for (int d = 0; d < NDECIDX; d++)
 		{
 			filterHw[d] = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // halfFft

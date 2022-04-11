@@ -7,14 +7,11 @@
 	const auto filter2 = &filter[halfFft - mfft / 2];
 
 	plan_f2t_c2c = &plans_f2t_c2c[decimate];
-	fftwf_complex* pout = nullptr;
 	int decimate_count = 0;
 
 	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
 		const int16_t *endloop;    // pointer to end data to be copied to beginning
-
-		const int _mtunebin = this->mtunebin;  // Update LO tune is possible during run
 
 		{
 			std::unique_lock<std::mutex> lk(mutexR2iqControl);
@@ -73,97 +70,111 @@
 		inputbuffer->ReadDone();
 		// decimate in frequency plus tuning
 
+		fftwf_complex* pout[MAX_CHANNELS];
 		if (decimate_count == 0)
-			pout = (fftwf_complex*)outputbuffer->getWritePtr();
+		{
+			for (int i = 0; i < channel_num; i++)
+			{
+				pout[i] = (fftwf_complex*)((outputbuffers[i])->getWritePtr());
+			}
+		}
 
-		decimate_count = (decimate_count + 1) & ((1 << decimate) - 1);
-
-		// Calculate the parameters for the first half
-		const auto count = std::min(mfft/2, halfFft - _mtunebin);
-		const auto source = &th->ADCinFreq[_mtunebin];
-
-		// Calculate the parameters for the second half
-		const auto start = std::max(0, mfft / 2 - _mtunebin);
-		const auto source2 = &th->ADCinFreq[_mtunebin - mfft / 2];
-		const auto dest = &th->inFreqTmp[mfft / 2];
 		for (int k = 0; k < fftPerBuf; k++)
 		{
 			// core of fast convolution including filter and decimation
 			//   main part is 'overlap-scrap' (IMHO better name for 'overlap-save'), see
 			//   https://en.wikipedia.org/wiki/Overlap%E2%80%93save_method
+
+			// FFT first stage: time to frequency, real to complex
+			// 'full' transformation size: 2 * halfFft
+			fftwf_execute_dft_r2c(plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
+			// result now in th->ADCinFreq[]
+
+			for(int channel = 0; channel < this->channel_num; channel++)
 			{
-				// FFT first stage: time to frequency, real to complex
-				// 'full' transformation size: 2 * halfFft
-				fftwf_execute_dft_r2c(plan_t2f_r2c, th->ADCinTime + (3 * halfFft / 2) * k, th->ADCinFreq);
-				// result now in th->ADCinFreq[]
+				const int tunebin = this->mtunebin[channel];  // Update LO tune is possible during run
+				decimate_count = (decimate_count + 1) & ((1 << decimate) - 1);
+
+				// Calculate the parameters for the first half
+				const auto count = std::min(mfft/2, halfFft - tunebin);
+				const auto source = &th->ADCinFreq[tunebin];
+
+				// Calculate the parameters for the second half
+				const auto start = std::max(0, mfft / 2 - tunebin);
+				const auto source2 = &th->ADCinFreq[tunebin - mfft / 2];
+				const auto dest = &th->inFreqTmp[mfft / 2];
 
 				// circular shift (mixing in full bins) and low/bandpass filtering (complex multiplication)
-				{
-					// circular shift tune fs/2 first half array into th->inFreqTmp[]
-					shift_freq(th->inFreqTmp, source, filter, 0, count);
-					if (mfft / 2 != count)
-						memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
+				// circular shift tune fs/2 first half array into th->inFreqTmp[]
+				shift_freq(th->inFreqTmp, source, filter, 0, count);
+				if (mfft / 2 != count)
+					memset(th->inFreqTmp[count], 0, sizeof(float) * 2 * (mfft / 2 - count));
 
-					// circular shift tune fs/2 second half array
-					shift_freq(dest, source2, filter2, start, mfft/2);
-					if (start != 0)
-						memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
-				}
+				// circular shift tune fs/2 second half array
+				shift_freq(dest, source2, filter2, start, mfft/2);
+				if (start != 0)
+					memset(th->inFreqTmp[mfft / 2], 0, sizeof(float) * 2 * start);
 				// result now in th->inFreqTmp[]
 
 				// 'shorter' inverse FFT transform (decimation); frequency (back) to COMPLEX time domain
 				// transform size: mfft = mfftdim[k] = halfFft / 2^k with k = mdecimation
 				fftwf_execute_dft(*plan_f2t_c2c, th->inFreqTmp, th->inFreqTmp);     //  c2c decimation
 				// result now in th->inFreqTmp[]
-			}
 
-			// postprocessing
-			// @todo: is it possible to ..
-			//  1)
-			//    let inverse FFT produce/save it's result directly
-			//    in "this->obuffers[modx] + offset" (pout)
-			//    ( obuffers[] would need to have additional space ..;
-			//      need to move 'scrap' of 'ovelap-scrap'? )
-			//    at least FFTW would allow so,
-			//      see http://www.fftw.org/fftw3_doc/New_002darray-Execute-Functions.html
-			//    attention: multithreading!
-			//  2)
-			//    could mirroring (lower sideband) get calculated together
-			//    with fine mixer - modifying the mixer frequency? (fs - fc)/fs
-			//    (this would reduce one memory pass)
-			if (lsb) // lower sideband
-			{
-				// mirror just by negating the imaginary Q of complex I/Q
-				if (k == 0)
+				// postprocessing
+				// @todo: is it possible to ..
+				//  1)
+				//    let inverse FFT produce/save it's result directly
+				//    in "this->obuffers[modx] + offset" (pout)
+				//    ( obuffers[] would need to have additional space ..;
+				//      need to move 'scrap' of 'ovelap-scrap'? )
+				//    at least FFTW would allow so,
+				//      see http://www.fftw.org/fftw3_doc/New_002darray-Execute-Functions.html
+				//    attention: multithreading!
+				//  2)
+				//    could mirroring (lower sideband) get calculated together
+				//    with fine mixer - modifying the mixer frequency? (fs - fc)/fs
+				//    (this would reduce one memory pass)
+				if (lsb) // lower sideband
 				{
-					copy<true>(pout, &th->inFreqTmp[mfft / 4], mfft/2);
+					// mirror just by negating the imaginary Q of complex I/Q
+					if (k == 0)
+					{
+						copy<true>(pout[channel], &th->inFreqTmp[mfft / 4], mfft/2);
+					}
+					else
+					{
+						copy<true>(pout[channel] + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->inFreqTmp[0], (3 * mfft / 4));
+					}
 				}
-				else
+				else // upper sideband
 				{
-					copy<true>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->inFreqTmp[0], (3 * mfft / 4));
+					if (k == 0)
+					{
+						copy<false>(pout[channel], &th->inFreqTmp[mfft / 4], mfft/2);
+					}
+					else
+					{
+						copy<false>(pout[channel] + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->inFreqTmp[0], (3 * mfft / 4));
+					}
 				}
+				// result now in this->obuffers[]
 			}
-			else // upper sideband
-			{
-				if (k == 0)
-				{
-					copy<false>(pout, &th->inFreqTmp[mfft / 4], mfft/2);
-				}
-				else
-				{
-					copy<false>(pout + mfft / 2 + (3 * mfft / 4) * (k - 1), &th->inFreqTmp[0], (3 * mfft / 4));
-				}
-			}
-			// result now in this->obuffers[]
 		}
 
 		if (decimate_count == 0) {
-			outputbuffer->WriteDone();
-			pout = nullptr;
+			for(int i = 0; i < channel_num; i++)
+			{
+				outputbuffers[i]->WriteDone();
+			}
+			memset(pout, 0, sizeof(pout));
 		}
 		else
 		{
-			pout += mfft / 2 + (3 * mfft / 4) * (fftPerBuf - 1);
+			for(int i = 0; i < channel_num; i++)
+			{
+				pout[i] += mfft / 2 + (3 * mfft / 4) * (fftPerBuf - 1);
+			}
 		}
 	} // while(run)
 //    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
