@@ -93,6 +93,9 @@
 			for(int channel = 0; channel < this->channel_num; channel++)
 			{
 				const int tunebin = this->mtunebin[channel];  // Update LO tune is possible during run
+				if (tunebin == 0)
+					continue;
+
 				decimate_count = (decimate_count + 1) & ((1 << decimate) - 1);
 
 				// Calculate the parameters for the first half

@@ -151,8 +151,11 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 
 void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, std::vector<ringbuffer<float>*> obuffers)
 {
+	if (obuffers.size() >= MAX_CHANNELS)
+		return;
+
 	this->inputbuffer = input;    // set to the global exported by main_loop
-	for(int i = 0; i < MAX_CHANNELS; i++)
+	for(size_t i = 0; i < obuffers.size(); i++)
 	{
 		this->outputbuffers[i] = obuffers[i];  // set to the global exported by main_loop
 	}
