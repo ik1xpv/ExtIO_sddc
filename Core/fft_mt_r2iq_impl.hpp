@@ -75,6 +75,10 @@
 		{
 			for (int i = 0; i < channel_num; i++)
 			{
+				const int tunebin = this->mtunebin[i];  // Update LO tune is possible during run
+				if (tunebin == 0)
+					continue;
+
 				pout[i] = (fftwf_complex*)((outputbuffers[i])->getWritePtr());
 			}
 		}
