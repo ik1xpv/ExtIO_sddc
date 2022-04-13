@@ -45,7 +45,6 @@ int receivers = 1;
 int decimate;
 
 int sock_ep2;
-struct sockaddr_in addr_ep6;
 
 int enable_thread = 0;
 int active_thread = 0;
@@ -163,9 +162,6 @@ static void CaculateStats();
 
 int main(int argc, char *argv[])
 {
-    int yes = 1;
-    uint8_t chan = 0;
-
     // Declare variables
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -227,7 +223,7 @@ int main(int argc, char *argv[])
         perror("Unsupported Hardware, please use RX888 serial.");
         return -3;
     }
-
+    DbgPrintf("Found device: %s\n", name);
     Radio->Initialize(ADC_RATE);
 
     for (int i = 0; i < MAX_CHANNELS; i++)
@@ -412,17 +408,18 @@ int server_proc()
             return -1;
         }
 
-        memcpy(&code, buffer, 4);
+        code = htonl(*(uint32_t*)buffer);
+        //DbgPrintf("Code: %08x\n", code);
         switch (code)
         {
-        case 0x0201feef:
+        case 0xEFFE0102:
             // DbgPrintf("Configuring Receiver\n");
             process_ep2(buffer + 11);
             process_ep2(buffer + 523);
             break;
-        case 0x0002feef:
-            DbgPrintf("Response Discovery\n");
-            reply[2] = 2 + active_thread;
+        case 0xEFFE0200:
+            DbgPrintf("Get Discovery from: %s:%d\n", inet_ntop(AF_INET, &addr_from.sin_addr, buffer, 100), addr_from.sin_port);
+            //reply[2] = 2 + active_thread;
             memset(buffer, 0, 60);
             memcpy(buffer, reply, 20);
             if (sendto(sock_ep2, buffer, 60, 0, (struct sockaddr *)&addr_from, size_from) == -1)
@@ -430,7 +427,7 @@ int server_proc()
                 DbgPrintf("Response disovery packet fail to send\n");
             }
             break;
-        case 0x0004feef:
+        case 0xEFFE0400:
             DbgPrintf("Stop Receiver\n");
             if (!enable_thread)
                 continue;
@@ -444,26 +441,35 @@ int server_proc()
             if (thread.joinable())
                 thread.join();
             break;
-        case 0x0104feef:
-        case 0x0204feef:
-        case 0x0304feef:
+        case 0xEFFE0401:
+            // restart
+        case 0xEFFE0402:
+        case 0xEFFE0403:
+        {
             DbgPrintf("Start Receiver\n");
             if (enable_thread)
                 continue;
-            memset(&addr_ep6, 0, sizeof(addr_ep6));
-            addr_ep6.sin_family = AF_INET;
-            addr_ep6.sin_addr.s_addr = addr_from.sin_addr.s_addr;
-            addr_ep6.sin_port = addr_from.sin_port;
+
+            DbgPrintf("Start Recever: %s:%d\n", inet_ntop(AF_INET, &addr_from.sin_addr, buffer, 100), addr_from.sin_port);
+
+            struct sockaddr_in *addr_ep6 = new sockaddr_in();
+            memcpy(addr_ep6, &addr_from, sizeof(addr_from));
+
+            DbgPrintf("Target: %s:%d\n", inet_ntop(AF_INET, &addr_ep6->sin_addr, buffer, 100), addr_ep6->sin_port);
+
+            Radio->FX3producerOn(); // FX3 start the producer
+
             enable_thread = 1;
             thread = std::thread(
-                []()
-                { handler_ep6(NULL); });
+                [addr_ep6]()
+                { handler_ep6(addr_ep6); });
             break;
+        }
         case 0x00000000:
             DbgPrintf("Protocol 2 discovery packet received\n");
             break;
         default:
-            DbgPrintf("Unknow code: %x\n", code);
+            DbgPrintf("Unknow code: %08x\n", code);
         }
     }
 
@@ -575,6 +581,12 @@ void process_ep2(char *frame)
         break;
     }
 
+    case 9:
+    {
+        // set PA, filter, etc
+        break;
+    }
+
     /*
     C0
     0 0 0 1 0 1 0 x
@@ -614,6 +626,29 @@ void process_ep2(char *frame)
         // printf("CW int=%d, dac_level=%d, cw_delay=%d\n", cw_int_data, dac_level_data, cw_delay);
         break;
     }
+    case 16:
+    {
+     //output_buffer[C0] = 0x20;
+      //output_buffer[C1] = (cw_keyer_hang_time >> 2) & 0xFF;
+      //output_buffer[C2] = cw_keyer_hang_time & 0x03;
+      //output_buffer[C3] = (cw_keyer_sidetone_frequency >> 4) & 0xFF;
+      //output_buffer[C4] = cw_keyer_sidetone_frequency & 0x0F;
+        break;
+    }
+    case 17:
+    {
+        //output_buffer[C0] = 0x22;
+        //output_buffer[C1] = (eer_pwm_min >> 2) & 0xFF;
+        //output_buffer[C2] = eer_pwm_min & 0x03;
+        //output_buffer[C3] = (eer_pwm_max >> 3) & 0xFF;
+        //output_buffer[C4] = eer_pwm_max & 0x03;
+        break;
+
+    }
+    case 18:
+    {
+        break;
+    }
     default:
         //DbgPrintf("Unknown Frame id=%d\n", frame[0] >> 1);
         break;
@@ -651,25 +686,22 @@ static void GetMoreData()
 
 void *handler_ep6(void *arg)
 {
-    uint8_t packet[2048];
+    uint8_t packet[1032];
+    struct sockaddr_in *addr = (struct sockaddr_in *)arg;
 
     uint32_t sequence = 0;
-    int datacount;
 
     memset(packet, 0, sizeof(packet));
 
-    Radio->FX3producerOn(); // FX3 start the producer
+    int state = PREPARE_HEADER;
+
+    int outputptr = 0;
+    int dataindex = EXT_BLOCKLEN;
 
     // 0,1,2,3,4 => 32,16,8,4,2 MHz
     r2iqCntrl.setDecimate(decimate);
     r2iqCntrl.TurnOn();
     Fx3->StartStream(input_buffer, QUEUE_SIZE);
-
-    int state = PREPARE_HEADER;
-
-    int outputptr = 0;
-    int ch;
-    int dataindex = -1;
 
     while (enable_thread)
     {
@@ -680,11 +712,14 @@ void *handler_ep6(void *arg)
             *(uint32_t *)packet = 0x0601feef;
             *(uint32_t *)(packet + 4) = htonl(sequence);
             state++;
-            outputptr = 8;
             break;
 
         case PREPARE_DATA2HEADER:
         case PREPARE_DATA1HEADER:
+            if (state == PREPARE_DATA1HEADER)
+                outputptr = 8;
+            else
+                outputptr = 520;
             packet[outputptr++] = 0x7f; // 8
             packet[outputptr++] = 0x7f; // 9
             packet[outputptr++] = 0x7f; // 10
@@ -694,20 +729,12 @@ void *handler_ep6(void *arg)
             packet[outputptr++] = 0; // 13
             packet[outputptr++] = 0; // 14
             packet[outputptr++] = 0; // 15
-            datacount = 504 / (receivers * 6 + 2);
-            ch = 0;
             state++;
             break;
 
         case PREPARE_DATA1:
         case PREPARE_DATA2:
         {
-            if (dataindex == -1)
-            {
-                GetMoreData();
-                dataindex = 0;
-            }
-
             // Every packet data section is 504 bytes
             // 512 total - 3 bytes sync , 5 bytes command
             // 504bytes to contain N samples
@@ -719,7 +746,7 @@ void *handler_ep6(void *arg)
             int nsamples = (512 - 3 - 5) / (receivers * 2 * 3 + 2);
             for (int i = 0; i < nsamples; i++)
             {
-                if (dataindex >= EXT_BLOCKLEN) // no more data
+                if (dataindex == EXT_BLOCKLEN) // no more data
                 {
                     GetMoreData();
                     dataindex = 0;
@@ -737,13 +764,11 @@ void *handler_ep6(void *arg)
                 outputptr += 2; // microphone int16 input
             }
 
-            if (state == PREPARE_DATA1)
-                outputptr = 520;
             state++;
             break;
         }
         case SEND:
-            if (sendto(sock_ep2, (const char *)packet, 1032, 0, (sockaddr *)&addr_ep6, sizeof(addr_ep6)) == -1)
+            if (sendto(sock_ep2, (const char *)packet, 1032, 0, (sockaddr *)addr, sizeof(*addr)) == -1)
             {
                 DbgPrintf("Fail to send data packet\n");
             }
@@ -753,5 +778,6 @@ void *handler_ep6(void *arg)
         }
     }
 
+    delete addr;
     return NULL;
 }
