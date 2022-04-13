@@ -76,5 +76,6 @@ endif (MSVC)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 add_subdirectory(Core)
+add_subdirectory(hermeslite)
 add_subdirectory(libsddc)
 add_subdirectory(unittest)
