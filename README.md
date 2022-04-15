@@ -23,12 +23,14 @@ The direct link to the current version v1.2.0 Version released at 18/3/2021 is: 
 > cmake --build .
 or
 > cmake --build . --config Release
+> cmake --build . --config RelWithDebInfo
 ```
 
 * You need to download **32bit version** of fftw library from fftw website http://www.fftw.org/install/windows.html. Copy libfftw3f-3.dll from the downloaded zip package to the same folder of extio DLL.
 
 * If you are running **64bit** OS, you need to run the following different commands instead of "cmake .." based on your Visual Studio Version:
 ```
+VS2022: >cmake .. -G "Visual Studio 17 2022" -A Win32
 VS2019: >cmake .. -G "Visual Studio 16 2019" -A Win32
 VS2017: >cmake .. -G "Visual Studio 15 2017 Win32"
 VS2015: >cmake .. -G "Visual Studio 14 2015 Win32"
@@ -51,6 +53,16 @@ export ARMGCC_VERSION=4.8.1
 cd SDDC_FX3
 make
 ```
+
+## Build Instruction for Linux
+
+1. Install development packages:
+```bash
+> sudo apt install libfftw3-dev
+```
+
+1. Follow Windows Build Instruction to run cmake to build Linux libaray
+
 
 ## Directory structure:
     \Core\           > Core logic of the component
