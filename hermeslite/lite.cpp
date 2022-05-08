@@ -678,7 +678,7 @@ static void GetMoreData()
 
         auto ptr = data->getReadPtr();
         mtx_finetune.lock();
-        shift_limited_unroll_C_sse_inp_c((complexf *)ptr, EXT_BLOCKLEN / 2, &stateFineTune[ch]);
+        shift_limited_unroll_C_sse_inp_c((complexf *)ptr, EXT_BLOCKLEN, &stateFineTune[ch]);
         mtx_finetune.unlock();
         for (int i = 0; i < EXT_BLOCKLEN; i++)
         {
