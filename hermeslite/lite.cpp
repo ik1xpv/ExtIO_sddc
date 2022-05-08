@@ -1,3 +1,17 @@
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <stdint.h>
+#include <string.h>
+#include <thread>
+#include <mutex>
+#include <limits.h>
+
+#include <fcntl.h>
+#include <math.h>
+
+#if _WIN32
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
@@ -5,31 +19,23 @@
 #include <Ws2tcpip.h>
 
 #include "resource.h"
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <stdint.h>
-#include <string.h>
+#define closesocket(fd) close(fd)
 
-#include <fcntl.h>
-#include <math.h>
+#endif
 
 #include "config.h"
-#include <thread>
-#include <mutex>
-#include <limits.h>
-#include <stdio.h>
 
 #include "lite.h"
 
 #include "RadioHandler.h"
 #include "fft_mt_r2iq.h"
 #include "pffft/pf_mixer.h"
-
-// Link with ws2_32.lib
-#pragma comment(lib, "Ws2_32.lib")
 
 //#define MAX_CHANNELS 7
 
@@ -52,7 +58,7 @@ int active_thread = 0;
 static void process_ep2(char *frame);
 static void *handler_ep6(void *arg);
 
-std::mutex mtx_finetune;           // mutex for critical section
+std::mutex mtx_finetune; // mutex for critical section
 
 //#define EXT_BLOCKLEN 512 * 16 /* 32768 only multiples of 512 */
 
@@ -162,9 +168,11 @@ static void CaculateStats();
 
 int main(int argc, char *argv[])
 {
-    // Declare variables
+
+#if _WIN32
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
 
     printf("HermesLite Emulator For RX888/MK2\n");
     printf("Support %d Channels\n", MAX_CHANNELS);
@@ -197,7 +205,10 @@ int main(int argc, char *argv[])
     res_size = ftell(fp);
     res_data = (unsigned char *)malloc(res_size);
     fseek(fp, 0, SEEK_SET);
-    fread(res_data, 1, res_size, fp);
+    if (fread(res_data, 1, res_size, fp) != res_size)
+    {
+        perror("Fail to load firmware");
+    }
 #endif
 
     Fx3 = CreateUsbHandler();
@@ -271,7 +282,10 @@ int main(int argc, char *argv[])
         {
             char c;
             // clear buf
-            scanf("%c", &c);
+            if (scanf("%c", &c) != 1)
+            {
+                perror("Parse failed");
+            }
             continue;
         }
 
@@ -319,9 +333,10 @@ int main(int argc, char *argv[])
 using namespace std::chrono;
 void CaculateStats()
 {
+#if 0
     uint32_t lastADCCount = 0;
     uint32_t lastIFCount[MAX_CHANNELS] = {0};
-
+#endif
     high_resolution_clock::time_point EndingTime;
 
     auto StartingTime = high_resolution_clock::now();
@@ -370,9 +385,8 @@ int server_proc()
     char buffer[1032];
     uint32_t code;
     struct sockaddr_in addr_ep2, addr_from;
-    int size_from;
+    socklen_t size_from;
     int yes = 1;
-    uint8_t chan = 0;
 
     /* set default rx sample rate */
     if ((sock_ep2 = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
@@ -408,8 +422,8 @@ int server_proc()
             return -1;
         }
 
-        code = htonl(*(uint32_t*)buffer);
-        //DbgPrintf("Code: %08x\n", code);
+        code = htonl(*(uint32_t *)buffer);
+        // DbgPrintf("Code: %08x\n", code);
         switch (code)
         {
         case 0xEFFE0102:
@@ -419,7 +433,7 @@ int server_proc()
             break;
         case 0xEFFE0200:
             DbgPrintf("Get Discovery from: %s:%d\n", inet_ntop(AF_INET, &addr_from.sin_addr, buffer, 100), addr_from.sin_port);
-            //reply[2] = 2 + active_thread;
+            // reply[2] = 2 + active_thread;
             memset(buffer, 0, 60);
             memcpy(buffer, reply, 20);
             if (sendto(sock_ep2, buffer, 60, 0, (struct sockaddr *)&addr_from, size_from) == -1)
@@ -485,15 +499,15 @@ void process_ep2(char *frame)
 
     uint32_t samplerate;
 
-    int ptt = frame[0] & 0x01; // LSB
+    // int ptt = frame[0] & 0x01; // LSB
 
     switch (frame[0] >> 1)
     {
     case 0:
     {
         receivers = ((frame[4] >> 3) & 7) + 1;
-        int data = (frame[4] >> 7) & 1;
-        int att = frame[3] & 0x03;
+        // int data = (frame[4] >> 7) & 1;
+        // int att = frame[3] & 0x03;
         /* set rx sample rate */
         switch (frame[1] & 3)
         {
@@ -547,7 +561,7 @@ void process_ep2(char *frame)
             SetChannel(i, 0);
         }
 
-        //DbgPrintf("Set SR=%d Recivers:%d (dec: %d)\n", receivers, samplerate, decimate);
+        // DbgPrintf("Set SR=%d Recivers:%d (dec: %d)\n", receivers, samplerate, decimate);
         break;
     }
     /*
@@ -620,37 +634,36 @@ void process_ep2(char *frame)
         break;
     case 15:
     {
-        int cw_int_data = frame[1] & 1;
-        int dac_level_data = frame[2];
-        int cw_delay = frame[3];
+        // int cw_int_data = frame[1] & 1;
+        // int dac_level_data = frame[2];
+        // int cw_delay = frame[3];
         // printf("CW int=%d, dac_level=%d, cw_delay=%d\n", cw_int_data, dac_level_data, cw_delay);
         break;
     }
     case 16:
     {
-     //output_buffer[C0] = 0x20;
-      //output_buffer[C1] = (cw_keyer_hang_time >> 2) & 0xFF;
-      //output_buffer[C2] = cw_keyer_hang_time & 0x03;
-      //output_buffer[C3] = (cw_keyer_sidetone_frequency >> 4) & 0xFF;
-      //output_buffer[C4] = cw_keyer_sidetone_frequency & 0x0F;
+        // output_buffer[C0] = 0x20;
+        // output_buffer[C1] = (cw_keyer_hang_time >> 2) & 0xFF;
+        // output_buffer[C2] = cw_keyer_hang_time & 0x03;
+        // output_buffer[C3] = (cw_keyer_sidetone_frequency >> 4) & 0xFF;
+        // output_buffer[C4] = cw_keyer_sidetone_frequency & 0x0F;
         break;
     }
     case 17:
     {
-        //output_buffer[C0] = 0x22;
-        //output_buffer[C1] = (eer_pwm_min >> 2) & 0xFF;
-        //output_buffer[C2] = eer_pwm_min & 0x03;
-        //output_buffer[C3] = (eer_pwm_max >> 3) & 0xFF;
-        //output_buffer[C4] = eer_pwm_max & 0x03;
+        // output_buffer[C0] = 0x22;
+        // output_buffer[C1] = (eer_pwm_min >> 2) & 0xFF;
+        // output_buffer[C2] = eer_pwm_min & 0x03;
+        // output_buffer[C3] = (eer_pwm_max >> 3) & 0xFF;
+        // output_buffer[C4] = eer_pwm_max & 0x03;
         break;
-
     }
     case 18:
     {
         break;
     }
     default:
-        //DbgPrintf("Unknown Frame id=%d\n", frame[0] >> 1);
+        // DbgPrintf("Unknown Frame id=%d\n", frame[0] >> 1);
         break;
     }
 }
@@ -665,7 +678,7 @@ static void GetMoreData()
 
         auto ptr = data->getReadPtr();
         mtx_finetune.lock();
-        shift_limited_unroll_C_sse_inp_c((complexf*)ptr, EXT_BLOCKLEN/2, &stateFineTune[ch]);
+        shift_limited_unroll_C_sse_inp_c((complexf *)ptr, EXT_BLOCKLEN / 2, &stateFineTune[ch]);
         mtx_finetune.unlock();
         for (int i = 0; i < EXT_BLOCKLEN; i++)
         {
