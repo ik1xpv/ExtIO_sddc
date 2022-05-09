@@ -214,6 +214,23 @@ int main(int argc, char *argv[])
     Fx3 = CreateUsbHandler();
     unsigned char idx = 0;
     char name[1024];
+    while (Fx3->Enumerate(idx, name, res_data, res_size) && (idx < MAXNDEV))
+    {
+        // https://en.wikipedia.org/wiki/West_Bridge
+        int retry = 2;
+        while ((strncmp("WestBridge", name,sizeof("WestBridge")) != NULL) && retry-- > 0)
+            Fx3->Enumerate(idx, name, res_data, res_size); // if it enumerates as BootLoader retry
+        idx++;
+    }
+
+    if (idx > 1)
+    {
+        printf("%d RX888 receivers are found, please use -device to select one\n", idx);
+    }
+    else
+    {
+        idx = 0;
+    }
 
     Fx3->Enumerate(idx, name, res_data, res_size);
     auto gbInitHW = Fx3->Open(res_data, res_size);
