@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
     {
         // https://en.wikipedia.org/wiki/West_Bridge
         int retry = 2;
-        while ((strncmp("WestBridge", name, sizeof("WestBridge")) != NULL) && retry-- > 0)
+        while ((strncmp("WestBridge", name, sizeof("WestBridge")) != 0) && (retry-- > 0))
             Fx3->Enumerate(idx, name, res_data, res_size); // if it enumerates as BootLoader retry
         idx++;
     }
