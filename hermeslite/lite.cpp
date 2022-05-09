@@ -682,8 +682,8 @@ static void GetMoreData()
         mtx_finetune.unlock();
         for (int i = 0; i < EXT_BLOCKLEN; i++)
         {
-            buffers[ch][i * 2] = htonl((int32_t)(ptr[i * 2] * INT32_MAX));
-            buffers[ch][i * 2 + 1] = htonl((int32_t)(ptr[i * 2 + 1] * INT32_MAX));
+            buffers[ch][i * 2] = htonl((int32_t)(ptr[i * 2 + 1] * INT32_MAX));
+            buffers[ch][i * 2 + 1] = htonl((int32_t)(ptr[i * 2] * INT32_MAX));
         }
 
         data->ReadDone();
