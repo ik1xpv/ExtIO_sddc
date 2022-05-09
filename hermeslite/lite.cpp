@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
     {
         // https://en.wikipedia.org/wiki/West_Bridge
         int retry = 2;
-        while ((strncmp("WestBridge", name,sizeof("WestBridge")) != NULL) && retry-- > 0)
+        while ((strncmp("WestBridge", name, sizeof("WestBridge")) != NULL) && retry-- > 0)
             Fx3->Enumerate(idx, name, res_data, res_size); // if it enumerates as BootLoader retry
         idx++;
     }
@@ -471,6 +471,11 @@ int server_proc()
 
             if (thread.joinable())
                 thread.join();
+
+            for (int i = receivers; i < MAX_CHANNELS; i++)
+            {
+                SetChannel(i, 0);
+            }
             break;
         case 0xEFFE0401:
             // restart
@@ -487,8 +492,6 @@ int server_proc()
             memcpy(addr_ep6, &addr_from, sizeof(addr_from));
 
             DbgPrintf("Target: %s:%d\n", inet_ntop(AF_INET, &addr_ep6->sin_addr, buffer, 100), addr_ep6->sin_port);
-
-            Radio->FX3producerOn(); // FX3 start the producer
 
             enable_thread = 1;
             thread = std::thread(
@@ -728,6 +731,7 @@ void *handler_ep6(void *arg)
     int outputptr = 0;
     int dataindex = EXT_BLOCKLEN;
 
+    Radio->FX3producerOn(); // FX3 start the producer
     // 0,1,2,3,4 => 32,16,8,4,2 MHz
     r2iqCntrl.setDecimate(decimate);
     r2iqCntrl.TurnOn();
