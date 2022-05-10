@@ -55,7 +55,7 @@ bool fx3handler::GetFx3DeviceStreamer() {   // open class
 	return r;
 }
 
-bool fx3handler::Enumerate(unsigned char& idx, char* lbuf, uint8_t* fw_data, uint32_t fw_size)
+bool fx3handler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_data, uint32_t fw_size)
 {
 	bool r = false;
 	strcpy(lbuf, "");
