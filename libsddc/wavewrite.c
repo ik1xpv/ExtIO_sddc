@@ -181,6 +181,15 @@ int  waveWriteSamples(FILE* f,  void * vpData, size_t numSamples, int needCleanD
 			/* TODO: convert back endianness */
 		}
 		return (nw == numSamples) ? 0 : 1;
+	case 32:
+		/* TODO: endian conversion needed */
+		nw = fwrite(vpData, sizeof(int32_t), numSamples, f);
+		waveDataSize += sizeof(int32_t) * numSamples;
+		if ( needCleanData )
+		{
+			/* TODO: convert back endianness */
+		}
+		return (nw == numSamples) ? 0 : 1;
 	}
 }
 
@@ -201,6 +210,15 @@ int  waveWriteFrames(FILE* f,  void * vpData, size_t numFrames, int needCleanDat
 		/* TODO: endian conversion needed */
 		nw = fwrite(vpData, waveHdr.f.nChannels * sizeof(int16_t), numFrames, f);
 		waveDataSize += waveHdr.f.nChannels * sizeof(int16_t) * numFrames;
+		if ( needCleanData )
+		{
+			/* TODO: convert back endianness */
+		}
+		return (nw == numFrames) ? 0 : 1;
+	case 32:
+		/* TODO: endian conversion needed */
+		nw = fwrite(vpData, waveHdr.f.nChannels * sizeof(int32_t), numFrames, f);
+		waveDataSize += waveHdr.f.nChannels * sizeof(int32_t) * numFrames;
 		if ( needCleanData )
 		{
 			/* TODO: convert back endianness */

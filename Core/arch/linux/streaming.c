@@ -73,7 +73,7 @@ typedef struct streaming {
 static const uint32_t DEFAULT_SAMPLE_RATE = 64000000;   /* 64Msps */
 static const uint32_t DEFAULT_FRAME_SIZE = (2 * 64000000 / 1000);  /* ~ 1 ms */
 static const uint32_t DEFAULT_NUM_FRAMES = 96;  /* we should not exceed 120 ms in total! */
-const unsigned int BULK_XFER_TIMEOUT = 5000; // timeout (in ms) for each bulk transfer
+const unsigned int BULK_XFER_TIMEOUT = 500; // timeout (in ms) for each bulk transfer
 
 
 streaming_t *streaming_open_sync(usb_device_t *usb_device)
@@ -118,8 +118,9 @@ streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
   }
 
   /* frame size must be a multiple of max_packet_size * max_burst */
-  uint32_t max_xfer_size = usb_device->bulk_in_max_packet_size *
-                           usb_device->bulk_in_max_burst;
+  uint32_t max_xfer_size = usb_device->bulk_in_max_packet_size;
+  if(usb_device->bulk_in_max_burst)
+    max_xfer_size *= usb_device->bulk_in_max_burst;
   if ( !max_xfer_size ) {
     fprintf(stderr, "ERROR: maximum transfer size is 0. probably not connected at USB 3 port?!\n");
     return ret_val;
@@ -253,7 +254,8 @@ int streaming_stop(streaming_t *this)
     }
     return 0;
   }
-
+  if (this->status == STREAMING_STATUS_FAILED)
+    return 0;
   this->status = STREAMING_STATUS_CANCELLED;
   /* cancel all the active transfers */
   for (uint32_t i = 0; i < this->num_frames; ++i) {

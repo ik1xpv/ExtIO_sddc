@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "libsddc.h"
 #include "wavewrite.h"
@@ -93,13 +94,13 @@ clock_gettime(int X, struct timeval* tv)
 #endif
 
 
-static void count_bytes_callback(uint32_t data_size, uint8_t *data,
+static void count_bytes_callback(uint32_t data_size, const float *data,
                                  void *context);
 
 static unsigned long long received_samples = 0;
 static unsigned long long total_samples = 0;
 static int num_callbacks;
-static int16_t *sampleData = 0;
+static float *sampleData = 0;
 static int runtime = 3000;
 static struct timespec clk_start, clk_end;
 static int stop_reception = 0;
@@ -118,6 +119,10 @@ int main(int argc, char **argv)
   }
   char *imagefile = argv[1];
   const char *outfilename = 0;
+  double rf_attenuation = 0;//maximum
+  double if_attenuation = 35;//maximum
+  int ret = 0;
+
   double sample_rate = 0.0;
   sscanf(argv[2], "%lf", &sample_rate);
   if (3 < argc)
@@ -148,6 +153,25 @@ int main(int argc, char **argv)
     goto DONE;
   }
 
+  if (sddc_set_rf_mode(sddc, HF_MODE) < 0) {
+    fprintf(stderr, "ERROR - sddc_set_rf_mode() failed\n");
+    goto DONE;
+  }
+
+  ret = sddc_set_tuner_rf_attenuation(sddc, rf_attenuation);
+  if (ret < 0) {
+    fprintf(stderr, "ERROR - sddc_set_tuner_rf_attenuation() failed\n");
+    goto DONE;
+  }
+  fprintf(stderr, "sddc_set_tuner_rf_attenuation(%f)=%d\n",rf_attenuation,ret);
+
+  ret = sddc_set_tuner_if_attenuation(sddc, if_attenuation);
+  if (ret < 0) {
+    fprintf(stderr, "ERROR - sddc_set_tuner_if_attenuation() failed\n");
+    goto DONE;
+  }
+  fprintf(stderr, "sddc_set_tuner_if_attenuation(%f)=%d\n",if_attenuation,ret);
+
   received_samples = 0;
   num_callbacks = 0;
   if (sddc_start_streaming(sddc) < 0) {
@@ -159,13 +183,17 @@ int main(int argc, char **argv)
   total_samples = (unsigned long long)(runtime * sample_rate / 1000.0);
 
   if (outfilename)
-    sampleData = (int16_t*)malloc(total_samples * sizeof(int16_t));
+    sampleData = malloc(total_samples * sizeof(sampleData[0]));
 
   /* todo: move this into a thread */
   stop_reception = 0;
   clock_gettime(CLOCK_REALTIME, &clk_start);
   while (!stop_reception)
+  {
     sddc_handle_events(sddc);
+    sleep(1);
+    fprintf(stderr,"\rreceived = %lld   ",received_samples);
+  }
 
   fprintf(stderr, "finished. now stop streaming ..\n");
   if (sddc_stop_streaming(sddc) < 0) {
@@ -174,7 +202,7 @@ int main(int argc, char **argv)
   }
 
   double dur = clk_diff();
-  fprintf(stderr, "received=%llu 16-Bit samples in %d callbacks\n", received_samples, num_callbacks);
+  fprintf(stderr, "received=%llu complex samples in %d callbacks\n", received_samples, num_callbacks);
   fprintf(stderr, "run for %f sec\n", dur);
   fprintf(stderr, "approx. samplerate is %f kSamples/sec\n", received_samples / (1000.0*dur) );
 
@@ -182,7 +210,7 @@ int main(int argc, char **argv)
     FILE * f = fopen(outfilename, "wb");
     if (f) {
       fprintf(stderr, "saving received real samples to file ..\n");
-      waveWriteHeader( (unsigned)(0.5 + sample_rate), 0U /*frequency*/, 16 /*bitsPerSample*/, 1 /*numChannels*/, f);
+      waveWriteHeader( (unsigned)(0.5 + sample_rate), 0U /*frequency*/, 32 /*bitsPerSample*/, 1 /*numChannels*/, f);
       for ( unsigned long long off = 0; off + 65536 < received_samples; off += 65536 )
         waveWriteSamples(f,  sampleData + off, 65536, 0 /*needCleanData*/);
       waveFinalizeHeader(f);
@@ -200,19 +228,22 @@ DONE:
 }
 
 static void count_bytes_callback(uint32_t data_size,
-                                 uint8_t *data,
+                                 const float *data,
                                  void *context)
 {
   if (stop_reception)
     return;
   ++num_callbacks;
-  unsigned N = data_size / sizeof(int16_t);
-  if ( received_samples + N < total_samples ) {
+//  fprintf(stderr, "\rcallback %d     ", num_callbacks);
+  unsigned N = data_size * 2;
+  if ( received_samples + N  < total_samples ) {
+//    printf("data size = %u\n",data_size);
     if (sampleData)
-      memcpy( sampleData+received_samples, data, data_size);
+      memcpy( sampleData+received_samples, data, data_size * sizeof(float) * 2);
     received_samples += N;
   }
   else {
+    received_samples += N;
     clock_gettime(CLOCK_REALTIME, &clk_end);
     stop_reception = 1;
   }

@@ -130,7 +130,6 @@ TEST_CASE(CoreFixture, BasicTest)
     REQUIRE_EQUAL(radio->GetBiasT_VHF(), true);
 
     delete radio;
-    delete usb;
 }
 
 TEST_CASE(CoreFixture, R2IQTest)
@@ -157,7 +156,6 @@ TEST_CASE(CoreFixture, R2IQTest)
     }
 
     delete radio;
-    delete usb;
 }
 
 TEST_CASE(CoreFixture, TuneTest)
@@ -180,5 +178,4 @@ TEST_CASE(CoreFixture, TuneTest)
 
 
     delete radio;
-    delete usb;
 }

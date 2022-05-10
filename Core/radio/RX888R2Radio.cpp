@@ -176,3 +176,8 @@ bool RX888R2Radio::UpdateGainIF(int gain_index)
         return Fx3->SetArgument(R82XX_VGA, (uint16_t)gain_index);
     }
 }
+
+bool RX888R2Radio::UpdateTunerBW(int bwHz)
+{
+    return Fx3->SetArgument(R82XX_BANDWIDTH, bwHz/1000);
+}

@@ -72,9 +72,10 @@ static int n_usb_device_ids = sizeof(usb_device_ids) / sizeof(usb_device_ids[0])
 
 int usb_device_count_devices()
 {
+  libusb_context *ctx = 0;
   int ret_val = -1;
 
-  int ret = libusb_init(0);
+  int ret = libusb_init(&ctx);
   if (ret < 0) {
     log_usb_error(ret, __func__, __FILE__, __LINE__);
     goto FAIL0;
@@ -102,7 +103,7 @@ int usb_device_count_devices()
   ret_val = count;
 
 FAIL1:
-  libusb_exit(0);
+  libusb_exit(ctx);
 FAIL0:
   return ret_val;
 }
@@ -110,6 +111,7 @@ FAIL0:
 
 int usb_device_get_device_list(struct usb_device_info **usb_device_infos)
 {
+  libusb_context *ctx = 0;
   const int MAX_STRING_BYTES = 256;
 
   int ret_val = -1;
@@ -119,7 +121,7 @@ int usb_device_get_device_list(struct usb_device_info **usb_device_infos)
     goto FAIL0;
   }
 
-  int ret = libusb_init(0);
+  int ret = libusb_init(&ctx);
   if (ret < 0) {
     log_usb_error(ret, __func__, __FILE__, __LINE__);
     goto FAIL0;
@@ -206,7 +208,7 @@ FAIL3:
 FAIL2:
   libusb_free_device_list(list, 1);
 FAIL1:
-  libusb_exit(0);
+  libusb_exit(ctx);
 FAIL0:
   return ret_val;
 }
@@ -237,6 +239,7 @@ usb_device_t *usb_device_open(int index, const char* image,
 {
   usb_device_t *ret_val = 0;
   libusb_context *ctx = 0;
+  int k = 0;
 
   int ret = libusb_init(&ctx);
   if (ret < 0) {
@@ -261,23 +264,30 @@ usb_device_t *usb_device_open(int index, const char* image,
     /* rescan USB to get a new device handle */
     libusb_close(dev_handle);
 
-    /* wait unitl firmware is ready */
-    usleep(500 * 1000L);
-
     needs_firmware = 0;
-    dev_handle = find_usb_device(index, ctx, &device, &needs_firmware);
+
+    for (k = 0; k < 5; k++) {
+      /* wait unitl firmware is ready */
+      usleep(500 * 1000L);
+
+      dev_handle = find_usb_device(index, ctx, &device, &needs_firmware);
+      if (dev_handle == 0) {
+        continue;
+      }
+      if (needs_firmware) {
+        log_error("device is still in boot loader mode", __func__, __FILE__, __LINE__);
+        goto FAIL2;
+      }
+      break;
+    }
     if (dev_handle == 0) {
       goto FAIL1;
-    }
-    if (needs_firmware) {
-      log_error("device is still in boot loader mode", __func__, __FILE__, __LINE__);
-      goto FAIL2;
     }
   }
 
   int speed = libusb_get_device_speed(device);
-  if ( speed == LIBUSB_SPEED_LOW || speed == LIBUSB_SPEED_FULL || speed == LIBUSB_SPEED_HIGH ) {
-      log_error("USB 3.x SuperSpeed connection failed", __func__, __FILE__, __LINE__);
+  if ( speed == LIBUSB_SPEED_LOW || speed == LIBUSB_SPEED_FULL) {
+      log_error("USB 3.x SuperSpeed/HighSpeed connection failed", __func__, __FILE__, __LINE__);
       goto FAIL2;
   }
 
@@ -325,12 +335,13 @@ usb_device_t *usb_device_open(int index, const char* image,
   this->bulk_in_max_burst = bulk_in_max_burst;
 
   ret_val = this;
+  fprintf(stderr,"usb_device_open %p\n",this);
   return ret_val;
 
 FAIL2:
   libusb_close(dev_handle);
 FAIL1:
-  libusb_exit(0);
+  libusb_exit(ctx);
 FAIL0:
   return ret_val;
 }
@@ -338,16 +349,20 @@ FAIL0:
 
 void usb_device_close(usb_device_t *this)
 {
+  fprintf(stderr,"usb_device_close %p\n",this);
   libusb_close(this->dev_handle);
+  libusb_exit(this->context);
   free(this);
-  libusb_exit(0);
   return;
 }
 
 
 int usb_device_handle_events(usb_device_t *this)
 {
-  return libusb_handle_events_completed(this->context, &this->completed);
+  struct timeval tv;
+  tv.tv_sec = 2;
+  tv.tv_usec = 0;
+  return libusb_handle_events_timeout_completed(this->context, &tv, &this->completed);
 }
 
 int usb_device_control(usb_device_t *this, uint8_t request, uint16_t value,
