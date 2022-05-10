@@ -34,7 +34,7 @@ public:
 	fx3handler();
 	virtual ~fx3handler(void);
 
-	bool Open(uint8_t* fw_data, uint32_t fw_size);
+	bool Open(const uint8_t* fw_data, uint32_t fw_size);
 	bool IsOn() { return Fx3IsOn; }
 	bool Control(FX3Command command, uint8_t data);
 	bool Control(FX3Command command, uint32_t data = 0);
