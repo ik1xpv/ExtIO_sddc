@@ -26,7 +26,7 @@ public:
 	bool ReadDebugTrace(uint8_t* pdata, uint8_t len) override;
 	void StartStream(ringbuffer<int16_t>& input, int numofblock) override;
 	void StopStream() override;
-	bool Enumerate(unsigned char &idx, char *lbuf, uint8_t* fw_data, uint32_t fw_size) override;
+	bool Enumerate(unsigned char &idx, char *lbuf, const uint8_t* fw_data, uint32_t fw_size) override;
 
 private:
 	bool ReadUsb(uint8_t command, uint16_t value, uint16_t index, uint8_t *data, size_t size);
