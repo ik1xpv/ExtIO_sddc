@@ -77,7 +77,10 @@
 			{
 				const int tunebin = this->mtunebin[i];  // Update LO tune is possible during run
 				if (tunebin == 0)
+				{
+					pout[i] = NULL;
 					continue;
+				}
 
 				pout[i] = (fftwf_complex*)((outputbuffers[i])->getWritePtr());
 			}
@@ -97,7 +100,7 @@
 			for(int channel = 0; channel < this->channel_num; channel++)
 			{
 				const int tunebin = this->mtunebin[channel];  // Update LO tune is possible during run
-				if (tunebin == 0)
+				if (tunebin == 0 || pout[channel] == NULL)
 					continue;
 
 				decimate_count = (decimate_count + 1) & ((1 << decimate) - 1);
@@ -180,6 +183,8 @@
 		{
 			for(int i = 0; i < channel_num; i++)
 			{
+				if (pout[i] == NULL)
+					continue;
 				pout[i] += mfft / 2 + (3 * mfft / 4) * (fftPerBuf - 1);
 			}
 		}

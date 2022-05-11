@@ -59,8 +59,8 @@ fft_mt_r2iq::fft_mt_r2iq() :
 	{
 		float Bw = 64.0f / mratio;
 		int ntaps = KaiserWindow(0, Astop, relPass * Bw / 128.0f, relStop * Bw / 128.0f, nullptr);
-		printf("decimation %2d: KaiserWindow(Astop = %.1f dB, Fpass = %.3f,Fstop = %.3f, Bw %.3f @ %f ) => %d taps\n",
-			d, Astop, relPass * Bw, relStop * Bw, Bw, 128.0f, ntaps);
+		printf("decimation %2d: KaiserWindow(Astop = %.1f dB, Fpass = %.3f,Fstop = %.3f, Bw %.3f @ %f ) => %d taps (%c)\n",
+			d, Astop, relPass * Bw, relStop * Bw, Bw, 128.0f, ntaps, (ntaps < halfFft / 4 + 1)?' ':'*');
 		mratio = mratio * 2;
 	}
 	printf("***************************************************************************\n");
