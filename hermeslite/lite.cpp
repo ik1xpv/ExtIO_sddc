@@ -39,7 +39,7 @@
 
 //#define MAX_CHANNELS 7
 
-#define ADC_RATE (48000 * 1024)
+#define ADC_RATE (48000 * 2 * 1024)
 
 float mBps;
 float mSpsIF[MAX_CHANNELS];
