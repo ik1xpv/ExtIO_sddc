@@ -156,7 +156,6 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 
 		//        DbgPrintf((char *) "RandTable generated\n");
 
-#define HTLEN (halfFft / 4 + 1)
 		   // filters
 		fftwf_complex *pfilterht;       // time filter ht
 		pfilterht = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*halfFft);     // halfFft

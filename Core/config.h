@@ -53,6 +53,8 @@ inline void null_func(const char *format, ...) { }
 #define WIDEFFTN  // test FFTN 8192 
 
 #define FFTN_R_ADC (8192)       // FFTN used for ADC real stream DDC  tested at  2048, 8192, 32768, 131072
+#define HALF_FFT (FFTN_R_ADC / 2)
+#define HTLEN ( HALF_FFT / 4 + 1)
 
 // GAINFACTORS to be adjusted with lab reference source measured with HDSDR Smeter rms mode  
 #define BBRF103_GAINFACTOR 	(7.8e-8f)       // BBRF103
