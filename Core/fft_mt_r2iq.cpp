@@ -40,6 +40,9 @@ fft_mt_r2iq::fft_mt_r2iq() :
 	r2iqControlClass(),
 	filterHw(nullptr)
 {
+#ifdef    _SOFT_TONE_DEBUG
+	genphase = 0.0;
+#endif
 	mtunebin = halfFft / 4;
 	mfftdim[0] = halfFft;
 	for (int i = 1; i < NDECIDX; i++)
