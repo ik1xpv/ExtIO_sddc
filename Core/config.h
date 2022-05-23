@@ -45,7 +45,7 @@ inline void null_func(const char *format, ...) { }
 #define DbgPrintf DbgEmpty
 #endif
 
-#define SWVERSION           "1.3.0 RC1"	  
+#define SWVERSION           "1.3.3 Alfa"	  
 #define SETTINGS_IDENTIFIER	"sddc_1.06"
 #define SWNAME				"ExtIO_sddc.dll"
 
@@ -54,12 +54,12 @@ inline void null_func(const char *format, ...) { }
 
 #define FFTN_R_ADC (8192)       // FFTN used for ADC real stream DDC  tested at  2048, 8192, 32768, 131072
 #define HALF_FFT (FFTN_R_ADC / 2) 
-//#define HTLEN ( HALF_FFT / 4 + 1)			//= 1025  ok
+#define HTLEN ( HALF_FFT / 4 + 1)			//= 1025  ok
 //#define HTLEN ( HALF_FFT / 2 + 1 - 256)	//= 1793  near ok  ? 
-#define HTLEN ( HALF_FFT / 2 + 1)			//= 2049  distortion at edges ???? 
-
+//#define HTLEN ( HALF_FFT / 2 + 1)			//= 2049  distortion at edges ???? 
+#ifdef _WIN32
 #define _SOFT_TONE_DEBUG   // Generate soft tone period transferSamples debug
-
+#endif
 
 // GAINFACTORS to be adjusted with lab reference source measured with HDSDR Smeter rms mode  
 #define BBRF103_GAINFACTOR 	(7.8e-8f)       // BBRF103
