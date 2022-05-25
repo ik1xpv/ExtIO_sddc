@@ -464,6 +464,7 @@ CyFxSlFifoApplnUSBSetupCB (
 				break;
 
     	 	case STARTFX3:
+					CyU3PUsbLPMDisable();
     	 		    CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL);
     	 		    CyU3PGpifControlSWInput ( CyFalse );
     	 		 	CyU3PDmaMultiChannelReset (&glMultiChHandleSlFifoPtoU);  // Reset existing channel
@@ -476,6 +477,7 @@ CyFxSlFifoApplnUSBSetupCB (
 					break;
 
 			case STOPFX3:
+					CyU3PUsbLPMEnable();
 				    CyU3PUsbGetEP0Data(wLength, glEp0Buffer, NULL);
 					CyU3PGpifControlSWInput ( CyFalse   );
 					CyU3PThreadSleep(10);

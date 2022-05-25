@@ -20,7 +20,7 @@ class fx3class
 {
 public:
 	virtual ~fx3class(void) {}
-	virtual bool Open(uint8_t* fw_data, uint32_t fw_size) = 0;
+	virtual bool Open(const uint8_t* fw_data, uint32_t fw_size) = 0;
 	virtual bool Control(FX3Command command, uint8_t data = 0) = 0;
 	virtual bool Control(FX3Command command, uint32_t data) = 0;
 	virtual bool Control(FX3Command command, uint64_t data) = 0;
@@ -29,7 +29,7 @@ public:
 	virtual bool ReadDebugTrace(uint8_t* pdata, uint8_t len) = 0;
 	virtual void StartStream(ringbuffer<int16_t>& input, int numofblock) = 0;
 	virtual void StopStream() = 0;
-	virtual bool Enumerate(unsigned char& idx, char* lbuf, uint8_t* fw_data, uint32_t fw_size) = 0;
+	virtual bool Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_data, uint32_t fw_size) = 0;
 };
 
 extern "C" fx3class* CreateUsbHandler();
