@@ -52,11 +52,12 @@ inline void null_func(const char *format, ...) { }
 #define	QUEUE_SIZE 32
 #define WIDEFFTN  // test FFTN 8192 
 
-#define FFTN_R_ADC (8192)       // FFTN used for ADC real stream DDC  tested at  2048, 8192, 32768, 131072
+#define FFTN_R_ADC (32768)       // FFTN used for ADC real stream DDC  tested at  2048, 8192, 32768, 131072
 #define HALF_FFT (FFTN_R_ADC / 2) 
-#define HTLEN ( HALF_FFT / 4 + 1)			//= 1025  ok
-//#define HTLEN ( HALF_FFT / 2 + 1 - 256)	//= 1793  near ok  ? 
-//#define HTLEN ( HALF_FFT / 2 + 1)			//= 2049  distortion at edges ???? 
+//#define HTLEN ( HALF_FFT / 4 + 1)			// ok
+#define HTLEN ( HALF_FFT * 3 / 8 + 1 )	    // ok  
+//#define HTLEN ( HALF_FFT * 7 / 16 + 1 )	// ok ?
+//#define HTLEN ( HALF_FFT / 2 + 1 )		// distortion at edges ???? 
 #ifdef _WIN32
 #define _SOFT_TONE_DEBUG   // Generate soft tone period transferSamples debug
 #endif
