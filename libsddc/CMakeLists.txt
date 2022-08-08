@@ -4,23 +4,26 @@ if (MSVC)
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif (MSVC)
 
+
 include_directories("." "../Core")
 
 add_library(sddc SHARED
-    libsddc.cpp
+libsddc.cpp
 )
 
 if (MSVC)
-  target_link_libraries(sddc PUBLIC Setupapi.lib)
+target_link_libraries(sddc PUBLIC Setupapi.lib)
 else()
-  target_include_directories(sddc PUBLIC "${LIBUSB_INCLUDE_DIR}")
-  target_link_directories(sddc PUBLIC "${LIBUSB_LIBRARY_DIRS}")
-  target_link_libraries(sddc PUBLIC ${LIBUSB_LIBRARIES})
+target_include_directories(sddc PUBLIC "${LIBUSB_INCLUDE_DIR}")
+target_link_directories(sddc PUBLIC "${LIBUSB_LIBRARY_DIRS}")
+target_link_libraries(sddc PUBLIC ${LIBUSB_LIBRARIES})
 endif (MSVC)
 
 target_include_directories(sddc PUBLIC "${LIBFFTW_INCLUDE_DIR}")
 target_link_directories(sddc PUBLIC "${LIBFFTW_LIBRARY_DIRS}")
 target_link_libraries(sddc PUBLIC ${LIBFFTW_LIBRARIES})
+
+
 
 target_link_libraries(sddc PRIVATE SDDC_CORE)
 set_target_properties(sddc PROPERTIES VERSION ${PROJECT_VERSION})
@@ -35,3 +38,10 @@ target_link_libraries(sddc_stream_test sddc ${ASANLIB})
 
 add_executable(sddc_vhf_stream_test sddc_vhf_stream_test.c wavewrite.c)
 target_link_libraries(sddc_vhf_stream_test sddc ${ASANLIB})
+
+
+pkg_check_modules(LIBRX888 REQUIRED librx888)
+include_directories(${LIBRX888_INCLUDE_DIRS})
+add_executable(rx888_test rx888_test.cpp wavewrite.c)
+target_link_libraries(rx888_test sddc ${LIBRX888_LIBRARIES})
+

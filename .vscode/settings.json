@@ -1,0 +1,5 @@
+{
+    "cmake.generator": "Unix Makefiles",
+    "cmake.ctest.parallelJobs": 1,
+    "cmake.parallelJobs": 1
+}

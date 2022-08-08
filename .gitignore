@@ -268,3 +268,5 @@ __pycache__/
 
 # FFTW wisdom files
 wisdom*
+.DS_Store
+.cache/clangd
