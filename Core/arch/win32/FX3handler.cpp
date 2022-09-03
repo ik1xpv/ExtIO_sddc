@@ -78,13 +78,13 @@ bool fx3handler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_dat
 	strcat(lbuf, "sn:");
 	strcat(lbuf, wchar2char((wchar_t*)fx3dev->SerialNumber));
 	fx3dev->Close();
-	devidx = idx;  // -> devidx
 	return true;
 }
 
-bool  fx3handler::Open(const uint8_t* fw_data, uint32_t fw_size) {
+bool  fx3handler::Open(int index, const uint8_t* fw_data, uint32_t fw_size) {
 	bool r = false;
 
+	devidx = index;
 	if (!GetFx3DeviceStreamer()) {
 		DbgPrintf("Failed to open device\n");
 		return r;

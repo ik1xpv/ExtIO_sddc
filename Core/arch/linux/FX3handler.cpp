@@ -16,9 +16,9 @@ fx3handler::~fx3handler()
 {
 }
 
-bool fx3handler::Open(const uint8_t* fw_data, uint32_t fw_size)
+bool fx3handler::Open(int index, const uint8_t* fw_data, uint32_t fw_size)
 {
-    dev = usb_device_open(0, (const char*)fw_data, fw_size);
+    dev = usb_device_open(index, (const char*)fw_data, fw_size);
 
     return dev != nullptr;
 }
