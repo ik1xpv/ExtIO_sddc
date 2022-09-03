@@ -3,6 +3,9 @@ project(SDDC VERSION 1.0.1)
 
 include(CTest)
 
+include(./cmake/CheckGit.cmake)
+CheckGitSetup()
+
 message(STATUS "CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}")
 
 ### build options

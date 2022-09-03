@@ -12,7 +12,7 @@ target_include_directories(ExtIO_SDDC PUBLIC "${LIBFFTW_INCLUDE_DIR}")
 target_link_directories(ExtIO_SDDC PUBLIC "${LIBFFTW_LIBRARY_DIRS}")
 target_link_libraries(ExtIO_SDDC PUBLIC ${LIBFFTW_LIBRARIES})
 
-
+target_link_libraries(ExtIO_SDDC PRIVATE git_version)
 target_link_libraries(ExtIO_SDDC PRIVATE SDDC_CORE)
 target_link_libraries(ExtIO_SDDC PUBLIC Setupapi.lib)
 set_target_properties(ExtIO_SDDC PROPERTIES PREFIX "")

@@ -16,6 +16,8 @@
 #include "PScope_uti.h"
 #include "r2iq.h"
 
+#include "git_version.h"
+
 #define   snprintf	_snprintf
 
 #define DEFAULT_TUNE_FREQ	999000.0	/* Turin MW broadcast ! */
@@ -358,7 +360,7 @@ int EXTIO_API StartHWdbl(double LOfreq)
 		uint8_t hb, lb;
 		hb = fw >> 8;
 		lb = (uint8_t) fw;
-		sprintf(ebuffer, "%s v%s | FX3 v%d.%02d | %s ",SWNAME, SWVERSION ,hb,lb, RadioHandler.getName() );
+		sprintf(ebuffer, "%s v%s (%s) | %s ", SWNAME, SWVERSION, kGitHash, RadioHandler.getName());
 		SetWindowText(h_dialog, ebuffer);
 		EXTIO_STATUS_CHANGE(pfnCallback, extHw_RUNNING);
 	}
