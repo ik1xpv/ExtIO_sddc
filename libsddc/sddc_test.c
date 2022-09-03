@@ -35,12 +35,6 @@ static void blink_led(sddc_t *sddc, uint8_t color);
 
 int main(int argc, char **argv)
 {
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s <image file>\n", argv[0]);
-    return -1;
-  }
-  char *imagefile = argv[1];
-
   /* count devices */
   int count = sddc_get_device_count();
   if (count < 0) {
@@ -64,7 +58,7 @@ int main(int argc, char **argv)
   sddc_free_device_info(sddc_device_infos);
 
   /* open and close device */
-  sddc_t *sddc = sddc_open(0, imagefile);
+  sddc_t *sddc = sddc_open(0);
   if (sddc == 0) {
     fprintf(stderr, "ERROR - sddc_open() failed\n");
     return -1;

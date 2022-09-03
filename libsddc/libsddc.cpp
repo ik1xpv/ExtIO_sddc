@@ -3,19 +3,29 @@
 #include "r2iq.h"
 #include "RadioHandler.h"
 
+#include <vector>
+#include <string>
+
+extern "C"
+{
+    #include "SDDC_FX3_img.h"
+}
+
 struct sddc
 {
     SDDCStatus status;
     RadioHandlerClass* handler;
     uint8_t led;
     int samplerateidx;
-    double freq;
+    uint64_t freq;
 
     sddc_read_async_cb_t callback;
     void *callback_context;
 };
 
 sddc_t *current_running;
+fx3class *Fx3 = NULL;
+std::vector<std::string> devices;
 
 static void Callback(void* context, const float* data, uint32_t len)
 {
@@ -37,64 +47,89 @@ private:
     int idx;
 };
 
+static void probe_devices()
+{
+    if (Fx3)
+        return;
+
+    if (Fx3 == NULL)
+    {
+        Fx3 = CreateUsbHandler();
+    }
+
+    unsigned char idx = 0;
+    int selected = 0;
+    char devicename[1024];
+    while (Fx3->Enumerate(idx, devicename, SDDC_FX3_img_data, SDDC_FX3_img_size) && (idx < MAXNDEV))
+    {
+        // https://en.wikipedia.org/wiki/West_Bridge
+        int retry = 2;
+        while ((strncmp("WestBridge", devicename,sizeof("WestBridge")) != NULL) && retry-- > 0)
+            Fx3->Enumerate(idx, devicename, SDDC_FX3_img_data, SDDC_FX3_img_size); // if it enumerates as BootLoader retry
+        devices.push_back(devicename);
+        idx++;
+    }
+    
+}
+
 int sddc_get_device_count()
 {
-    return 1;
+    probe_devices();
+
+    return devices.size();
 }
 
 int sddc_get_device_info(struct sddc_device_info **sddc_device_infos)
 {
-    auto ret = new sddc_device_info();
-    const char *todo = "TODO";
-    ret->manufacturer = todo;
-    ret->product = todo;
-    ret->serial_number = todo;
+    int count = 0;
+    *sddc_device_infos = new sddc_device_info[devices.size()];
+    probe_devices();
 
-    *sddc_device_infos = ret;
+    for(auto &s : devices)
+    {
+        auto ret = &(*sddc_device_infos)[count];
+        ret->manufacturer = "RX";
 
-    return 1;
+        char *product = new char[256];
+        auto len = strchr(s.c_str(), ' ') - s.c_str();
+        strncpy(product, s.c_str(), len);
+        product[len] = '\0';
+        ret->product = product;
+
+        char *serial = new char[256];
+        strcpy(serial, strstr(s.c_str(), "sn:") + 3);
+        ret->serial_number = serial;
+
+        count++;
+    }
+
+    return sddc_get_device_count();
 }
 
 int sddc_free_device_info(struct sddc_device_info *sddc_device_infos)
 {
-    delete sddc_device_infos;
+    for (int i = 0; i < sddc_get_device_count(); i++)
+    {
+        delete[] sddc_device_infos[i].product;
+        delete[] sddc_device_infos[i].serial_number;
+    }
+
+    delete[] sddc_device_infos;
     return 0;
 }
 
-sddc_t *sddc_open(int index, const char* imagefile)
+sddc_t *sddc_open(int index)
 {
     auto ret_val = new sddc_t();
+    probe_devices();
 
-    fx3class *fx3 = CreateUsbHandler();
-    if (fx3 == nullptr)
-    {
-        return nullptr;
-    }
-
-    // open the firmware
-    unsigned char* res_data;
-    uint32_t res_size;
-
-    FILE *fp = fopen(imagefile, "rb");
-    if (fp == nullptr)
-    {
-        return nullptr;
-    }
-
-    fseek(fp, 0, SEEK_END);
-    res_size = ftell(fp);
-    res_data = (unsigned char*)malloc(res_size);
-    fseek(fp, 0, SEEK_SET);
-    if (fread(res_data, 1, res_size, fp) != res_size)
-        return nullptr;
-
-    bool openOK = fx3->Open(res_data, res_size);
+    bool openOK = Fx3->Open(index, SDDC_FX3_img_data, SDDC_FX3_img_size);
     if (!openOK)
         return nullptr;
 
     ret_val->handler = new RadioHandlerClass();
 
-    if (ret_val->handler->Init(fx3, Callback, new rawdata()))
+    if (ret_val->handler->Init(Fx3, Callback))
     {
         ret_val->status = SDDC_STATUS_READY;
         ret_val->samplerateidx = 0;
@@ -102,6 +137,28 @@ sddc_t *sddc_open(int index, const char* imagefile)
 
     return ret_val;
 }
+
+/*
+sddc_t *sddc_open_raw(int index)
+{
+    auto ret_val = new sddc_t();
+    probe_devices();
+
+    bool openOK = Fx3->Open(index, SDDC_FX3_img_data, SDDC_FX3_img_size);
+    if (!openOK)
+        return nullptr;
+
+    ret_val->handler = new RadioHandlerClass();
+
+    if (ret_val->handler->Init(Fx3, Callback, new rawdata()))
+    {
+        ret_val->status = SDDC_STATUS_READY;
+        ret_val->samplerateidx = 0;
+    }
+
+    return ret_val;
+}
+*/
 
 void sddc_close(sddc_t *that)
 {
@@ -272,12 +329,12 @@ int sddc_set_hf_bias(sddc_t *t, int bias)
 /* VHF block and VHF/UHF tuner functions */
 double sddc_get_tuner_frequency(sddc_t *t)
 {
-    return t->freq;
+    return (double)t->freq;
 }
 
 int sddc_set_tuner_frequency(sddc_t *t, double frequency)
 {
-    t->freq = t->handler->TuneLO((int64_t)frequency);
+    t->freq = t->handler->TuneLO((uint64_t)frequency);
 
     return 0;
 }

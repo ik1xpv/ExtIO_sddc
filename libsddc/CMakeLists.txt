@@ -4,6 +4,12 @@ if (MSVC)
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif (MSVC)
 
+
+include(../cmake/FileEmbed.cmake)
+
+FileEmbedSetup()
+FileEmbedAdd(${CMAKE_SOURCE_DIR}/SDDC_FX3.img)
+
 include_directories("." "../Core")
 
 add_library(sddc SHARED
@@ -21,6 +27,7 @@ endif (MSVC)
 target_include_directories(sddc PUBLIC "${LIBFFTW_INCLUDE_DIR}")
 target_link_directories(sddc PUBLIC "${LIBFFTW_LIBRARY_DIRS}")
 target_link_libraries(sddc PUBLIC ${LIBFFTW_LIBRARIES})
+target_link_libraries(sddc PUBLIC file_embed)
 
 target_link_libraries(sddc PRIVATE SDDC_CORE)
 set_target_properties(sddc PROPERTIES VERSION ${PROJECT_VERSION})

@@ -73,7 +73,7 @@ int sddc_get_device_info(struct sddc_device_info **sddc_device_infos);
 
 int sddc_free_device_info(struct sddc_device_info *sddc_device_infos);
 
-sddc_t *sddc_open(int index, const char* imagefile);
+sddc_t *sddc_open(int index);
 
 void sddc_close(sddc_t *t);
 
