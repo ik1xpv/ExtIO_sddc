@@ -69,14 +69,14 @@ int	waveHdrStarted = 0;
 
 static void waveSetCurrTime(Wind_SystemTime *p)
 {
-	struct timeval tv;
+	time_t rawtime;
 	struct tm t;
 
-	gettimeofday(&tv, NULL);
-	p->wMilliseconds = tv.tv_usec / 1000;
+	time(&rawtime);
+	p->wMilliseconds = 0;
 
 #ifdef _WIN32
-	t = *gmtime(&tv.tv_sec);
+	t = *gmtime(&rawtime);
 #else
 	gmtime_r(&tv.tv_sec, &t);
 #endif

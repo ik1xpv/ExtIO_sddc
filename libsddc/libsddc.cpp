@@ -19,6 +19,9 @@ struct sddc
     int samplerateidx;
     uint64_t freq;
 
+    std::vector<void*> frame_buffers;
+    size_t frame_size;
+
     sddc_read_async_cb_t callback;
     void *callback_context;
 };
@@ -27,8 +30,13 @@ sddc_t *current_running;
 fx3class *Fx3 = NULL;
 std::vector<std::string> devices;
 
+// Callback of data
+// Fill the ring buffer
 static void Callback(void* context, const float* data, uint32_t len)
 {
+    struct sddc *sddc = (struct sddc *)context;
+
+    sddc->callback(len, data, sddc->callback_context);
 }
 
 class rawdata : public r2iqControlClass {
@@ -88,7 +96,7 @@ int sddc_get_device_info(struct sddc_device_info **sddc_device_infos)
     for(auto &s : devices)
     {
         auto ret = &(*sddc_device_infos)[count];
-        ret->manufacturer = "RX";
+        ret->manufacturer = "SDDC";
 
         char *product = new char[256];
         auto len = strchr(s.c_str(), ' ') - s.c_str();
@@ -129,7 +137,7 @@ sddc_t *sddc_open(int index)
 
     ret_val->handler = new RadioHandlerClass();
 
-    if (ret_val->handler->Init(Fx3, Callback))
+    if (ret_val->handler->Init(Fx3, Callback, nullptr, ret_val))
     {
         ret_val->status = SDDC_STATUS_READY;
         ret_val->samplerateidx = 0;
@@ -304,12 +312,12 @@ int sddc_set_adc_random(sddc_t *t, int random)
 }
 
 /* HF block functions */
-double sddc_get_hf_attenuation(sddc_t *t)
+float sddc_get_hf_attenuation(sddc_t *t)
 {
     return 0;
 }
 
-int sddc_set_hf_attenuation(sddc_t *t, double attenuation)
+int sddc_set_hf_attenuation(sddc_t *t, float attenuation)
 {
     return 0;
 }
@@ -339,35 +347,35 @@ int sddc_set_tuner_frequency(sddc_t *t, double frequency)
     return 0;
 }
 
-int sddc_get_tuner_rf_attenuations(sddc_t *t, const double *attenuations[])
+int sddc_get_tuner_rf_attenuations(sddc_t *t, const float *attenuations[])
 {
     return 0;
 }
 
-double sddc_get_tuner_rf_attenuation(sddc_t *t)
+float sddc_get_tuner_rf_attenuation(sddc_t *t)
 {
     return 0;
 }
 
-int sddc_set_tuner_rf_attenuation(sddc_t *t, double attenuation)
+int sddc_set_tuner_rf_attenuation(sddc_t *t, float attenuation)
 {
-    //TODO, convert double to index
+    //TODO, convert float to index
     t->handler->UpdateattRF(5);
     return 0;
 }
 
-int sddc_get_tuner_if_attenuations(sddc_t *t, const double *attenuations[])
+int sddc_get_tuner_if_attenuations(sddc_t *t, const float *attenuations[])
 {
     // TODO
     return 0;
 }
 
-double sddc_get_tuner_if_attenuation(sddc_t *t)
+float sddc_get_tuner_if_attenuation(sddc_t *t)
 {
     return 0;
 }
 
-int sddc_set_tuner_if_attenuation(sddc_t *t, double attenuation)
+int sddc_set_tuner_if_attenuation(sddc_t *t, float attenuation)
 {
     return 0;
 }
@@ -383,14 +391,14 @@ int sddc_set_vhf_bias(sddc_t *t, int bias)
     return 0;
 }
 
-double sddc_get_sample_rate(sddc_t *t)
+float sddc_get_sample_rate(sddc_t *t)
 {
     return 0;
 }
 
-int sddc_set_sample_rate(sddc_t *t, double sample_rate)
+int sddc_set_sample_rate(sddc_t *t, uint64_t sample_rate)
 {
-    switch((int64_t)sample_rate)
+    switch(sample_rate)
     {
         case 32000000:
             t->samplerateidx = 0;
