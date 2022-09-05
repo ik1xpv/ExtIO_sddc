@@ -19,13 +19,13 @@ add_library(sddc SHARED
 if (MSVC)
   target_link_libraries(sddc PUBLIC Setupapi.lib)
 else()
-  target_include_directories(sddc PUBLIC "${LIBUSB_INCLUDE_DIR}")
-  target_link_directories(sddc PUBLIC "${LIBUSB_LIBRARY_DIRS}")
+  target_include_directories(sddc PUBLIC ${LIBUSB_INCLUDE_DIR})
+  target_link_directories(sddc PUBLIC ${LIBUSB_LIBRARY_DIRS})
   target_link_libraries(sddc PUBLIC ${LIBUSB_LIBRARIES})
 endif (MSVC)
 
-target_include_directories(sddc PUBLIC "${LIBFFTW_INCLUDE_DIR}")
-target_link_directories(sddc PUBLIC "${LIBFFTW_LIBRARY_DIRS}")
+target_include_directories(sddc PUBLIC ${LIBFFTW_INCLUDE_DIR})
+target_link_directories(sddc PUBLIC ${LIBFFTW_LIBRARY_DIRS})
 target_link_libraries(sddc PUBLIC ${LIBFFTW_LIBRARIES})
 target_link_libraries(sddc PUBLIC file_embed)
 
