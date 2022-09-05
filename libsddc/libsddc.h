@@ -66,6 +66,15 @@ enum LEDColors {
   BLUE_LED   = 0x04
 };
 
+// Success
+#define ERROR_SUCCESS 0
+
+// The operation failed due to invalid state of the device
+#define ERROR_INVALID_STATE -1
+
+// The operation failed due to invalid parameter
+#define ERROR_INVALID_PARAMETER -2
+
 /* basic functions */
 int sddc_get_device_count();
 

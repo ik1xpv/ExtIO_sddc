@@ -359,7 +359,6 @@ float sddc_get_tuner_rf_attenuation(sddc_t *t)
 
 int sddc_set_tuner_rf_attenuation(sddc_t *t, float attenuation)
 {
-    //TODO, convert float to index
     t->handler->UpdateattRF(5);
     return 0;
 }
@@ -398,6 +397,11 @@ float sddc_get_sample_rate(sddc_t *t)
 
 int sddc_set_sample_rate(sddc_t *t, uint64_t sample_rate)
 {
+    if (t->status != SDDC_STATUS_READY)
+    {
+        return ERROR_INVALID_STATE;
+    }
+
     switch(sample_rate)
     {
         case 32000000:
