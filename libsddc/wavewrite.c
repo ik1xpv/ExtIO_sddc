@@ -78,7 +78,7 @@ static void waveSetCurrTime(Wind_SystemTime *p)
 #ifdef _WIN32
 	t = *gmtime(&rawtime);
 #else
-	gmtime_r(&tv.tv_sec, &t);
+	gmtime_r(&rawtime, &t);
 #endif
 
 	p->wYear = t.tm_year + 1900;	/* 1601 through 30827 */

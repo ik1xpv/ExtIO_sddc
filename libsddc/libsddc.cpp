@@ -2,6 +2,7 @@
 #include "config.h"
 #include "r2iq.h"
 #include "RadioHandler.h"
+#include "string.h"
 
 #include <vector>
 #include <string>
@@ -66,13 +67,12 @@ static void probe_devices()
     }
 
     unsigned char idx = 0;
-    int selected = 0;
     char devicename[1024];
     while (Fx3->Enumerate(idx, devicename, SDDC_FX3_img_data, SDDC_FX3_img_size) && (idx < MAXNDEV))
     {
         // https://en.wikipedia.org/wiki/West_Bridge
         int retry = 2;
-        while ((strncmp("WestBridge", devicename,sizeof("WestBridge")) != NULL) && retry-- > 0)
+        while ((strncmp("WestBridge", devicename,sizeof("WestBridge")) != 0) && retry-- > 0)
             Fx3->Enumerate(idx, devicename, SDDC_FX3_img_data, SDDC_FX3_img_size); // if it enumerates as BootLoader retry
         devices.push_back(devicename);
         idx++;
