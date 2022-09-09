@@ -2,6 +2,7 @@
 
 #include <thread>
 #include <mutex>
+#include <chrono>
 #include <condition_variable>
 
 const int default_count = 64;
@@ -80,7 +81,7 @@ protected:
             std::unique_lock<std::mutex> lk(mutex);
 
             emptyCount++;
-            nonemptyCV.wait(lk, [this] {
+            nonemptyCV.wait_for(lk, std::chrono::seconds(5),  [this] {
                 return read_index != write_index;
             });
         }
@@ -98,7 +99,7 @@ protected:
         {
             std::unique_lock<std::mutex> lk(mutex);
             fullCount++;
-            nonfullCV.wait(lk, [this] {
+            nonfullCV.wait_for(lk, std::chrono::seconds(5), [this] {
                 return (write_index + 1) % max_count != read_index;
             });
         }

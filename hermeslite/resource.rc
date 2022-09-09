@@ -1,0 +1,8 @@
+#include "resource.h"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RCDATA
+//
+
+RES_BIN_FIRMWARE        RCDATA                  "..\SDDC_FX3.img"

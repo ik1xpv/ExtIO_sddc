@@ -5,10 +5,14 @@
 #include "config.h"
 #include <algorithm>
 #include <string.h>
+#include <vector>
 
 // use up to this many threads
 #define N_MAX_R2IQ_THREADS 1
 #define PRINT_INPUT_RANGE  0
+
+// We support 8 channels for now
+#define MAX_CHANNELS 8
 
 static const int halfFft = FFTN_R_ADC / 2;    // half the size of the first fft at ADC 64Msps real rate (2048)
 static const int fftPerBuf = transferSize / sizeof(short) / (3 * halfFft / 2) + 1; // number of ffts per buffer with 256|768 overlap
@@ -19,16 +23,17 @@ public:
     fft_mt_r2iq();
     virtual ~fft_mt_r2iq();
 
-    float setFreqOffset(float offset);
+    float setFreqOffset(float offset, int channel = 0);
 
-    void Init(float gain, ringbuffer<int16_t>* buffers, ringbuffer<float>* obuffers);
+    void Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>* obuffer);
+    void Init(float gain, ringbuffer<int16_t> *input, std::vector<ringbuffer<float>*> obuffers);
     void TurnOn();
     void TurnOff(void);
     bool IsOn(void);
 
 protected:
 
-    template<bool rand> void convert_float(const int16_t *input, float* output, int size)
+    template<bool rand> void inline convert_float(const int16_t *input, float* output, int size)
     {
         for(int m = 0; m < size; m++)
         {
@@ -45,7 +50,7 @@ protected:
         }
     }
 
-    void shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end)
+    void inline shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end)
     {
         for (int m = start; m < end; m++)
         {
@@ -55,7 +60,7 @@ protected:
         }
     }
 
-    template<bool flip> void copy(fftwf_complex* dest, const fftwf_complex* source, int count)
+    template<bool flip> void inline copy(fftwf_complex* dest, const fftwf_complex* source, int count)
     {
         if (flip)
         {
@@ -77,13 +82,15 @@ protected:
 
 private:
     ringbuffer<int16_t>* inputbuffer;    // pointer to input buffers
-    ringbuffer<float>* outputbuffer;    // pointer to ouput buffers
+    ringbuffer<float>* outputbuffers[MAX_CHANNELS];    // pointer to ouput buffers
+    int channel_num;                     // the number of channels
+
     int bufIdx;         // index to next buffer to be processed
     r2iqThreadArg* lastThread;
 
     float GainScale;
-    int mfftdim [NDECIDX]; // FFT N dimensions: mfftdim[k] = halfFft / 2^k
-    int mtunebin;
+    int mfftdim[NDECIDX]; // FFT N dimensions: mfftdim[k] = halfFft / 2^k
+    int mtunebin[MAX_CHANNELS];
 
     void *r2iqThreadf(r2iqThreadArg *th);   // thread function
 
