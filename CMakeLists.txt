@@ -79,5 +79,8 @@ endif (MSVC)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 add_subdirectory(Core)
-add_subdirectory(libsddc)
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    add_subdirectory(libsddc)
+endif()
+
 add_subdirectory(unittest)
