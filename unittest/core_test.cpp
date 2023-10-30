@@ -10,7 +10,7 @@
 
 using namespace std::chrono;
 
-class fx3handler : public IUsbHandler
+class CyApiHandler : public IUsbHandler
 {
     bool Open(const uint8_t* fw_data, uint32_t fw_size)
     {
@@ -96,7 +96,7 @@ namespace {
 
 TEST_CASE(CoreFixture, BasicTest)
 {
-    auto usb = new fx3handler();
+    auto usb = new CyApiHandler();
 
     auto radio = new RadioHandlerClass();
 
@@ -135,7 +135,7 @@ TEST_CASE(CoreFixture, BasicTest)
 
 TEST_CASE(CoreFixture, R2IQTest)
 {
-    auto usb = new fx3handler();
+    auto usb = new CyApiHandler();
 
     auto radio = new RadioHandlerClass();
 
@@ -162,7 +162,7 @@ TEST_CASE(CoreFixture, R2IQTest)
 
 TEST_CASE(CoreFixture, TuneTest)
 {
-    auto usb = new fx3handler();
+    auto usb = new CyApiHandler();
 
     auto radio = new RadioHandlerClass();
 

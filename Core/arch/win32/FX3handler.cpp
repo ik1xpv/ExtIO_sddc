@@ -17,10 +17,10 @@
 
 IUsbHandler* CreateUsbHandler()
 {
-	return new fx3handler();
+	return new CyApiHandler();
 }
 
-fx3handler::fx3handler():
+CyApiHandler::CyApiHandler():
 	fx3dev (nullptr),
 	Fx3IsOn (false),
 	devidx (0)
@@ -29,9 +29,9 @@ fx3handler::fx3handler():
 }
 
 
-fx3handler::~fx3handler() // reset USB device and exit
+CyApiHandler::~CyApiHandler() // reset USB device and exit
 {
-	DbgPrintf("\r\n~fx3handler\r\n");
+	DbgPrintf("\r\n~CyApiHandler\r\n");
 	Close();
 }
 
@@ -45,7 +45,7 @@ char* wchar2char(const wchar_t* wchar)
 	return m_char;
 }
 
-bool fx3handler::GetFx3DeviceStreamer() {   // open class 
+bool CyApiHandler::GetFx3DeviceStreamer() {   // open class 
 	bool r = false;
 	if (fx3dev == NULL) return r;
 	fx3dev->Open(devidx);
@@ -55,7 +55,7 @@ bool fx3handler::GetFx3DeviceStreamer() {   // open class
 	return r;
 }
 
-bool fx3handler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_data, uint32_t fw_size)
+bool CyApiHandler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_data, uint32_t fw_size)
 {
 	bool r = false;
 	strcpy(lbuf, "");
@@ -82,7 +82,7 @@ bool fx3handler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_dat
 	return true;
 }
 
-bool  fx3handler::Open(const uint8_t* fw_data, uint32_t fw_size) {
+bool  CyApiHandler::Open(const uint8_t* fw_data, uint32_t fw_size) {
 	bool r = false;
 
 	if (!GetFx3DeviceStreamer()) {
@@ -119,7 +119,7 @@ bool  fx3handler::Open(const uint8_t* fw_data, uint32_t fw_size) {
 
 using namespace std;
 
-bool fx3handler::Control(FX3Command command, UINT8 data) { // firmware control BBRF
+bool CyApiHandler::Control(FX3Command command, UINT8 data) { // firmware control BBRF
 	long lgt = 1;
 
 	fx3dev->ControlEndPt->ReqCode = command;
@@ -134,7 +134,7 @@ bool fx3handler::Control(FX3Command command, UINT8 data) { // firmware control B
 	return r;
 }
 
-bool fx3handler::Control(FX3Command command, UINT32 data) { // firmware control BBRF
+bool CyApiHandler::Control(FX3Command command, UINT32 data) { // firmware control BBRF
 	long lgt = 4;
 
 	fx3dev->ControlEndPt->ReqCode = command;
@@ -149,7 +149,7 @@ bool fx3handler::Control(FX3Command command, UINT32 data) { // firmware control 
 	return r;
 }
 
-bool fx3handler::Control(FX3Command command, UINT64 data) { // firmware control BBRF
+bool CyApiHandler::Control(FX3Command command, UINT64 data) { // firmware control BBRF
 	long lgt = 8;
 
 	fx3dev->ControlEndPt->ReqCode = command;
@@ -165,7 +165,7 @@ bool fx3handler::Control(FX3Command command, UINT64 data) { // firmware control 
 }
 
 
-bool fx3handler::SetArgument(UINT16 index, UINT16 value) { // firmware control BBRF
+bool CyApiHandler::SetArgument(UINT16 index, UINT16 value) { // firmware control BBRF
 	long lgt = 1;
 	uint8_t data = 0;
 
@@ -181,7 +181,7 @@ bool fx3handler::SetArgument(UINT16 index, UINT16 value) { // firmware control B
 	return r;
 }
 
-bool fx3handler::GetHardwareInfo(UINT32* data) { // firmware control BBRF
+bool CyApiHandler::GetHardwareInfo(UINT32* data) { // firmware control BBRF
 	long lgt = 4;
 
 	fx3dev->ControlEndPt->ReqCode = TESTFX3;
@@ -201,7 +201,7 @@ bool fx3handler::GetHardwareInfo(UINT32* data) { // firmware control BBRF
 
 }
 
-bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
+bool CyApiHandler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 {
 	long lgt = len;
 	bool r;
@@ -211,7 +211,7 @@ bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 	return r;
 }
 
-bool fx3handler::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
+bool CyApiHandler::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
 {
 	bool r = false;
 	LONG lgt = len;
@@ -226,7 +226,7 @@ bool fx3handler::SendI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 
 	return r;
 }
 
-bool fx3handler::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
+bool CyApiHandler::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 len)
 {
 	bool r = false;
 	LONG lgt = len;
@@ -245,7 +245,7 @@ bool fx3handler::ReadI2cbytes(UINT8 i2caddr, UINT8 regaddr, PUINT8 pdata, UINT8 
 	return r;
 }
 
-bool fx3handler::Close() {
+bool CyApiHandler::Close() {
 	fx3dev->Close();            // close class
 	delete fx3dev;              // destroy class
 	Fx3IsOn = false;
@@ -263,7 +263,7 @@ struct ReadContext
 	long size;
 };
 
-bool fx3handler::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
+bool CyApiHandler::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
 {
 	ReadContext *readContext = (ReadContext *)(*context);
 
@@ -291,7 +291,7 @@ bool fx3handler::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
 	return true;
 }
 
-bool fx3handler::FinishDataXfer(void** context)
+bool CyApiHandler::FinishDataXfer(void** context)
 {
 	ReadContext *readContext = (ReadContext *)(*context);
 
@@ -318,7 +318,7 @@ bool fx3handler::FinishDataXfer(void** context)
 	return true;
 }
 
-void fx3handler::CleanupDataXfer(void** context)
+void CyApiHandler::CleanupDataXfer(void** context)
 {
 	ReadContext *readContext = (ReadContext *)(*context);
 
@@ -328,7 +328,7 @@ void fx3handler::CleanupDataXfer(void** context)
 
 #define USB_READ_CONCURRENT 4
 
-void fx3handler::AdcSamplesProcess()
+void CyApiHandler::AdcSamplesProcess()
 {
 	DbgPrintf("AdcSamplesProc thread runs\n");
 	int buf_idx;            // queue index
@@ -376,7 +376,7 @@ void fx3handler::AdcSamplesProcess()
 	return;  // void *
 }
 
-void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
+void CyApiHandler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 {
 	// Allocate the context and buffers
 	inputbuffer = &input;
@@ -391,7 +391,7 @@ void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 	);
 }
 
-void fx3handler::StopStream()
+void CyApiHandler::StopStream()
 {
 	// set the flag
 	run = false;

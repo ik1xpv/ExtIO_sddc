@@ -28,11 +28,11 @@
 class CCyFX3Device;
 class CCyUSBEndPoint;
 
-class fx3handler : public IUsbHandler
+class CyApiHandler : public IUsbHandler
 {
 public:
-	fx3handler();
-	virtual ~fx3handler(void);
+	CyApiHandler();
+	virtual ~CyApiHandler(void);
 
 	bool Open(const uint8_t* fw_data, uint32_t fw_size);
 	bool IsOn() { return Fx3IsOn; }
