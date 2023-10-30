@@ -2,7 +2,7 @@
 #define FX3HANDLER_H
 
 //
-// FX3handler.cpp 
+// CyApiHandler.cpp 
 // 2020 10 12  Oscar Steila ik1xpv
 // loading arm code.img from resource by Howard Su and Hayati Ayguen
 // This module was previous named:openFX3.cpp

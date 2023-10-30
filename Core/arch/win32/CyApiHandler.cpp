@@ -1,5 +1,5 @@
 //
-// FX3handler.cpp 
+// CyApiHandler.cpp 
 // 2020 10 12  Oscar Steila ik1xpv
 // loading arm code.img from resource by Howard Su and Hayati Ayguen
 // This module was previous named:
@@ -9,7 +9,7 @@
 // 
 #include <windows.h>
 #include "../../config.h"
-#include "FX3handler.h"
+#include "CyApiHandler.h"
 #include "./CyAPI/CyAPI.h"
 #include "./CyAPI/cyioctl.h"
 #define RES_BIN_FIRMWARE                2000
@@ -297,7 +297,7 @@ bool CyApiHandler::FinishDataXfer(void** context)
 
 	if (!readContext)
 	{
-		return nullptr;
+		return false;
 	}
 
 	if (!EndPt->WaitForXfer(&readContext->overlap, BLOCK_TIMEOUT)) { // block on transfer
