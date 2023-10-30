@@ -12,7 +12,7 @@
 #include "streaming.h"
 #include "../../dsp/ringbuffer.h"
 
-class fx3handler : public fx3class
+class fx3handler : public IUsbHandler
 {
 public:
 	fx3handler();

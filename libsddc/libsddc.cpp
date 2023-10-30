@@ -65,7 +65,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
 {
     auto ret_val = new sddc_t();
 
-    fx3class *fx3 = CreateUsbHandler();
+    IUsbHandler *fx3 = CreateUsbHandler();
     if (fx3 == nullptr)
     {
         return nullptr;

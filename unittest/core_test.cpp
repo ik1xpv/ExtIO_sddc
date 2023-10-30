@@ -10,7 +10,7 @@
 
 using namespace std::chrono;
 
-class fx3handler : public fx3class
+class fx3handler : public IUsbHandler
 {
     bool Open(const uint8_t* fw_data, uint32_t fw_size)
     {

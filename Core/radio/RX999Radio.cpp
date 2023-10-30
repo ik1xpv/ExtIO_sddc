@@ -8,7 +8,7 @@
 
 #define MODE HIGH_MODE
 
-RX999Radio::RX999Radio(fx3class *fx3)
+RX999Radio::RX999Radio(IUsbHandler *fx3)
     : RadioHardware(fx3)
 {
     // high mode gain = 0.409, start=-30

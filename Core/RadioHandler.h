@@ -30,7 +30,7 @@ class RadioHandlerClass {
 public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
-    bool Init(fx3class* Fx3, void (*callback)(void* context, const float*, uint32_t), r2iqControlClass *r2iqCntrl = nullptr, void* context = nullptr);
+    bool Init(IUsbHandler* Fx3, void (*callback)(void* context, const float*, uint32_t), r2iqControlClass *r2iqCntrl = nullptr, void* context = nullptr);
     bool Start(int srate_idx);
     bool Stop();
     bool Close();
@@ -117,7 +117,7 @@ private:
     float	mBps;
     float	mSpsIF;
 
-    fx3class *fx3;
+    IUsbHandler *fx3;
     uint32_t adcrate;
 
     std::mutex fc_mutex;
@@ -131,7 +131,7 @@ extern unsigned long Failures;
 
 class RadioHardware {
 public:
-    RadioHardware(fx3class* fx3) : Fx3(fx3), gpios(0) {}
+    RadioHardware(IUsbHandler* fx3) : Fx3(fx3), gpios(0) {}
 
     virtual ~RadioHardware();
     virtual const char* getName() = 0;
@@ -155,13 +155,13 @@ public:
     bool FX3UnsetGPIO(uint32_t mask);
 
 protected:
-    fx3class* Fx3;
+    IUsbHandler* Fx3;
     uint32_t gpios;
 };
 
 class BBRF103Radio : public RadioHardware {
 public:
-    BBRF103Radio(fx3class* fx3);
+    BBRF103Radio(IUsbHandler* fx3);
     const char* getName() override { return "BBRF103"; }
     float getGain() override { return BBRF103_GAINFACTOR; }
     rf_mode PrepareLo(uint64_t freq) override;
@@ -187,14 +187,14 @@ private:
 
 class RX888Radio : public BBRF103Radio {
 public:
-    RX888Radio(fx3class* fx3) : BBRF103Radio(fx3) {}
+    RX888Radio(IUsbHandler* fx3) : BBRF103Radio(fx3) {}
     const char* getName() override { return "RX888"; }
     float getGain() override { return RX888_GAINFACTOR; }
 };
 
 class RX888R2Radio : public RadioHardware {
 public:
-    RX888R2Radio(fx3class* fx3);
+    RX888R2Radio(IUsbHandler* fx3);
     const char* getName() override { return "RX888 mkII"; }
     float getGain() override { return RX888mk2_GAINFACTOR; }
     rf_mode PrepareLo(uint64_t freq) override;
@@ -223,7 +223,7 @@ private:
 
 class RX888R3Radio : public RadioHardware {
 public:
-    RX888R3Radio(fx3class* fx3);
+    RX888R3Radio(IUsbHandler* fx3);
     const char* getName() override { return "RX888 mkIII"; }
     float getGain() override { return RX888mk2_GAINFACTOR; }
     rf_mode PrepareLo(uint64_t freq) override;
@@ -252,7 +252,7 @@ private:
 
 class RX999Radio : public RadioHardware {
 public:
-    RX999Radio(fx3class* fx3);
+    RX999Radio(IUsbHandler* fx3);
     const char* getName() override { return "RX999"; }
     float getGain() override { return RX888_GAINFACTOR; }
 
@@ -275,7 +275,7 @@ private:
 
 class HF103Radio : public RadioHardware {
 public:
-    HF103Radio(fx3class* fx3);
+    HF103Radio(IUsbHandler* fx3);
     const char* getName() override { return "HF103"; }
     float getGain() override { return HF103_GAINFACTOR; }
 
@@ -298,7 +298,7 @@ private:
 
 class RXLucyRadio : public RadioHardware {
 public:
-    RXLucyRadio(fx3class* fx3);
+    RXLucyRadio(IUsbHandler* fx3);
     const char* getName() override { return "Lucy"; }
     float getGain() override { return HF103_GAINFACTOR; }
 
@@ -323,7 +323,7 @@ private:
 
 class DummyRadio : public RadioHardware {
 public:
-    DummyRadio(fx3class* fx3) : RadioHardware(fx3) {}
+    DummyRadio(IUsbHandler* fx3) : RadioHardware(fx3) {}
     const char* getName() override { return "Dummy"; }
 
     rf_mode PrepareLo(uint64_t freq) override

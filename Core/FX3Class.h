@@ -16,10 +16,10 @@
 #include "../Interface.h"
 #include "dsp/ringbuffer.h"
 
-class fx3class
+class IUsbHandler
 {
 public:
-	virtual ~fx3class(void) {}
+	virtual ~IUsbHandler(void) {}
 	virtual bool Open(const uint8_t* fw_data, uint32_t fw_size) = 0;
 	virtual bool Control(FX3Command command, uint8_t data = 0) = 0;
 	virtual bool Control(FX3Command command, uint32_t data) = 0;
@@ -32,6 +32,6 @@ public:
 	virtual bool Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_data, uint32_t fw_size) = 0;
 };
 
-extern "C" fx3class* CreateUsbHandler();
+extern "C" IUsbHandler* CreateUsbHandler();
 
 #endif // FX3CLASS_H

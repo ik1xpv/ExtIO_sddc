@@ -21,7 +21,7 @@ const float RX888R3Radio::vhf_rf_steps[RX888R3Radio::vhf_rf_step_size] = {
 const float RX888R3Radio::vhf_if_steps[RX888R3Radio::vhf_if_step_size] = {
     -4.7f, -2.1f, 0.5f, 3.5f, 7.7f, 11.2f, 13.6f, 14.9f, 16.3f, 19.5f, 23.1f, 26.5f, 30.0f, 33.7f, 37.2f, 40.8f};
 
-RX888R3Radio::RX888R3Radio(fx3class *fx3)
+RX888R3Radio::RX888R3Radio(IUsbHandler *fx3)
     : RadioHardware(fx3)
 {
     for (uint8_t i = 0; i < hf_rf_step_size; i++)
@@ -150,11 +150,12 @@ uint64_t RX888R3Radio::TuneLo(uint64_t freq)
         uint32_t hardwareVCO = targetVCO / 1000000; // convert to MHz
         int offset = targetVCO % 1000000;
 
-        DbgPrintf("Target VCO = %luHZ, hardware VCO= %dMHX, Actual IF = %dHZ\n", freq + IF_FREQ, hardwareVCO, IF_FREQ - offset);
+        DbgPrintf("Target VCO = %lluHZ, hardware VCO= %dMHX, Actual IF = %dHZ\n", freq + IF_FREQ, hardwareVCO, IF_FREQ - offset);
 
         Fx3->Control(TUNERTUNE, hardwareVCO);
         return freq - (IF_FREQ - offset);
     }
+
 }
 
 int RX888R3Radio::getRFSteps(const float **steps)

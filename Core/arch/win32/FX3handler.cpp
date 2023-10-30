@@ -15,7 +15,7 @@
 #define RES_BIN_FIRMWARE                2000
 
 
-fx3class* CreateUsbHandler()
+IUsbHandler* CreateUsbHandler()
 {
 	return new fx3handler();
 }

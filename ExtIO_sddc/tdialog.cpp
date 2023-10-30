@@ -175,7 +175,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		HDC hDc = (HDC)wParam;
 		SetBkMode(hDc, TRANSPARENT);
-		return (LONG)g_hbrBackground;
+		return (LRESULT)reinterpret_cast<HBRUSH>(g_hbrBackground);
 	}
 
 	case WM_USER + 1:
@@ -494,7 +494,7 @@ BOOL CALLBACK DlgSelectDevice(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	{
 		HDC hDc = (HDC)wParam;
 		SetBkMode(hDc, TRANSPARENT);
-		return (LONG)g_hbrBackground;
+		return (LRESULT)reinterpret_cast<HBRUSH>(g_hbrBackground);
 	}
 	case WM_COMMAND:
 		switch (LOWORD(wParam))

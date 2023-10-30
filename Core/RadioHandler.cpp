@@ -86,7 +86,7 @@ const char *RadioHandlerClass::getName()
 	return hardware->getName();
 }
 
-bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(void*context, const float*, uint32_t), r2iqControlClass *r2iqCntrl, void *context)
+bool RadioHandlerClass::Init(IUsbHandler* Fx3, void (*callback)(void*context, const float*, uint32_t), r2iqControlClass *r2iqCntrl, void *context)
 {
 	uint8_t rdata[4];
 	this->fx3 = Fx3;

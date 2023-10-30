@@ -8,7 +8,7 @@
 
 #define MODE HIGH_MODE
 
-RXLucyRadio::RXLucyRadio(fx3class *fx3)
+RXLucyRadio::RXLucyRadio(IUsbHandler *fx3)
     : RadioHardware(fx3)
 {
     // initialize steps

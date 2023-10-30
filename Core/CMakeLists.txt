@@ -15,7 +15,7 @@ if (MSVC)
     set_source_files_properties(fft_mt_r2iq_avx512.cpp PROPERTIES COMPILE_FLAGS /arch:AVX512)
 else()
     # Assume GCC, check target CPU/FPU
-  if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
+  if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64")
     message(STATUS "Compiling for AVX")
     set_source_files_properties(fft_mt_r2iq_avx.cpp PROPERTIES COMPILE_FLAGS -mavx)
     set_source_files_properties(fft_mt_r2iq_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)

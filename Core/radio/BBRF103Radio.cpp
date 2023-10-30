@@ -18,7 +18,7 @@ const float BBRF103Radio::hfsteps[3] = {
     -20.0f, -10.0f, 0.0f
 };
 
-BBRF103Radio::BBRF103Radio(fx3class* fx3)
+BBRF103Radio::BBRF103Radio(IUsbHandler* fx3)
     : RadioHardware(fx3)
 {
     

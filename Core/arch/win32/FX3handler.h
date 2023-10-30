@@ -28,7 +28,7 @@
 class CCyFX3Device;
 class CCyUSBEndPoint;
 
-class fx3handler : public fx3class
+class fx3handler : public IUsbHandler
 {
 public:
 	fx3handler();
