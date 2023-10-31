@@ -103,8 +103,7 @@ static bool GetConsoleInput(char* buf, int maxlen)
 {
 	DWORD nevents = 0;
 	INPUT_RECORD irInBuf[128];
-	KEY_EVENT_RECORD key;
-	int i;
+	uint32_t i;
 	bool rc = false;
 	int counter = 0;
 	if (Hconsole == nullptr) return rc;
@@ -492,7 +491,7 @@ double EXTIO_API SetHWLOdbl(double LOfreq)
 	const double wishedLO = LOfreq;
 	double ret = 0;
 	rf_mode rfmode = RadioHandler.GetmodeRF();
-	rf_mode newmode = RadioHandler.PrepareLo(LOfreq);
+	rf_mode newmode = RadioHandler.PrepareLo((uint64_t)LOfreq);
 
 	if (newmode == NOMODE) // this freq is not supported
 		return -1;
@@ -525,7 +524,7 @@ double EXTIO_API SetHWLOdbl(double LOfreq)
 	}
 
 	double internal_LOfreq = LOfreq / FreqCorrectionFactor();
-	internal_LOfreq = RadioHandler.TuneLO(internal_LOfreq);
+	internal_LOfreq = (uint64_t)RadioHandler.TuneLO((uint64_t)internal_LOfreq);
 	gfLOfreq = LOfreq = internal_LOfreq * FreqCorrectionFactor();
 	if (wishedLO != LOfreq)
 	{
@@ -892,7 +891,7 @@ int SetOverclock(uint32_t adcfreq)
 
 	RadioHandler.Start(ExtIoGetActualSrateIdx());
 	double internal_LOfreq = gfLOfreq / FreqCorrectionFactor();
-	RadioHandler.TuneLO(internal_LOfreq);
+	RadioHandler.TuneLO((uint64_t)internal_LOfreq);
 	return 0;
 }
 
