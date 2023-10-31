@@ -18,6 +18,8 @@ message(STATUS "Build type: " ${CMAKE_BUILD_TYPE} " - Version: " ${VERSION} " / 
 # allow disabling optimizations - for debug reasons
 option(USE_SIMD_OPTIMIZATIONS "enable SIMD optimizations" ON)
 
+option(USE_LIBUSB "Use libusb instead of CyAPI" OFF)
+
 # allow enabling address sanitizer - for debug reasons
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     option(USE_DEBUG_ASAN "use GCC's address sanitizer?" OFF)
@@ -46,9 +48,14 @@ if (MSVC)
         SET(HASH cfd88dc0e8d7001115ea79e069a2c695d52c8947f5b4f3b7ac54a192756f439f)
     endif()
 
+    if (USE_LIBUSB)
+        SET(LIBUSB_URL "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-binaries.7z")
+    endif (USE_LIBUSB)
+
     include(ExternalProject)
     ExternalProject_Add(
         LIBFFTW
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE # new in CMake 3.24
         URL ${FFTW_URL}
         URL_HASH SHA256=${HASH}
         BUILD_IN_SOURCE TRUE
@@ -60,7 +67,28 @@ if (MSVC)
     SET(LIBFFTW_INCLUDE_DIRS ${SOURCE_DIR})
     SET(LIBFFTW_LIBRARY_DIRS ${SOURCE_DIR})
     SET(LIBFFTW_LIBRARIES fftw3f-3)
+    message(STATUS "LIBFFTW_INCLUDE_DIRS=${LIBFFTW_INCLUDE_DIRS}")
+    message(STATUS "LIBFFTW_LIBRARY_DIRS=${LIBFFTW_LIBRARY_DIRS}")
 
+
+    if (USE_LIBUSB)
+        ExternalProject_Add(
+            LIBUSB
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE # new in CMake 3.24
+            URL ${LIBUSB_URL}
+            BUILD_IN_SOURCE TRUE
+            CONFIGURE_COMMAND   ""
+            BUILD_COMMAND       ${LIBEXE}  /MACHINE:${ARCH} /OUT:./libusb-1.0.lib
+            INSTALL_COMMAND     ""
+        )
+        ExternalProject_Get_Property(LIBUSB SOURCE_DIR)
+        SET(LIBUSB_INCLUDE_DIRS ${SOURCE_DIR}/libusb-MinGW-Win32/include)
+        SET(LIBUSB_LIBRARY_DIRS ${SOURCE_DIR}/VS2015-Win32/lib)
+        message(STATUS "LIBUSB_INCLUDE_DIRS=${LIBUSB_INCLUDE_DIRS}")
+        message(STATUS "LIBUSB_LIBRARY_DIRS=${LIBUSB_LIBRARY_DIRS}")
+        
+        SET(LIBUSB_LIBRARIES libusb-1.0)
+    endif (USE_LIBUSB)
     add_subdirectory(ExtIO_sddc)
 else()
 
