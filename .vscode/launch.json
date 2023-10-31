@@ -16,6 +16,10 @@
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
         "environment": [],
+        "symbolOptions": {
+          "searchPaths": [],
+          "searchMicrosoftSymbolServer": true
+        }
       
       }
     ]
