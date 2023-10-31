@@ -23,7 +23,7 @@
 #define	STREAMER_ID   (0x00F1)
 #define	BOOTLOADER_ID (0x00F3)
 
-#include "../../FX3Class.h"
+#include "../../IUsbHandler.h"
 
 class CCyFX3Device;
 class CCyUSBEndPoint;

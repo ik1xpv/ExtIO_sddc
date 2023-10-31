@@ -25,7 +25,7 @@ CyApiHandler::CyApiHandler():
 	Fx3IsOn (false),
 	devidx (0)
 {
-
+	DbgPrintf("\r\nCyApiHandler\r\n");
 }
 
 

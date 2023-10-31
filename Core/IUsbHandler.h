@@ -1,5 +1,5 @@
-#ifndef FX3CLASS_H
-#define FX3CLASS_H
+#ifndef IUsbHandler_H
+#define IUsbHandler_H
 
 //
 // CyApiHandler.cpp 
@@ -34,4 +34,4 @@ public:
 
 extern "C" IUsbHandler* CreateUsbHandler();
 
-#endif // FX3CLASS_H
+#endif // IUsbHandler_H

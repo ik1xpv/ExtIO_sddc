@@ -1,5 +1,5 @@
 #include "r2iq.h"
-#include "FX3Class.h"
+#include "IUsbHandler.h"
 #include "CppUnitTestFramework.hpp"
 #include <thread>
 #include <chrono>

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
-#include "FX3Class.h"
+#include "IUsbHandler.h"
 
 #include "dsp/ringbuffer.h"
 
