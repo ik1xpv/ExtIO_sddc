@@ -1,5 +1,5 @@
-#ifndef FX3HANDLER_H
-#define FX3HANDLER_H
+#ifndef CYAPIHANDLER_H
+#define CYAPIHANDLER_H
 
 //
 // CyApiHandler.cpp 
@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
+#include <windows.h>
 
 #include "../../dsp/ringbuffer.h"
 
@@ -70,4 +71,4 @@ private:
 };
 
 
-#endif // FX3HANDLER_H
+#endif // CYAPIHANDLER_H

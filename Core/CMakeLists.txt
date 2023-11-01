@@ -8,6 +8,12 @@ endif (MSVC)
 
 file(GLOB SRC "*.cpp" "radio/*.cpp" "pffft/*.cpp" ${ARCH_SRC})
 
+# Conditionally append additional source files to the list if USE_LIBUSB is ON
+if(USE_LIBUSB)
+    file(GLOB LIBUSB_SRC "libusb/*.cpp")
+    list(APPEND SRC ${LIBUSB_SRC})
+endif()
+
 if (MSVC)
     # Assume Windows/x86 target ;)
     set_source_files_properties(fft_mt_r2iq_avx.cpp PROPERTIES COMPILE_FLAGS /arch:AVX)
@@ -31,8 +37,11 @@ else()
     message(FATAL_ERROR "Unable to identify CPU: ${CMAKE_SYSTEM_PROCESSOR}")
   endif()
 
+  endif (MSVC)
+
+if (USE_LIBUSB)
     include_directories(${LIBUSB_INCLUDE_DIRS})
-endif (MSVC)
+endif()
 
 include_directories(${LIBFFTW_INCLUDE_DIRS})
 
