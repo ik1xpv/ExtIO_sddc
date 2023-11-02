@@ -18,7 +18,7 @@ message(STATUS "Build type: " ${CMAKE_BUILD_TYPE} " - Version: " ${VERSION} " / 
 # allow disabling optimizations - for debug reasons
 option(USE_SIMD_OPTIMIZATIONS "enable SIMD optimizations" ON)
 
-option(USE_LIBUSB "Use libusb instead of CyAPI" ON)
+option(USE_LIBUSB "Use libusb instead of CyAPI" OFF)
 
 # allow enabling address sanitizer - for debug reasons
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -32,7 +32,7 @@ else()
 endif()
 
 if (MSVC)
-    set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3")
+    set(CMAKE_CXX_FLAGS " /std:c++17 /EHsc /W3")
 
     get_filename_component(SDKPATH ${CMAKE_LINKER} DIRECTORY)
     find_program(LIBEXE lib HINTS ${SDKPATH} REQUIRED)
