@@ -1,35 +1,11 @@
-#ifndef CYAPIHANDLER_H
-#define CYAPIHANDLER_H
+#ifndef LIBUSB_HANDLER_HPP
+#define LIBUSB_HANDLER_HPP
 
-//
-// CyApiHandler.cpp 
-// 2020 10 12  Oscar Steila ik1xpv
-// loading arm code.img from resource by Howard Su and Hayati Ayguen
-// This module was previous named:openFX3.cpp
-// MIT License Copyright (c) 2016 Booya Corp.
-// booyasdr@gmail.com, http://booyasdr.sf.net
-// modified 2017 11 30 ik1xpv@gmail.com, http://www.steila.com/blog
-// 
+#include "libusb-1.0/libusb.h"
+#include "../ringbuffer.h"
+#include "IUsbHandler.h"
 
-#include <sys/stat.h>
-#include <iostream>
-#include <stdio.h>
-#include <stdint.h>
-#include <time.h>
-#include <windows.h>
-
-#include "../../dsp/ringbuffer.h"
-
-#define	VENDOR_ID     (0x04B4)
-#define	STREAMER_ID   (0x00F1)
-#define	BOOTLOADER_ID (0x00F3)
-
-#include "../../IUsbHandler.h"
-
-class CCyFX3Device;
-class CCyUSBEndPoint;
-
-class CyApiHandler : public IUsbHandler
+/* class CyApiHandler : public IUsbHandler
 {
 public:
 	CyApiHandler();
@@ -46,7 +22,9 @@ public:
 	void StartStream(ringbuffer<int16_t>& input, int numofblock);
 	void StopStream();
 	bool Enumerate(unsigned char &idx, char *lbuf, const uint8_t* fw_data, uint32_t fw_size);
+
 private:
+
 	bool SendI2cbytes(uint8_t i2caddr, uint8_t regaddr, uint8_t* pdata, uint8_t len);
 	bool ReadI2cbytes(uint8_t i2caddr, uint8_t regaddr, uint8_t* pdata, uint8_t len);
 
@@ -54,8 +32,8 @@ private:
 	bool FinishDataXfer(void** context);
 	void CleanupDataXfer(void** context);
 
-	CCyFX3Device* fx3dev;
-	CCyUSBEndPoint* EndPt;
+	//CCyFX3Device* fx3dev;
+	//CCyUSBEndPoint* EndPt;
 
     std::thread *adc_samples_thread;
 
@@ -70,5 +48,6 @@ private:
 	UCHAR devidx;
 };
 
+ */
 
-#endif // CYAPIHANDLER_H
+#endif // LIBUSB_HPP

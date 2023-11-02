@@ -1,6 +1,0 @@
-#ifndef LIBUSBHANDLER_H
-#define LIBUSBHANDLER_H
-
-
-
-#endif // LIBUSBHANDLER_H

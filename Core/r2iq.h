@@ -9,7 +9,7 @@
 #include <condition_variable>
 #include <atomic>
 
-#include "dsp/ringbuffer.h"
+#include "ringbuffer.h"
 
 struct r2iqThreadArg;
 

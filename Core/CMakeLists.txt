@@ -1,18 +1,22 @@
+# Core/CmakeLists.txt
 cmake_minimum_required(VERSION 3.13)
+message(STATUS "Enter CORE directory")
+add_subdirectory(usb)
 
-if (MSVC)
-    file(GLOB ARCH_SRC "arch/win32/*.cpp" "arch/win32/CyAPI/*.cpp")
-else()
-    file(GLOB ARCH_SRC "arch/linux/*.c" "arch/linux/*.cpp")
-endif (MSVC)
+file(GLOB SRC "config.cpp"
+              "fft_mt_r2iq.cpp"
+              "fft_mt_r2iq_avx.cpp"
+              "fft_mt_r2iq_avx2.cpp"
+              "fft_mt_r2iq_avx512.cpp"
+              "fft_mt_r2iq_def.cpp"
+              "fft_mt_r2iq_impl.hpp"
+              "fft_mt_r2iq_neon.cpp"
+              "fft_mt_r2iq.cpp"
+              "fir.cpp"
+              "PScope_uti.cpp"
+              "RadioHandler.cpp"
+              "radio/*.cpp" "pffft/*.cpp")
 
-file(GLOB SRC "*.cpp" "radio/*.cpp" "pffft/*.cpp" ${ARCH_SRC})
-
-# Conditionally append additional source files to the list if USE_LIBUSB is ON
-if(USE_LIBUSB)
-    file(GLOB LIBUSB_SRC "libusb/*.cpp")
-    list(APPEND SRC ${LIBUSB_SRC})
-endif()
 
 if (MSVC)
     # Assume Windows/x86 target ;)
@@ -39,15 +43,17 @@ else()
 
   endif (MSVC)
 
-if (USE_LIBUSB)
-    include_directories(${LIBUSB_INCLUDE_DIRS})
-endif()
 
 include_directories(${LIBFFTW_INCLUDE_DIRS})
-
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
+
+
 add_library(SDDC_CORE STATIC ${SRC})
+
+target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES})
+target_link_directories(SDDC_CORE PUBLIC ${LIBFFTW_LIBRARY_DIRS})
+
 set_target_properties(SDDC_CORE PROPERTIES POSITION_INDEPENDENT_CODE True)
 target_compile_definitions(SDDC_CORE PUBLIC _CRT_SECURE_NO_WARNINGS)
 

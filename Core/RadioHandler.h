@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
-#include "IUsbHandler.h"
+#include "usb/IUsbHandler.h"
 
-#include "dsp/ringbuffer.h"
+#include "ringbuffer.h"
 
 class RadioHardware;
 class r2iqControlClass;

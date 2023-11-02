@@ -9,7 +9,7 @@
 #include "config.h"
 #include "ExtIO_sddc.h"
 #include "RadioHandler.h"
-#include "IUsbHandler.h"
+#include "../Core/usb/IUsbHandler.h"
 #include "uti.h"
 #include "tdialog.h"
 #include "splashwindow.h"

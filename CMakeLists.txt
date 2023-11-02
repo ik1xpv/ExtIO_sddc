@@ -89,7 +89,7 @@ if (MSVC)
         
         SET(LIBUSB_LIBRARIES libusb-1.0)
     endif (USE_LIBUSB)
-    add_subdirectory(ExtIO_sddc)
+    
 else()
 
     if (USE_DEBUG_ASAN)
@@ -102,12 +102,13 @@ else()
     include(FindPkgConfig)
     pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
     pkg_check_modules(LIBFFTW REQUIRED fftw3f)
-    add_subdirectory(ExtIO_sddc)
+    
 endif (MSVC)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 add_subdirectory(Core)
+add_subdirectory(ExtIO_sddc)
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_subdirectory(libsddc)
     add_subdirectory(unittest)

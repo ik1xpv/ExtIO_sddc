@@ -13,8 +13,8 @@
 
 #include <stdint.h>
 #include <functional>
-#include "../Interface.h"
-#include "dsp/ringbuffer.h"
+#include "../../Interface.h"
+#include "../ringbuffer.h"
 
 class IUsbHandler
 {
