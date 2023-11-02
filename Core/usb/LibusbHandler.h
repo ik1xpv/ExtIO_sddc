@@ -5,11 +5,12 @@
 #include "../ringbuffer.h"
 #include "IUsbHandler.h"
 
-/* class CyApiHandler : public IUsbHandler
+
+class LibusbHandler : public IUsbHandler
 {
 public:
-	CyApiHandler();
-	virtual ~CyApiHandler(void);
+	LibusbHandler();
+	virtual ~LibusbHandler(void);
 
 	bool Open(const uint8_t* fw_data, uint32_t fw_size);
 	bool IsOn() { return Fx3IsOn; }
@@ -22,9 +23,7 @@ public:
 	void StartStream(ringbuffer<int16_t>& input, int numofblock);
 	void StopStream();
 	bool Enumerate(unsigned char &idx, char *lbuf, const uint8_t* fw_data, uint32_t fw_size);
-
 private:
-
 	bool SendI2cbytes(uint8_t i2caddr, uint8_t regaddr, uint8_t* pdata, uint8_t len);
 	bool ReadI2cbytes(uint8_t i2caddr, uint8_t regaddr, uint8_t* pdata, uint8_t len);
 
@@ -48,6 +47,5 @@ private:
 	UCHAR devidx;
 };
 
- */
 
 #endif // LIBUSB_HPP

@@ -1,7 +1,7 @@
 #include "UsbHandlerFactory.h"
 
 #ifdef USE_LIBUSB_DRIVER
-    #include "LibusbHandler.hpp"
+    #include "LibusbHandler.h"
 #else
     #include "CyApiHandler.h"
 #endif

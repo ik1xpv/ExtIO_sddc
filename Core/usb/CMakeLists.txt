@@ -12,8 +12,8 @@ if(WIN32)
     if(USE_LIBUSB)
         # Append libusb specific sources and headers for Windows
         target_compile_definitions(usbLib PUBLIC -DUSE_LIBUSB_DRIVER)
-        list(APPEND USB_SRC "libusbHandler.cpp" "libusb/libusb.cpp")
-        list(APPEND USB_HEADERS "libusbHandler.hpp" "libusb/libusb.hpp")
+        list(APPEND USB_SRC "LibusbHandler.cpp" "libusb/libusb.cpp")
+        list(APPEND USB_HEADERS "LibusbHandler.h" "libusb/libusb.hpp")
         target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
     else()
         # Append CyAPI specific sources and headers
