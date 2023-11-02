@@ -11,7 +11,7 @@ set(USB_HEADERS "IUsbHandler.h")
 if(WIN32)
     if(USE_LIBUSB)
         # Append libusb specific sources and headers for Windows
-        add_definitions(-DUSE_LIBUSB_DRIVER)
+        target_compile_definitions(usbLib PUBLIC -DUSE_LIBUSB_DRIVER)
         list(APPEND USB_SRC "libusbHandler.cpp" "libusb/libusb.cpp")
         list(APPEND USB_HEADERS "libusbHandler.hpp" "libusb/libusb.hpp")
         target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
@@ -25,6 +25,7 @@ if(WIN32)
         
     endif()
 else()
+    add_compile_definitions(-DUSE_LIBUSB_DRIVER)
     # Append libusb specific sources and headers for Unix-like systems
     list(APPEND USB_SRC "libusb/*.cpp")
     list(APPEND USB_HEADERS "libusb/*.h")
