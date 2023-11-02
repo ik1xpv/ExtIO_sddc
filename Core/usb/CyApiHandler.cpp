@@ -55,31 +55,31 @@ bool CyApiHandler::GetFx3DeviceStreamer() {   // open class
 	return r;
 }
 
-bool CyApiHandler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_data, uint32_t fw_size)
+bool CyApiHandler::Enumerate(unsigned char& idx, char* lbuf, size_t bufSize, const uint8_t* fw_data, uint32_t fw_size)
 {
-	bool r = false;
-	strcpy(lbuf, "");
-	if (fx3dev == nullptr)
-		fx3dev = new CCyFX3Device;              // instantiate the device
-	if (fx3dev == nullptr) return r;		// return if failed
-	if (!fx3dev->Open(idx)) return r;
-	if (fx3dev->IsBootLoaderRunning()) {
-		if (fx3dev->DownloadFwToRam(fw_data, fw_size) != SUCCESS) {
-			DbgPrintf("Failed to DownloadFwToRam device(%x)\n", idx);
-		}
-		else {
-			fx3dev->Close();
-			Sleep(800);					    // wait after firmware change ?
-			fx3dev->Open(idx);
-		}
-	}
-	strcpy (lbuf, fx3dev->DeviceName);
-	while (strlen(lbuf) < 18) strcat(lbuf, " ");
-	strcat(lbuf, "sn:");
-	strcat(lbuf, wchar2char((wchar_t*)fx3dev->SerialNumber));
-	fx3dev->Close();
-	devidx = idx;  // -> devidx
-	return true;
+    bool r = false;
+    strcpy_s(lbuf, bufSize, "");
+    if (fx3dev == nullptr)
+        fx3dev = new CCyFX3Device;              // instantiate the device
+    if (fx3dev == nullptr) return r;        // return if failed
+    if (!fx3dev->Open(idx)) return r;
+    if (fx3dev->IsBootLoaderRunning()) {
+        if (fx3dev->DownloadFwToRam(fw_data, fw_size) != SUCCESS) {
+            DbgPrintf("Failed to DownloadFwToRam device(%x)\n", idx);
+        }
+        else {
+            fx3dev->Close();
+            Sleep(800);                     // wait after firmware change ?
+            fx3dev->Open(idx);
+        }
+    }
+    strcpy_s(lbuf, bufSize, fx3dev->DeviceName);
+    while (strlen(lbuf) < 18) strcat_s(lbuf, bufSize, " ");
+    strcat_s(lbuf, bufSize, "sn:");
+    strcat_s(lbuf, bufSize, wchar2char((wchar_t*)fx3dev->SerialNumber));
+    fx3dev->Close();
+    devidx = idx;  // -> devidx
+    return true;
 }
 
 bool  CyApiHandler::Open(const uint8_t* fw_data, uint32_t fw_size) {

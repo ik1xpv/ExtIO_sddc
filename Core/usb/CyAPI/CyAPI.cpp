@@ -1241,57 +1241,57 @@ void  CCyUSBDevice::UsbdStatusString(ULONG stat, PCHAR str)
     ZeroMemory(StatusStr,64);
 
     if (! USBD_STATUS(stat)) {
-        sprintf(StateStr,"[state=SUCCESS ");
-        sprintf(StatusStr,"status=USBD_STATUS_SUCCESS]");
+        sprintf_s(StateStr,"[state=SUCCESS ");
+        sprintf_s(StatusStr,"status=USBD_STATUS_SUCCESS]");
     } else {
 
         switch(USBD_STATE(stat)) {
-       case USBD_STATUS_SUCCESS: sprintf(StateStr," [state=SUCCESS "); break;
-       case USBD_STATUS_PENDING: sprintf(StateStr," [state=PENDING "); break;
-       case USBD_STATUS_HALTED:	 sprintf(StateStr," [state=STALLED "); break;
-       case USBD_STATUS_ERROR: 	 sprintf(StateStr," [state=ERROR   "); break;
+       case USBD_STATUS_SUCCESS: sprintf_s(StateStr," [state=SUCCESS "); break;
+       case USBD_STATUS_PENDING: sprintf_s(StateStr," [state=PENDING "); break;
+       case USBD_STATUS_HALTED:	 sprintf_s(StateStr," [state=STALLED "); break;
+       case USBD_STATUS_ERROR: 	 sprintf_s(StateStr," [state=ERROR   "); break;
        default: break;
         }
 
         switch(stat|0xC0000000L) { // Note: error typedefs have both error and stall bit set
-       case USBD_STATUS_CRC:		        sprintf(StatusStr,"status=USBD_STATUS_CRC]"); break;
-       case USBD_STATUS_BTSTUFF:	        sprintf(StatusStr,"status=USBD_STATUS_BTSTUFF]"); break;
-       case USBD_STATUS_DATA_TOGGLE_MISMATCH:	sprintf(StatusStr,"status=USBD_STATUS_DATA_TOGGLE_MISMATCH]"); break;
-       case USBD_STATUS_STALL_PID:		sprintf(StatusStr,"status=USBD_STATUS_STALL_PID]"); break;
-       case USBD_STATUS_DEV_NOT_RESPONDING:     sprintf(StatusStr,"status=USBD_STATUS_DEV_NOT_RESPONDING]"); break;
-       case USBD_STATUS_PID_CHECK_FAILURE:	sprintf(StatusStr,"status=USBD_STATUS_PID_CHECK_FAILURE]"); break;
-       case USBD_STATUS_UNEXPECTED_PID:	        sprintf(StatusStr,"status=USBD_STATUS_UNEXPECTED_PID]"); break;
-       case USBD_STATUS_DATA_OVERRUN:		sprintf(StatusStr,"status=USBD_STATUS_DATA_OVERRUN]"); break;
-       case USBD_STATUS_DATA_UNDERRUN:		sprintf(StatusStr,"status=USBD_STATUS_DATA_UNDERRUN]"); break;
-       case USBD_STATUS_RESERVED1:		sprintf(StatusStr,"status=USBD_STATUS_RESERVED1]"); break;
-       case USBD_STATUS_RESERVED2:		sprintf(StatusStr,"status=USBD_STATUS_RESERVED2]"); break;
-       case USBD_STATUS_BUFFER_OVERRUN:	        sprintf(StatusStr,"status=USBD_STATUS_BUFFER_OVERRUN]"); break;
-       case USBD_STATUS_BUFFER_UNDERRUN:	sprintf(StatusStr,"status=USBD_STATUS_BUFFER_UNDERRUN]"); break;
-       case USBD_STATUS_NOT_ACCESSED:		sprintf(StatusStr,"status=USBD_STATUS_NOT_ACCESSED]"); break;
-       case USBD_STATUS_FIFO:			sprintf(StatusStr,"status=USBD_STATUS_FIFO]"); break;
+       case USBD_STATUS_CRC:		        sprintf_s(StatusStr,"status=USBD_STATUS_CRC]"); break;
+       case USBD_STATUS_BTSTUFF:	        sprintf_s(StatusStr,"status=USBD_STATUS_BTSTUFF]"); break;
+       case USBD_STATUS_DATA_TOGGLE_MISMATCH:	sprintf_s(StatusStr,"status=USBD_STATUS_DATA_TOGGLE_MISMATCH]"); break;
+       case USBD_STATUS_STALL_PID:		sprintf_s(StatusStr,"status=USBD_STATUS_STALL_PID]"); break;
+       case USBD_STATUS_DEV_NOT_RESPONDING:     sprintf_s(StatusStr,"status=USBD_STATUS_DEV_NOT_RESPONDING]"); break;
+       case USBD_STATUS_PID_CHECK_FAILURE:	sprintf_s(StatusStr,"status=USBD_STATUS_PID_CHECK_FAILURE]"); break;
+       case USBD_STATUS_UNEXPECTED_PID:	        sprintf_s(StatusStr,"status=USBD_STATUS_UNEXPECTED_PID]"); break;
+       case USBD_STATUS_DATA_OVERRUN:		sprintf_s(StatusStr,"status=USBD_STATUS_DATA_OVERRUN]"); break;
+       case USBD_STATUS_DATA_UNDERRUN:		sprintf_s(StatusStr,"status=USBD_STATUS_DATA_UNDERRUN]"); break;
+       case USBD_STATUS_RESERVED1:		sprintf_s(StatusStr,"status=USBD_STATUS_RESERVED1]"); break;
+       case USBD_STATUS_RESERVED2:		sprintf_s(StatusStr,"status=USBD_STATUS_RESERVED2]"); break;
+       case USBD_STATUS_BUFFER_OVERRUN:	        sprintf_s(StatusStr,"status=USBD_STATUS_BUFFER_OVERRUN]"); break;
+       case USBD_STATUS_BUFFER_UNDERRUN:	sprintf_s(StatusStr,"status=USBD_STATUS_BUFFER_UNDERRUN]"); break;
+       case USBD_STATUS_NOT_ACCESSED:		sprintf_s(StatusStr,"status=USBD_STATUS_NOT_ACCESSED]"); break;
+       case USBD_STATUS_FIFO:			sprintf_s(StatusStr,"status=USBD_STATUS_FIFO]"); break;
 
-       case USBD_STATUS_ENDPOINT_HALTED:	sprintf(StatusStr,"status=USBD_STATUS_ENDPOINT_HALTED]"); break;
-       case USBD_STATUS_NO_MEMORY:		sprintf(StatusStr,"status=USBD_STATUS_NO_MEMORY]"); break;
-       case USBD_STATUS_INVALID_URB_FUNCTION:	sprintf(StatusStr,"status=USBD_STATUS_INVALID_URB_FUNCTION]"); break;
-       case USBD_STATUS_INVALID_PARAMETER:	sprintf(StatusStr,"status=USBD_STATUS_INVALID_PARAMETER]"); break;
-       case USBD_STATUS_ERROR_BUSY:		sprintf(StatusStr,"status=USBD_STATUS_ERROR_BUSY]"); break;
-       case USBD_STATUS_REQUEST_FAILED:	        sprintf(StatusStr,"status=USBD_STATUS_REQUEST_FAILED]"); break;
-       case USBD_STATUS_INVALID_PIPE_HANDLE:	sprintf(StatusStr,"status=USBD_STATUS_INVALID_PIPE_HANDLE]"); break;
-       case USBD_STATUS_NO_BANDWIDTH:		sprintf(StatusStr,"status=USBD_STATUS_NO_BANDWIDTH]"); break;
-       case USBD_STATUS_INTERNAL_HC_ERROR:	sprintf(StatusStr,"status=USBD_STATUS_INTERNAL_HC_ERROR]"); break;
-       case USBD_STATUS_ERROR_SHORT_TRANSFER:	sprintf(StatusStr,"status=USBD_STATUS_ERROR_SHORT_TRANSFER]"); break;
-       case USBD_STATUS_BAD_START_FRAME:	sprintf(StatusStr,"status=USBD_STATUS_BAD_START_FRAME]"); break;
-       case USBD_STATUS_ISOCH_REQUEST_FAILED:	sprintf(StatusStr,"status=USBD_STATUS_ISOCH_REQUEST_FAILED]"); break;
-       case USBD_STATUS_FRAME_CONTROL_OWNED:	sprintf(StatusStr,"status=USBD_STATUS_FRAME_CONTROL_OWNED]"); break;
-       case USBD_STATUS_FRAME_CONTROL_NOT_OWNED:sprintf(StatusStr,"status=USBD_STATUS_FRAME_CONTROL_NOT_OWNED]"); break;
-       case USBD_STATUS_CANCELED:		sprintf(StatusStr,"status=USBD_STATUS_CANCELED]"); break;
-       case USBD_STATUS_CANCELING:		sprintf(StatusStr,"status=USBD_STATUS_CANCELING]"); break;
+       case USBD_STATUS_ENDPOINT_HALTED:	sprintf_s(StatusStr,"status=USBD_STATUS_ENDPOINT_HALTED]"); break;
+       case USBD_STATUS_NO_MEMORY:		sprintf_s(StatusStr,"status=USBD_STATUS_NO_MEMORY]"); break;
+       case USBD_STATUS_INVALID_URB_FUNCTION:	sprintf_s(StatusStr,"status=USBD_STATUS_INVALID_URB_FUNCTION]"); break;
+       case USBD_STATUS_INVALID_PARAMETER:	sprintf_s(StatusStr,"status=USBD_STATUS_INVALID_PARAMETER]"); break;
+       case USBD_STATUS_ERROR_BUSY:		sprintf_s(StatusStr,"status=USBD_STATUS_ERROR_BUSY]"); break;
+       case USBD_STATUS_REQUEST_FAILED:	        sprintf_s(StatusStr,"status=USBD_STATUS_REQUEST_FAILED]"); break;
+       case USBD_STATUS_INVALID_PIPE_HANDLE:	sprintf_s(StatusStr,"status=USBD_STATUS_INVALID_PIPE_HANDLE]"); break;
+       case USBD_STATUS_NO_BANDWIDTH:		sprintf_s(StatusStr,"status=USBD_STATUS_NO_BANDWIDTH]"); break;
+       case USBD_STATUS_INTERNAL_HC_ERROR:	sprintf_s(StatusStr,"status=USBD_STATUS_INTERNAL_HC_ERROR]"); break;
+       case USBD_STATUS_ERROR_SHORT_TRANSFER:	sprintf_s(StatusStr,"status=USBD_STATUS_ERROR_SHORT_TRANSFER]"); break;
+       case USBD_STATUS_BAD_START_FRAME:	sprintf_s(StatusStr,"status=USBD_STATUS_BAD_START_FRAME]"); break;
+       case USBD_STATUS_ISOCH_REQUEST_FAILED:	sprintf_s(StatusStr,"status=USBD_STATUS_ISOCH_REQUEST_FAILED]"); break;
+       case USBD_STATUS_FRAME_CONTROL_OWNED:	sprintf_s(StatusStr,"status=USBD_STATUS_FRAME_CONTROL_OWNED]"); break;
+       case USBD_STATUS_FRAME_CONTROL_NOT_OWNED:sprintf_s(StatusStr,"status=USBD_STATUS_FRAME_CONTROL_NOT_OWNED]"); break;
+       case USBD_STATUS_CANCELED:		sprintf_s(StatusStr,"status=USBD_STATUS_CANCELED]"); break;
+       case USBD_STATUS_CANCELING:		sprintf_s(StatusStr,"status=USBD_STATUS_CANCELING]"); break;
 
-       default: sprintf(StatusStr,"status=UNKNOWN]"); break;
+       default: sprintf_s(StatusStr,"status=UNKNOWN]"); break;
         }
     }
 
-    sprintf(str, "%s%s", StateStr, StatusStr);
+    sprintf_s(str, sizeof(str), "%s%s", StateStr, StatusStr);
 
 }
 
@@ -3111,51 +3111,56 @@ FX3_FWDWNLOAD_ERROR_CODE CCyFX3Device::DownloadFw(char *fileName, FX3_FWDWNLOAD_
 {
     UINT fwSize = 0;
     PUCHAR FwImage;
-    FILE *FwImagePtr;
-    //int error;
+    FILE *FwImagePtr = nullptr;
 
-//  error = fopen_s(&FwImagePtr, fileName, "rb");
-    FwImagePtr = fopen( fileName, "rb");
-    if (FwImagePtr == NULL)
+    // Properly using fopen_s
+    errno_t error = fopen_s(&FwImagePtr, fileName, "rb");
+    if (error != 0 || FwImagePtr == NULL)
         return INVALID_FILE;
 
     /* Find the length of the image */
-    fseek (FwImagePtr, 0, SEEK_END);
+    fseek(FwImagePtr, 0, SEEK_END);
     fwSize = ftell(FwImagePtr);
-    fseek (FwImagePtr, 0, SEEK_SET);
-
-    /* Allocate memory for the image */
-    FwImage =  new unsigned char[fwSize];
-
-    if (FwImage == NULL)
-        return INVALID_FILE;
+    fseek(FwImagePtr, 0, SEEK_SET);
 
     if (fwSize <= 0)
     {
-        fclose (FwImagePtr);
+        fclose(FwImagePtr);
         return INVALID_FILE;
     }
 
-    /* Read into buffer */
-    fread (FwImage, fwSize, 1, FwImagePtr);
-    fclose (FwImagePtr);
+    /* Allocate memory for the image */
+    FwImage = new unsigned char[fwSize];
+    if (FwImage == NULL)
+    {
+        fclose(FwImagePtr);
+        return INVALID_FILE;
+    }
 
-	FX3_FWDWNLOAD_ERROR_CODE ErroCode = SUCCESS;
-    // call api to download the image
+    /* Read into buffer and check for reading success */
+    size_t elementsRead = fread(FwImage, 1, fwSize, FwImagePtr);
+    fclose(FwImagePtr);
+    if (elementsRead != fwSize)
+    {
+        delete[] FwImage;
+        return INVALID_FILE;
+    }
+
+    FX3_FWDWNLOAD_ERROR_CODE ErrorCode = SUCCESS;
+    // call API to download the image
     if (enMediaType == RAM)
-        ErroCode = DownloadFwToRam(FwImage, fwSize, 0xA0);
+        ErrorCode = DownloadFwToRam(FwImage, fwSize, 0xA0);
     else if (enMediaType == I2CE2PROM)
-            ErroCode = DownloadUserIMGtoI2CE2PROM(FwImage, fwSize, 0xBA);
+        ErrorCode = DownloadUserIMGtoI2CE2PROM(FwImage, fwSize, 0xBA);
     else if (enMediaType == SPIFLASH)
-        ErroCode = DownloadUserIMGtoSPIFLASH(FwImage, fwSize, 0xC4);
+        ErrorCode = DownloadUserIMGtoSPIFLASH(FwImage, fwSize, 0xC4);
     else
-        ErroCode = INVALID_MEDIA_TYPE;
+        ErrorCode = INVALID_MEDIA_TYPE;
 
-	if(FwImage)
-		delete[] FwImage;
-
-	return ErroCode;
+    delete[] FwImage;
+    return ErrorCode;
 }
+
 
 //______________________________________________________________________________
 
