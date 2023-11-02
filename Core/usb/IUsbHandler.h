@@ -32,6 +32,6 @@ public:
 	virtual bool Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_data, uint32_t fw_size) = 0;
 };
 
-extern "C" IUsbHandler* CreateUsbHandler();
+
 
 #endif // IUsbHandler_H

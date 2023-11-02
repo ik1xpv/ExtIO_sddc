@@ -1,4 +1,6 @@
+#include "../Core/usb/IUsbHandler.h"
 #include "license.txt" 
+#include "usb/UsbHandlerFactory.h"
 
 #define EXTIO_EXPORTS
 
@@ -10,6 +12,7 @@
 #include "ExtIO_sddc.h"
 #include "RadioHandler.h"
 #include "../Core/usb/IUsbHandler.h"
+#include "../Core/usb/UsbHandlerFactory.h"
 #include "uti.h"
 #include "tdialog.h"
 #include "splashwindow.h"
@@ -220,7 +223,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			res_size = SizeofResource(hInst, res);
 		}
 
-		auto Fx3 = CreateUsbHandler();
+		auto Fx3 = UsbHandlerFactory::CreateUsbHandler();
 		unsigned char idx = 0;
 		int selected = 0;
 		while (Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size) && (idx < MAXNDEV))

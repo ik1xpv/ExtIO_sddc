@@ -2,7 +2,7 @@
 add_library(usbLib STATIC)
 
 # Gather source files
-set(USB_SRC "")
+set(USB_SRC "UsbHandlerFactory.cpp")
 
 # For headers which might be used outside this directory, you might want to specify them too.
 set(USB_HEADERS "IUsbHandler.h")
@@ -11,8 +11,10 @@ set(USB_HEADERS "IUsbHandler.h")
 if(WIN32)
     if(USE_LIBUSB)
         # Append libusb specific sources and headers for Windows
+        add_definitions(-DUSE_LIBUSB_DRIVER)
         list(APPEND USB_SRC "libusbHandler.cpp" "libusb/libusb.cpp")
         list(APPEND USB_HEADERS "libusbHandler.hpp" "libusb/libusb.hpp")
+        target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
     else()
         # Append CyAPI specific sources and headers
         list(APPEND USB_SRC "CyAPI/CyAPI.cpp" "CyApiHandler.cpp")
