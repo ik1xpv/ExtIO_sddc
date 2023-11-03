@@ -1,4 +1,4 @@
-#include "dsp/ringbuffer.h"
+#include "../Core/ringbuffer.h"
 
 #include "CppUnitTestFramework.hpp"
 #include <thread>

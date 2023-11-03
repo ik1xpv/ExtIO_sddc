@@ -11,12 +11,30 @@ set(USB_HEADERS "IUsbHandler.h")
 
 if(WIN32)
     if(USE_LIBUSB)
+        SET(LIBUSB_URL "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-binaries.7z")
+        include(ExternalProject)
+        ExternalProject_Add(
+            LIBUSB
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE # new in CMake 3.24
+            URL ${LIBUSB_URL}
+            BUILD_IN_SOURCE TRUE
+            CONFIGURE_COMMAND   ""
+            BUILD_COMMAND       ${LIBEXE}  /MACHINE:${ARCH} /OUT:./libusb-1.0.lib
+            INSTALL_COMMAND     ""
+        )
+        ExternalProject_Get_Property(LIBUSB SOURCE_DIR)
+        SET(LIBUSB_INCLUDE_DIRS ${SOURCE_DIR}/libusb-MinGW-Win32/include)
+        SET(LIBUSB_LIBRARY_DIRS ${SOURCE_DIR}/VS2015-Win32/lib)
+        message(STATUS "LIBUSB_INCLUDE_DIRS=${LIBUSB_INCLUDE_DIRS}")
+        message(STATUS "LIBUSB_LIBRARY_DIRS=${LIBUSB_LIBRARY_DIRS}")
+        
+        SET(LIBUSB_LIBRARIES libusb-1.0)
         # Append libusb specific sources and headers for Windows
         target_compile_definitions(usbLib PUBLIC -DUSE_LIBUSB_DRIVER)
         list(APPEND USB_SRC "LibusbHandler.cpp" "libusb/libusb.cpp")
         list(APPEND USB_HEADERS "LibusbHandler.h" "libusb/libusb.hpp")
         target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
-    else()
+    else() # then use CyAPI
         # Append CyAPI specific sources and headers
         list(APPEND USB_SRC "CyAPI/CyAPI.cpp" "CyApiHandler.cpp")
         list(APPEND USB_HEADERS "CyApiHandler.h" "CyAPI/CyAPI.h" "CyAPI/cyioctl.h" "CyAPI/CyUSB30_def.h" "CyAPI/devioctl.h"
@@ -24,13 +42,18 @@ if(WIN32)
         # Include CyAPI directories and libraries
         target_include_directories(usbLib PUBLIC "CyAPI")
         
-    endif()
-else()
-    add_compile_definitions(-DUSE_LIBUSB_DRIVER)
+    endif() # USE_LIBUSB
+else() # if not WIN32
+    include(FindPkgConfig)
+    pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+    target_compile_definitions(usbLib PUBLIC -DUSE_LIBUSB_DRIVER)
     # Append libusb specific sources and headers for Unix-like systems
     list(APPEND USB_SRC "libusb/libusb.cpp")
     list(APPEND USB_HEADERS "libusb/libusb.hpp")
-endif()
+    target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
+    target_link_libraries(usbLib PUBLIC ${LIBUSB_LIBRARIES})
+
+endif() # WIN32
 
 # Add the sources and headers to your main target
 target_sources(usbLib PUBLIC ${USB_SRC} ${USB_HEADERS})

@@ -18,7 +18,7 @@ add_executable(unittest ${UNITTESTS})
 add_dependencies(unittest LIBCPPUNIT)
 
 target_include_directories(unittest PUBLIC "${LIBFFTW_INCLUDE_DIR}")
-target_link_directories(unittest PUBLIC "${LIBFFTW_LIBRARY_DIRS}")
+target_link_directories(unittest PUBLIC "${LIBFFTW_LIBRARY_DIRS} ${LIBUSB_LIBRARY_DIRS}")
 
 include_directories("." "../Core")
 include_directories(${LIBCPPUNIT_INCLUDE_DIRS})

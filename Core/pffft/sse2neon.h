@@ -55,6 +55,7 @@
  * x86 SSE2. (e.g. would solve a hole or NaN pixel in the rendering result)
  */
 /* _mm_min_ps and _mm_max_ps */
+#include <sys/types.h>
 #ifndef SSE2NEON_PRECISE_MINMAX
 #define SSE2NEON_PRECISE_MINMAX (0)
 #endif
@@ -68,8 +69,11 @@
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-#pragma push_macro("FORCE_INLINE")
 #pragma push_macro("ALIGN_STRUCT")
+#pragma push_macro("FORCE_INLINE")
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
 #define FORCE_INLINE static inline __attribute__((always_inline))
 #define ALIGN_STRUCT(x) __attribute__((aligned(x)))
 #ifndef likely
@@ -6870,8 +6874,8 @@ FORCE_INLINE __m128i _mm_shuffle_epi8(__m128i a, __m128i b)
 // https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_shuffle_pi8
 FORCE_INLINE __m64 _mm_shuffle_pi8(__m64 a, __m64 b)
 {
-    const int8x8_t controlMask =
-        vand_s8(vreinterpret_s8_m64(b), vdup_n_s8(1 << 7 | 0x07));
+    const int8x8_t controlMask = vand_s8(b, vdup_n_s8((int8_t)(1 << 7 | 0x07)));
+
     int8x8_t res = vtbl1_s8(vreinterpret_s8_m64(a), controlMask);
     return vreinterpret_m64_s8(res);
 }

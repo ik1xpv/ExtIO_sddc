@@ -18,7 +18,7 @@ message(STATUS "Build type: " ${CMAKE_BUILD_TYPE} " - Version: " ${VERSION} " / 
 # allow disabling optimizations - for debug reasons
 option(USE_SIMD_OPTIMIZATIONS "enable SIMD optimizations" ON)
 
-option(USE_LIBUSB "Use libusb instead of CyAPI" OFF)
+option(USE_LIBUSB "Use libusb instead of CyAPI" ON)
 
 # allow enabling address sanitizer - for debug reasons
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -70,26 +70,6 @@ if (MSVC)
     message(STATUS "LIBFFTW_INCLUDE_DIRS=${LIBFFTW_INCLUDE_DIRS}")
     message(STATUS "LIBFFTW_LIBRARY_DIRS=${LIBFFTW_LIBRARY_DIRS}")
 
-
-    if (USE_LIBUSB)
-        ExternalProject_Add(
-            LIBUSB
-            DOWNLOAD_EXTRACT_TIMESTAMP TRUE # new in CMake 3.24
-            URL ${LIBUSB_URL}
-            BUILD_IN_SOURCE TRUE
-            CONFIGURE_COMMAND   ""
-            BUILD_COMMAND       ${LIBEXE}  /MACHINE:${ARCH} /OUT:./libusb-1.0.lib
-            INSTALL_COMMAND     ""
-        )
-        ExternalProject_Get_Property(LIBUSB SOURCE_DIR)
-        SET(LIBUSB_INCLUDE_DIRS ${SOURCE_DIR}/libusb-MinGW-Win32/include)
-        SET(LIBUSB_LIBRARY_DIRS ${SOURCE_DIR}/VS2015-Win32/lib)
-        message(STATUS "LIBUSB_INCLUDE_DIRS=${LIBUSB_INCLUDE_DIRS}")
-        message(STATUS "LIBUSB_LIBRARY_DIRS=${LIBUSB_LIBRARY_DIRS}")
-        
-        SET(LIBUSB_LIBRARIES libusb-1.0)
-    endif (USE_LIBUSB)
-    
 else()
 
     if (USE_DEBUG_ASAN)
@@ -100,7 +80,7 @@ else()
     endif(USE_DEBUG_ASAN)
     #add_compile_options(-Wall -Wextra -pedantic)
     include(FindPkgConfig)
-    pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+    
     pkg_check_modules(LIBFFTW REQUIRED fftw3f)
     
 endif (MSVC)
@@ -110,7 +90,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 add_subdirectory(Core)
 add_subdirectory(ExtIO_sddc)
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    add_subdirectory(libsddc)
-    add_subdirectory(unittest)
+    #add_subdirectory(libsddc)
+    #add_subdirectory(unittest)
 endif()
 

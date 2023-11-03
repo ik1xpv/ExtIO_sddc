@@ -1,7 +1,7 @@
 #ifndef LIBUSB_HANDLER_HPP
 #define LIBUSB_HANDLER_HPP
 
-#include "libusb-1.0/libusb.h"
+#include "libusb.h"
 #include "../ringbuffer.h"
 #include "IUsbHandler.h"
 
@@ -44,7 +44,7 @@ private:
 	ringbuffer<int16_t> *inputbuffer;
 	int numofblock;
 	bool run;
-	UCHAR devidx;
+	//UCHAR devidx;
 };
 
 

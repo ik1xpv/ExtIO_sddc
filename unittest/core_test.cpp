@@ -1,5 +1,5 @@
 #include "r2iq.h"
-#include "IUsbHandler.h"
+#include "../Core/usb/IUsbHandler.h"
 #include "CppUnitTestFramework.hpp"
 #include <thread>
 #include <chrono>
