@@ -6,10 +6,10 @@ IUsbHandler* CreateUsbHandler()
 	return new LibusbHandler();
 }
 
-LibusbHandler::LibusbHandler():
+LibusbHandler::LibusbHandler() :
 	//fx3dev (nullptr),
-	Fx3IsOn (false),
-	devidx (0)
+	Fx3IsOn (false)
+	//devidx (0)
 {
 	DbgPrintf("\r\nLibusbHandler\r\n");
 }
