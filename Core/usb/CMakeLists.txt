@@ -1,3 +1,4 @@
+# Core/usb/CMakeLists.txt
 # Declare the usbLib static library (without any sources initially)
 add_library(usbLib STATIC)
 
@@ -27,8 +28,8 @@ if(WIN32)
 else()
     add_compile_definitions(-DUSE_LIBUSB_DRIVER)
     # Append libusb specific sources and headers for Unix-like systems
-    list(APPEND USB_SRC "libusb/*.cpp")
-    list(APPEND USB_HEADERS "libusb/*.h")
+    list(APPEND USB_SRC "libusb/libusb.cpp")
+    list(APPEND USB_HEADERS "libusb/libusb.hpp")
 endif()
 
 # Add the sources and headers to your main target
