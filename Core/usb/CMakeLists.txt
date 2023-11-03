@@ -34,6 +34,8 @@ if(WIN32)
         list(APPEND USB_SRC "LibusbHandler.cpp" "libusb/libusb.cpp")
         list(APPEND USB_HEADERS "LibusbHandler.h" "libusb/libusb.hpp")
         target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
+        target_link_directories(usbLib PUBLIC ${LIBUSB_LIBRARY_DIRS})
+        target_link_libraries(usbLib PUBLIC ${LIBUSB_LIBRARIES})
     else() # then use CyAPI
         # Append CyAPI specific sources and headers
         list(APPEND USB_SRC "CyAPI/CyAPI.cpp" "CyApiHandler.cpp")
