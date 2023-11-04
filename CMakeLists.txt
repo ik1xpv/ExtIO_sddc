@@ -18,7 +18,9 @@ message(STATUS "Build type: " ${CMAKE_BUILD_TYPE} " - Version: " ${VERSION} " / 
 # allow disabling optimizations - for debug reasons
 option(USE_SIMD_OPTIMIZATIONS "enable SIMD optimizations" ON)
 
-option(USE_LIBUSB "Use libusb instead of CyAPI" ON)
+if(WIN32)
+  option(USE_LIBUSB "Use libusb instead of CyAPI" OFF)
+endif()
 
 # allow enabling address sanitizer - for debug reasons
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
