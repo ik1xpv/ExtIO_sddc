@@ -15,11 +15,11 @@
 #define RES_BIN_FIRMWARE                2000
 
 
-IUsbHandler* CreateUsbHandler()
+/* IUsbHandler* CreateUsbHandler()
 {
 	return new CyApiHandler();
 }
-
+ */
 CyApiHandler::CyApiHandler():
 	fx3dev (nullptr),
 	Fx3IsOn (false),

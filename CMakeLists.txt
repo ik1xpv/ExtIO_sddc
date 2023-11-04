@@ -31,63 +31,11 @@ else()
   set(ASANLIB "")
 endif()
 
-if (MSVC)
-    set(CMAKE_CXX_FLAGS " /std:c++17 /EHsc /W3")
-
-    get_filename_component(SDKPATH ${CMAKE_LINKER} DIRECTORY)
-    find_program(LIBEXE lib HINTS ${SDKPATH} REQUIRED)
-
-    # External Project FFTW on Windows
-    if(${CMAKE_EXE_LINKER_FLAGS} MATCHES "X86")
-        SET(FFTW_URL "ftp://ftp.fftw.org/pub/fftw/fftw-3.3.5-dll32.zip")
-        SET(ARCH x86)
-        SET(HASH 29882a43033c9393479a4df52a2e9120589c06a2b724155b1a682747fa3e57d4)
-    else()
-        SET(FFTW_URL "ftp://ftp.fftw.org/pub/fftw/fftw-3.3.5-dll64.zip")
-        SET(ARCH x64)
-        SET(HASH cfd88dc0e8d7001115ea79e069a2c695d52c8947f5b4f3b7ac54a192756f439f)
-    endif()
-
-    if (USE_LIBUSB)
-        SET(LIBUSB_URL "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-binaries.7z")
-    endif (USE_LIBUSB)
-
-    include(ExternalProject)
-    ExternalProject_Add(
-        LIBFFTW
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE # new in CMake 3.24
-        URL ${FFTW_URL}
-        URL_HASH SHA256=${HASH}
-        BUILD_IN_SOURCE TRUE
-        CONFIGURE_COMMAND   ""
-        BUILD_COMMAND       ${LIBEXE} /def:./libfftw3f-3.def /MACHINE:${ARCH} /OUT:./fftw3f-3.lib
-        INSTALL_COMMAND     ""
-    )
-    ExternalProject_Get_Property(LIBFFTW SOURCE_DIR)
-    SET(LIBFFTW_INCLUDE_DIRS ${SOURCE_DIR})
-    SET(LIBFFTW_LIBRARY_DIRS ${SOURCE_DIR})
-    SET(LIBFFTW_LIBRARIES fftw3f-3)
-    message(STATUS "LIBFFTW_INCLUDE_DIRS=${LIBFFTW_INCLUDE_DIRS}")
-    message(STATUS "LIBFFTW_LIBRARY_DIRS=${LIBFFTW_LIBRARY_DIRS}")
-
-else()
-
-    if (USE_DEBUG_ASAN)
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
-        set(CMAKE_CXX_FLAGS "-O0 -std=c++17 -Wall -Werror")
-    else()
-        set(CMAKE_CXX_FLAGS "-O3 -std=c++17 -Wall -Werror")
-    endif(USE_DEBUG_ASAN)
-    #add_compile_options(-Wall -Wextra -pedantic)
-    include(FindPkgConfig)
-    
-    pkg_check_modules(LIBFFTW REQUIRED fftw3f)
-    
-endif (MSVC)
+add_subdirectory(Core)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
-add_subdirectory(Core)
+
 add_subdirectory(ExtIO_sddc)
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
     #add_subdirectory(libsddc)

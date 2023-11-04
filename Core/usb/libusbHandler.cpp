@@ -1,10 +1,10 @@
 #include "LibusbHandler.h"
 #include "../config.h"
 
-IUsbHandler* CreateUsbHandler()
+/* IUsbHandler* CreateUsbHandler()
 {
 	return new LibusbHandler();
-}
+} */
 
 LibusbHandler::LibusbHandler() :
 	//fx3dev (nullptr),

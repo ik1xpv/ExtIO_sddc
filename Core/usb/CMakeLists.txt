@@ -2,6 +2,9 @@
 # Declare the usbLib static library (without any sources initially)
 add_library(usbLib STATIC)
 
+# Ensure usbLib is built after LIBUSB.
+add_dependencies(usbLib LIBUSB)
+
 # Gather source files
 set(USB_SRC "UsbHandlerFactory.cpp")
 
@@ -10,16 +13,17 @@ set(USB_HEADERS "IUsbHandler.h")
 
 
 if(WIN32)
-    if(USE_LIBUSB)
+    
         SET(LIBUSB_URL "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-binaries.7z")
         include(ExternalProject)
         ExternalProject_Add(
             LIBUSB
+            PREFIX LIBUSB
             DOWNLOAD_EXTRACT_TIMESTAMP TRUE # new in CMake 3.24
             URL ${LIBUSB_URL}
             BUILD_IN_SOURCE TRUE
             CONFIGURE_COMMAND   ""
-            BUILD_COMMAND       ${LIBEXE}  /MACHINE:${ARCH} /OUT:./libusb-1.0.lib
+            BUILD_COMMAND      ""
             INSTALL_COMMAND     ""
         )
         ExternalProject_Get_Property(LIBUSB SOURCE_DIR)
@@ -30,21 +34,25 @@ if(WIN32)
         
         SET(LIBUSB_LIBRARIES libusb-1.0)
         # Append libusb specific sources and headers for Windows
-        target_compile_definitions(usbLib PUBLIC -DUSE_LIBUSB_DRIVER)
+        if(USE_LIBUSB)
+            target_compile_definitions(usbLib PUBLIC -DUSE_LIBUSB_DRIVER)
+        endif()
         list(APPEND USB_SRC "LibusbHandler.cpp" "libusb/libusb.cpp")
         list(APPEND USB_HEADERS "LibusbHandler.h" "libusb/libusb.hpp")
         target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
-        target_link_directories(usbLib PUBLIC ${LIBUSB_LIBRARY_DIRS})
-        target_link_libraries(usbLib PUBLIC ${LIBUSB_LIBRARIES})
-    else() # then use CyAPI
+        #target_link_directories(usbLib PUBLIC ${LIBUSB_LIBRARY_DIRS})
+        #target_link_libraries(usbLib PUBLIC ${LIBUSB_LIBRARIES})
+   
         # Append CyAPI specific sources and headers
         list(APPEND USB_SRC "CyAPI/CyAPI.cpp" "CyApiHandler.cpp")
         list(APPEND USB_HEADERS "CyApiHandler.h" "CyAPI/CyAPI.h" "CyAPI/cyioctl.h" "CyAPI/CyUSB30_def.h" "CyAPI/devioctl.h"
                                 "CyAPI/usb100.h" "CyAPI/usb200.h" "CyAPI/UsbdStatus.h" "CyAPI/VersionNo.h")
         # Include CyAPI directories and libraries
-        target_include_directories(usbLib PUBLIC "CyAPI")
+        target_include_directories(usbLib PUBLIC "CyAPI" ${LIBUSB_INCLUDE_DIRS})
+        target_link_directories(usbLib PUBLIC "CyAPI" ${LIBUSB_LIBRARY_DIRS})
+       # target_link_libraries(usbLib PUBLIC "CyAPI" ${LIBUSB_LIBRARIES})
         
-    endif() # USE_LIBUSB
+   
 else() # if not WIN32
     include(FindPkgConfig)
     pkg_check_modules(LIBUSB REQUIRED libusb-1.0)

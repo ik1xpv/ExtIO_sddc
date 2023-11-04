@@ -17,6 +17,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 
     add_library(ExtIO_SDDC SHARED ${EXTIOSDDC_SRC})
 
+    add_dependencies(ExtIO_SDDC usbLib)
+
     # Specify include directories for this target
     target_include_directories(ExtIO_SDDC PRIVATE
         "."
