@@ -2,8 +2,10 @@
 # Declare the usbLib static library (without any sources initially)
 add_library(usbLib STATIC)
 
-# Ensure usbLib is built after LIBUSB.
-add_dependencies(usbLib LIBUSB)
+set_target_properties(usbLib PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+)
 
 # Gather source files
 set(USB_SRC "UsbHandlerFactory.cpp")
@@ -51,6 +53,8 @@ if(WIN32)
         target_include_directories(usbLib PUBLIC "CyAPI" ${LIBUSB_INCLUDE_DIRS})
         target_link_directories(usbLib PUBLIC "CyAPI" ${LIBUSB_LIBRARY_DIRS})
        # target_link_libraries(usbLib PUBLIC "CyAPI" ${LIBUSB_LIBRARIES})
+        # Ensure usbLib is built after LIBUSB.
+        add_dependencies(usbLib LIBUSB)
         
    
 else() # if not WIN32
@@ -58,8 +62,8 @@ else() # if not WIN32
     pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
     target_compile_definitions(usbLib PUBLIC -DUSE_LIBUSB_DRIVER)
     # Append libusb specific sources and headers for Unix-like systems
-    list(APPEND USB_SRC "libusb/libusb.cpp")
-    list(APPEND USB_HEADERS "libusb/libusb.hpp")
+    list(APPEND USB_SRC "libusb/libusb.cpp" "LibusbHandler.cpp")
+    list(APPEND USB_HEADERS "libusb/libusb.hpp" "LibusbHandler.h")
     target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
     target_link_libraries(usbLib PUBLIC ${LIBUSB_LIBRARIES})
 
