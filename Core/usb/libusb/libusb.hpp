@@ -3,7 +3,7 @@
 
 #if defined(_WIN32) && defined(USE_LIBUSB_DRIVER)
     #include <libusb-1.0/libusb.h>
-#else
+#elif defined(UNIX)
     #include <libusb.h>
 #endif
 
