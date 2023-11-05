@@ -35,17 +35,17 @@ private:
 	//CCyFX3Device* fx3dev;
 	//CCyUSBEndPoint* EndPt;
 
-    std::thread *adc_samples_thread;
+    [[maybe_unused]] std::thread *adc_samples_thread;
 
 	bool GetFx3DeviceStreamer();
 	bool Fx3IsOn;
 	bool Close(void);
 	void AdcSamplesProcess();
 
-	ringbuffer<int16_t> *inputbuffer;
-	int numofblock;
-	bool run;
-	uint8_t devidx;
+	[[maybe_unused]] ringbuffer<int16_t> *inputbuffer;
+	[[maybe_unused]] int numofblock;
+	[[maybe_unused]] bool run;
+	[[maybe_unused]] uint8_t devidx;
 };
 
 

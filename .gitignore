@@ -272,3 +272,4 @@ __pycache__/
 # FFTW wisdom files
 wisdom*
 hardware/.DS_Store
+.DS_Store
