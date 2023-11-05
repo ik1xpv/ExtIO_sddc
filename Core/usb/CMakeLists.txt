@@ -21,7 +21,6 @@ if(WIN32)
         ExternalProject_Add(
             LIBUSB
             PREFIX LIBUSB
-            DOWNLOAD_EXTRACT_TIMESTAMP TRUE # new in CMake 3.24
             URL ${LIBUSB_URL}
             BUILD_IN_SOURCE TRUE
             CONFIGURE_COMMAND   ""

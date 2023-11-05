@@ -24,7 +24,6 @@ if (MSVC)
     ExternalProject_Add(
         LIBFFTW
         PREFIX LIBFFTW
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE # new in CMake 3.24
         URL ${FFTW_URL}
         URL_HASH SHA256=${HASH}
         BUILD_IN_SOURCE TRUE
