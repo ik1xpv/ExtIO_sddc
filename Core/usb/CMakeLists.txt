@@ -65,7 +65,7 @@ else() # if not WIN32
     list(APPEND USB_SRC "libusb/libusb.cpp" "LibusbHandler.cpp")
     list(APPEND USB_HEADERS "libusb/libusb.hpp" "LibusbHandler.h")
     target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
-    target_link_libraries(usbLib PUBLIC ${LIBUSB_LIBRARIES})
+    target_link_libraries(usbLib PRIVATE ${LIBUSB_LIBRARIES})
 
 endif() # WIN32
 

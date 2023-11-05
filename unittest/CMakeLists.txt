@@ -1,3 +1,4 @@
+# unittest/CMakeLists.txt
 cmake_minimum_required(VERSION 3.13)
 
 include(ExternalProject)
@@ -12,22 +13,27 @@ ExternalProject_Add(
 ExternalProject_Get_Property(LIBCPPUNIT SOURCE_DIR)
 SET(LIBCPPUNIT_INCLUDE_DIRS ${SOURCE_DIR})
 
+
 file(GLOB UNITTESTS "./*.cpp")
 
 add_executable(unittest ${UNITTESTS})
 add_dependencies(unittest LIBCPPUNIT)
-
+set_target_properties(unittest PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+)
 target_include_directories(unittest PUBLIC "${LIBFFTW_INCLUDE_DIR}")
-target_link_directories(unittest PUBLIC "${LIBFFTW_LIBRARY_DIRS} ${LIBUSB_LIBRARY_DIRS}")
+target_link_directories(unittest PUBLIC "${LIBFFTW_LIBRARY_DIRS}" ${LIBUSB_LIBRARY_DIRS} )
 
 include_directories("." "../Core")
 include_directories(${LIBCPPUNIT_INCLUDE_DIRS})
 
 target_link_libraries(unittest PRIVATE SDDC_CORE)
 if (MSVC)
-  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES})
+  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES} )
 else()
-  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES} pthread ${ASANLIB})
+
+  target_link_libraries(unittest PUBLIC  pthread ${ASANLIB})
 endif (MSVC)
 
 
