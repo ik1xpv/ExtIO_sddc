@@ -2,7 +2,7 @@
 #define LIBUSB_HANDLER_HPP
 
 
-#include "../ringbuffer.h"
+#include "../include/ringbuffer.h"
 #include "IUsbHandler.h"
 #include <stdint.h>
 

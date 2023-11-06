@@ -19,7 +19,7 @@ message(STATUS "Build type: " ${CMAKE_BUILD_TYPE} " - Version: " ${VERSION} " / 
 option(USE_SIMD_OPTIMIZATIONS "enable SIMD optimizations" ON)
 
 if(WIN32)
-  option(USE_LIBUSB "Use libusb instead of CyAPI" ON)
+  option(USE_LIBUSB "Use libusb instead of CyAPI" OFF)
 endif()
 
 # allow enabling address sanitizer - for debug reasons
@@ -39,8 +39,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 
 add_subdirectory(ExtIO_sddc)
+#add_subdirectory(unittest)
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
     #add_subdirectory(libsddc)
-    add_subdirectory(unittest)
 endif()
 

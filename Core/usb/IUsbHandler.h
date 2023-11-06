@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <functional>
 #include "../../Interface.h"
-#include "../ringbuffer.h"
+#include "../include/ringbuffer.h"
 
 class IUsbHandler
 {

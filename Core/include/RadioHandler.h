@@ -1,14 +1,14 @@
 #ifndef RADIOHANDLER_H
 #define RADIOHANDLER_H
 
-#include "license.txt" 
 
-#include "config.h"
+
+#include "../config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
-#include "usb/IUsbHandler.h"
+#include "../usb/IUsbHandler.h"
 
 #include "ringbuffer.h"
 

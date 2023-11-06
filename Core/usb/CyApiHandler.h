@@ -18,7 +18,7 @@
 #include <time.h>
 #include <windows.h>
 
-#include "../ringbuffer.h"
+#include "../include/ringbuffer.h"
 
 #define	VENDOR_ID     (0x04B4)
 #define	STREAMER_ID   (0x00F1)

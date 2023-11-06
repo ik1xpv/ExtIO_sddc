@@ -15,7 +15,7 @@ The name r2iq as Real 2 I+Q stream
 #include "fft_mt_r2iq.h"
 #include "config.h"
 #include "fftw3.h"
-#include "RadioHandler.h"
+#include "include/RadioHandler.h"
 
 #include "fir.h"
 

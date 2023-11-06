@@ -10,14 +10,14 @@
 #include <math.h>
 #include "config.h"
 #include "ExtIO_sddc.h"
-#include "RadioHandler.h"
+#include "../Core/include/RadioHandler.h"
 #include "../Core/usb/IUsbHandler.h"
 #include "../Core/usb/UsbHandlerFactory.h"
 #include "uti.h"
 #include "tdialog.h"
 #include "splashwindow.h"
 #include "PScope_uti.h"
-#include "r2iq.h"
+#include "../Core/include/r2iq.h"
 
 #include "git_version.h"
 

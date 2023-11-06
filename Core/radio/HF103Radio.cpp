@@ -1,4 +1,4 @@
-#include "../RadioHandler.h"
+#include "../include/RadioHandler.h"
 
 HF103Radio::HF103Radio(IUsbHandler* fx3)
     : RadioHardware(fx3)
