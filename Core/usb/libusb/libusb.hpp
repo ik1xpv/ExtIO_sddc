@@ -17,14 +17,17 @@ public:
     USBDevice(libusb_context *ctx = nullptr, bool open = true);
     ~USBDevice();
 
+    unsigned char DeviceCount(void);
     bool Open(uint8_t dev);
-
     
 
     libusb_device *device;
-    libusb_device_handle *handle;
     libusb_device_descriptor descriptor;
     libusb_config_descriptor *config;
+private:
+    libusb_context *ctx;
+    libusb_device_handle *hDevice;
+
 };
 
 
