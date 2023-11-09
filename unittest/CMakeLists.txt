@@ -28,9 +28,9 @@ add_dependencies(unittest LIBCPPUNIT usbLib SDDC_CORE)
 target_compile_features(unittest PRIVATE cxx_std_17)
 target_include_directories(unittest PUBLIC "${LIBFFTW_INCLUDE_DIR}" "../Core/include" 
                             ${LIBCPPUNIT_INCLUDE_DIRS})
-#target_link_directories(unittest PUBLIC  ${LIBFFTW_LIBRARY_DIRS} )
+target_link_directories(unittest PUBLIC  ${LIBFFTW_LIBRARY_DIRS} ${LIBUSB_LIBRARY_DIRS} )
 
-target_link_libraries(unittest PRIVATE SDDC_CORE)
+target_link_libraries(unittest PRIVATE SDDC_CORE usbLib ${LIBCPPUNIT_LIBRARIES})
 
 if (MSVC)
   target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES} Setupapi.lib)
