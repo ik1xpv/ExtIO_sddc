@@ -32,7 +32,8 @@ bool LibusbHandler::Enumerate(unsigned char& idx, char* lbuf, size_t bufSize, co
 {
     DbgPrintf("\r\nEnumerate\r\n");
     bool r = false;
-    strcpy_s(lbuf, bufSize, "");
+    strncpy(lbuf, "", bufSize);
+    lbuf[bufSize - 1] = '\0';
     
     if (fx3dev == nullptr) {
         fx3dev = new FX3Device();

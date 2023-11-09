@@ -34,7 +34,7 @@ private:
 	void CleanupDataXfer(void** context);
 
 	FX3Device* fx3dev;
-	USBEndPoint* EndPt;
+	[[maybe_unused]] USBEndPoint* EndPt;
 
     [[maybe_unused]] std::thread *adc_samples_thread;
 
