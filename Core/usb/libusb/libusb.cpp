@@ -34,7 +34,7 @@ unsigned char USBDevice::DeviceCount(void) {
         return 0;          // Return 0 devices in case of error
     }
 
-    UCHAR DeviceCount = 0; // Count of devices with the desired characteristics
+    unsigned char DeviceCount = 0; // Count of devices with the desired characteristics
 
     for (i = 0; i < count; i++) {
         libusb_device *device = devs[i];
