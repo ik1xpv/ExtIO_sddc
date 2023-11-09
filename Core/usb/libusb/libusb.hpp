@@ -25,7 +25,7 @@ public:
     libusb_device_descriptor descriptor;
     libusb_config_descriptor *config;
 private:
-    libusb_context *ctx;
+    //libusb_context *ctx;
     libusb_device_handle *hDevice;
 
 };
