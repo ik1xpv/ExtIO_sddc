@@ -1,5 +1,6 @@
 #include "LibusbHandler.h"
 #include "../config.h"
+#include "libusb/libusb.hpp"
 
 /* IUsbHandler* CreateUsbHandler()
 {
@@ -30,6 +31,22 @@ bool LibusbHandler::GetFx3DeviceStreamer()
 bool LibusbHandler::Enumerate(unsigned char& idx, char* lbuf, size_t bufSize, const uint8_t* fw_data, uint32_t fw_size)
 {
     DbgPrintf("\r\nEnumerate\r\n");
+    bool r = false;
+    strcpy_s(lbuf, bufSize, "");
+    
+    if (fx3dev == nullptr) {
+        fx3dev = new FX3Device();
+    }
+
+    if (fx3dev == nullptr) {
+        return r;
+    }
+
+    if(!fx3dev->Open(idx)) {
+        return r;
+    }
+
+    
     return true;
 }
 

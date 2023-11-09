@@ -6,7 +6,8 @@
 #include "IUsbHandler.h"
 #include <stdint.h>
 
-
+class FX3Device;
+class USBEndPoint;
 class LibusbHandler : public IUsbHandler
 {
 public:
@@ -32,8 +33,8 @@ private:
 	bool FinishDataXfer(void** context);
 	void CleanupDataXfer(void** context);
 
-	//CCyFX3Device* fx3dev;
-	//CCyUSBEndPoint* EndPt;
+	FX3Device* fx3dev;
+	USBEndPoint* EndPt;
 
     [[maybe_unused]] std::thread *adc_samples_thread;
 

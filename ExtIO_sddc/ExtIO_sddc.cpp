@@ -51,7 +51,6 @@ int		giMgcIdxVHF = 0;
 pfnExtIOCallback	pfnCallback = 0;
 HWND Hconsole;
 
-static bool gshdwn;
 static bool needSaveSettings;
 const char RegKeyName[] = "SOFTWARE\\SDDC";
 
