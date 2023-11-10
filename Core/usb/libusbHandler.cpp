@@ -8,9 +8,9 @@
 } */
 
 LibusbHandler::LibusbHandler() :
-	//fx3dev (nullptr),
-	Fx3IsOn (false)
-	//devidx (0)
+	fx3dev (nullptr),
+	Fx3IsOn (false),
+	devidx (0)
 {
 	DbgPrintf("\r\nLibusbHandler\r\n");
 }

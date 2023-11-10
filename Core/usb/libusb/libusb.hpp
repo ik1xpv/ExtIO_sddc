@@ -18,6 +18,7 @@ public:
     ~USBDevice();
 
     unsigned char DeviceCount(void);
+    bool CreateHandle(unsigned char dev);
     bool Open(uint8_t dev);
     
 

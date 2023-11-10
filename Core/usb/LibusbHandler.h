@@ -46,7 +46,7 @@ private:
 	[[maybe_unused]] ringbuffer<int16_t> *inputbuffer;
 	[[maybe_unused]] int numofblock;
 	[[maybe_unused]] bool run;
-	[[maybe_unused]] uint8_t devidx;
+	uint8_t devidx;
 };
 
 

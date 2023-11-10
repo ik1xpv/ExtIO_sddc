@@ -3,6 +3,46 @@
 #include "../../config.h"
 
 
+bool USBDevice::CreateHandle(UCHAR dev) {
+    libusb_device **devs;
+    libusb_device_handle *dev_handle = NULL;
+    int r; //for return values
+    ssize_t cnt; //holding number of devices in list
+    int deviceNumber = static_cast<int>(dev);
+
+    r = libusb_init(NULL); //initialize the library for the session we just declared
+    if(r < 0) {
+        return false;
+    }
+
+    cnt = libusb_get_device_list(NULL, &devs); //get the list of devices
+    if(cnt < 0) {
+        libusb_exit(NULL);
+        return false;
+    }
+
+    if(deviceNumber >= cnt) { // if the requested device number is greater than available devices
+        libusb_free_device_list(devs, 1); //free the list, unref the devices in it
+        libusb_exit(NULL);
+        return false;
+    }
+
+    r = libusb_open(devs[deviceNumber], &dev_handle); //open the device
+    if(r != LIBUSB_SUCCESS) {
+        libusb_free_device_list(devs, 1);
+        libusb_exit(NULL);
+        return false;
+    }
+
+    libusb_free_device_list(devs, 1); //free the list, unref the devices in it
+
+    // Store the device handle in your class' member variable, replacing the Windows HANDLE.
+    this->hDevice = dev_handle; // Assuming 'hDeviceHandle' is of type 'libusb_device_handle*'
+
+    return true;
+}
+
+
 bool USBDevice::Open(uint8_t dev)
 {
     DbgPrintf("\r\nUSBDevice::Open\r\n");
