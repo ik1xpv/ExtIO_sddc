@@ -3,7 +3,7 @@
 #include "../../config.h"
 
 
-bool USBDevice::CreateHandle(UCHAR dev) {
+bool USBDevice::CreateHandle(unsigned char dev) {
     libusb_device **devs;
     libusb_device_handle *dev_handle = NULL;
     int r; //for return values

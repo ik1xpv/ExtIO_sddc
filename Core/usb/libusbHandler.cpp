@@ -2,16 +2,13 @@
 #include "../config.h"
 #include "libusb/libusb.hpp"
 
-/* IUsbHandler* CreateUsbHandler()
-{
-	return new LibusbHandler();
-} */
 
 LibusbHandler::LibusbHandler() :
 	fx3dev (nullptr),
 	Fx3IsOn (false),
 	devidx (0)
 {
+    (void)devidx;
 	DbgPrintf("\r\nLibusbHandler\r\n");
 }
 
