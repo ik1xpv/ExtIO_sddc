@@ -31,14 +31,19 @@ CyApiHandler::~CyApiHandler() // reset USB device and exit
 	Close();
 }
 
-char* wchar2char(const wchar_t* wchar)
-{
-	char* m_char;
-	int len = WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), NULL, 0, NULL, NULL);
-	m_char = new char[len + 1];
-	WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), m_char, len, NULL, NULL);
-	m_char[len] = '\0';
-	return m_char;
+char* wchar2char(const wchar_t* wchar) {
+    if (wchar == nullptr) return nullptr;
+
+    // Calculate the length needed for the new string
+    size_t len = std::wcsrtombs(nullptr, &wchar, 0, nullptr);
+    if (len == static_cast<size_t>(-1)) return nullptr;
+
+    char* m_char = new char[len + 1];
+    // Convert the wide string to a multi-byte string
+    std::wcsrtombs(m_char, &wchar, len + 1, nullptr);
+    m_char[len] = '\0';  // Ensure null termination
+
+    return m_char;
 }
 
 bool CyApiHandler::GetFx3DeviceStreamer() {   // open class 
