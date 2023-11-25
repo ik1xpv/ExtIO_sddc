@@ -2,6 +2,49 @@
 #include "libusb.hpp"
 #include "../../config.h"
 
+void USBDevice::GetDeviceName(void) {
+    memset(DeviceName, 0, sizeof(DeviceName));
+    
+}
+
+unsigned char USBDevice::DeviceCount(void) {
+    libusb_device **devs; // Pointer to pointer of device, used to retrieve a list of devices
+    ssize_t count = 0;    // Number of devices in list
+    ssize_t i = 0;        // Iterator variable
+
+    // Initialize the library if it has not been initialized
+    libusb_init(NULL); // Normally you would check for errors here
+
+    // Get the list of devices
+    count = libusb_get_device_list(NULL, &devs);
+    if (count < 0) {
+        // Error handling here
+        libusb_exit(NULL); // Cleanup on error
+        return 0;          // Return 0 devices in case of error
+    }
+
+    unsigned char DeviceCount = 0; // Count of devices with the desired characteristics
+
+    for (i = 0; i < count; i++) {
+        libusb_device *device = devs[i];
+        libusb_device_descriptor desc;
+        
+        // Get the device descriptor for each device and increase the count if it matches your criteria
+        if (libusb_get_device_descriptor(device, &desc) == 0) {
+            // Here you would typically check if the device's vendor ID and product ID match your target device
+            // For example: if (desc.idVendor == MY_VENDOR_ID && desc.idProduct == MY_PRODUCT_ID)
+            DeviceCount++;
+        }
+    }
+
+    // Free the list after use, unref_devices set to 1 to decrement the reference count on each device
+    libusb_free_device_list(devs, 1);
+
+    // Exit libusb
+    libusb_exit(NULL);
+
+    return DeviceCount;
+}
 
 bool USBDevice::CreateHandle(unsigned char dev) {
     libusb_device **devs;
@@ -58,44 +101,7 @@ bool USBDevice::Open(uint8_t dev)
     return true;
 }
 
-unsigned char USBDevice::DeviceCount(void) {
-    libusb_device **devs; // Pointer to pointer of device, used to retrieve a list of devices
-    ssize_t count = 0;    // Number of devices in list
-    ssize_t i = 0;        // Iterator variable
 
-    // Initialize the library if it has not been initialized
-    libusb_init(NULL); // Normally you would check for errors here
-
-    // Get the list of devices
-    count = libusb_get_device_list(NULL, &devs);
-    if (count < 0) {
-        // Error handling here
-        libusb_exit(NULL); // Cleanup on error
-        return 0;          // Return 0 devices in case of error
-    }
-
-    unsigned char DeviceCount = 0; // Count of devices with the desired characteristics
-
-    for (i = 0; i < count; i++) {
-        libusb_device *device = devs[i];
-        libusb_device_descriptor desc;
-        
-        // Get the device descriptor for each device and increase the count if it matches your criteria
-        if (libusb_get_device_descriptor(device, &desc) == 0) {
-            // Here you would typically check if the device's vendor ID and product ID match your target device
-            // For example: if (desc.idVendor == MY_VENDOR_ID && desc.idProduct == MY_PRODUCT_ID)
-            DeviceCount++;
-        }
-    }
-
-    // Free the list after use, unref_devices set to 1 to decrement the reference count on each device
-    libusb_free_device_list(devs, 1);
-
-    // Exit libusb
-    libusb_exit(NULL);
-
-    return DeviceCount;
-}
 
 
 FX3Device::FX3Device()

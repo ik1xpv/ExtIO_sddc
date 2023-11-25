@@ -17,6 +17,8 @@ public:
     USBDevice(libusb_context *ctx = nullptr, bool open = true);
     ~USBDevice();
 
+    char DeviceName[256];
+
     unsigned char DeviceCount(void);
     bool CreateHandle(unsigned char dev);
     bool Open(uint8_t dev);
@@ -28,6 +30,7 @@ public:
 private:
     //libusb_context *ctx;
     libusb_device_handle *hDevice;
+    void GetDeviceName(void);
 
 };
 
