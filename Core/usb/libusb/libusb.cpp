@@ -66,6 +66,13 @@ unsigned char USBDevice::DeviceCount(void) {
 bool USBDevice::CreateHandle(unsigned char dev) {
 
     Devices = DeviceCount();
+
+    if (!Devices) return false;
+
+    if (dev > (Devices - 1)) return false; //dev = Devices-1;
+
+    
+
     libusb_device **devs;
     libusb_device_handle *dev_handle = NULL;
     int r; //for return values
