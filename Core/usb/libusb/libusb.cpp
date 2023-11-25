@@ -2,9 +2,24 @@
 #include "libusb.hpp"
 #include "../../config.h"
 
+USBDevice::USBDevice(libusb_context *ctx, bool open)
+{
+    DbgPrintf("\r\nUSBDevice::USBDevice\r\n");
+    hDevice = nullptr;
+}
+
+
+USBDevice::~USBDevice()
+{
+    DbgPrintf("\r\nUSBDevice::~USBDevice\r\n");
+}
+
+
+
+
 void USBDevice::GetDeviceName(void) {
     memset(DeviceName, 0, sizeof(DeviceName));
-    
+
 }
 
 unsigned char USBDevice::DeviceCount(void) {
@@ -98,6 +113,10 @@ bool USBDevice::Open(uint8_t dev)
         hDevice = nullptr;  // Ensure the handle is marked invalid after closing.
     }
 
+    if (CreateHandle(dev)) {
+        return false;
+    }
+
     return true;
 }
 
@@ -112,15 +131,5 @@ FX3Device::FX3Device()
 FX3Device::~FX3Device()
 {
     DbgPrintf("\r\nFX3Device::~FX3Device\r\n");
-}
-
-USBDevice::USBDevice(libusb_context *ctx, bool open)
-{
-    DbgPrintf("\r\nUSBDevice::USBDevice\r\n");
-}
-
-USBDevice::~USBDevice()
-{
-    DbgPrintf("\r\nUSBDevice::~USBDevice\r\n");
 }
 
