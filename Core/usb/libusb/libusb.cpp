@@ -6,6 +6,8 @@ USBDevice::USBDevice(libusb_context *ctx, bool open)
 {
     DbgPrintf("\r\nUSBDevice::USBDevice\r\n");
     hDevice = nullptr;
+
+    Devices = 0;
 }
 
 
@@ -62,6 +64,8 @@ unsigned char USBDevice::DeviceCount(void) {
 }
 
 bool USBDevice::CreateHandle(unsigned char dev) {
+
+    Devices = DeviceCount();
     libusb_device **devs;
     libusb_device_handle *dev_handle = NULL;
     int r; //for return values

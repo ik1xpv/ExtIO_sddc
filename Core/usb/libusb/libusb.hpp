@@ -30,6 +30,9 @@ public:
 private:
     //libusb_context *ctx;
     libusb_device_handle *hDevice;
+
+    int Devices;
+
     void GetDeviceName(void);
 
 };
