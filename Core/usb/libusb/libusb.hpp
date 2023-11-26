@@ -5,7 +5,7 @@
 
 #if defined(_WIN32) 
     #include <libusb-1.0/libusb.h>
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__linux__)
     #include <libusb.h>
 #else
     #error "Unsupported platform"   
