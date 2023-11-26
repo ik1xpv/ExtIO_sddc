@@ -274,3 +274,4 @@ __pycache__/
 wisdom*
 hardware/.DS_Store
 .DS_Store
+.vscode/settings.json
