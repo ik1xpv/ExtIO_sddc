@@ -61,7 +61,7 @@ else() # if not WIN32
     pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
     target_compile_definitions(usbLib PUBLIC -DUSE_LIBUSB_DRIVER)
     # Append libusb specific sources and headers for Unix-like systems
-    list(APPEND USB_SRC "libusb/libusb.cpp" "LibusbHandler.cpp")
+    list(APPEND USB_SRC "libusb/libusb.cpp" "libusbHandler.cpp")
     list(APPEND USB_HEADERS "libusb/libusb.hpp" "LibusbHandler.h")
     target_include_directories(usbLib PUBLIC ${LIBUSB_INCLUDE_DIRS})
     target_link_libraries(usbLib PRIVATE ${LIBUSB_LIBRARIES})
