@@ -10,6 +10,8 @@
     #error "Unsupported platform"   
 #endif
 
+const int USB_STRING_MAXLEN = 256;
+
 class USBDevice {
 
 public:
@@ -17,7 +19,13 @@ public:
     USBDevice(libusb_context *ctx = nullptr, bool open = true);
     ~USBDevice();
 
-    char DeviceName[256];
+    ULONG LastError;
+
+    char        DeviceName[USB_STRING_MAXLEN];
+    char        FriendlyName[USB_STRING_MAXLEN];
+    wchar_t     Manufacturer[USB_STRING_MAXLEN];
+    wchar_t     Product[USB_STRING_MAXLEN];
+    wchar_t     SerialNumber[USB_STRING_MAXLEN];
 
     unsigned char DeviceCount(void);
     bool CreateHandle(unsigned char dev);

@@ -1,8 +1,8 @@
 
 // Note: see usbdi.h in the DDK for the USBD_STATUS source definitions
-typedef LONG USBD_STATUS;
-#define USBD_STATUS(Status) ((ULONG)(Status) & 0x0FFFFFFFL)
-#define USBD_STATE(Status) ((ULONG)(Status) & 0xF0000000L)
+typedef unsigned long USBD_STATUS;
+#define USBD_STATUS(Status) ((unsigned long)(Status) & 0x0FFFFFFFL)
+#define USBD_STATE(Status) ((unsigned long)(Status) & 0xF0000000L)
 
 // HC status codes (Note: both error and stall bit are set)
 #define USBD_STATUS_SUCCESS                  ((USBD_STATUS)0x00000000L)

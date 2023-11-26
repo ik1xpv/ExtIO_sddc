@@ -302,14 +302,15 @@ bool CyApiHandler::FinishDataXfer(void** context)
 	}
 
 	if (!EndPt->WaitForXfer(&readContext->overlap, BLOCK_TIMEOUT)) { // block on transfer
-		DbgPrintf("WaitForXfer timeout. NTSTATUS = 0x%08X\n", EndPt->NtStatus);
+		DbgPrintf("WaitForXfer timeout. NTSTATUS = 0x%08lX\n", EndPt->NtStatus);
+
 		EndPt->Abort(); // abort if timeout
 		return false;
 	}
 
 	auto requested_size = readContext->size;
 	if (!EndPt->FinishDataXfer(readContext->buffer, readContext->size, &readContext->overlap, readContext->context)) {
-		DbgPrintf("FinishDataXfer Failed. NTSTATUS = 0x%08X\n", EndPt->NtStatus);
+		DbgPrintf("FinishDataXfer Failed. NTSTATUS = 0x%08lX\n", EndPt->NtStatus);
 		return false;
 	}
 

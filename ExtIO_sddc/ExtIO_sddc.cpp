@@ -229,7 +229,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		{
 			// https://en.wikipedia.org/wiki/West_Bridge
 			int retry = 2;
-			while ((strncmp("WestBridge", devicelist.dev[idx],sizeof("WestBridge")) != NULL) && retry-- > 0)
+			while ((strncmp("WestBridge", devicelist.dev[idx], sizeof("WestBridge")) != 0) && retry-- > 0)
 				Fx3->Enumerate(idx, devicelist.dev[idx],sizeof(devicelist.dev[idx]), res_data, res_size); // if it enumerates as BootLoader retry
 			idx++;
 		}

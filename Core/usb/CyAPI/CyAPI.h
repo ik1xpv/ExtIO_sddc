@@ -145,6 +145,7 @@ protected:
 
 public:
 
+    virtual ~CCyUSBEndPoint() {}
     CCyUSBEndPoint(void);
     CCyUSBEndPoint(CCyUSBEndPoint& ept);
     CCyUSBEndPoint(HANDLE h, PUSB_ENDPOINT_DESCRIPTOR pEndPtDescriptor);

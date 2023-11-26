@@ -101,7 +101,7 @@ CCyUSBDevice::~CCyUSBDevice(void)
 
     if (hDevNotification) {
         if (! UnregisterDeviceNotification(hDevNotification))
-            throw "Failed to close the device notification handle.";
+            //throw "Failed to close the device notification handle.";
         hDevNotification = 0;
     }
 
@@ -469,6 +469,7 @@ bool CCyUSBDevice::CreateHandle(UCHAR dev){
                             NULL);
 
                         DWORD errCode =  GetLastError();
+                        (void)errCode;
                         free(functionClassDeviceData);
                         SetupDiDestroyDeviceInfoList(hwDeviceInfo);
 
@@ -533,6 +534,7 @@ bool CCyUSBDevice::Open(UCHAR dev){
 				catch(char *Str)
 				{
 					char *Str1 = Str;// just to ignore warning
+                    (void)Str1;
 					MessageBox(NULL,"Please correct firmware BOS descriptor table","Wrong BOS Descriptor",(UINT) NULL);
 					Close(); // Close the device handle.
 					return false;
@@ -566,6 +568,7 @@ bool CCyUSBDevice::Open(UCHAR dev){
 			catch(char *Str)
 			{
 				char *Str1 = Str; // just to ignore warning
+                (void)Str1;
 				MessageBox(NULL,"Please correct firmware descriptor table","Wrong Device Configuration",(UINT) NULL);
 				Close(); // Close the device handle.
 				return false;
@@ -621,7 +624,7 @@ void CCyUSBDevice::DestroyHandle(void){
 
     if ( hDevice != INVALID_HANDLE_VALUE ) {
 
-        if (hHndNotification)
+        if (hHndNotification) {
             if (! UnregisterDeviceNotification(hHndNotification))
             {
                 LastError = GetLastError();
@@ -636,6 +639,7 @@ void CCyUSBDevice::DestroyHandle(void){
 
             hDevice = INVALID_HANDLE_VALUE;
             hHndNotification = 0;
+        }
     }
 
 }
@@ -657,7 +661,7 @@ void CCyUSBDevice::Close(void){
 		UsbBos = NULL;
 	}
     // Clean-up dynamically allocated objects
-    for (int i=0; i<Configs; i++)
+    for (int i=0; i<Configs; i++) {
         if (USBConfigDescriptors[i]) {
             free(USBConfigDescriptors[i]);
             USBConfigDescriptors[i] = NULL;
@@ -679,6 +683,7 @@ void CCyUSBDevice::Close(void){
         Configs = 0;
         Interfaces = 0;
         AltInterfaces = 0;
+    }
 
 }
 
@@ -2532,6 +2537,7 @@ bool CCyFX3Device::Ep0VendorCommand(vendorCmdData cmdData)
     ControlEndPt->Index     = ((cmdData.addr >> 16) & 0xFFFF);
 
     int maxpkt = ControlEndPt->MaxPktSize;
+    (void)maxpkt;
 
     long len = cmdData.size;
 
