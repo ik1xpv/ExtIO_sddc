@@ -1,7 +1,7 @@
 #include "LibusbHandler.h"
 #include "../config.h"
 #include "libusb/libusb.hpp"
-
+#include <cstring>
 
 LibusbHandler::LibusbHandler() :
 	fx3dev (nullptr),
