@@ -2,6 +2,7 @@
 #define __LIBUSB_HPP__
 
 #include <stdint.h>
+
 #if defined(_WIN32) 
     #include <libusb-1.0/libusb.h>
 #elif defined(__APPLE__)
@@ -19,7 +20,7 @@ public:
     USBDevice(libusb_context *ctx = nullptr, bool open = true);
     ~USBDevice();
 
-    ULONG LastError;
+    unsigned long LastError;
 
     char        DeviceName[USB_STRING_MAXLEN];
     char        FriendlyName[USB_STRING_MAXLEN];
