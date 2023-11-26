@@ -33,7 +33,7 @@ uint32_t glCounter[20];					// Counters used to monitor GPIF
 uint32_t MAXCLOCKVALUE = 10;
 uint32_t ClockValue;	// Used to Set/Display GPIF clock
 uint8_t Toggle;
-uint32_t Qevent __attribute__ ((aligned (32)));
+extern uint32_t Qevent __attribute__ ((aligned (32)));
 
 CyBool_t flagdebug = false;
 volatile uint16_t debtxtlen = 0;
