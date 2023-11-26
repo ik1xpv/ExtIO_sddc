@@ -187,6 +187,7 @@ _pkginfo.txt
 
 # Visual Studio Code
 .cache/
+.vscode/
 
 # Others
 ClientBin/
