@@ -1,6 +1,7 @@
 #include "../LibusbHandler.h"
 #include "libusb.hpp"
 #include "../../config.h"
+#include <cstring>
 
 USBDevice::USBDevice(libusb_context *ctx, bool open)
 {
