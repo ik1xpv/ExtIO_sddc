@@ -14,7 +14,7 @@ set(USB_SRC "UsbHandlerFactory.cpp")
 set(USB_HEADERS "IUsbHandler.h")
 
 
-if(WIN32)
+if(MSVC)
     
         SET(LIBUSB_URL "https://github.com/libusb/libusb/releases/download/v1.0.26/libusb-1.0.26-binaries.7z")
         include(ExternalProject)

@@ -1,7 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 // 
 #include "resource.h"
-
+#include <windows.h>
 #include "winres.h"
 /////////////////////////////////////////////////////////////////////////////
 // Neutral resources
@@ -58,12 +58,12 @@ BEGIN
 
  //  GROUPBOX        "", IDC_STATIC, 2, 66, 212, 42
 
-    LTEXT	        "Sampling frequency  Hz" IDC_STATIC, 16, 76, 100, 10, NOT WS_GROUP
+//    LTEXT	        "Sampling frequency  Hz" IDC_STATIC, 16, 76, 100, 10, NOT WS_GROUP
     EDITTEXT        IDC_EDIT1, 100, 73, 46, 14, ES_CENTER | ES_UPPERCASE | ES_AUTOHSCROLL | ES_NUMBER
     PUSHBUTTON      "Apply", IDC_FREQAPPLY, 150, 74, 27, 12, WS_GROUP | NOT WS_TABSTOP
     PUSHBUTTON      "Cancel", IDC_FREQCANC, 178, 74, 27, 12, WS_GROUP | NOT WS_TABSTOP
 
-    LTEXT	        "Reference corr. +/- ppm" IDC_STATIC, 16, 94, 88, 10, NOT WS_GROUP
+   // LTEXT	        "Reference corr. +/- ppm" IDC_STATIC, 16, 94, 88, 10, NOT WS_GROUP
     EDITTEXT        IDC_EDIT2, 112, 91, 34, 14, ES_CENTER | ES_UPPERCASE | ES_AUTOHSCROLL
     PUSHBUTTON      "Apply", IDC_CORRUPDATE, 150, 92, 27, 12, WS_GROUP | NOT WS_TABSTOP
     PUSHBUTTON      "Cancel", IDC_CORRCANC, 178, 92, 27, 12, WS_GROUP | NOT WS_TABSTOP
@@ -97,13 +97,13 @@ BEGIN
     LTEXT           "ADC", IDC_STATIC, 16,28, 17, 10, NOT WS_GROUP
     CONTROL         "Dither", IDC_DITHER, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 100, 27, 30, 10
     CONTROL         "Rand", IDC_RAND, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 150, 27, 30, 10
-    LTEXT	        "Sampling frequency  Hz" IDC_STATIC,16,44,100,10,NOT WS_GROUP
+  //  LTEXT	        "Sampling frequency  Hz" IDC_STATIC,16,44,100,10,NOT WS_GROUP
     EDITTEXT        IDC_EDIT1,100,42,46,13,ES_CENTER | ES_UPPERCASE | 
                     ES_AUTOHSCROLL | ES_NUMBER
     PUSHBUTTON      "Apply",IDC_FREQAPPLY,150,42,27,12,WS_GROUP | NOT WS_TABSTOP
     PUSHBUTTON      "Cancel", IDC_FREQCANC, 178, 42, 27, 12, WS_GROUP | NOT WS_TABSTOP
 
-    LTEXT	        "Reference corr. +/- ppm" IDC_STATIC, 16, 62, 88, 10, NOT WS_GROUP
+   // LTEXT	        "Reference corr. +/- ppm" IDC_STATIC, 16, 62, 88, 10, NOT WS_GROUP
     EDITTEXT        IDC_EDIT2, 112, 60, 34, 13, ES_CENTER | ES_UPPERCASE |
     ES_AUTOHSCROLL
     PUSHBUTTON      "Apply", IDC_CORRUPDATE, 150, 60, 27, 12, WS_GROUP | NOT WS_TABSTOP
@@ -143,7 +143,7 @@ GROUPBOX        "", IDC_STATIC, 4, 19, 208, 40
 LTEXT           "ADC", IDC_STATIC, 16, 28, 17, 10, NOT WS_GROUP
 CONTROL         "Dither", IDC_DITHER, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 100, 27, 30, 10
 CONTROL         "Rand", IDC_RAND, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 150, 27, 30, 10
-LTEXT	        "Sampling frequency  Hz" IDC_STATIC, 16, 44, 100, 10, NOT WS_GROUP
+//LTEXT	        "Sampling frequency  Hz" IDC_STATIC, 16, 44, 100, 10, NOT WS_GROUP
 EDITTEXT        IDC_EDIT1, 100, 42, 46, 13, ES_CENTER | ES_UPPERCASE |
 ES_AUTOHSCROLL | ES_NUMBER
 PUSHBUTTON      "Apply", IDC_FREQAPPLY, 150, 42, 27, 12, WS_GROUP | NOT WS_TABSTOP
