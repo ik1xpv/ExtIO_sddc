@@ -36,9 +36,9 @@ public:
     libusb_device *device;
     libusb_device_descriptor descriptor;
     libusb_config_descriptor *config;
+    libusb_device_handle *hDevice;
 private:
     //libusb_context *ctx;
-    libusb_device_handle *hDevice;
 
     int Devices;
     void GetDevDescriptor(void);

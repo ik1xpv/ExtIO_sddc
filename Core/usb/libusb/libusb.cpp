@@ -1,6 +1,8 @@
 #include "../LibusbHandler.h"
 #include "libusb.hpp"
 #include "../../config.h"
+#include "libusb-1.0/libusb.h"
+#include <cstddef>
 #include <cstring>
 
 USBDevice::USBDevice(libusb_context *ctx, bool open)
@@ -124,12 +126,11 @@ bool USBDevice::Open(uint8_t dev)
         libusb_close(hDevice);
         hDevice = nullptr;  // Ensure the handle is marked invalid after closing.
     }
+    libusb_init(NULL);
+    hDevice = libusb_open_device_with_vid_pid(NULL ,  0x04b4, 0x00f1);
 
-    if (CreateHandle(dev)) {
-        return false;
-    }
 
-    return true;
+    return false;
 }
 
 

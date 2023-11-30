@@ -1,5 +1,6 @@
 #include "LibusbHandler.h"
 #include "../config.h"
+#include "libusb-1.0/libusb.h"
 #include "libusb/libusb.hpp"
 #include <cstring>
 
@@ -22,6 +23,9 @@ LibusbHandler::~LibusbHandler() // reset USB device and exit
 bool LibusbHandler::GetFx3DeviceStreamer()
 {
     DbgPrintf("\r\nGetFx3DeviceStreamer\r\n");
+    bool r = false;
+    if (fx3dev == nullptr) return r;
+
     return true;
 }
 
@@ -51,6 +55,20 @@ bool LibusbHandler::Enumerate(unsigned char& idx, char* lbuf, size_t bufSize, co
 bool LibusbHandler::Open(const uint8_t* fw_data, uint32_t fw_size)
 {
     DbgPrintf("\r\nOpen\r\n");
+    int r = false;
+    if (!GetFx3DeviceStreamer()) {
+		DbgPrintf("Failed to open device\n");
+		return r;
+	}
+
+    fx3dev->device = libusb_get_device(fx3dev->hDevice);
+    r = libusb_get_device_descriptor(fx3dev->device, &fx3dev->descriptor);
+    if (r < 0) {
+        DbgPrintf("Failed to get device descriptor\n");
+        return r;
+    }
+    
+
     return true;
 }
 
