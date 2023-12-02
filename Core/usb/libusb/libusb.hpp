@@ -32,7 +32,7 @@ public:
     bool CreateHandle(unsigned char dev);
     bool Open(uint8_t dev);
     
-
+     libusb_ss_endpoint_companion_descriptor *ep_comp_desc;
     libusb_device *device;
     libusb_device_descriptor descriptor;
     libusb_config_descriptor *config;

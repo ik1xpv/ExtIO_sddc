@@ -2,6 +2,7 @@
 #include "../config.h"
 #include "libusb-1.0/libusb.h"
 #include "libusb/libusb.hpp"
+#include <cstddef>
 #include <cstring>
 
 LibusbHandler::LibusbHandler() :
@@ -85,10 +86,25 @@ bool LibusbHandler::Open(const uint8_t* fw_data, uint32_t fw_size)
             }
         }
     }
-    unsigned short PktsPerFrame = (fx3dev->epBulkIn->wMaxPacketSize & 0x1800) >> 11;
-    int pktSize = (fx3dev->epBulkIn->wMaxPacketSize & 0x7ff) * (PktsPerFrame + 1);
+    int speed = libusb_get_device_speed(fx3dev->device);
+    DbgPrintf("Device speed: %d\n", speed);
+    if (speed != LIBUSB_SPEED_SUPER) {
+        DbgPrintf("Device is not operating at SuperSpeed. Please check your USB connection\n");
+        return false;
+    }
+    
+    r = libusb_get_ss_endpoint_companion_descriptor(NULL, fx3dev->epBulkIn, &fx3dev->ep_comp_desc);
+    if (r < 0) {
+        DbgPrintf("Failed to get endpoint companion descriptor\n");
+        return r;
+    }
 
-    //long pktSize = fx3dev->epBulkIn->wMaxPacketSize;
+    fx3dev->epBulkIn->wMaxPacketSize *= (fx3dev->ep_comp_desc->bMaxBurst + 1);
+
+    unsigned short PktsPerFrame = (fx3dev->epBulkIn->wMaxPacketSize & 0x1800) >> 11;
+    //int pktSize = (fx3dev->epBulkIn->wMaxPacketSize & 0x7ff) * (PktsPerFrame + 1);
+
+    long pktSize = fx3dev->epBulkIn->wMaxPacketSize;
     
     long ppx = transferSize / pktSize;
     DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
