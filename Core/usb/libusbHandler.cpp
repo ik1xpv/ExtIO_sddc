@@ -67,9 +67,46 @@ bool LibusbHandler::Open(const uint8_t* fw_data, uint32_t fw_size)
         DbgPrintf("Failed to get device descriptor\n");
         return r;
     }
-    
 
-    return true;
+    r = libusb_get_config_descriptor(fx3dev->device, 0, &fx3dev->config);
+    if (r < 0) {
+        DbgPrintf("Failed to get config descriptor\n");
+        return r;
+    }
+
+    fx3dev->interface = &fx3dev->config->interface[0];
+    fx3dev->altsetting = &fx3dev->interface->altsetting[0];
+
+    for (int i = 0; i < fx3dev->altsetting->bNumEndpoints; i++) {
+        const libusb_endpoint_descriptor *ep = &fx3dev->altsetting->endpoint[i];
+        if ((ep->bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) == LIBUSB_TRANSFER_TYPE_BULK) {
+            if (ep->bEndpointAddress & LIBUSB_ENDPOINT_IN) {
+                fx3dev->epBulkIn = (libusb_endpoint_descriptor *)ep;
+            }
+        }
+    }
+    unsigned short PktsPerFrame = (fx3dev->epBulkIn->wMaxPacketSize & 0x1800) >> 11;
+    int pktSize = (fx3dev->epBulkIn->wMaxPacketSize & 0x7ff) * (PktsPerFrame + 1);
+
+    //long pktSize = fx3dev->epBulkIn->wMaxPacketSize;
+    
+    long ppx = transferSize / pktSize;
+    DbgPrintf("buffer transferSize = %d. packet size = %ld. packets per transfer = %ld\n"
+		, transferSize, pktSize, ppx);
+
+	uint8_t data[4];
+    GetHardwareInfo((uint32_t*)&data);
+
+    if (data[1] != FIRMWARE_VER_MAJOR ||
+		data[2] != FIRMWARE_VER_MINOR)
+	{
+		DbgPrintf("Firmware version mismatch %d.%d != %d.%d (actual)\n", FIRMWARE_VER_MAJOR, FIRMWARE_VER_MINOR, data[1], data[2]);
+		Control(RESETFX3);
+		return false;
+	}
+
+	Fx3IsOn = true;
+	return Fx3IsOn;          // init success
 }
 
 bool LibusbHandler::Control(FX3Command command, uint8_t data)
@@ -80,8 +117,30 @@ bool LibusbHandler::Control(FX3Command command, uint8_t data)
 
 bool LibusbHandler::Control(FX3Command command, uint32_t data)
 {
-    DbgPrintf("\r\nControl\r\n");
+    EnterFunction();
+     uint8_t requestType = LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE;
+    uint8_t request = static_cast<uint8_t>(command);
+    uint16_t value = 0;
+    uint16_t index = 0;
+    unsigned char buffer[4];
+    int length = 4;
+
+    // Prepare data for sending
+    memcpy(buffer, &data, sizeof(UINT32));
+
+    int r = libusb_control_transfer(fx3dev->hDevice, requestType, request, value, index, buffer, length, 0);
+
+    DbgPrintf("FX3FWControl %x .%x %x\n", r, command, data);
+
+    if (r < 0) {
+        // Handle the error
+        Close();
+        return false;
+    }
+
     return true;
+
+   
 }
 
 bool LibusbHandler::Control(FX3Command command, uint64_t data)
@@ -99,7 +158,34 @@ bool LibusbHandler::SetArgument(uint16_t index, uint16_t value)
 bool LibusbHandler::GetHardwareInfo(uint32_t* data)
 {
     DbgPrintf("\r\nGetHardwareInfo\r\n");
+
+
+    uint8_t requestType = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE;
+    uint8_t request = TESTFX3;
+    uint16_t value = 0;
+    uint16_t index = 0;
+    unsigned char buffer[4];
+    int length = 4;
+
+#ifdef _DEBUG
+    value = 1;
+#endif
+
+    int r = libusb_control_transfer(fx3dev->hDevice, requestType, request, value, index, buffer, length, 0);
+
+    if (r < 0) {
+        // Handle the error
+        DbgPrintf("GetHardwareInfo failed: %d\n", r);
+        Close();
+        return false;
+    }
+
+    // Assuming data is a 32-bit integer and buffer contains 4 bytes
+    memcpy(data, buffer, sizeof(UINT32));
+    DbgPrintf("GetHardwareInfo %x .%x %x\n", r, TESTFX3, *data);
+
     return true;
+    
 }
 
 bool LibusbHandler::ReadDebugTrace(uint8_t* pdata, uint8_t len)

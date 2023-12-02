@@ -37,6 +37,10 @@ public:
     libusb_device_descriptor descriptor;
     libusb_config_descriptor *config;
     libusb_device_handle *hDevice;
+    libusb_endpoint_descriptor *epBulkIn;
+    const libusb_interface *interface;
+    const libusb_interface_descriptor *altsetting;
+
 private:
     //libusb_context *ctx;
 
