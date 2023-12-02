@@ -87,11 +87,12 @@ bool LibusbHandler::Open(const uint8_t* fw_data, uint32_t fw_size)
         }
     }
     int speed = libusb_get_device_speed(fx3dev->device);
-    DbgPrintf("Device speed: %d\n", speed);
+    
     if (speed != LIBUSB_SPEED_SUPER) {
         DbgPrintf("Device is not operating at SuperSpeed. Please check your USB connection\n");
         return false;
     }
+    DbgPrintf("Device is operating at SuperSpeed\n");
     
     r = libusb_get_ss_endpoint_companion_descriptor(NULL, fx3dev->epBulkIn, &fx3dev->ep_comp_desc);
     if (r < 0) {
@@ -101,8 +102,7 @@ bool LibusbHandler::Open(const uint8_t* fw_data, uint32_t fw_size)
 
     fx3dev->epBulkIn->wMaxPacketSize *= (fx3dev->ep_comp_desc->bMaxBurst + 1);
 
-    unsigned short PktsPerFrame = (fx3dev->epBulkIn->wMaxPacketSize & 0x1800) >> 11;
-    //int pktSize = (fx3dev->epBulkIn->wMaxPacketSize & 0x7ff) * (PktsPerFrame + 1);
+    //unsigned short PktsPerFrame = (fx3dev->epBulkIn->wMaxPacketSize & 0x1800) >> 11;
 
     long pktSize = fx3dev->epBulkIn->wMaxPacketSize;
     
