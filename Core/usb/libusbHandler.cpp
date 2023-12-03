@@ -223,6 +223,21 @@ bool LibusbHandler::GetHardwareInfo(uint32_t* data)
 bool LibusbHandler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 {
     DbgPrintf("\r\nReadDebugTrace\r\n");
+    uint8_t requestType = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE;
+    uint8_t request = READINFODEBUG; // Assuming READINFODEBUG is defined
+    uint16_t value = static_cast<uint16_t>(pdata[0]); // upstream char
+    uint16_t index = 0; // Assuming index is 0
+    unsigned int timeout = 0; // Define a suitable timeout
+
+    int r = libusb_control_transfer(fx3dev->hDevice, requestType, request, value, index, pdata, len, timeout);
+
+    if (r < 0) {
+        // Handle the error
+        DbgPrintf("ReadDebugTrace failed: %s\n", libusb_error_name(r));
+        Close();
+        return false;
+    }
+
     return true;
 }
 
