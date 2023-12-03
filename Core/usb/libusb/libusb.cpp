@@ -1,7 +1,6 @@
 #include "../LibusbHandler.h"
 #include "libusb.hpp"
 #include "../../config.h"
-#include "libusb-1.0/libusb.h"
 #include <cstddef>
 #include <cstring>
 
