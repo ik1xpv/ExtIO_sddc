@@ -3,6 +3,7 @@
 #include "libusb-1.0/libusb.h"
 #include "libusb/libusb.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 
 LibusbHandler::LibusbHandler() :
@@ -157,7 +158,7 @@ bool LibusbHandler::Control(FX3Command command, uint32_t data)
     int length = 4;
 
     // Prepare data for sending
-    memcpy(buffer, &data, sizeof(UINT32));
+    memcpy(buffer, &data, sizeof(uint32_t));
 
     int r = libusb_control_transfer(fx3dev->hDevice, requestType, request, value, index, buffer, length, 0);
 
@@ -212,7 +213,7 @@ bool LibusbHandler::GetHardwareInfo(uint32_t* data)
     }
 
     // Assuming data is a 32-bit integer and buffer contains 4 bytes
-    memcpy(data, buffer, sizeof(UINT32));
+    memcpy(data, buffer, sizeof(uint32_t));
     DbgPrintf("GetHardwareInfo %x .%x %x\n", r, TESTFX3, *data);
 
     return true;
