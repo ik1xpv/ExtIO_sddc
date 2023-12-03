@@ -34,18 +34,18 @@ private:
 	void CleanupDataXfer(void** context);
 
 	FX3Device* fx3dev;
-	[[maybe_unused]] USBEndPoint* EndPt;
+	USBEndPoint* EndPt;
 
-    [[maybe_unused]] std::thread *adc_samples_thread;
+    std::thread *adc_samples_thread;
 
 	bool GetFx3DeviceStreamer();
 	bool Fx3IsOn;
 	bool Close(void);
 	void AdcSamplesProcess();
 
-	[[maybe_unused]] ringbuffer<int16_t> *inputbuffer;
-	[[maybe_unused]] int numofblock;
-	[[maybe_unused]] bool run;
+	ringbuffer<int16_t> *inputbuffer;
+	int numofblock;
+	bool run;
 	uint8_t devidx;
 };
 
