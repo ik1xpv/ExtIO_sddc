@@ -127,7 +127,22 @@ bool LibusbHandler::Open(const uint8_t* fw_data, uint32_t fw_size)
 
 bool LibusbHandler::Control(FX3Command command, uint8_t data)
 {
-    DbgPrintf("\r\nControl\r\n");
+    EnterFunction();
+    uint8_t requestType = LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE;
+    uint8_t request = static_cast<uint8_t>(command);
+    uint16_t value = 0;    // Assuming value is 0
+    uint16_t index = 0;    // Assuming index is 0
+    unsigned char buffer[1] = { data };
+    int length = 1;        // Data length is 1 byte
+
+    int r = libusb_control_transfer(fx3dev->hDevice, requestType, request, value, index, buffer, length, 0);
+
+    if (r < 0) {
+        // Handle the error, for example, by logging or closing the device
+        Close();
+        return false;
+    }
+
     return true;
 }
 
@@ -253,6 +268,17 @@ void LibusbHandler::AdcSamplesProcess()
 void LibusbHandler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 {
     DbgPrintf("\r\nStartStream\r\n");
+    // Allocate the context and buffers
+	inputbuffer = &input;
+
+	// create the thread
+	this->numofblock = numofblock;
+	run = true;
+	adc_samples_thread = new std::thread(
+		[this]() {
+			this->AdcSamplesProcess();
+		}
+	);
 }
 
 void LibusbHandler::StopStream()
