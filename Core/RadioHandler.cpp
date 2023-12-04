@@ -368,7 +368,7 @@ void RadioHandlerClass::CaculateStats()
 		int nt = 10;
 		while (nt-- > 0)
 		{
-			std::this_thread::sleep_for(0.05s);
+			std::this_thread::sleep_for(0.5s);
 			debdata[0] = 0; //clean buffer 
 			if (GetConsoleIn != nullptr)
 			{

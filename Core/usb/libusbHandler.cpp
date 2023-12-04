@@ -1,6 +1,8 @@
 #include "LibusbHandler.h"
 #include "../config.h"
+
 #include "libusb/libusb.hpp"
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -226,7 +228,7 @@ bool LibusbHandler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
     uint8_t request = READINFODEBUG; // Assuming READINFODEBUG is defined
     uint16_t value = static_cast<uint16_t>(pdata[0]); // upstream char
     uint16_t index = 0; // Assuming index is 0
-    unsigned int timeout = 0; // Define a suitable timeout
+    unsigned int timeout = 100; // Define a suitable timeout
 
     int r = libusb_control_transfer(fx3dev->hDevice, requestType, request, value, index, pdata, len, timeout);
 
@@ -254,9 +256,33 @@ bool LibusbHandler::ReadI2cbytes(uint8_t i2caddr, uint8_t regaddr, uint8_t* pdat
 
 bool LibusbHandler::Close(void)
 {
-    DbgPrintf("\r\nClose\r\n");
-    return true;
+    //fx3dev->Close();            // close class
+	delete fx3dev;              // destroy class
+	Fx3IsOn = false;
+	return true;
 }
+
+#define BLOCK_TIMEOUT (80) // block 65.536 ms timeout is 80
+
+struct ReadContext
+{
+    ReadContext() : used(false) {
+        transfer = libusb_alloc_transfer(0);
+        bytesTransferred = 0;
+    }
+	unsigned char* context;
+	//OVERLAPPED overlap;
+	//SINGLE_TRANSFER transfer;
+	uint8_t* buffer;
+    bool used;
+	long size;
+    libusb_transfer* transfer;
+    long bytesTransferred;
+    std::atomic<bool> done;
+    std::mutex transferLock;
+    std::condition_variable cv;
+};
+
 
 bool LibusbHandler::BeginDataXfer(uint8_t *buffer, long transferSize, void** context)
 {
@@ -275,9 +301,54 @@ void LibusbHandler::CleanupDataXfer(void** context)
     DbgPrintf("\r\nCleanupDataXfer\r\n");
 }
 
+#define USB_READ_CONCURRENT 4
+
 void LibusbHandler::AdcSamplesProcess()
 {
-    DbgPrintf("\r\nAdcSamplesProcess\r\n");
+    DbgPrintf("AdcSamplesProc thread runs\n");
+	int buf_idx;            // queue index
+	int read_idx;
+	void*		contexts[USB_READ_CONCURRENT];
+
+	memset(contexts, 0, sizeof(contexts));
+
+	// Queue-up the first batch of transfer requests
+	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
+		auto ptr = inputbuffer->peekWritePtr(n);
+		if (!BeginDataXfer((uint8_t*)ptr, transferSize, &contexts[n])) {
+			DbgPrintf("Xfer request rejected.\n");
+			return;
+		}
+	}
+
+	read_idx = 0;	// context cycle index
+	buf_idx = 0;	// buffer cycle index
+
+	// The infinite xfer loop.
+	while (run) {
+		if (!FinishDataXfer(&contexts[read_idx])) {
+			break;
+		}
+
+		inputbuffer->WriteDone();
+
+		// Re-submit this queue element to keep the queue full
+		auto ptr = inputbuffer->peekWritePtr(USB_READ_CONCURRENT - 1);
+		if (!BeginDataXfer((uint8_t*)ptr, transferSize, &contexts[read_idx])) { // BeginDataXfer failed
+			DbgPrintf("Xfer request rejected.\n");
+			break;
+		}
+
+		buf_idx = (buf_idx + 1) % QUEUE_SIZE;
+		read_idx = (read_idx + 1) % USB_READ_CONCURRENT;
+	}  // End of the infinite loop
+
+	for (int n = 0; n < USB_READ_CONCURRENT; n++) {
+		CleanupDataXfer(&contexts[n]);
+	}
+
+	DbgPrintf("AdcSamplesProc thread_exit\n");
+	return;  // void *
 }
 
 void LibusbHandler::StartStream(ringbuffer<int16_t>& input, int numofblock)

@@ -128,6 +128,15 @@ bool USBDevice::Open(uint8_t dev)
     libusb_init(NULL);
     hDevice = libusb_open_device_with_vid_pid(NULL ,  0x04b4, 0x00f1);
 
+    if (hDevice == nullptr) {
+        DbgPrintf("Failed to open device : %s\r\n", libusb_error_name(LIBUSB_ERROR_NO_DEVICE));
+    }
+
+    int r = libusb_claim_interface(hDevice, 0);
+    if (r != LIBUSB_SUCCESS) {
+        DbgPrintf("Failed to claim interface : %s\r\n", libusb_error_name(r));
+    }
+
 
     return false;
 }
