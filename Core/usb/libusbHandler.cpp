@@ -3,6 +3,7 @@
 
 #include "libusb/libusb.hpp"
 #include <condition_variable>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
