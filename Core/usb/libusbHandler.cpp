@@ -129,56 +129,62 @@ bool LibusbHandler::Open(const uint8_t* fw_data, uint32_t fw_size)
 
 bool LibusbHandler::Control(FX3Command command, uint8_t data)
 {
-    EnterFunction();
-    uint8_t requestType = LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE;
-    uint8_t request = static_cast<uint8_t>(command);
-    uint16_t value = 0;    // Assuming value is 0
-    uint16_t index = 0;    // Assuming index is 0
-    unsigned char buffer[1] = { data };
-    int length = 1;        // Data length is 1 byte
+    int r = libusb_control_transfer(fx3dev->hDevice,
+                                    LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_OUT,
+                                    command,
+                                    0, // Value
+                                    0, // Index
+                                    &data,
+                                    1, // Length of data
+                                    5000); // Timeout in milliseconds
 
-    int r = libusb_control_transfer(fx3dev->hDevice, requestType, request, value, index, buffer, length, 0);
-
+    DbgPrintf("FX3FWControl %x .%x %x\n", r, command, data);
     if (r < 0) {
-        // Handle the error, for example, by logging or closing the device
+        // Handle the error
+        DbgPrintf("FX3FWControl failed: %s\n", libusb_error_name(r));
         Close();
         return false;
     }
-
     return true;
 }
 
 bool LibusbHandler::Control(FX3Command command, uint32_t data)
 {
-    EnterFunction();
-     uint8_t requestType = LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE;
-    uint8_t request = static_cast<uint8_t>(command);
-    uint16_t value = 0;
-    uint16_t index = 0;
-    unsigned char buffer[4];
-    int length = 4;
-
-    // Prepare data for sending
-    memcpy(buffer, &data, sizeof(uint32_t));
-
-    int r = libusb_control_transfer(fx3dev->hDevice, requestType, request, value, index, buffer, length, 0);
+    int r = libusb_control_transfer(fx3dev->hDevice,
+                                    LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_OUT,
+                                    command,
+                                    0, // Value
+                                    0, // Index
+                                    (unsigned char*)&data,
+                                    sizeof(uint32_t), // Length of data
+                                    5000); // Timeout in milliseconds
 
     DbgPrintf("FX3FWControl %x .%x %x\n", r, command, data);
-
     if (r < 0) {
-        // Handle the error
+        DbgPrintf("FX3FWControl failed: %s\n", libusb_error_name(r));
         Close();
         return false;
     }
-
     return true;
-
-   
 }
 
 bool LibusbHandler::Control(FX3Command command, uint64_t data)
 {
-    DbgPrintf("\r\nControl\r\n");
+    int r = libusb_control_transfer(fx3dev->hDevice,
+                                    LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_OUT,
+                                    command,
+                                    0, // Value
+                                    0, // Index
+                                    (unsigned char*)&data,
+                                    sizeof(uint64_t), // Length of data
+                                    5000); // Timeout in milliseconds
+
+    DbgPrintf("FX3FWControl %x .%x %llx\n", r, command, data);
+    if (r < 0) {
+        DbgPrintf("FX3FWControl failed: %s\n", libusb_error_name(r));
+        Close();
+        return false;
+    }
     return true;
 }
 
@@ -223,22 +229,20 @@ bool LibusbHandler::GetHardwareInfo(uint32_t* data)
 
 bool LibusbHandler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 {
-    DbgPrintf("\r\nReadDebugTrace\r\n");
-    uint8_t requestType = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE;
-    uint8_t request = READINFODEBUG; // Assuming READINFODEBUG is defined
-    uint16_t value = static_cast<uint16_t>(pdata[0]); // upstream char
-    uint16_t index = 0; // Assuming index is 0
-    unsigned int timeout = 100; // Define a suitable timeout
-
-    int r = libusb_control_transfer(fx3dev->hDevice, requestType, request, value, index, pdata, len, timeout);
+    int r = libusb_control_transfer(fx3dev->hDevice,
+                                    LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_IN,
+                                    READINFODEBUG, // This should be your specific request code for reading debug trace
+                                    (unsigned short)pdata[0], // Value, assuming pdata[0] holds the relevant value as in your original method
+                                    0, // Index
+                                    pdata,
+                                    len, // Length of data
+                                    5000); // Timeout in milliseconds
 
     if (r < 0) {
         // Handle the error
         DbgPrintf("ReadDebugTrace failed: %s\n", libusb_error_name(r));
-        Close();
-        return false;
+        return false; // Handle error
     }
-
     return true;
 }
 
