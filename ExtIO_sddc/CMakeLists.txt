@@ -35,7 +35,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     target_include_directories(ExtIO_SDDC PUBLIC "${LIBFFTW_INCLUDE_DIRS}")
     message(STATUS "LIBFFTW_LIBRARIES: ${LIBFFTW_LIBRARIES}")
     target_link_directories(ExtIO_SDDC PUBLIC ${LIBFFTW_LIBRARY_DIRS})
-    target_link_libraries(ExtIO_SDDC PRIVATE $${LIBFFTW_LIBRARIES})
+    target_link_libraries(ExtIO_SDDC PRIVATE ${LIBFFTW_LIBRARIES})
     target_link_libraries(ExtIO_SDDC PRIVATE git_version SDDC_CORE Setupapi.lib)
 
     # Set other properties for the target
