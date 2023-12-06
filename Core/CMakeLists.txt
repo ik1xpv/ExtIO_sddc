@@ -98,8 +98,9 @@ include_directories(${LIBFFTW_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 
-
 add_library(SDDC_CORE STATIC ${SRC})
+
+add_dependencies(SDDC_CORE LIBFFTW)
 
 target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES})
 target_link_directories(SDDC_CORE PUBLIC ${LIBFFTW_LIBRARY_DIRS})
