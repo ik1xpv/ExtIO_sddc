@@ -100,6 +100,10 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 add_library(SDDC_CORE STATIC ${SRC})
 
+if (MSVC)
+    add_dependencies(SDDC_CORE LIBFFTW)
+endif()
+
 add_dependencies(SDDC_CORE LIBFFTW)
 
 target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES})
