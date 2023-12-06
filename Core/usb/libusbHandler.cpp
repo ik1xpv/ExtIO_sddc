@@ -291,13 +291,13 @@ struct ReadContext
 
 bool LibusbHandler::BeginDataXfer(uint8_t *buffer, long transferSize, void** context)
 {
-    DbgPrintf("\r\nBeginDataXfer\r\n");
+    //DbgPrintf("\r\nBeginDataXfer\r\n");
     return true;
 }
 
 bool LibusbHandler::FinishDataXfer(void** context)
 {
-    DbgPrintf("\r\nFinishDataXfer\r\n");
+    //DbgPrintf("\r\nFinishDataXfer\r\n");
     return true;
 }
 
