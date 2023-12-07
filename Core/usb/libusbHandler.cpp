@@ -1,12 +1,14 @@
 #include "LibusbHandler.h"
 #include "../config.h"
 
+
 #include "libusb/libusb.hpp"
 #include <condition_variable>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <mutex>
 
 LibusbHandler::LibusbHandler() :
 	fx3dev (nullptr),
@@ -269,35 +271,82 @@ bool LibusbHandler::Close(void)
 
 #define BLOCK_TIMEOUT (80) // block 65.536 ms timeout is 80
 
-struct ReadContext
-{
-    ReadContext() : used(false) {
-        transfer = libusb_alloc_transfer(0);
-        bytesTransferred = 0;
-    }
-	unsigned char* context;
-	//OVERLAPPED overlap;
-	//SINGLE_TRANSFER transfer;
-	uint8_t* buffer;
-    bool used;
-	long size;
-    libusb_transfer* transfer;
-    long bytesTransferred;
-    std::atomic<bool> done;
-    std::mutex transferLock;
-    std::condition_variable cv;
-};
 
+void LIBUSB_CALL callback_libusbtransfer(libusb_transfer *trans)
+{
+    TransferContext *context = reinterpret_cast<TransferContext*>(trans->user_data);
+    std::unique_lock<std::mutex> lck(context->transferLock);
+    switch (trans->status) {
+
+        case LIBUSB_TRANSFER_CANCELLED:
+            context->bytesXfered = trans->actual_length;
+            context->done.store(true);  
+            DbgPrintf("LIBUSB_TRANSFER_CANCELLED\n");
+            break;
+        case LIBUSB_TRANSFER_COMPLETED:
+            context->bytesXfered = trans->actual_length;
+            context->done.store(true);
+            break;
+        case LIBUSB_TRANSFER_ERROR:
+            DbgPrintf("LIBUSB_TRANSFER_ERROR\n");
+            context->bytesXfered = trans->actual_length;
+            context->done.store(true);
+            break;
+        case LIBUSB_TRANSFER_TIMED_OUT:
+            context->bytesXfered = trans->actual_length;
+            context->done.store(true);
+            break;
+        case LIBUSB_TRANSFER_OVERFLOW:
+            DbgPrintf("LIBUSB_TRANSFER_OVERFLOW\n");
+            break;
+        case LIBUSB_TRANSFER_STALL:
+            DbgPrintf("LIBUSB_TRANSFER_STALL\n");
+            break;
+        case LIBUSB_TRANSFER_NO_DEVICE:
+            DbgPrintf("LIBUSB_TRANSFER_NO_DEVICE\n");
+            break;
+	}
+	lck.unlock();
+	context->cv.notify_one();
+}
+
+#define USB_READ_CONCURRENT 4
 
 bool LibusbHandler::BeginDataXfer(uint8_t *buffer, long transferSize, void** context)
 {
-    //DbgPrintf("\r\nBeginDataXfer\r\n");
-    return true;
+    const unsigned char streamBulkInAddr = 0x81;
+    int i =0;
+    bool contextFound = false;
+    for (i = 0; i < USB_READ_CONCURRENT; i++) {
+        if (!contexts[i].used) {
+            contextFound = true;
+            break;
+        }
+    }
+
+    if(!contextFound) {
+        DbgPrintf("No contexts left for reading data\n");
+        return false;
+    }
+    contexts[i].used = true;
+
+    libusb_transfer *tr = contexts[i].transfer;
+    libusb_fill_bulk_transfer(tr, fx3dev->hDevice, streamBulkInAddr, (unsigned char*)buffer, transferSize, callback_libusbtransfer, &contexts[i], 0);
+    int status = libusb_submit_transfer(tr);
+    if (status != 0) {
+        DbgPrintf("libusb_submit_transfer failed: %s\n", libusb_error_name(status));
+        contexts[i].used = false;
+        return false;
+    }
+    return i;
 }
 
 bool LibusbHandler::FinishDataXfer(void** context)
 {
-    //DbgPrintf("\r\nFinishDataXfer\r\n");
+    
+    TransferContext *readContext = reinterpret_cast<TransferContext*>(*context);
+  
+
     return true;
 }
 
@@ -306,7 +355,6 @@ void LibusbHandler::CleanupDataXfer(void** context)
     DbgPrintf("\r\nCleanupDataXfer\r\n");
 }
 
-#define USB_READ_CONCURRENT 4
 
 void LibusbHandler::AdcSamplesProcess()
 {

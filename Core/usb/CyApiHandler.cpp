@@ -259,7 +259,6 @@ struct ReadContext
 {
 	PUCHAR context;
 	OVERLAPPED overlap;
-	SINGLE_TRANSFER transfer;
 	uint8_t* buffer;
 	long size;
 };

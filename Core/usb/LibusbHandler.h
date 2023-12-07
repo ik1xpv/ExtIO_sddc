@@ -4,7 +4,35 @@
 
 #include "../include/ringbuffer.h"
 #include "IUsbHandler.h"
+#include "libusb/libusb.hpp"
+#include <atomic>
 #include <stdint.h>
+#include <thread>
+
+class TransferContext
+{
+public:
+	TransferContext() : used(false) {
+		transfer = libusb_alloc_transfer(0);
+		bytesXfered = 0;
+		done = false;
+	}
+	~TransferContext() {
+		libusb_free_transfer(transfer);
+	}
+	bool reset() {
+		if (used) {
+			return false;
+		}
+		return true;
+	}
+	bool used;
+	libusb_transfer* transfer;
+	long bytesXfered;
+	std::atomic<bool> done;
+	std::mutex transferLock;
+	std::condition_variable cv;
+};
 
 class FX3Device;
 class USBEndPoint;
@@ -35,7 +63,12 @@ private:
 
 	FX3Device* fx3dev;
 	//USBEndPoint* EndPt;
+	TransferContext* contexts;
 
+	std::thread mUSBProcessThread;
+	void handle_libusb_events();
+	std::atomic<bool> mProcessUSBEvents;
+	
     std::thread *adc_samples_thread;
 
 	bool GetFx3DeviceStreamer();
@@ -48,6 +81,7 @@ private:
 	bool run;
 	uint8_t devidx;
 };
+
 
 
 #endif // LIBUSB_HPP
