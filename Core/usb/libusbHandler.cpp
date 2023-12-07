@@ -345,7 +345,7 @@ bool LibusbHandler::FinishDataXfer(void** context)
 {
     
     TransferContext *readContext = reinterpret_cast<TransferContext*>(*context);
-  
+    (void)readContext;
 
     return true;
 }
