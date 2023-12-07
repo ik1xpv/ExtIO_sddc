@@ -271,45 +271,6 @@ bool LibusbHandler::Close(void)
 
 #define BLOCK_TIMEOUT (80) // block 65.536 ms timeout is 80
 
-
-/* void LIBUSB_CALL callback_libusbtransfer(libusb_transfer *trans)
-{
-    TransferContext *context = reinterpret_cast<TransferContext*>(trans->user_data);
-    std::unique_lock<std::mutex> lck(context->transferLock);
-    switch (trans->status) {
-
-        case LIBUSB_TRANSFER_CANCELLED:
-            context->bytesXfered = trans->actual_length;
-            context->done.store(true);  
-            DbgPrintf("LIBUSB_TRANSFER_CANCELLED\n");
-            break;
-        case LIBUSB_TRANSFER_COMPLETED:
-            context->bytesXfered = trans->actual_length;
-            context->done.store(true);
-            break;
-        case LIBUSB_TRANSFER_ERROR:
-            DbgPrintf("LIBUSB_TRANSFER_ERROR\n");
-            context->bytesXfered = trans->actual_length;
-            context->done.store(true);
-            break;
-        case LIBUSB_TRANSFER_TIMED_OUT:
-            context->bytesXfered = trans->actual_length;
-            context->done.store(true);
-            break;
-        case LIBUSB_TRANSFER_OVERFLOW:
-            DbgPrintf("LIBUSB_TRANSFER_OVERFLOW\n");
-            break;
-        case LIBUSB_TRANSFER_STALL:
-            DbgPrintf("LIBUSB_TRANSFER_STALL\n");
-            break;
-        case LIBUSB_TRANSFER_NO_DEVICE:
-            DbgPrintf("LIBUSB_TRANSFER_NO_DEVICE\n");
-            break;
-	}
-	lck.unlock();
-	context->cv.notify_one();
-} */
-
 #define USB_READ_CONCURRENT 4
 struct ReadContext {
     libusb_transfer* transfer;
@@ -337,15 +298,7 @@ bool LibusbHandler::FinishDataXfer(void** context)
 
 void LibusbHandler::CleanupDataXfer(void** context)
 {
-     if (*context) {
-        ReadContext* readContext = reinterpret_cast<ReadContext*>(*context);
-        if (readContext->transfer) {
-            libusb_free_transfer(readContext->transfer);
-        }
-        delete[] readContext->buffer;
-        delete readContext;
-        *context = nullptr;
-    }
+    
 }
 
 
