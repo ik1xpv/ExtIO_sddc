@@ -405,9 +405,7 @@ void LibusbHandler::AdcSamplesProcess()
     }
 
     // Cleanup allocated buffers
-    for (int n = 0; n < USB_READ_CONCURRENT; n++) {
-        delete[] buffers[n];
-    }
+    
 
     DbgPrintf("AdcSamplesProc thread_exit\n");
 }
