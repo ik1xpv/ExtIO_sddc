@@ -354,8 +354,7 @@ void LibusbHandler::AdcSamplesProcess()
     DbgPrintf("AdcSamplesProc thread runs\n");
     int actual_length;
 
-    // Allocate buffers for the transfers
-    uint8_t* buffers[USB_READ_CONCURRENT];
+    
     for (int n = 0; n < USB_READ_CONCURRENT; n++) {
         uint8_t* ptr = reinterpret_cast<uint8_t*>(inputbuffer->peekWritePtr(n));
         int r = libusb_bulk_transfer(fx3dev->hDevice, 0x81, ptr, 
@@ -404,8 +403,6 @@ void LibusbHandler::AdcSamplesProcess()
         
     }
 
-    // Cleanup allocated buffers
-    
 
     DbgPrintf("AdcSamplesProc thread_exit\n");
 }
