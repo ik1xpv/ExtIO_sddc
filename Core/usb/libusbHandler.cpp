@@ -352,22 +352,39 @@ void LibusbHandler::CleanupDataXfer(void** context)
 void LibusbHandler::AdcSamplesProcess()
 {
     DbgPrintf("AdcSamplesProc thread runs\n");
-    int buf_idx = 0; // Buffer cycle index
+    int actual_length;
 
     // Allocate buffers for the transfers
     uint8_t* buffers[USB_READ_CONCURRENT];
     for (int n = 0; n < USB_READ_CONCURRENT; n++) {
-        buffers[n] = new uint8_t[transferSize];
+        uint8_t* ptr = reinterpret_cast<uint8_t*>(inputbuffer->peekWritePtr(n));
+        int r = libusb_bulk_transfer(fx3dev->hDevice, 0x81, ptr, 
+                                         transferSize, &actual_length, 70); // 5000 ms timeout
+
+            if (r != 0) {
+                DbgPrintf("Transfer error: %d\n", r);
+                break; // Break out of the loop on error
+            }
+
+            if (actual_length < transferSize) {
+                DbgPrintf("Only read %d bytes, but requested %u\n", actual_length, transferSize);
+            }
+
+        
     }
 
+    int read_idx = 0;
+    int buf_idx = 0; // Buffer cycle index
+
     while (run) {
-        for (int n = 0; n < USB_READ_CONCURRENT; n++) {
+        
             int actual_length;
-            uint8_t* ptr = reinterpret_cast<uint8_t*>(inputbuffer->peekWritePtr(buf_idx));
+            inputbuffer->WriteDone();
+            uint8_t* ptr = reinterpret_cast<uint8_t*>(inputbuffer->peekWritePtr(USB_READ_CONCURRENT-1));
 
             // Perform the synchronous USB transfer
             int r = libusb_bulk_transfer(fx3dev->hDevice, 0x81, ptr, 
-                                         transferSize, &actual_length, 5000); // 5000 ms timeout
+                                         transferSize, &actual_length, 70); // 5000 ms timeout
 
             if (r != 0) {
                 DbgPrintf("Transfer error: %d\n", r);
@@ -379,11 +396,12 @@ void LibusbHandler::AdcSamplesProcess()
             }
 
             // Signal that writing to this part of the buffer is done
-            inputbuffer->WriteDone();
+            
 
             // Increment buffer index for the next transfer
             buf_idx = (buf_idx + 1) % QUEUE_SIZE;
-        }
+            read_idx = (read_idx + 1) % USB_READ_CONCURRENT;
+        
     }
 
     // Cleanup allocated buffers
