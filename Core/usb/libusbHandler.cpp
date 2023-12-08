@@ -272,27 +272,10 @@ bool LibusbHandler::Close(void)
 #define BLOCK_TIMEOUT (80) // block 65.536 ms timeout is 80
 
 #define USB_READ_CONCURRENT 4
-struct ReadContext {
-    libusb_transfer* transfer;
-    uint8_t* buffer;
-    long size;
-    // Additional fields as needed for your application logic
-};
-
-
 
 bool LibusbHandler::BeginDataXfer(uint8_t *buffer, long transferSize, void** context)
 {
    
-    return true;
-}
-
-bool LibusbHandler::FinishDataXfer(void** context)
-{
-    
-    //TransferContext *readContext = reinterpret_cast<TransferContext*>(*context);
-  
-
     return true;
 }
 
@@ -375,7 +358,14 @@ void LibusbHandler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 
 void LibusbHandler::StopStream()
 {
-    DbgPrintf("\r\nStopStream\r\n");
+    // set the flag
+	run = false;
+	adc_samples_thread->join();
+
+	// force exit the thread
+	inputbuffer = nullptr;
+
+	delete adc_samples_thread;
 }
 
 
