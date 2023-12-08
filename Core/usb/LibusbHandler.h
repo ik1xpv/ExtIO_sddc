@@ -9,31 +9,6 @@
 #include <stdint.h>
 #include <thread>
 
-class TransferContext
-{
-public:
-	TransferContext() : used(false) {
-		transfer = libusb_alloc_transfer(0);
-		bytesXfered = 0;
-		done = false;
-	}
-	~TransferContext() {
-		libusb_free_transfer(transfer);
-	}
-	bool reset() {
-		if (used) {
-			return false;
-		}
-		return true;
-	}
-	bool used;
-	libusb_transfer* transfer;
-	long bytesXfered;
-	std::atomic<bool> done;
-	std::mutex transferLock;
-	std::condition_variable cv;
-};
-
 class FX3Device;
 class USBEndPoint;
 class LibusbHandler : public IUsbHandler
@@ -62,13 +37,7 @@ private:
 	void CleanupDataXfer(void** context);
 
 	FX3Device* fx3dev;
-	//USBEndPoint* EndPt;
-	TransferContext* contexts;
 
-	std::thread mUSBProcessThread;
-	void handle_libusb_events();
-	std::atomic<bool> mProcessUSBEvents;
-	
     std::thread *adc_samples_thread;
 
 	bool GetFx3DeviceStreamer();

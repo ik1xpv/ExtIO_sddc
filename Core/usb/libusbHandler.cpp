@@ -311,14 +311,14 @@ void LibusbHandler::AdcSamplesProcess()
     for (int n = 0; n < USB_READ_CONCURRENT; n++) {
         uint8_t* ptr = reinterpret_cast<uint8_t*>(inputbuffer->peekWritePtr(n));
         int r = libusb_bulk_transfer(fx3dev->hDevice, 0x81, ptr, 
-                                         transferSize, &actual_length, 70); // 5000 ms timeout
+                                         transferSize, &actual_length, 70);
 
             if (r != 0) {
                 DbgPrintf("Transfer error: %d\n", r);
-                break; // Break out of the loop on error
+                break;
             }
 
-            if (actual_length < transferSize) {
+            if (static_cast<uint32_t>(actual_length) < transferSize) {
                 DbgPrintf("Only read %d bytes, but requested %u\n", actual_length, transferSize);
             }
 
@@ -336,19 +336,16 @@ void LibusbHandler::AdcSamplesProcess()
 
             // Perform the synchronous USB transfer
             int r = libusb_bulk_transfer(fx3dev->hDevice, 0x81, ptr, 
-                                         transferSize, &actual_length, 70); // 5000 ms timeout
+                                         transferSize, &actual_length, 70); 
 
             if (r != 0) {
                 DbgPrintf("Transfer error: %d\n", r);
-                break; // Break out of the loop on error
+                break;
             }
 
-            if (actual_length < transferSize) {
+            if (static_cast<uint32_t>(actual_length) < transferSize) {
                 DbgPrintf("Only read %d bytes, but requested %u\n", actual_length, transferSize);
             }
-
-            // Signal that writing to this part of the buffer is done
-            
 
             // Increment buffer index for the next transfer
             buf_idx = (buf_idx + 1) % QUEUE_SIZE;
