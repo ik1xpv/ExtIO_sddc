@@ -94,18 +94,18 @@ if (MSVC)
           
 
 
-include_directories(${LIBFFTW_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 
 add_library(SDDC_CORE STATIC ${SRC})
+target_include_directories(SDDC_CORE PRIVATE ${LIBFFTW_INCLUDE_DIRS} ${LIBUSB_INCLUDE_DIRS})
 
 if (MSVC)
     add_dependencies(SDDC_CORE LIBFFTW)
 endif()
 
-target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES})
-target_link_directories(SDDC_CORE PUBLIC ${LIBFFTW_LIBRARY_DIRS})
+target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES} ${LIBUSB_LIBRARIES})
+target_link_directories(SDDC_CORE PUBLIC ${LIBFFTW_LIBRARY_DIRS} ${LIBUSB_LIBRARY_DIRS})
 
 set_target_properties(SDDC_CORE PROPERTIES POSITION_INDEPENDENT_CODE True)
 target_compile_definitions(SDDC_CORE PUBLIC _CRT_SECURE_NO_WARNINGS)

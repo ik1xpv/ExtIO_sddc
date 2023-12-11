@@ -20,8 +20,21 @@
           "searchPaths": [],
           "searchMicrosoftSymbolServer": true
         }
-      
-      }
+      },// macos debug launch lldb
+      {
+        "name": "sddc_test",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/libsddc/sddc_test",
+        "args": [
+          "SDDC_FX3.img"
+        ],
+        "cwd": "${workspaceFolder}",
+        "stopAtEntry": false,
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb"
+      },
     ]
   }
   

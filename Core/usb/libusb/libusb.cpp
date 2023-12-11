@@ -6,6 +6,8 @@
 
 USBDevice::USBDevice(libusb_context *ctx, bool open)
 {
+    (void)ctx;
+    (void)open;
     DbgPrintf("\r\nUSBDevice::USBDevice\r\n");
     hDevice = nullptr;
 
@@ -116,6 +118,7 @@ bool USBDevice::CreateHandle(unsigned char dev) {
 
 bool USBDevice::Open(uint8_t dev)
 {
+    (void)dev;
     DbgPrintf("\r\nUSBDevice::Open\r\n");
     // Assuming 'device_handle' is of type 'libusb_device_handle*' and
     // it's a member of your device handling class.

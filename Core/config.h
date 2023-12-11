@@ -12,7 +12,9 @@
 //#define _DEBUG  // defined in VS configuration
 
 #ifdef __cplusplus
-inline void null_func(const char *format, ...) { }
+inline void null_func(const char *format, ...) { 
+	(void)format;
+}
 #define DbgEmpty null_func
 #else
 #define DbgEmpty { }
