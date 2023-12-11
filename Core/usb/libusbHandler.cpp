@@ -235,7 +235,7 @@ bool LibusbHandler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
     int r = libusb_control_transfer(fx3dev->hDevice,
                                     LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_IN,
                                     READINFODEBUG, // This should be your specific request code for reading debug trace
-                                    (unsigned short)pdata[0], // Value, assuming pdata[0] holds the relevant value as in your original method
+                                    (uint16_t)pdata[0], // Value, assuming pdata[0] holds the relevant value as in your original method
                                     0, // Index
                                     pdata,
                                     len, // Length of data
@@ -243,7 +243,7 @@ bool LibusbHandler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 
     if (r < 0) {
         // Handle the error
-        DbgPrintf("ReadDebugTrace failed: %s\n", libusb_error_name(r));
+        //DbgPrintf("ReadDebugTrace failed: %s\n", libusb_error_name(r));
         return false; // Handle error
     }
     return true;

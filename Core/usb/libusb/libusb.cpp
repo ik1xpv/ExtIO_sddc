@@ -3,6 +3,7 @@
 #include "../../config.h"
 #include <cstddef>
 #include <cstring>
+#include <stdexcept>
 
 USBDevice::USBDevice(libusb_context *ctx, bool open)
 {
@@ -132,7 +133,8 @@ bool USBDevice::Open(uint8_t dev)
     hDevice = libusb_open_device_with_vid_pid(NULL ,  0x04b4, 0x00f1);
 
     if (hDevice == nullptr) {
-        DbgPrintf("Failed to open device : %s\r\n", libusb_error_name(LIBUSB_ERROR_NO_DEVICE));
+    // Throwing a runtime_error exception with a custom message
+    throw std::runtime_error("Failed to open device. The device might not be connected or might not have firmware.");
     }
 
     int r = libusb_claim_interface(hDevice, 0);
