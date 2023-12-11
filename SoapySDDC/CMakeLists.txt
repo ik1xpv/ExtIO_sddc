@@ -14,11 +14,6 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # which point to directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_definitions(-Wno-unused-parameter)
-endif()
-
-
 SOAPY_SDR_MODULE_UTIL(
     TARGET SDDCSupport
     SOURCES
