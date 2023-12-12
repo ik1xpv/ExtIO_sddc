@@ -2,7 +2,7 @@
 #include "../Core/config.h"
 #include <SoapySDR/Device.hpp>
 #include <SoapySDR/Types.h>
-
+#include <atomic>
 
 class SoapySDDC: public SoapySDR::Device
 {
