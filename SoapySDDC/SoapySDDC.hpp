@@ -3,7 +3,7 @@
 #include <SoapySDR/Device.hpp>
 #include <SoapySDR/Types.h>
 #include <atomic>
-
+#include "../Core/usb/UsbHandlerFactory.h"
 class SoapySDDC: public SoapySDR::Device
 {
 public:
@@ -108,5 +108,7 @@ private:
     uint32_t sampleRate;
     size_t numBuffers, bufferLength, asyncBuffs;
     std::atomic<long long> ticks;
+
+    IUsbHandler* Fx3;
 
 };

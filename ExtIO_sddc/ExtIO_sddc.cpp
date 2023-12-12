@@ -222,7 +222,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			res_size = SizeofResource(hInst, res);
 		}
 
-		auto Fx3 = UsbHandlerFactory::CreateUsbHandler();
+		Fx3 = UsbHandlerFactory::CreateUsbHandler();
 		unsigned char idx = 0;
 		int selected = 0;
 		while (Fx3->Enumerate(idx, devicelist.dev[idx],sizeof(devicelist.dev[idx]), res_data, res_size) && (idx < MAXNDEV))

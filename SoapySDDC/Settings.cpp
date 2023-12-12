@@ -2,11 +2,13 @@
 #include <SoapySDR/Types.hpp>
 #include <SoapySDR/Time.hpp>
 
-class SoapySDDC;
+
+ 
 
 SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args)
 {
     DbgPrintf("SoapySDDC::SoapySDDC\n");
+
 }
 
 SoapySDDC::~SoapySDDC(void)

@@ -35,6 +35,27 @@
         "externalConsole": false,
         "MIMode": "lldb"
       },
+      {
+        "name": "Debug Shared Library",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "/Users/cozy/SoapySDR/build/apps/SoapySDRUtil", // Change this to the executable that loads your .so
+        "args": [
+            "--probe"
+        ], // Any arguments the executable takes
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb",
+        //"miDebuggerPath": "/usr/bin/lldb",
+       // "preLaunchTask": "build", // Your build task name
+       
+      
+       // "launchCompleteCommand": "None",
+        //"additionalSOLibSearchPath": "${workspaceFolder}/ExtIO_sddc/build/SoapySDDC/", // Specify the directory where your .so file is
+        "logging": { "engineLogging": false }
+    }
     ]
   }
   
