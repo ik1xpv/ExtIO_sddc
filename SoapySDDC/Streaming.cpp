@@ -27,3 +27,22 @@ SoapySDR::ArgInfoList SoapySDDC::getStreamArgsInfo(const int direction, const si
 
     return streamArgs;
 }
+
+SoapySDR::Stream *SoapySDDC::setupStream(const int direction,
+                                         const std::string &format,
+                                         const std::vector<size_t> &channels,
+                                         const SoapySDR::Kwargs &args)
+{
+    DbgPrintf("SoapySDDC::setupStream\n");
+    return nullptr;
+}
+
+int SoapySDDC::activateStream(SoapySDR::Stream *stream,
+                             const int flags,
+                              const long long timeNs,
+                               const size_t numElems)
+{
+    DbgPrintf("SoapySDDC::activateStream\n");
+    RadioHandler.Start(0);
+    return 0;
+}

@@ -37,13 +37,13 @@ public:
 
     SoapySDR::ArgInfoList getStreamArgsInfo(const int direction, const size_t channel) const;
 
-    //SoapySDR::Stream *setupStream(const int direction, const std::string &format, const std::vector<size_t> &channels = std::vector<size_t>(), const SoapySDR::Kwargs &args = SoapySDR::Kwargs());
+    SoapySDR::Stream *setupStream(const int direction, const std::string &format, const std::vector<size_t> &channels = std::vector<size_t>(), const SoapySDR::Kwargs &args = SoapySDR::Kwargs());
 
     //void closeStream(SoapySDR::Stream *stream);
 
     //size_t getStreamMTU(SoapySDR::Stream *stream) const;
 
-    //int activateStream(SoapySDR::Stream *stream, const int flags = 0, const long long timeNs = 0, const size_t numElems = 0);
+    int activateStream(SoapySDR::Stream *stream, const int flags = 0, const long long timeNs = 0, const size_t numElems = 0);
 
     //int deactivateStream(SoapySDR::Stream *stream, const int flags = 0, const long long timeNs = 0);
 

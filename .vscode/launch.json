@@ -41,7 +41,7 @@
         "request": "launch",
         "program": "/Users/cozy/SoapySDR/build/apps/SoapySDRUtil", // Change this to the executable that loads your .so
         "args": [
-            "--probe"
+            "--args="driver=SDDC"","--rate=64000000","--direction=RX"
         ], // Any arguments the executable takes
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
