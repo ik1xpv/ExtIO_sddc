@@ -4,6 +4,16 @@
 #include <SoapySDR/Types.h>
 #include <atomic>
 #include "../Core/usb/UsbHandlerFactory.h"
+#include "../Core/include/RadioHandler.h"
+
+struct DevContext 
+{
+	unsigned char numdev;
+	char dev[MAXNDEV][MAXDEVSTRLEN];
+};
+
+
+
 class SoapySDDC: public SoapySDR::Device
 {
 public:
@@ -109,6 +119,8 @@ private:
     size_t numBuffers, bufferLength, asyncBuffs;
     std::atomic<long long> ticks;
 
+
     IUsbHandler* Fx3;
+    RadioHandlerClass RadioHandler;
 
 };

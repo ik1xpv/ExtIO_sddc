@@ -2,13 +2,32 @@
 #include <SoapySDR/Types.hpp>
 #include <SoapySDR/Time.hpp>
 
+static void Callback(void* context, const float* data, uint32_t len)
+{
+	if (data)
+	{
+		DbgPrintf("Callback: %d\n", len);
+	}
+	else
+	{
+		DbgPrintf("Callback: NULL\n");
+	}
+}
 
- 
 
-SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args)
+
+SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args):
+    Fx3(UsbHandlerFactory::CreateUsbHandler())
 {
     DbgPrintf("SoapySDDC::SoapySDDC\n");
-
+    unsigned char* fw_data;
+    uint32_t fw_size;
+    unsigned char idx = 0;
+    DevContext  devicelist; 
+    Fx3->Enumerate(idx, devicelist.dev[0], sizeof(devicelist.dev[0]), fw_data, fw_size);
+    Fx3->Open(fw_data, fw_size);
+    RadioHandler.Init(Fx3, Callback);
+    
 }
 
 SoapySDDC::~SoapySDDC(void)
