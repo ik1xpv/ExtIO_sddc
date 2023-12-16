@@ -7,7 +7,7 @@ DevContext  devicelist; // list of FX3 devices
 
 SoapySDR::KwargsList findSDDC(const SoapySDR::Kwargs &args)
 {
-    DbgPrintf("entering findSDDC method\n");
+    DbgPrintf("soapySDDC::findSDDC\n");
     unsigned char* fw_data;
     uint32_t fw_size;
     unsigned char idx = 0;
@@ -20,7 +20,7 @@ SoapySDR::KwargsList findSDDC(const SoapySDR::Kwargs &args)
 
 SoapySDR::Device *makeSDDC(const SoapySDR::Kwargs &args)
 { 
-    DbgPrintf("makeSDDC\n");
+    DbgPrintf("soapySDDC::makeSDDC\n");
     return new SoapySDDC(args);
 }
 

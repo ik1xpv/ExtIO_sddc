@@ -92,13 +92,13 @@ std::string SoapySDDC::getAntenna(const int dir, const size_t) const
 
 bool SoapySDDC::hasDCOffsetMode(const int, const size_t) const
 {
-    DbgPrintf("Does not have DC offset mode\n");
+    DbgPrintf("SoapySDDC::hasDCOffsetMode\n");
     return false;
 }
 
 bool SoapySDDC::hasFrequencyCorrection(const int, const size_t) const
 {
-    DbgPrintf("Doest not have frequency correction\n");
+    DbgPrintf("SoapySDDC::hasFrequencyCorrection\n");
     return false;
 }
 

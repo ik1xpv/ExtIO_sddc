@@ -3,6 +3,7 @@
 #include <SoapySDR/Device.hpp>
 #include <SoapySDR/Types.h>
 #include <atomic>
+#include <cstddef>
 #include "../Core/usb/UsbHandlerFactory.h"
 #include "../Core/include/RadioHandler.h"
 
@@ -47,7 +48,7 @@ public:
 
     //int deactivateStream(SoapySDR::Stream *stream, const int flags = 0, const long long timeNs = 0);
 
-    //int readStream(SoapySDR::Stream *stream, void * const *buffs, const size_t numElems, int &flags, long long &timeNs, const long timeoutUs = 100000);
+    int readStream(SoapySDR::Stream *stream, void * const *buffs, const size_t numElems, int &flags, long long &timeNs, const long timeoutUs = 100000);
 
     //size_t getNumDirectAccessBuffers(SoapySDR::Stream *stream);
 
@@ -114,8 +115,9 @@ public:
     void setHardwareTime(const long long timeNs, const std::string &what = "");
 
 private:
+    int bytesPerSample;
 
-    uint32_t sampleRate;
+    size_t sampleRate;
     size_t numBuffers, bufferLength, asyncBuffs;
     std::atomic<long long> ticks;
 
