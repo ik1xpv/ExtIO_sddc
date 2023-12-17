@@ -20,6 +20,7 @@ SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args):
     //RadioHandler.Init(Fx3, Callback);
     //RadioHandler.Start(0);
     
+    
 }
 
 SoapySDDC::~SoapySDDC(void)
