@@ -77,9 +77,9 @@ SoapySDR::Stream *SoapySDDC::setupStream(const int direction,
         throw std::runtime_error("setupStream failed: SDDC only supports CF32.");
     }
 
-    bytesPerSample = SoapySDR::formatToSize(format);
+    bytesPerSample = 4;
 
-    bufferLength = 262144/ bytesPerSample;
+    bufferLength = 262144 / bytesPerSample;
 
     _buf_tail = 0;
     _buf_head = 0;
@@ -89,8 +89,7 @@ SoapySDR::Stream *SoapySDDC::setupStream(const int direction,
     _buffs.resize(numBuffers);
     for (auto &buff : _buffs) buff.reserve(bufferLength*bytesPerSample);
     for (auto &buff : _buffs) buff.resize(bufferLength*bytesPerSample);
-    float* data = nullptr; // Replace nullptr with the appropriate value or variable
-    uint32_t len = 0; // Replace 0 with the appropriate value or variable
+    
 
     RadioHandler.Init(Fx3, _Callback, nullptr,this);
     
