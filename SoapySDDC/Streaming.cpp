@@ -6,7 +6,7 @@
 
 #include <SoapySDR/Time.hpp>
 #include <cstdint>
-
+#include <cstring> 
 #include "SoapySDDC.hpp"
 
 static void _Callback(void* context, const float* data, uint32_t len)
