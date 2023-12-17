@@ -77,7 +77,7 @@ SoapySDR::Stream *SoapySDDC::setupStream(const int direction,
         throw std::runtime_error("setupStream failed: SDDC only supports CF32.");
     }
 
-    bytesPerSample = 4;
+    bytesPerSample = 8;
 
     bufferLength = 262144 / bytesPerSample;
 
@@ -183,4 +183,12 @@ int SoapySDDC::acquireReadBuffer(SoapySDR::Stream *stream,
     return _buffs[handle].size() / bytesPerSample;
 
 
+}
+
+void SoapySDDC::releaseReadBuffer(SoapySDR::Stream *stream,
+                                  const size_t handle)
+{
+    //DbgPrintf("SoapySDDC::releaseReadBuffer\n");
+    std::lock_guard <std::mutex> lock(_buf_mutex);
+    _buf_count--;
 }

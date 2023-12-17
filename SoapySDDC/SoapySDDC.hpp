@@ -56,7 +56,7 @@ public:
 
     int acquireReadBuffer(SoapySDR::Stream *stream, size_t &handle, const void **buffs, int &flags, long long &timeNs, const long timeoutUs = 100000);
     
-    //void releaseReadBuffer(SoapySDR::Stream *stream, const size_t handle);
+    void releaseReadBuffer(SoapySDR::Stream *stream, const size_t handle);
     
     std::vector<std::string> listAntennas(const int direction, const size_t channel) const;
 
