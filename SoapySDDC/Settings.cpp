@@ -2,17 +2,6 @@
 #include <SoapySDR/Types.hpp>
 #include <SoapySDR/Time.hpp>
 
-static void Callback(void* context, const float* data, uint32_t len)
-{
-	if (data)
-	{
-		DbgPrintf("Callback: %d\n", len);
-	}
-	else
-	{
-		DbgPrintf("Callback: NULL\n");
-	}
-}
 
 
 
@@ -26,7 +15,7 @@ SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args):
     DevContext  devicelist; 
     Fx3->Enumerate(idx, devicelist.dev[0], sizeof(devicelist.dev[0]), fw_data, fw_size);
     Fx3->Open(fw_data, fw_size);
-    RadioHandler.Init(Fx3, Callback);
+    //RadioHandler.Init(Fx3, Callback);
     //RadioHandler.Start(0);
     
 }

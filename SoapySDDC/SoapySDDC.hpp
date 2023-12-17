@@ -54,7 +54,7 @@ public:
 
     //int getDirectAccessBufferAddrs(SoapySDR::Stream *stream, const size_t handle, void **buffs);
 
-    //int acquireReadBuffer(SoapySDR::Stream *stream, size_t &handle, const void **buffs, int &flags, long long &timeNs, const long timeoutUs = 100000);
+    int acquireReadBuffer(SoapySDR::Stream *stream, size_t &handle, const void **buffs, int &flags, long long &timeNs, const long timeoutUs = 100000);
     
     //void releaseReadBuffer(SoapySDR::Stream *stream, const size_t handle);
     
@@ -125,4 +125,19 @@ private:
     IUsbHandler* Fx3;
     RadioHandlerClass RadioHandler;
 
+public:
+    int Callback(void* context,const float* data, uint32_t len);
+
+    std::mutex _buf_mutex;
+    std::condition_variable _buf_cond;
+
+    std::vector<std::vector<char> > _buffs;
+    size_t	_buf_head;
+    size_t	_buf_tail;
+    std::atomic<size_t>	_buf_count;
+    char *_currentBuff;
+    std::atomic<bool> _overflowEvent;
+    size_t bufferedElems;
+    size_t _currentHandle;
+    bool resetBuffer;
 };
