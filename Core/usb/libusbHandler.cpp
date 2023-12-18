@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <cstring>
 #include <mutex>
+#include <cinttypes>
 
 LibusbHandler::LibusbHandler() :
 	fx3dev (nullptr),
@@ -182,7 +183,7 @@ bool LibusbHandler::Control(FX3Command command, uint64_t data)
                                     sizeof(uint64_t), // Length of data
                                     5000); // Timeout in milliseconds
 
-    DbgPrintf("FX3FWControl %x .%x %llx\n", r, command, data);
+    DbgPrintf("FX3FWControl %x .%x %" PRIx64 "\n", r, command, data);
     if (r < 0) {
         DbgPrintf("FX3FWControl failed: %s\n", libusb_error_name(r));
         Close();
