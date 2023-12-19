@@ -46,7 +46,7 @@ public:
 
     int activateStream(SoapySDR::Stream *stream, const int flags = 0, const long long timeNs = 0, const size_t numElems = 0);
 
-    //int deactivateStream(SoapySDR::Stream *stream, const int flags = 0, const long long timeNs = 0);
+    int deactivateStream(SoapySDR::Stream *stream, const int flags = 0, const long long timeNs = 0);
 
     int readStream(SoapySDR::Stream *stream, void * const *buffs, const size_t numElems, int &flags, long long &timeNs, const long timeoutUs = 100000);
 
