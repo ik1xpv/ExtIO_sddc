@@ -55,7 +55,24 @@
        // "launchCompleteCommand": "None",
         //"additionalSOLibSearchPath": "${workspaceFolder}/ExtIO_sddc/build/SoapySDDC/", // Specify the directory where your .so file is
         "logging": { "engineLogging": false }
-    }
+    },
+
+    {
+      "name": "Linux Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/usr/local/bin/SoapySDRUtil",
+      "args": [
+        "--args=driver=SDDC",
+        "--rate=64000000",
+        "--direction=RX"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb"
+    },
     ]
   }
   
