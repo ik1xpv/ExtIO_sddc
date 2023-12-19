@@ -37,13 +37,13 @@ SoapySDDC::~SoapySDDC(void)
 std::string SoapySDDC::getDriverKey(void) const
 {
     DbgPrintf("SoapySDDC::getDriverKey\n");
-    return "SDDC";
+    
 }
 
 std::string SoapySDDC::getHardwareKey(void) const
 {
     DbgPrintf("SoapySDDC::getHardwareKey\n");
-    return "SDDC";
+    return std::string(RadioHandler.getName());
 }
 
 SoapySDR::Kwargs SoapySDDC::getHardwareInfo(void) const
@@ -142,6 +142,17 @@ SoapySDR::Range SoapySDDC::getGainRange(const int, const size_t, const std::stri
     return SoapySDR::Range();
 }
 
+void SoapySDDC::setFrequency(const int, const size_t, const std::string &, const double, const SoapySDR::Kwargs &)
+{
+    DbgPrintf("SoapySDDC::setFrequency\n");
+}
+
+double SoapySDDC::getFrequency(const int, const size_t, const std::string &) const
+{
+    DbgPrintf("SoapySDDC::getFrequency\n");
+    return 0.0;
+}
+
 SoapySDR::ArgInfoList SoapySDDC::getFrequencyArgsInfo(const int, const size_t) const
 {
     DbgPrintf("SoapySDDC::getFrequencyArgsInfo\n");
@@ -150,7 +161,7 @@ SoapySDR::ArgInfoList SoapySDDC::getFrequencyArgsInfo(const int, const size_t) c
 
 void SoapySDDC::setSampleRate(const int, const size_t, const double)
 {
-    DbgPrintf("SoapySDDC::setSampleRate\n");
+    DbgPrintf("SoapySDDC::setSampleRate %f\n", sampleRate);
 }
 
 double SoapySDDC::getSampleRate(const int, const size_t) const
