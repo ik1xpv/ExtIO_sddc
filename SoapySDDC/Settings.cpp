@@ -52,10 +52,14 @@ SoapySDR::Kwargs SoapySDDC::getHardwareInfo(void) const
     return SoapySDR::Kwargs();
 }
 
+/*******************************************************************
+ * Channels API
+ ******************************************************************/
+
 size_t SoapySDDC::getNumChannels(const int dir) const
 {
     DbgPrintf("SoapySDDC::getNumChannels\n");
-    return (dir == SOAPY_SDR_RX) ? 1 : 0;
+    return (dir == SOAPY_SDR_RX) ? 2 : 0;
 }
 
 bool SoapySDDC::getFullDuplex(const int, const size_t) const
@@ -64,27 +68,59 @@ bool SoapySDDC::getFullDuplex(const int, const size_t) const
     return false;
 }
 
-// list antennas
-std::vector<std::string> SoapySDDC::listAntennas(const int, const size_t) const
+/*******************************************************************
+ * Antenna API
+ ******************************************************************/
+
+std::vector<std::string> SoapySDDC::listAntennas(const int direction, const size_t) const
 {
     DbgPrintf("SoapySDDC::listAntennas\n");
     std::vector<std::string> antennas;
-    antennas.push_back("RX");
+    if (direction == SOAPY_SDR_TX)
+    {
+        return antennas;
+    }
+    
+    antennas.push_back("HF");
+    antennas.push_back("VHF");
     return antennas;
 }
 
 // set the selected antenna
-void SoapySDDC::setAntenna(const int dir, const size_t, const std::string &)
+void SoapySDDC::setAntenna(const int direction, const size_t, const std::string &name)
 {
     DbgPrintf("SoapySDDC::setAntenna\n");
-    if (dir != SOAPY_SDR_RX) throw std::runtime_error("setAntena failed: SDDC only supports RX");
+    if (direction != SOAPY_SDR_RX)
+    {
+        return;
+    }
+    if (name == "HF")
+    {
+        RadioHandler.UpdatemodeRF(HFMODE);
+        RadioHandler.UpdBiasT_HF(true);
+    }
+    else if (name == "VHF")
+    {
+        RadioHandler.UpdatemodeRF(VHFMODE);
+        RadioHandler.UpdBiasT_VHF(true);
+    }
+    else
+    {
+        RadioHandler.UpdBiasT_HF(false);
+        RadioHandler.UpdBiasT_VHF(false);
+    }
+
+
 }
 
 // get the selected antenna
-std::string SoapySDDC::getAntenna(const int dir, const size_t) const
+std::string SoapySDDC::getAntenna(const int direction, const size_t) const
 {
     DbgPrintf("SoapySDDC::getAntenna\n");
-    if (dir != SOAPY_SDR_RX) throw std::runtime_error("getAntena failed: SDDC only supports RX");
+    if (direction == SOAPY_SDR_TX)
+    {
+        return "";
+    }
     return "RX";
 }
 
