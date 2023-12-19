@@ -23,8 +23,9 @@ LibusbHandler::LibusbHandler() :
 
 LibusbHandler::~LibusbHandler() // reset USB device and exit
 {
-	DbgPrintf("\r\n~LibusbHandler\r\n");
-	//Close();
+	DbgPrintf("\r\n~LibusbHandler destructor\r\n");
+	Close();
+    //libusb_exit(nullptr);
 }
 
 bool LibusbHandler::GetFx3DeviceStreamer()
@@ -264,7 +265,7 @@ bool LibusbHandler::ReadI2cbytes(uint8_t i2caddr, uint8_t regaddr, uint8_t* pdat
 
 bool LibusbHandler::Close(void)
 {
-    //fx3dev->Close();            // close class
+    fx3dev->Close();            // close class
 	delete fx3dev;              // destroy class
 	Fx3IsOn = false;
 	return true;

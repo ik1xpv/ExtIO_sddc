@@ -26,6 +26,12 @@ SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args):
 SoapySDDC::~SoapySDDC(void)
 {
     DbgPrintf("SoapySDDC::~SoapySDDC\n");
+    RadioHandler.Stop();
+    delete Fx3;
+    Fx3 = nullptr;
+    
+
+    //RadioHandler.Close();
 }
 
 std::string SoapySDDC::getDriverKey(void) const

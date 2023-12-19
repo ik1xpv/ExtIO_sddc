@@ -31,6 +31,7 @@ public:
     unsigned char DeviceCount(void);
     bool CreateHandle(unsigned char dev);
     bool Open(uint8_t dev);
+    void Close(void);
     
     libusb_ss_endpoint_companion_descriptor *ep_comp_desc;
     libusb_device *device;

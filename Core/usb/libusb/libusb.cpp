@@ -138,8 +138,10 @@ bool USBDevice::Open(uint8_t dev)
     }
 
     int r = libusb_claim_interface(hDevice, 0);
-    if (r != LIBUSB_SUCCESS) {
-        DbgPrintf("Failed to claim interface : %s\r\n", libusb_error_name(r));
+    if (r != LIBUSB_SUCCESS) {  
+            libusb_close(hDevice);
+            hDevice = nullptr;
+            throw std::runtime_error("Failed to claim interface.");  
     }
 
 
@@ -147,6 +149,21 @@ bool USBDevice::Open(uint8_t dev)
 }
 
 
+void USBDevice::Close(void)
+{
+    DbgPrintf("\r\nUSBDevice::Close\r\n");
+
+    if (hDevice != nullptr) {
+        int ret = libusb_release_interface(hDevice, 0);
+        if (ret != LIBUSB_SUCCESS) {
+            DbgPrintf("Error releasing interface: %d\n", ret);
+        }
+
+        libusb_close(hDevice);
+        hDevice = nullptr;  // Ensure the handle is marked invalid after closing.
+    }
+   
+}
 
 
 FX3Device::FX3Device()

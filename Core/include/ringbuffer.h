@@ -124,7 +124,8 @@ template<typename T> class ringbuffer : public ringbufferbase {
 
 public:
     ringbuffer(int count = default_count) :
-        ringbufferbase(count)
+        ringbufferbase(count),
+        block_size(0)
     {
         buffers = new TPtr[max_count];
         buffers[0] = nullptr;
