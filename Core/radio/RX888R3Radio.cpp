@@ -1,5 +1,5 @@
 #include "../include/RadioHandler.h"
-
+#include <cinttypes> 
 #define REFCLK_FREQ (27000000) // R820T reference frequency
 #define IF_FREQ (20000000)
 
@@ -150,7 +150,7 @@ uint64_t RX888R3Radio::TuneLo(uint64_t freq)
         uint32_t hardwareVCO = targetVCO / 1000000; // convert to MHz
         int offset = targetVCO % 1000000;
 
-        DbgPrintf("Target VCO = %lluHZ, hardware VCO= %dMHX, Actual IF = %dHZ\n", freq + IF_FREQ, hardwareVCO, IF_FREQ - offset);
+        DbgPrintf("Target VCO = %" PRIu64 "HZ, hardware VCO= %dMHX, Actual IF = %dHZ\n", freq + IF_FREQ, hardwareVCO, IF_FREQ - offset);
 
         Fx3->Control(TUNERTUNE, hardwareVCO);
         return freq - (IF_FREQ - offset);
