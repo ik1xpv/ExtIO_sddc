@@ -109,6 +109,9 @@ target_link_directories(SDDC_CORE PUBLIC ${LIBFFTW_LIBRARY_DIRS} ${LIBUSB_LIBRAR
 
 set_target_properties(SDDC_CORE PROPERTIES POSITION_INDEPENDENT_CODE True)
 target_compile_definitions(SDDC_CORE PUBLIC _CRT_SECURE_NO_WARNINGS)
+if(VERBOSE_DEBUG)
+    target_compile_definitions(SDDC_CORE PUBLIC -DVERBOSE_DEBUG)
+endif()
 
 if (NOT USE_SIMD_OPTIMIZATIONS)
    target_compile_definitions(SDDC_CORE PRIVATE NO_SIMD_OPTIM)
