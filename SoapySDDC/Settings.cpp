@@ -7,7 +7,7 @@
 
 SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args):
     Fx3(UsbHandlerFactory::CreateUsbHandler()),
-    numBuffers(1),
+    numBuffers(8),
     sampleRate(2000000)
 {
     DbgPrintf("SoapySDDC::SoapySDDC\n");
@@ -74,7 +74,7 @@ bool SoapySDDC::getFullDuplex(const int, const size_t) const
 
 std::vector<std::string> SoapySDDC::listAntennas(const int direction, const size_t) const
 {
-    DbgPrintf("SoapySDDC::listAntennas\n");
+    DbgPrintf("SoapySDDC::listAntennas : %d\n", direction);
     std::vector<std::string> antennas;
     if (direction == SOAPY_SDR_TX)
     {
@@ -83,13 +83,18 @@ std::vector<std::string> SoapySDDC::listAntennas(const int direction, const size
     
     antennas.push_back("HF");
     antennas.push_back("VHF");
+    // i want to list antennas names in dbgprintf
+    for (auto &antenna : antennas)
+    {
+        DbgPrintf("SoapySDDC::listAntennas : %s\n", antenna.c_str());
+    }
     return antennas;
 }
 
 // set the selected antenna
 void SoapySDDC::setAntenna(const int direction, const size_t, const std::string &name)
 {
-    DbgPrintf("SoapySDDC::setAntenna\n");
+    DbgPrintf("SoapySDDC::setAntenna : %d\n", direction);
     if (direction != SOAPY_SDR_RX)
     {
         return;
@@ -110,6 +115,8 @@ void SoapySDDC::setAntenna(const int direction, const size_t, const std::string 
         RadioHandler.UpdBiasT_VHF(false);
     }
 
+    //what antenna is set print in dbgprintf
+    DbgPrintf("SoapySDDC::setAntenna : %s\n", name.c_str());
 
 }
 
@@ -178,6 +185,11 @@ SoapySDR::Range SoapySDDC::getGainRange(const int, const size_t, const std::stri
     return SoapySDR::Range();
 }
 
+void SoapySDDC::setFrequency(const int, const size_t, const double frequency, const SoapySDR::Kwargs &)
+{
+    DbgPrintf("SoapySDDC::setFrequency %f\n", frequency);
+}
+
 void SoapySDDC::setFrequency(const int, const size_t, const std::string &, const double, const SoapySDR::Kwargs &)
 {
     DbgPrintf("SoapySDDC::setFrequency\n");
@@ -195,14 +207,40 @@ SoapySDR::ArgInfoList SoapySDDC::getFrequencyArgsInfo(const int, const size_t) c
     return SoapySDR::ArgInfoList();
 }
 
-void SoapySDDC::setSampleRate(const int, const size_t, const double)
+void SoapySDDC::setSampleRate(const int, const size_t, const double rate)
 {
-    DbgPrintf("SoapySDDC::setSampleRate %f\n", sampleRate);
+    DbgPrintf("SoapySDDC::setSampleRate %f\n", rate);
+    switch ((int)rate)
+    {
+        case 32000000:
+            sampleRate = 32000000;
+            samplerateidx = 4;
+            break;
+        case 16000000:
+            sampleRate = 16000000;
+            samplerateidx = 3;
+            break;
+        case 8000000:
+            sampleRate = 8000000;
+            samplerateidx = 2;
+            break;
+        case 4000000:
+            sampleRate = 4000000;
+            samplerateidx = 1;
+            break;
+        case 2000000:
+            sampleRate = 2000000;
+            samplerateidx = 0;
+            break;
+        default:
+            return;
+    }
+        
 }
 
 double SoapySDDC::getSampleRate(const int, const size_t) const
 {
-    DbgPrintf("SoapySDDC::getSampleRate\n");
+    DbgPrintf("SoapySDDC::getSampleRate %f\n", sampleRate);
     return sampleRate;
 }
 
@@ -211,20 +249,33 @@ std::vector<double> SoapySDDC::listSampleRates(const int, const size_t) const
     DbgPrintf("SoapySDDC::listSampleRates\n");
     std::vector<double> results;
 
-    results.push_back(250000);
-    results.push_back(500000);
-    results.push_back(1000000);
+    //results.push_back(250000);
+    //results.push_back(500000);
+    //results.push_back(1000000);
     results.push_back(2000000);
     results.push_back(4000000);
     results.push_back(8000000);
     results.push_back(16000000);
     results.push_back(32000000);
-    results.push_back(64000000);
-    results.push_back(128000000);
-    results.push_back(150000000);
+    //results.push_back(64000000);
+    //results.push_back(128000000);
+    //results.push_back(150000000);
 
     return results;
 }
+
+void SoapySDDC::setMasterClockRate(const double rate)
+{
+    DbgPrintf("SoapySDDC::setMasterClockRate %f\n", rate);
+    masterClockRate = rate;
+}
+
+double SoapySDDC::getMasterClockRate(void) const
+{
+    DbgPrintf("SoapySDDC::getMasterClockRate %f\n", masterClockRate);
+    return masterClockRate;
+}
+
 
 std::vector<std::string> SoapySDDC::listTimeSources(void) const
 {

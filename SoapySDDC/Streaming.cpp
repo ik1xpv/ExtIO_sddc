@@ -91,10 +91,23 @@ SoapySDR::Stream *SoapySDDC::setupStream(const int direction,
     for (auto &buff : _buffs) buff.resize(bufferLength*bytesPerSample);
     
     RadioHandler.Init(Fx3, _Callback, nullptr,this);
-    //RadioHandler.Start(0);
+    //RadioHandler.Start(samplerateidx);
     
     //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     return (SoapySDR::Stream *) this;;
+}
+
+void SoapySDDC::closeStream(SoapySDR::Stream *stream)
+{
+    DbgPrintf("SoapySDDC::closeStream\n");
+    RadioHandler.Stop();
+    //RadioHandler.Close();
+}
+
+size_t SoapySDDC::getStreamMTU(SoapySDR::Stream *stream) const
+{
+    DbgPrintf("SoapySDDC::getStreamMTU\n");
+    return bufferLength;
 }
 
 int SoapySDDC::activateStream(SoapySDR::Stream *stream,
@@ -102,10 +115,10 @@ int SoapySDDC::activateStream(SoapySDR::Stream *stream,
                               const long long timeNs,
                                const size_t numElems)
 {
-    DbgPrintf("SoapySDDC::activateStream\n");
+    DbgPrintf("SoapySDDC::activateStream %d\n", samplerateidx);
     resetBuffer = true;
     bufferedElems = 0;
-    RadioHandler.Start(0);
+    RadioHandler.Start(samplerateidx);
     
     
     return 0;

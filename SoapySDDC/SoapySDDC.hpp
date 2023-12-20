@@ -40,9 +40,9 @@ public:
 
     SoapySDR::Stream *setupStream(const int direction, const std::string &format, const std::vector<size_t> &channels = std::vector<size_t>(), const SoapySDR::Kwargs &args = SoapySDR::Kwargs());
 
-    //void closeStream(SoapySDR::Stream *stream);
+    void closeStream(SoapySDR::Stream *stream);
 
-    //size_t getStreamMTU(SoapySDR::Stream *stream) const;
+    size_t getStreamMTU(SoapySDR::Stream *stream) const;
 
     int activateStream(SoapySDR::Stream *stream, const int flags = 0, const long long timeNs = 0, const size_t numElems = 0);
 
@@ -88,6 +88,8 @@ public:
 
     SoapySDR::Range getGainRange(const int direction, const size_t channel, const std::string &name) const;
 
+    void setFrequency(const int direction, const size_t channel, const double frequency, const SoapySDR::Kwargs &args = SoapySDR::Kwargs());
+
     void setFrequency(const int direction,const size_t channel,const std::string &name,const double frequency,const SoapySDR::Kwargs &args = SoapySDR::Kwargs());
     
     double getFrequency(const int direction, const size_t channel, const std::string &name) const;
@@ -104,6 +106,10 @@ public:
 
     std::vector<double> listSampleRates(const int direction, const size_t channel) const;
 
+    void setMasterClockRate(const double rate);
+
+    double getMasterClockRate(void) const;
+
     std::vector<std::string> listTimeSources(void) const;
 
     std::string getTimeSource(void) const;
@@ -117,7 +123,7 @@ public:
 private:
     int bytesPerSample;
 
-    size_t sampleRate;
+    double sampleRate;
     size_t numBuffers, bufferLength, asyncBuffs;
     std::atomic<long long> ticks;
 
@@ -140,4 +146,8 @@ public:
     size_t bufferedElems;
     size_t _currentHandle;
     bool resetBuffer;
+
+    int samplerateidx;
+
+    double masterClockRate;
 };
