@@ -296,7 +296,7 @@ void LibusbHandler::AdcSamplesProcess()
     for (int n = 0; n < USB_READ_CONCURRENT; n++) {
         uint8_t* ptr = reinterpret_cast<uint8_t*>(inputbuffer->peekWritePtr(n));
         int r = libusb_bulk_transfer(fx3dev->hDevice, 0x81, ptr, 
-                                         transferSize, &actual_length, 70);
+                                         transferSize, &actual_length, BLOCK_TIMEOUT);
 
             if (r != 0) {
                 DbgPrintf("Transfer error: %d\n", r);
@@ -321,7 +321,7 @@ void LibusbHandler::AdcSamplesProcess()
 
             // Perform the synchronous USB transfer
             int r = libusb_bulk_transfer(fx3dev->hDevice, 0x81, ptr, 
-                                         transferSize, &actual_length, 70); 
+                                         transferSize, &actual_length, BLOCK_TIMEOUT); 
 
             if (r != 0) {
                 DbgPrintf("Transfer error: %d\n", r);
