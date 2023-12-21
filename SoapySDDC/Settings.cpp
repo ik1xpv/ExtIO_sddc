@@ -7,8 +7,8 @@
 
 SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args):
     Fx3(UsbHandlerFactory::CreateUsbHandler()),
-    numBuffers(8),
-    sampleRate(2000000)
+    numBuffers(16),
+    sampleRate(32000000)
 {
     DbgPrintf("SoapySDDC::SoapySDDC\n");
     unsigned char* fw_data;
