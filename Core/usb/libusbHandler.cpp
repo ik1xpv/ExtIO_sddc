@@ -37,12 +37,11 @@ bool LibusbHandler::GetFx3DeviceStreamer()
     return true;
 }
 
-bool LibusbHandler::Enumerate(unsigned char& idx, char* lbuf, size_t bufSize, const uint8_t* fw_data, uint32_t fw_size)
+bool LibusbHandler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_data, uint32_t fw_size)
 {
     DbgPrintf("\r\nEnumerate\r\n");
     bool r = false;
-    strncpy(lbuf, "", bufSize);
-    lbuf[bufSize - 1] = '\0';
+    
     
     if (fx3dev == nullptr) {
         fx3dev = new FX3Device();

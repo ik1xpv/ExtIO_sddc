@@ -15,7 +15,7 @@ SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args):
     uint32_t fw_size;
     unsigned char idx = 0;
     DevContext  devicelist; 
-    Fx3->Enumerate(idx, devicelist.dev[0], sizeof(devicelist.dev[0]), fw_data, fw_size);
+    Fx3->Enumerate(idx, devicelist.dev[0], fw_data, fw_size);
     Fx3->Open(fw_data, fw_size);
     //RadioHandler.Init(Fx3, Callback);
     //RadioHandler.Start(0);
