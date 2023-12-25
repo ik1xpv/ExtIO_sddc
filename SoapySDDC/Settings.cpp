@@ -195,9 +195,15 @@ void SoapySDDC::setFrequency(const int, const size_t, const std::string &, const
     DbgPrintf("SoapySDDC::setFrequency\n");
 }
 
-double SoapySDDC::getFrequency(const int, const size_t, const std::string &) const
+double SoapySDDC::getFrequency(const int, const size_t) const
 {
     DbgPrintf("SoapySDDC::getFrequency\n");
+    return 0.0;
+}
+
+double SoapySDDC::getFrequency(const int, const size_t, const std::string &name) const
+{
+    DbgPrintf("SoapySDDC::getFrequency with name %s\n", name.c_str());
     if (sampleRate == 32000000)
         {
             return 8000000.000000;
