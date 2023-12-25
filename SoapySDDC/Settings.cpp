@@ -1,6 +1,8 @@
 #include "SoapySDDC.hpp"
 #include <SoapySDR/Types.hpp>
 #include <SoapySDR/Time.hpp>
+#include <cstdint>
+#include <sys/types.h>
 
 
 
@@ -188,17 +190,22 @@ SoapySDR::Range SoapySDDC::getGainRange(const int, const size_t, const std::stri
 void SoapySDDC::setFrequency(const int, const size_t, const double frequency, const SoapySDR::Kwargs &)
 {
     DbgPrintf("SoapySDDC::setFrequency %f\n", frequency);
+    RadioHandler.TuneLO((uint64_t)centerFrequency);
+    centerFrequency = frequency;
 }
 
-void SoapySDDC::setFrequency(const int, const size_t, const std::string &, const double, const SoapySDR::Kwargs &)
+void SoapySDDC::setFrequency(const int, const size_t, const std::string &, const double frequency, const SoapySDR::Kwargs &)
 {
     DbgPrintf("SoapySDDC::setFrequency\n");
+    RadioHandler.TuneLO((uint64_t)centerFrequency);
+    centerFrequency = frequency;
 }
 
 double SoapySDDC::getFrequency(const int, const size_t) const
 {
-    DbgPrintf("SoapySDDC::getFrequency\n");
-    return 0.0;
+    DbgPrintf("SoapySDDC::getFrequency %f\n", (double)centerFrequency);
+   
+    return (double)centerFrequency;
 }
 
 double SoapySDDC::getFrequency(const int, const size_t, const std::string &name) const
@@ -207,9 +214,8 @@ double SoapySDDC::getFrequency(const int, const size_t, const std::string &name)
     if (sampleRate == 32000000)
         {
             return 8000000.000000;
-        }
-
-    return 0.0;
+        } 
+    return (double)centerFrequency;
 }
 
 SoapySDR::ArgInfoList SoapySDDC::getFrequencyArgsInfo(const int, const size_t) const

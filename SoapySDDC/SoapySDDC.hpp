@@ -4,6 +4,7 @@
 #include <SoapySDR/Types.h>
 #include <atomic>
 #include <cstddef>
+#include <sys/types.h>
 #include "../Core/usb/UsbHandlerFactory.h"
 #include "../Core/include/RadioHandler.h"
 
@@ -125,6 +126,7 @@ public:
 private:
     int bytesPerSample;
 
+    uint32_t centerFrequency;
     double sampleRate;
     size_t numBuffers, bufferLength, asyncBuffs;
     std::atomic<long long> ticks;
