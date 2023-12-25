@@ -17,7 +17,6 @@
 #include <stdint.h>
 #include <time.h>
 #include <windows.h>
-
 #include "../include/ringbuffer.h"
 
 #define	VENDOR_ID     (0x04B4)

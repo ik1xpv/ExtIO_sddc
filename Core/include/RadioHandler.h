@@ -58,7 +58,7 @@ public:
     float getBps() const { return mBps; }
     float getSpsIF() const {return mSpsIF; }
 
-    const char* getName() const;
+    const char* getName();
     RadioModel getModel() { return radio; }
 
     bool GetBiasT_HF() { return biasT_HF; }

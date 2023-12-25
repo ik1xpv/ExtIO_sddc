@@ -1,6 +1,6 @@
 #ifndef R2IQ_H
 #define R2IQ_H
-//#include "license.txt" 
+#include "license.txt" 
 
 #define NDECIDX 7  //number of srate
 

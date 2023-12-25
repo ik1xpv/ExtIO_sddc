@@ -21,7 +21,7 @@ CyApiHandler::CyApiHandler():
 	Fx3IsOn (false),
 	devidx (0)
 {
-	DbgPrintf("\r\nCyApiHandler\r\n");
+
 }
 
 
@@ -254,6 +254,7 @@ struct ReadContext
 {
 	PUCHAR context;
 	OVERLAPPED overlap;
+	SINGLE_TRANSFER transfer;
 	uint8_t* buffer;
 	long size;
 };

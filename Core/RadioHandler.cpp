@@ -81,7 +81,7 @@ RadioHandlerClass::~RadioHandlerClass()
 	delete stateFineTune;
 }
 
-const char *RadioHandlerClass::getName() const
+const char *RadioHandlerClass::getName()
 {
 	return hardware->getName();
 }
