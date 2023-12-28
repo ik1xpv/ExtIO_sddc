@@ -4,6 +4,35 @@
 #include <cstdint>
 #include <sys/types.h>
 
+static void _Callback(void* context, const float* data, uint32_t len)
+{
+    SoapySDDC *sddc = (SoapySDDC *) context;
+    sddc->Callback(context, data, len);
+	
+}
+
+int SoapySDDC::Callback(void* context,const float* data, uint32_t len)
+{
+    //DbgPrintf("SoapySDDC::Callback %d\n", len);
+    if (_buf_count == numBuffers)
+    {
+        _overflowEvent = true;
+        return 0;
+    }
+
+    auto &buff = _buffs[_buf_tail];
+    buff.resize(len*bytesPerSample);
+    memcpy(buff.data(), data, len*bytesPerSample);
+    _buf_tail = (_buf_tail + 1) % numBuffers;
+
+    {
+        std::lock_guard<std::mutex> lock(_buf_mutex);
+        _buf_count++;
+    }
+    _buf_cond.notify_one();
+ 
+    return 0;
+}
 
 
 
@@ -21,6 +50,7 @@ SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args):
     Fx3->Open(fw_data, fw_size);
     //RadioHandler.Init(Fx3, Callback);
     //RadioHandler.Start(0);
+    RadioHandler.Init(Fx3, _Callback, nullptr,this);
     
     
 }

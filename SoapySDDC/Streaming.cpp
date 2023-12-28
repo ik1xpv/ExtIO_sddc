@@ -9,35 +9,6 @@
 #include <cstring> 
 #include "SoapySDDC.hpp"
 
-static void _Callback(void* context, const float* data, uint32_t len)
-{
-    SoapySDDC *sddc = (SoapySDDC *) context;
-    sddc->Callback(context, data, len);
-	
-}
-
-int SoapySDDC::Callback(void* context,const float* data, uint32_t len)
-{
-    //DbgPrintf("SoapySDDC::Callback %d\n", len);
-    if (_buf_count == numBuffers)
-    {
-        _overflowEvent = true;
-        return 0;
-    }
-
-    auto &buff = _buffs[_buf_tail];
-    buff.resize(len*bytesPerSample);
-    memcpy(buff.data(), data, len*bytesPerSample);
-    _buf_tail = (_buf_tail + 1) % numBuffers;
-
-    {
-        std::lock_guard<std::mutex> lock(_buf_mutex);
-        _buf_count++;
-    }
-    _buf_cond.notify_one();
- 
-    return 0;
-}
 
 
 std::vector<std::string> SoapySDDC::getStreamFormats(const int direction, const size_t channel) const
@@ -70,7 +41,7 @@ SoapySDR::Stream *SoapySDDC::setupStream(const int direction,
 {
     DbgPrintf("SoapySDDC::setupStream\n");
     if (direction != SOAPY_SDR_RX) throw std::runtime_error("setupStream failed: SDDC only supports RX");
-    if (channels.size() != 1) throw std::runtime_error("setupStream failed: SDDC only supports one channel");
+    //if (channels.size() != 1) throw std::runtime_error("setupStream failed: SDDC only supports one channel");
     if (format == SOAPY_SDR_CF32) {
         SoapySDR_logf(SOAPY_SDR_INFO, "Using format CF32.");
     } else {
@@ -90,7 +61,7 @@ SoapySDR::Stream *SoapySDDC::setupStream(const int direction,
     for (auto &buff : _buffs) buff.reserve(bufferLength*bytesPerSample);
     for (auto &buff : _buffs) buff.resize(bufferLength*bytesPerSample);
     
-    RadioHandler.Init(Fx3, _Callback, nullptr,this);
+    //RadioHandler.Init(Fx3, _Callback, nullptr,this);
     //RadioHandler.Start(samplerateidx);
     
     //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
