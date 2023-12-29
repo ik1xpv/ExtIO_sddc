@@ -3,6 +3,7 @@
 #include <SoapySDR/Time.hpp>
 #include <cstdint>
 #include <sys/types.h>
+#include <cstring>
 
 static void _Callback(void* context, const float* data, uint32_t len)
 {
