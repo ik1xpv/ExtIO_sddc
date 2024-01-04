@@ -48,7 +48,9 @@ else()
     endif(USE_DEBUG_ASAN)
     #add_compile_options(-Wall -Wextra -pedantic)
     include(FindPkgConfig)
-    
+
+    find_package(Threads REQUIRED)
+
     pkg_check_modules(LIBFFTW REQUIRED fftw3f)
     
 endif (MSVC)
@@ -104,7 +106,7 @@ if (MSVC)
     add_dependencies(SDDC_CORE LIBFFTW)
 endif()
 
-target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES} ${LIBUSB_LIBRARIES})
+target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES} ${LIBUSB_LIBRARIES} Threads::Threads)
 target_link_directories(SDDC_CORE PUBLIC ${LIBFFTW_LIBRARY_DIRS} ${LIBUSB_LIBRARY_DIRS})
 
 set_target_properties(SDDC_CORE PROPERTIES POSITION_INDEPENDENT_CODE True)
