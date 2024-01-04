@@ -106,7 +106,12 @@ if (MSVC)
     add_dependencies(SDDC_CORE LIBFFTW)
 endif()
 
-target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES} ${LIBUSB_LIBRARIES} Threads::Threads)
+if(MSVC)
+    target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES} ${LIBUSB_LIBRARIES})
+else()
+    target_link_libraries(SDDC_CORE PUBLIC usbLib ${LIBFFTW_LIBRARIES} ${LIBUSB_LIBRARIES} Threads::Threads)
+endif()
+
 target_link_directories(SDDC_CORE PUBLIC ${LIBFFTW_LIBRARY_DIRS} ${LIBUSB_LIBRARY_DIRS})
 
 set_target_properties(SDDC_CORE PROPERTIES POSITION_INDEPENDENT_CODE True)
