@@ -215,28 +215,27 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 }
 
 #ifdef _WIN32
-    //  Windows, assumed MSVC
-    #include <intrin.h>
-    #define cpuid(info, x)    __cpuidex(info, x, 0)
-    #define DETECT_AVX
+	//  Windows, assumed MSVC
+	#include <intrin.h>
+	#define cpuid(info, x)    __cpuidex(info, x, 0)
+	#define DETECT_AVX
 #elif defined(__x86_64__)
-    //  GCC Intrinsics, x86 only
-    #include <cpuid.h>
-    #define cpuid(info, x)  __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
-    #define DETECT_AVX
+	//  GCC Intrinsics, x86 only
+	#include <cpuid.h>
+	#define cpuid(info, x)  __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
+	#define DETECT_AVX
 #elif defined(__arm__) || (defined(__APPLE__) && defined(__aarch64__))
-    #define DETECT_NEON
-    #include <sys/types.h>
-    #include <sys/sysctl.h>
-    static bool detect_neon() {
+	#define DETECT_NEON
+	#include <sys/types.h>
+	#include <sys/sysctl.h>
+	static bool detect_neon()
+	{
 		// On Apple Silicon, we always have NEON
 		return true;
-    }
+	}
 #else
-    #error Compiler does not identify an x86 or ARM core.
+#error Compiler does not identify an x86 or ARM core..
 #endif
-
-
 
 void * fft_mt_r2iq::r2iqThreadf(r2iqThreadArg *th)
 {

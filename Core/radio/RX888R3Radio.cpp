@@ -155,7 +155,6 @@ uint64_t RX888R3Radio::TuneLo(uint64_t freq)
         Fx3->Control(TUNERTUNE, hardwareVCO);
         return freq - (IF_FREQ - offset);
     }
-
 }
 
 int RX888R3Radio::getRFSteps(const float **steps)

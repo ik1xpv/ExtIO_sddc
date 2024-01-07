@@ -56,7 +56,7 @@ if(MSVC)
         add_dependencies(usbLib LIBUSB)
         
    
-else() # if not WIN32
+else() # if not MSVC
     include(FindPkgConfig)
     pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
     target_compile_definitions(usbLib PUBLIC -DUSE_LIBUSB_DRIVER)
@@ -69,7 +69,7 @@ else() # if not WIN32
 
     target_link_libraries(usbLib PRIVATE ${LIBUSB_LIBRARIES})
 
-endif() # WIN32
+endif() # MSVC
 
 # Add the sources and headers to your main target
 target_sources(usbLib PUBLIC ${USB_SRC} ${USB_HEADERS})

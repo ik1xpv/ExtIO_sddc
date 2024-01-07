@@ -41,7 +41,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 add_subdirectory(ExtIO_sddc)
 add_subdirectory(unittest)
 if(NOT (CMAKE_SYSTEM_NAME STREQUAL "Windows" AND NOT MINGW))
-  #add_subdirectory(libsddc)
+  add_subdirectory(libsddc)
   add_subdirectory(SoapySDDC)
 endif()
 
