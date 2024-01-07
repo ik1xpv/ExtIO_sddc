@@ -33,5 +33,4 @@ public:
 };
 
 
-
 #endif // IUsbHandler_H
