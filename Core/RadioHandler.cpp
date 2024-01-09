@@ -4,7 +4,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include "pffft/pf_mixer.h"
-#include "RadioHandler.h"
+#include "include/RadioHandler.h"
 #include "config.h"
 #include "fft_mt_r2iq.h"
 #include "config.h"
@@ -81,12 +81,12 @@ RadioHandlerClass::~RadioHandlerClass()
 	delete stateFineTune;
 }
 
-const char *RadioHandlerClass::getName()
+const char *RadioHandlerClass::getName() const
 {
 	return hardware->getName();
 }
 
-bool RadioHandlerClass::Init(fx3class* Fx3, void (*callback)(void*context, const float*, uint32_t), r2iqControlClass *r2iqCntrl, void *context)
+bool RadioHandlerClass::Init(IUsbHandler* Fx3, void (*callback)(void*context, const float*, uint32_t), r2iqControlClass *r2iqCntrl, void *context)
 {
 	uint8_t rdata[4];
 	this->fx3 = Fx3;

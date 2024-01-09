@@ -1,5 +1,7 @@
+# unittest/CMakeLists.txt
 cmake_minimum_required(VERSION 3.13)
 
+#cmake_policy(SET CMP0135 NEW)
 include(ExternalProject)
 ExternalProject_Add(
     LIBCPPUNIT
@@ -12,22 +14,27 @@ ExternalProject_Add(
 ExternalProject_Get_Property(LIBCPPUNIT SOURCE_DIR)
 SET(LIBCPPUNIT_INCLUDE_DIRS ${SOURCE_DIR})
 
-file(GLOB UNITTESTS "./*.cpp")
+
+set(UNITTESTS 
+    core_test.cpp
+    ringbuffer_test.cpp
+    unittests.cpp
+    # ... and so on
+)
+
 
 add_executable(unittest ${UNITTESTS})
-add_dependencies(unittest LIBCPPUNIT)
+add_dependencies(unittest LIBCPPUNIT usbLib SDDC_CORE)
+target_compile_features(unittest PRIVATE cxx_std_17)
+target_include_directories(unittest PUBLIC "${LIBFFTW_INCLUDE_DIR}" "../Core/include" 
+                            ${LIBCPPUNIT_INCLUDE_DIRS})
+target_link_directories(unittest PUBLIC  ${LIBFFTW_LIBRARY_DIRS} ${LIBUSB_LIBRARY_DIRS} )
 
-target_include_directories(unittest PUBLIC "${LIBFFTW_INCLUDE_DIR}")
-target_link_directories(unittest PUBLIC "${LIBFFTW_LIBRARY_DIRS}")
-
-include_directories("." "../Core")
-include_directories(${LIBCPPUNIT_INCLUDE_DIRS})
-
-target_link_libraries(unittest PRIVATE SDDC_CORE)
+target_link_libraries(unittest PRIVATE SDDC_CORE usbLib ${LIBCPPUNIT_LIBRARIES})
 if (MSVC)
-  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES})
+  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES} Setupapi.lib)
 else()
-  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES} pthread ${ASANLIB})
+  target_link_libraries(unittest PUBLIC  pthread ${ASANLIB})
 endif (MSVC)
 
 

@@ -10,6 +10,11 @@ add_library(sddc SHARED
     libsddc.cpp
 )
 
+set_target_properties(sddc PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+)
+
 if (MSVC)
   target_link_libraries(sddc PUBLIC Setupapi.lib)
 else()

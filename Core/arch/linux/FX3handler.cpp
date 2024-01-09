@@ -3,7 +3,7 @@
 #include "FX3handler.h"
 #include "usb_device.h"
 
-fx3class* CreateUsbHandler()
+IUsbHandler* CreateUsbHandler()
 {
 	return new fx3handler();
 }
