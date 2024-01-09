@@ -63,7 +63,7 @@ extern const char* FX3CommandName[];
 extern const char* SETARGFX3List[];
 
 extern CyU3PQueue EventAvailable;	  	// Used for threads communications
-uint32_t Qevent __attribute__ ((aligned (32)));
+extern uint32_t Qevent __attribute__ ((aligned (32)));
 extern char ConsoleInBuffer[32];				// Buffer for user Console Input
 extern uint32_t ConsoleInIndex;				// Index into ConsoleIn buffer
 
