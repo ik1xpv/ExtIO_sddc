@@ -13,7 +13,7 @@
 
 #include "SDDC_GPIF.h" // GPIFII include once
 #include "Application.h"
-uint32_t Qevent __attribute__ ((aligned (32)));
+extern uint32_t Qevent __attribute__ ((aligned (32)));
 uint32_t glDMACount;
 
 // Declare external functions
