@@ -1,4 +1,4 @@
-#include "../RadioHandler.h"
+#include "../include/RadioHandler.h"
 
 #define R828D_FREQ (16000000) // R820T reference frequency
 #define R828D_IF_CARRIER (4570000)
@@ -21,7 +21,7 @@ const float RX888R2Radio::vhf_rf_steps[RX888R2Radio::vhf_rf_step_size] = {
 const float RX888R2Radio::vhf_if_steps[RX888R2Radio::vhf_if_step_size] = {
     -4.7f, -2.1f, 0.5f, 3.5f, 7.7f, 11.2f, 13.6f, 14.9f, 16.3f, 19.5f, 23.1f, 26.5f, 30.0f, 33.7f, 37.2f, 40.8f};
 
-RX888R2Radio::RX888R2Radio(fx3class *fx3)
+RX888R2Radio::RX888R2Radio(IUsbHandler *fx3)
     : RadioHardware(fx3)
 {
     for (uint8_t i = 0; i < hf_rf_step_size; i++)

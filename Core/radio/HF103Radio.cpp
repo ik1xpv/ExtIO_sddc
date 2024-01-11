@@ -1,6 +1,6 @@
-#include "../RadioHandler.h"
+#include "../include/RadioHandler.h"
 
-HF103Radio::HF103Radio(fx3class* fx3)
+HF103Radio::HF103Radio(IUsbHandler* fx3)
     : RadioHardware(fx3)
 {
     // initialize steps

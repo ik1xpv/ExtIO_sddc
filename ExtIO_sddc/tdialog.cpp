@@ -4,7 +4,7 @@
 #include "tdialog.h"
 #include <stdint.h>
 #include <string.h>
-#include "RadioHandler.h"
+#include "../Core/include/RadioHandler.h"
 #include <commctrl.h>
 #include "ExtIO_sddc.h"
 #include "config.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "r2iq.h"
+#include "include/r2iq.h"
 #include "fftw3.h"
 #include "config.h"
 #include <algorithm>
