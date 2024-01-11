@@ -48,10 +48,14 @@ endif
 
 endif
 
-# The ARM toolchain location and the version are taken from environment variables
+# Get the full library paths for libc.a and libgcc.a using arm-none-eabi-gcc
+LIBC_PATH := $(shell arm-none-eabi-gcc -print-file-name=libc.a)
+LIBGCC_PATH := $(shell arm-none-eabi-gcc -print-file-name=libgcc.a)
+
+# Link the libraries using the extracted paths
 LDLIBS  += \
-	${ARMGCC_INSTALL_PATH}/lib/arm-none-eabi/lib/libc.a	\
-	${ARMGCC_INSTALL_PATH}/lib/gcc/arm-none-eabi/$(ARMGCC_VERSION)/libgcc.a
+	$(LIBC_PATH)	\
+	$(LIBGCC_PATH)
 
 EXEEXT		= elf
 
