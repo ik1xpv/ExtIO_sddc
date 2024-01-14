@@ -70,6 +70,7 @@ SoapySDDC::~SoapySDDC(void)
 std::string SoapySDDC::getDriverKey(void) const
 {
     DbgPrintf("SoapySDDC::getDriverKey\n");
+    return "SDDC";
     
 }
 
@@ -92,7 +93,7 @@ SoapySDR::Kwargs SoapySDDC::getHardwareInfo(void) const
 size_t SoapySDDC::getNumChannels(const int dir) const
 {
     DbgPrintf("SoapySDDC::getNumChannels\n");
-    return (dir == SOAPY_SDR_RX) ? 2 : 0;
+    return (dir == SOAPY_SDR_RX) ? 1 : 0;
 }
 
 bool SoapySDDC::getFullDuplex(const int, const size_t) const

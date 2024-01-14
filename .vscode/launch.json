@@ -74,6 +74,20 @@
       "MIMode": "gdb"
     },
     {
+      "name": "Linux SoapySDRUtil --probe",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/usr/local/bin/SoapySDRUtil",
+      "args": [
+        "--probe",
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb"
+    },
+    {
       "name": "Debug (MinGW)",
       "type": "cppdbg",
       "request": "launch",
