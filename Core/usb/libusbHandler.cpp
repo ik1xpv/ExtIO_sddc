@@ -2,6 +2,7 @@
 #include "../config.h"
 
 
+#include "libusb.h"
 #include "libusb/libusb.hpp"
 #include <condition_variable>
 #include <atomic>
@@ -25,7 +26,7 @@ LibusbHandler::~LibusbHandler() // reset USB device and exit
 {
 	DbgPrintf("\r\n~LibusbHandler destructor\r\n");
 	Close();
-    //libusb_exit(nullptr);
+    libusb_exit(NULL);
 }
 
 bool LibusbHandler::GetFx3DeviceStreamer()
@@ -82,6 +83,7 @@ bool LibusbHandler::Open(const uint8_t* fw_data, uint32_t fw_size)
     }
 
     fx3dev->interface = &fx3dev->config->interface[0];
+    
     fx3dev->altsetting = &fx3dev->interface->altsetting[0];
 
     for (int i = 0; i < fx3dev->altsetting->bNumEndpoints; i++) {
@@ -128,6 +130,8 @@ bool LibusbHandler::Open(const uint8_t* fw_data, uint32_t fw_size)
 	}
 
 	Fx3IsOn = true;
+    libusb_free_ss_endpoint_companion_descriptor(fx3dev->ep_comp_desc);
+    libusb_free_config_descriptor(fx3dev->config);
 	return Fx3IsOn;          // init success
 }
 
