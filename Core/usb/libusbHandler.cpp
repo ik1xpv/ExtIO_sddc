@@ -2,7 +2,7 @@
 #include "../config.h"
 
 
-#include "libusb.h"
+
 #include "libusb/libusb.hpp"
 #include <condition_variable>
 #include <atomic>
