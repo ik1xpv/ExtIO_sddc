@@ -26,7 +26,33 @@ public:
     void TurnOff(void);
     bool IsOn(void);
 
-protected:
+protected: 
+
+#ifdef    _SOFT_TONE_DEBUG
+    double genphase;
+#define PI ( 3.14159265358979323846 )
+    float  burst[transferSamples + HALF_FFT];
+    void init_burst(void)
+    {
+        for (int m = 0; m < transferSamples + HALF_FFT; m++)
+        {
+            genphase += (PI * 2048.0) / (double)(transferSamples);
+
+            if (genphase > 2.0 * PI) genphase -= 2.0 * PI;
+
+            burst[m] = 32768.0F * sin(genphase);
+        }
+    }
+    void generate_float( float* output, int size)
+    {
+        for (int m = 0; m < size; m++)
+        {
+            output[m] = burst[m];
+            // output[m] = 32768.0F;  // generate DC
+
+        }
+    }
+#endif
 
     template<bool rand> void convert_float(const int16_t *input, float* output, int size)
     {

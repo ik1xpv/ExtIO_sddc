@@ -9,7 +9,9 @@
 	plan_f2t_c2c = &plans_f2t_c2c[decimate];
 	fftwf_complex* pout = nullptr;
 	int decimate_count = 0;
-
+#ifdef _SOFT_TONE_DEBUG
+	init_burst(); // if DEBUG_LENGTH
+#endif
 	while (r2iqOn) {
 		const int16_t *dataADC;  // pointer to input data
 		const int16_t *endloop;    // pointer to end data to be copied to beginning
@@ -49,8 +51,12 @@
 		}
 		else
 		{
+#ifdef _SOFT_TONE_DEBUG
+			generate_float(inloop, transferSamples + halfFft);
+#else
 			convert_float<true>(endloop, inloop, halfFft);
 			convert_float<true>(dataADC, inloop + halfFft, transferSamples);
+#endif
 		}
 
 #if PRINT_INPUT_RANGE
