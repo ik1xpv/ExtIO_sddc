@@ -185,6 +185,10 @@ _pkginfo.txt
 # but keep track of directories ending in .cache
 !*.[Cc]ache/
 
+# Visual Studio Code
+.cache/
+.vscode/
+
 # Others
 ClientBin/
 ~$*
@@ -268,3 +272,6 @@ __pycache__/
 
 # FFTW wisdom files
 wisdom*
+hardware/.DS_Store
+.DS_Store
+.vscode/settings.json

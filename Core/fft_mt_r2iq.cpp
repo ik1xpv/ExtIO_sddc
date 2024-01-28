@@ -15,7 +15,7 @@ The name r2iq as Real 2 I+Q stream
 #include "fft_mt_r2iq.h"
 #include "config.h"
 #include "fftw3.h"
-#include "RadioHandler.h"
+#include "include/RadioHandler.h"
 
 #include "fir.h"
 
@@ -224,14 +224,14 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 	#include <cpuid.h>
 	#define cpuid(info, x)  __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
 	#define DETECT_AVX
-#elif defined(__arm__)
+#elif defined(__arm__) || (defined(__APPLE__) && defined(__aarch64__))
 	#define DETECT_NEON
-	#include <sys/auxv.h>
-	#include <asm/hwcap.h>
+	#include <sys/types.h>
+	#include <sys/sysctl.h>
 	static bool detect_neon()
 	{
-		unsigned long caps = getauxval(AT_HWCAP);
-		return (caps & HWCAP_NEON);
+		// On Apple Silicon, we always have NEON
+		return true;
 	}
 #else
 #error Compiler does not identify an x86 or ARM core..

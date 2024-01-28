@@ -1,7 +1,8 @@
 #include "libsddc.h"
 #include "config.h"
-#include "r2iq.h"
-#include "RadioHandler.h"
+#include "../Core/include/r2iq.h"
+#include "../Core/include/RadioHandler.h"
+#include "../Core/usb/UsbHandlerFactory.h"
 
 struct sddc
 {
@@ -65,7 +66,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
 {
     auto ret_val = new sddc_t();
 
-    fx3class *fx3 = CreateUsbHandler();
+    IUsbHandler *fx3 = UsbHandlerFactory::CreateUsbHandler();
     if (fx3 == nullptr)
     {
         return nullptr;

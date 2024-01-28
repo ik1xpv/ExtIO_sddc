@@ -1,0 +1,117 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Attach to Process",
+        "type": "cppvsdbg",
+        "request": "attach",
+        "processId": "${command:pickProcess}"
+      },
+      {
+        "name": "Launch",
+        "type": "cppvsdbg",
+        "request": "launch",
+        "program": "C:/Program Files (x86)/HDSDR/hdsdr.exe",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "symbolOptions": {
+          "searchPaths": [],
+          "searchMicrosoftSymbolServer": true
+        }
+      },// macos debug launch lldb
+      {
+        "name": "sddc_test",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/libsddc/sddc_test",
+        "args": [
+          "SDDC_FX3.img"
+        ],
+        "cwd": "${workspaceFolder}",
+        "stopAtEntry": false,
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb"
+      },
+      {
+        "name": "Debug Shared Library",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "/Users/cozy/SoapySDR/build/apps/SoapySDRUtil", // Change this to the executable that loads your .so
+        "args": [
+            "--args="driver=SDDC"","--rate=64000000","--direction=RX"
+        ], // Any arguments the executable takes
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "lldb",
+        //"miDebuggerPath": "/usr/bin/lldb",
+       // "preLaunchTask": "build", // Your build task name
+       
+      
+       // "launchCompleteCommand": "None",
+        //"additionalSOLibSearchPath": "${workspaceFolder}/ExtIO_sddc/build/SoapySDDC/", // Specify the directory where your .so file is
+        "logging": { "engineLogging": false }
+    },
+
+    {
+      "name": "Linux Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/usr/local/bin/SoapySDRUtil",
+      "args": [
+        "--args=driver=SDDC",
+        "--rate=64000000",
+        "--direction=RX"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb"
+    },
+    {
+      "name": "Linux SoapySDRUtil --probe",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/usr/local/bin/SoapySDRUtil",
+      "args": [
+        "--probe",
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb"
+    },
+    {
+      "name": "Debug (MinGW)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "C:/PothosSDR/bin/SoapySDRUtil.exe",
+      "args": [
+        "--args=driver=SDDC",
+        "--rate=64000000",
+        "--direction=RX"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+     // "preLaunchTask": "YourBuildTaskName"
+    }
+    ]
+  }
+  

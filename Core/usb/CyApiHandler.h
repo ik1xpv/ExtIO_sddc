@@ -1,8 +1,8 @@
-#ifndef FX3HANDLER_H
-#define FX3HANDLER_H
+#ifndef CYAPIHANDLER_H
+#define CYAPIHANDLER_H
 
 //
-// FX3handler.cpp 
+// CyApiHandler.cpp 
 // 2020 10 12  Oscar Steila ik1xpv
 // loading arm code.img from resource by Howard Su and Hayati Ayguen
 // This module was previous named:openFX3.cpp
@@ -16,23 +16,23 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
-
-#include "../../dsp/ringbuffer.h"
+#include <windows.h>
+#include "../include/ringbuffer.h"
 
 #define	VENDOR_ID     (0x04B4)
 #define	STREAMER_ID   (0x00F1)
 #define	BOOTLOADER_ID (0x00F3)
 
-#include "../../FX3Class.h"
+#include "IUsbHandler.h"
 
 class CCyFX3Device;
 class CCyUSBEndPoint;
 
-class fx3handler : public fx3class
+class CyApiHandler : public IUsbHandler
 {
 public:
-	fx3handler();
-	virtual ~fx3handler(void);
+	CyApiHandler();
+	virtual ~CyApiHandler(void);
 
 	bool Open(const uint8_t* fw_data, uint32_t fw_size);
 	bool IsOn() { return Fx3IsOn; }
@@ -70,4 +70,4 @@ private:
 };
 
 
-#endif // FX3HANDLER_H
+#endif // CYAPIHANDLER_H

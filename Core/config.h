@@ -8,7 +8,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-
+#include <cstdio>
 //#define _DEBUG  // defined in VS configuration
 
 #ifdef __cplusplus
