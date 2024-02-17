@@ -3,8 +3,12 @@
 #include "FX3handler.h"
 #include "usb_device.h"
 
+struct usb_device_info *devlist;
+int devlist_n;
+
 fx3class* CreateUsbHandler()
 {
+    devlist_n = usb_device_get_device_list(&devlist);
 	return new fx3handler();
 }
 
@@ -16,9 +20,9 @@ fx3handler::~fx3handler()
 {
 }
 
-bool fx3handler::Open(const uint8_t* fw_data, uint32_t fw_size)
+bool fx3handler::Open(int index, const uint8_t* fw_data, uint32_t fw_size)
 {
-    dev = usb_device_open(0, (const char*)fw_data, fw_size);
+    dev = usb_device_open(index, (const char*)fw_data, fw_size);
 
     return dev != nullptr;
 }
@@ -96,5 +100,10 @@ bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)
 
 bool fx3handler::Enumerate(unsigned char &idx, char *lbuf, const uint8_t* fw_data, uint32_t fw_size)
 {
-	return true; // TBD
+    if (idx > devlist_n - 1)
+        return false;
+
+    sprintf(lbuf, "%s sn:%s", devlist[idx].product, devlist[idx].serial_number);
+
+    return true;
 }

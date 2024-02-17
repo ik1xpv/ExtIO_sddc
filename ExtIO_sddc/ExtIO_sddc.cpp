@@ -237,10 +237,8 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			selected =  DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SELECTDEVICE), NULL, DlgSelectDevice, (LPARAM) &devicelist);
 		}
 		DbgPrintf("selected %d \n",selected);
-		idx = selected;
-		Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size);
 
-		gbInitHW = Fx3->Open(res_data, res_size) &&
+		gbInitHW = Fx3->Open(selected, res_data, res_size) &&
 				RadioHandler.Init(Fx3, Callback); // Check if it there hardware
 	
 #ifdef _DEBUG

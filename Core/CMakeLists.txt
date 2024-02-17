@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.13)
-
 if (MSVC)
     file(GLOB ARCH_SRC "arch/win32/*.cpp" "arch/win32/CyAPI/*.cpp")
 else()

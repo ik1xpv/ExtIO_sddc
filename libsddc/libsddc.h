@@ -66,6 +66,15 @@ enum LEDColors {
   BLUE_LED   = 0x04
 };
 
+// Success
+#define ERROR_SUCCESS 0
+
+// The operation failed due to invalid state of the device
+#define ERROR_INVALID_STATE -1
+
+// The operation failed due to invalid parameter
+#define ERROR_INVALID_PARAMETER -2
+
 /* basic functions */
 int sddc_get_device_count();
 
@@ -73,7 +82,7 @@ int sddc_get_device_info(struct sddc_device_info **sddc_device_infos);
 
 int sddc_free_device_info(struct sddc_device_info *sddc_device_infos);
 
-sddc_t *sddc_open(int index, const char* imagefile);
+sddc_t *sddc_open(int index);
 
 void sddc_close(sddc_t *t);
 
@@ -111,9 +120,9 @@ int sddc_set_adc_random(sddc_t *t, int random);
 
 
 /* HF block functions */
-double sddc_get_hf_attenuation(sddc_t *t);
+float sddc_get_hf_attenuation(sddc_t *t);
 
-int sddc_set_hf_attenuation(sddc_t *t, double attenuation);
+int sddc_set_hf_attenuation(sddc_t *t, float attenuation);
 
 int sddc_get_hf_bias(sddc_t *t);
 
@@ -125,17 +134,17 @@ double sddc_get_tuner_frequency(sddc_t *t);
 
 int sddc_set_tuner_frequency(sddc_t *t, double frequency);
 
-int sddc_get_tuner_rf_attenuations(sddc_t *t, const double *attenuations[]);
+int sddc_get_tuner_rf_attenuations(sddc_t *t, const float *attenuations[]);
 
-double sddc_get_tuner_rf_attenuation(sddc_t *t);
+float sddc_get_tuner_rf_attenuation(sddc_t *t);
 
-int sddc_set_tuner_rf_attenuation(sddc_t *t, double attenuation);
+int sddc_set_tuner_rf_attenuation(sddc_t *t, float attenuation);
 
-int sddc_get_tuner_if_attenuations(sddc_t *t, const double *attenuations[]);
+int sddc_get_tuner_if_attenuations(sddc_t *t, const float *attenuations[]);
 
-double sddc_get_tuner_if_attenuation(sddc_t *t);
+float sddc_get_tuner_if_attenuation(sddc_t *t);
 
-int sddc_set_tuner_if_attenuation(sddc_t *t, double attenuation);
+int sddc_set_tuner_if_attenuation(sddc_t *t, float attenuation);
 
 int sddc_get_vhf_bias(sddc_t *t);
 
@@ -143,12 +152,12 @@ int sddc_set_vhf_bias(sddc_t *t, int bias);
 
 
 /* streaming functions */
-typedef void (*sddc_read_async_cb_t)(uint32_t data_size, uint8_t *data,
+typedef void (*sddc_read_async_cb_t)(uint32_t data_length, const float *data,
                                       void *context);
 
-double sddc_get_sample_rate(sddc_t *t);
+float sddc_get_sample_rate(sddc_t *t);
 
-int sddc_set_sample_rate(sddc_t *t, double sample_rate);
+int sddc_set_sample_rate(sddc_t *t, uint64_t sample_rate);
 
 int sddc_set_async_params(sddc_t *t, uint32_t frame_size, 
                           uint32_t num_frames, sddc_read_async_cb_t callback,

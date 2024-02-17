@@ -25,25 +25,19 @@
 
 #if _WIN32
 #include <windows.h>
-#define sleep(x) Sleep(x*1000)
+#define sleep(x) Sleep(x * 1000)
 #else
 #include <unistd.h>
 #endif
 
 static void blink_led(sddc_t *sddc, uint8_t color);
 
-
 int main(int argc, char **argv)
 {
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s <image file>\n", argv[0]);
-    return -1;
-  }
-  char *imagefile = argv[1];
-
   /* count devices */
   int count = sddc_get_device_count();
-  if (count < 0) {
+  if (count < 0)
+  {
     fprintf(stderr, "ERROR - sddc_get_device_count() failed\n");
     return -1;
   }
@@ -52,11 +46,13 @@ int main(int argc, char **argv)
   /* get device info */
   struct sddc_device_info *sddc_device_infos;
   count = sddc_get_device_info(&sddc_device_infos);
-  if (count < 0) {
+  if (count < 0)
+  {
     fprintf(stderr, "ERROR - sddc_get_device_info() failed\n");
     return -1;
   }
-  for (int i = 0; i < count; ++i) {
+  for (int i = 0; i < count; ++i)
+  {
     printf("%d - manufacturer=\"%s\" product=\"%s\" serial number=\"%s\"\n",
            i, sddc_device_infos[i].manufacturer, sddc_device_infos[i].product,
            sddc_device_infos[i].serial_number);
@@ -64,8 +60,9 @@ int main(int argc, char **argv)
   sddc_free_device_info(sddc_device_infos);
 
   /* open and close device */
-  sddc_t *sddc = sddc_open(0, imagefile);
-  if (sddc == 0) {
+  sddc_t *sddc = sddc_open(0);
+  if (sddc == 0)
+  {
     fprintf(stderr, "ERROR - sddc_open() failed\n");
     return -1;
   }
@@ -86,15 +83,18 @@ int main(int argc, char **argv)
 
 static void blink_led(sddc_t *sddc, uint8_t color)
 {
-  for (int i = 0; i < 5; ++i) {
+  for (int i = 0; i < 5; ++i)
+  {
     int ret = sddc_led_on(sddc, color);
-    if (ret < 0) {
+    if (ret < 0)
+    {
       fprintf(stderr, "ERROR - sddc_led_on(%02x) failed\n", color);
       return;
     }
     sleep(1);
     ret = sddc_led_off(sddc, color);
-    if (ret < 0) {
+    if (ret < 0)
+    {
       fprintf(stderr, "ERROR - sddc_led_off(%02x) failed\n", color);
       return;
     }
