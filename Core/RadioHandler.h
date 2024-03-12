@@ -30,7 +30,7 @@ class RadioHandlerClass {
 public:
     RadioHandlerClass();
     virtual ~RadioHandlerClass();
-    bool Init(fx3class* Fx3, void (*callback)(void* context, const float*, uint32_t), r2iqControlClass *r2iqCntrl = nullptr, void* context = nullptr);
+    bool Init(fx3class* Fx3, void (*callback)(void* context, const float*, uint32_t), r2iqControlClass *r2iqCntrlIn = nullptr, void* context = nullptr);
     bool Start(int srate_idx);
     bool Stop();
     bool Close();
@@ -41,6 +41,7 @@ public:
 
     int GetIFGainSteps(const float **steps);
     int UpdateIFGain(int attIdx);
+    int UpdateTunerBW(int bwHz);
 
     bool UpdatemodeRF(rf_mode mode);
     rf_mode GetmodeRF(){return (rf_mode)modeRF;}
@@ -52,6 +53,8 @@ public:
     bool GetRand () {return randout;}
     uint16_t GetFirmware() { return firmware; }
 
+     int SetSampleRate(int sr);
+    int GetSampleRate();
     uint32_t getSampleRate() { return adcrate; }
     bool UpdateSampleRate(uint32_t samplerate);
 
@@ -145,6 +148,7 @@ public:
     virtual int getRFSteps(const float** steps ) { return 0; }
     virtual int getIFSteps(const float** steps ) { return 0; }
     virtual bool UpdateGainIF(int attIndex) { return false; }
+    virtual bool UpdateTunerBW(int bwHz) { return false; }
 
     bool FX3producerOn() { return Fx3->Control(STARTFX3); }
     bool FX3producerOff() { return Fx3->Control(STOPFX3); }
@@ -170,6 +174,7 @@ public:
     uint64_t TuneLo(uint64_t freq) override;
     bool UpdateattRF(int attIndex) override;
     bool UpdateGainIF(int attIndex) override;
+    bool UpdateTunerBW(int bwHz) override;
 
     int getRFSteps(const float** steps ) override;
     int getIFSteps(const float** steps ) override;
@@ -203,6 +208,7 @@ public:
     uint64_t TuneLo(uint64_t freq) override;
     bool UpdateattRF(int attIndex) override;
     bool UpdateGainIF(int attIndex) override;
+    bool UpdateTunerBW(int bwHz) override;
 
     int getRFSteps(const float** steps ) override;
     int getIFSteps(const float** steps ) override;

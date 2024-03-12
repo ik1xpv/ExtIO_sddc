@@ -26,6 +26,7 @@
 
 #include "libsddc.h"
 #include "wavewrite.h"
+#include <unistd.h>
 
 #if _WIN32
 #include <Windows.h>
@@ -93,13 +94,13 @@ clock_gettime(int X, struct timeval* tv)
 #endif
 
 
-static void count_bytes_callback(uint32_t data_size, uint8_t *data,
+static void count_bytes_callback(uint32_t data_size, const float *data,
                                  void *context);
 
 static unsigned long long received_samples = 0;
 static unsigned long long total_samples = 0;
 static int num_callbacks;
-static int16_t *sampleData = 0;
+static float *sampleData = 0;
 static int runtime = 3000;
 static struct timespec clk_start, clk_end;
 static int stop_reception = 0;
@@ -120,7 +121,7 @@ int main(int argc, char **argv)
   const char *outfilename = 0;
   double sample_rate = 0.0;
 
-  double vhf_frequency = 100e6;
+  double vhf_frequency = 108e6-4.572e6;
   double vhf_attenuation = 20;  /* 20dB attenuation */
 
   sscanf(argv[2], "%lf", &sample_rate);
@@ -175,16 +176,20 @@ int main(int argc, char **argv)
   }
 
   fprintf(stderr, "started streaming .. for %d ms ..\n", runtime);
-  total_samples = (unsigned long long)(runtime * sample_rate / 1000.0);
+  total_samples = (unsigned long long)(runtime * sample_rate * 2.0 * 2.0 / 1000.0);
 
   if (outfilename)
-    sampleData = (int16_t*)malloc(total_samples * sizeof(int16_t));
+    sampleData = malloc(total_samples * sizeof(float));
 
   /* todo: move this into a thread */
   stop_reception = 0;
   clock_gettime(CLOCK_REALTIME, &clk_start);
   while (!stop_reception)
+  {
     sddc_handle_events(sddc);
+    sleep(1);
+    fprintf(stderr,"\rreceived = %lld   ",received_samples);
+  }
 
   fprintf(stderr, "finished. now stop streaming ..\n");
   if (sddc_stop_streaming(sddc) < 0) {
@@ -201,7 +206,7 @@ int main(int argc, char **argv)
     FILE * f = fopen(outfilename, "wb");
     if (f) {
       fprintf(stderr, "saving received real samples to file ..\n");
-      waveWriteHeader( (unsigned)(0.5 + sample_rate), 0U /*frequency*/, 16 /*bitsPerSample*/, 1 /*numChannels*/, f);
+      waveWriteHeader( (unsigned)(0.5 + sample_rate), 0U /*frequency*/, 32 /*bitsPerSample*/, 1 /*numChannels*/, f);
       for ( unsigned long long off = 0; off + 65536 < received_samples; off += 65536 )
         waveWriteSamples(f,  sampleData + off, 65536, 0 /*needCleanData*/);
       waveFinalizeHeader(f);
@@ -219,16 +224,16 @@ DONE:
 }
 
 static void count_bytes_callback(uint32_t data_size,
-                                 uint8_t *data,
+                                 const float *data,
                                  void *context)
 {
   if (stop_reception)
     return;
   ++num_callbacks;
-  unsigned N = data_size / sizeof(int16_t);
+  unsigned N = data_size;
   if ( received_samples + N < total_samples ) {
     if (sampleData)
-      memcpy( sampleData+received_samples, data, data_size);
+      memcpy( sampleData+received_samples, data, data_size * sizeof(float));
     received_samples += N;
   }
   else {

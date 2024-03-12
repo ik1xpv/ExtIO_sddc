@@ -26,7 +26,7 @@ include $(FX3FWROOT)/fw_build/fx3_fw/fx3_build_config.mak
 
 MODULE = SDDC_FX3
 
-all:$(MODULE).img
+all:$(MODULE).img $(MODULE).h
 
 USER_CFLAGS = -I./radio -I./driver
 
@@ -94,6 +94,7 @@ clean:
 	rm -f ./$(MODULE).$(EXEEXT)
 	rm -f $(ELF2IMG)
 	rm -f ./$(MODULE).img
+	rm -f ./$(MODULE).h
 	rm -f ./$(MODULE).map
 	rm -f ./*.o
 	rm -Rf ./obj
@@ -106,5 +107,8 @@ $(ELF2IMG) : $(FX3FWROOT)/util/elf2img/elf2img.c
 
 $(MODULE).img: $(EXES) $(ELF2IMG)
 	$(ELF2IMG) -i $< -o $@ -v
+
+$(MODULE).h: $(EXES) $(ELF2IMG)
+	$(ELF2IMG) -i $< -o $@ -s -v
 
 #[]#

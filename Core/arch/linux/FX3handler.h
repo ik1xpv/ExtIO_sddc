@@ -38,6 +38,8 @@ private:
 	streaming_t *stream;
 	ringbuffer<int16_t> *inputbuffer;
     bool run;
+    int readsize;
+    int fill;
     std::thread poll_thread;
 };
 

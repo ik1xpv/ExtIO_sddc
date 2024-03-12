@@ -22,9 +22,8 @@ public:
     float setFreqOffset(float offset);
 
     void Init(float gain, ringbuffer<int16_t>* buffers, ringbuffer<float>* obuffers);
-    void TurnOn();
-    void TurnOff(void);
-    bool IsOn(void);
+    void TurnOn() override;
+    void TurnOff() override;
 
 protected:
 

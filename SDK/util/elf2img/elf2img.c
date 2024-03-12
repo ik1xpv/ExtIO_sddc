@@ -91,6 +91,7 @@ int          verbose        = 0;
 unsigned int checksum       = 0;
 unsigned int i2cDevSize     = 0x4000;  /* 64 KB by default. */
 int          loadIntVectors = 0;
+int          hfile          = 0;
 
 int
 CheckElfHeader (
@@ -142,6 +143,29 @@ CheckElfHeader (
         ERREXIT ("Bad parameter\n");
 
     return (0);
+}
+
+int WriteFile (
+        FILE          *fpImg,
+        void          *buffer,
+        int           length)
+{
+    if (hfile)
+    {
+        static int bytec = 0;
+        for (int k = 0; k < length; k++)
+        {
+            fprintf(fpImg, "0x%02x,", ((unsigned char *)buffer)[k]);
+            bytec++;
+            if ((bytec & 15) == 0)
+                fprintf(fpImg, "\n");
+        }
+        return length;
+    }
+    else
+    {
+        return fwrite (buffer,  1, length, fpImg);
+    }
 }
 
 int
@@ -222,8 +246,8 @@ ProcessProgHeader (
                             secStart, loadSz, validSz, offset, progHdr->flags);
                 }
 
-                fwrite (&loadSz,  4, 1, fpImg);
-                fwrite (&secStart, 4, 1, fpImg);
+                WriteFile(fpImg, &loadSz, 4);
+                WriteFile(fpImg, &secStart, 4);
                 secStart += (loadSz * 4);
                 offset   += (loadSz * 4);
 
@@ -245,7 +269,8 @@ ProcessProgHeader (
                             checksum += buffer[i];
                     }
 
-                    actual_wr = fwrite (&buffer, 4, writelen, fpImg);
+                    actual_wr = WriteFile(fpImg, &buffer, 4 * writelen);
+                    actual_wr /= 4;
                     if (actual_wr < actual_rd)
                         actual_rd = actual_wr;
 
@@ -302,7 +327,7 @@ PrintUsageInfo (
 {
     printf ("Usage:\n______\n");
     printf ("%s -i <elf filename> -o <image filename> [-i2cconf <eeprom control>]\n", progName);
-    printf ("        [-imgtype <image type>] [-vectorload <vecload>] [-v] [-h]\n");
+    printf ("        [-imgtype <image type>] [-vectorload <vecload>] [-v] [-s] [-h]\n");
     printf ("    where\n");
     printf ("    <elf filename> is the input ELF file name with path\n");
     printf ("    <image filename> is the output file name with path\n");
@@ -310,6 +335,7 @@ PrintUsageInfo (
     printf ("    <image type> is the image type byte in hexadecimal\n");
     printf ("    <vecload> can be set to \"yes\" to force the interrupt vectors to be exported into the image\n");
     printf ("    -v is used for verbose logs during the conversion process\n");
+    printf ("    -s is used to produce C include file as an output file\n");
     printf ("    -h is used to print this help information\n");
 }
 
@@ -346,6 +372,8 @@ main (
     }
     if (GetParameter (argc, argv, "-v", 0) == 0)
         verbose = 1;
+    if (GetParameter (argc, argv, "-s", 0) == 0)
+        hfile = 1;
     if (GetParameter (argc, argv, "-vectorload", &tmp) == 0)
     {
         if (strcmp (tmp, "yes") == 0)
@@ -384,8 +412,12 @@ main (
     if (fpOut == NULL)
         ERREXIT ("Failed to open output file %s\n", outFilename);
 
+    if (hfile)
+        fprintf(fpOut,"const unsigned char firmware_image[] = {\n");
     /* Write the image header to the output file. */
-    fprintf (fpOut, "CY%c%c", i2cConf, imgType);
+    char hdr[5];
+    sprintf(&hdr[0],"CY%c%c", i2cConf, imgType);
+    WriteFile(fpOut,hdr,4);
 
     /* Read each program header and process. */
     for (i = 0; i < elfHdr.phnum; i++)
@@ -404,10 +436,12 @@ main (
     entryAddr = elfHdr.entry;
 
     /* Write the trailer with the entry section and checksum to the img file. */
-    fwrite (&val,       4, 1, fpOut);
-    fwrite (&entryAddr, 4, 1, fpOut);
-    fwrite (&checksum,  4, 1, fpOut);
+    WriteFile(fpOut,&val,       4);
+    WriteFile(fpOut,&entryAddr, 4);
+    WriteFile(fpOut,&checksum,  4);
 
+    if (hfile)
+        fprintf(fpOut,"\n};\n");
     fclose (fpOut);
     fclose (fpIn);
 

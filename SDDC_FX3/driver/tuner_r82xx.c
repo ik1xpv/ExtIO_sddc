@@ -2010,9 +2010,9 @@ int r82xx_set_freq64(struct r82xx_priv *priv, uint64_t freq)
 			priv->rf_freq = freq;
 
 		if ( priv->sideband ^ harm_sideband_xor[priv->tuner_harmonic] )
-			lo_freq = freq - priv->int_freq + priv->if_band_center_freq;
+			lo_freq = freq;
 		else
-			lo_freq = freq + priv->int_freq + priv->if_band_center_freq;
+			lo_freq = freq;
 
 		lo_freqHarm = (nth_harm) ? ( lo_freq / harm ) : lo_freq;
 

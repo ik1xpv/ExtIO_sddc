@@ -143,3 +143,8 @@ bool BBRF103Radio::UpdateGainIF(int attIndex)
         return Fx3->SetArgument(R82XX_VGA, (uint16_t)attIndex);
     }
 }
+
+bool BBRF103Radio::UpdateTunerBW(int bwHz)
+{
+    return Fx3->SetArgument(R82XX_BANDWIDTH, bwHz/1000);
+}

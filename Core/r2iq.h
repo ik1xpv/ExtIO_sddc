@@ -15,7 +15,20 @@ struct r2iqThreadArg;
 
 class r2iqControlClass {
 public:
-    r2iqControlClass();
+    r2iqControlClass()
+    {
+        r2iqOn = false;
+        randADC = false;
+        sideband = false;
+        mdecimation = 0;
+        mratio[0] = 1;  // 1,2,4,8,16
+        for (int i = 1; i < NDECIDX; i++)
+        {
+            mratio[i] = mratio[i - 1] * 2;
+        }
+    }
+
+
     virtual ~r2iqControlClass() {}
 
     int getRatio()  {return mratio [mdecimation];}
@@ -39,10 +52,10 @@ protected:
     int mdecimation ;   // selected decimation ratio
       // 64 Msps:               0 => 32Msps, 1=> 16Msps, 2 = 8Msps, 3 = 4Msps, 4 = 2Msps
       // 128 Msps: 0 => 64Msps, 1 => 32Msps, 2=> 16Msps, 3 = 8Msps, 4 = 4Msps, 5 = 2Msps
-    bool r2iqOn;        // r2iq on flag
     int mratio [NDECIDX];  // ratio
 
 private:
+    bool r2iqOn;        // r2iq on flag
     bool randADC;       // randomized ADC output
     bool sideband;
 };

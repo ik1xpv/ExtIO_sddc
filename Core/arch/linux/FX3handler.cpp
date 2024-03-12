@@ -2,6 +2,8 @@
 
 #include "FX3handler.h"
 #include "usb_device.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 fx3class* CreateUsbHandler()
 {
@@ -10,16 +12,20 @@ fx3class* CreateUsbHandler()
 
 fx3handler::fx3handler()
 {
+    readsize = 0;
+    fill = 0;
 }
 
 fx3handler::~fx3handler()
 {
+    StopStream();
+    if(dev)
+        usb_device_close(dev);
 }
 
 bool fx3handler::Open(const uint8_t* fw_data, uint32_t fw_size)
 {
     dev = usb_device_open(0, (const char*)fw_data, fw_size);
-
     return dev != nullptr;
 }
 
@@ -51,8 +57,10 @@ bool fx3handler::GetHardwareInfo(uint32_t* data)
 
 void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 {
+    fprintf(stderr,"fx3handler::StartStream()\n");
     inputbuffer = &input;
-    auto readsize = input.getWriteCount() * sizeof(uint16_t);
+    readsize = input.getBlockSize() * sizeof(uint16_t);
+    fill = 0;
     stream = streaming_open_async(this->dev, readsize, numofblock, PacketRead, this);
 
     // Start background thread to poll the events
@@ -73,20 +81,40 @@ void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 
 void fx3handler::StopStream()
 {
+    fprintf(stderr,"fx3handler::StopStream()\n");
+    if(!run)
+        return;
     run = false;
     poll_thread.join();
-
-    streaming_stop(stream);
-    streaming_close(stream);
+    fprintf(stderr,"fx3handler::StopStream() thread joined\n");
+    if(stream)
+    {
+        streaming_stop(stream);
+        fprintf(stderr,"fx3handler::StopStream() streaming_stop\n");
+        streaming_close(stream);
+        fprintf(stderr,"fx3handler::StopStream() streaming_close\n");
+        stream = nullptr;
+    }
 }
 
 void fx3handler::PacketRead(uint32_t data_size, uint8_t *data, void *context)
 {
     fx3handler *handler = (fx3handler*)context;
 
-    auto *ptr = handler->inputbuffer->getWritePtr();
-    memcpy(ptr, data, data_size);
-    handler->inputbuffer->WriteDone();
+    uint32_t written = 0;
+    while(written < data_size)
+    {
+        uint8_t *ptr = (uint8_t *)handler->inputbuffer->getWritePtr();
+        int to_copy = std::min(int(data_size - written), handler->readsize - handler->fill);
+        memcpy(&ptr[handler->fill], &data[written], to_copy);
+        handler->fill += to_copy;
+        written += to_copy;
+        if(handler->fill >= handler->readsize)
+        {
+            handler->inputbuffer->WriteDone();
+            handler->fill = 0;
+        }
+    }
 }
 
 bool fx3handler::ReadDebugTrace(uint8_t* pdata, uint8_t len)

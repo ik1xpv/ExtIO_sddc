@@ -66,6 +66,7 @@ extern CyU3PQueue EventAvailable;	  	// Used for threads communications
 extern uint32_t Qevent __attribute__ ((aligned (32)));
 extern char ConsoleInBuffer[32];				// Buffer for user Console Input
 extern uint32_t ConsoleInIndex;				// Index into ConsoleIn buffer
+uint32_t bw = 8*1000*1000;
 
 /* Trace function */
 void
@@ -134,9 +135,8 @@ void r820_initialize(uint32_t freq)
 
 	tuner.cfg = &tuner_config;
 
-	uint32_t bw;
 	r82xx_init(&tuner);
-	r82xx_set_bandwidth(&tuner, 8*1000*1000, 0, &bw, 1);
+	r82xx_set_bandwidth(&tuner, bw, 0, &bw, 1);
 
 	return;
 }
@@ -392,6 +392,12 @@ CyFxSlFifoApplnUSBSetupCB (
 						case R82XX_HARMONIC:
 							// todo
 							break;
+						case R82XX_BANDWIDTH:
+							{
+								bw = wValue*1000;
+								r82xx_set_bandwidth(&tuner, bw, 0, &bw, 1);
+							}
+							break;
 						case DAT31_ATT:
 							switch(HWconfig)
 							{
@@ -493,7 +499,7 @@ CyFxSlFifoApplnUSBSetupCB (
 					CyU3PDeviceReset(CyFalse);
 					break;
 
-            		case TESTFX3:
+    		case TESTFX3:
 					glEp0Buffer[0] =  HWconfig;
 					glEp0Buffer[1] = (uint8_t) (FWconfig >> 8);
 					glEp0Buffer[2] = (uint8_t) FWconfig;
@@ -505,7 +511,7 @@ CyFxSlFifoApplnUSBSetupCB (
 					break;
 
 
-	   case READINFODEBUG:	
+            case READINFODEBUG:	
 					{
 					if (wValue >0)
 					{

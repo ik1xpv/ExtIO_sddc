@@ -9,7 +9,7 @@
 #include <mutex>
 #include <condition_variable>
 
-//#define _DEBUG  // defined in VS configuration
+#define NO_DEBUG  // defined in VS configuration
 
 #ifdef __cplusplus
 inline void null_func(const char *format, ...) { }

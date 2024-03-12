@@ -95,10 +95,28 @@ void StartApplication ( void ) {
     CyU3PMemSet ((uint8_t *)&epCfg, 0, sizeof (epCfg));
     epCfg.enable = CyTrue;
     epCfg.epType = CY_U3P_USB_EP_BULK;
-    epCfg.burstLen = ENDPOINT_BURST_LENGTH;
+    epCfg.burstLen = (usbSpeed == CY_U3P_SUPER_SPEED ? ENDPOINT_BURST_LENGTH : 1);
     epCfg.streams = 0;
-    epCfg.pcktSize = ENDPOINT_BURST_SIZE;
     epCfg.isoPkts = 1;
+    /* Determine max packet size based on USB speed */
+    switch (usbSpeed)
+    {
+        case CY_U3P_FULL_SPEED:
+            epCfg.pcktSize = 64;
+            break;
+
+        case CY_U3P_HIGH_SPEED:
+            epCfg.pcktSize = 512;
+            break;
+
+        case CY_U3P_SUPER_SPEED:
+            epCfg.pcktSize = 1024;
+            break;
+
+        default:
+            epCfg.pcktSize = 1024;
+            break;
+    }
 
     glDMACount= 0;
     /* Consumer endpoint configuration */
