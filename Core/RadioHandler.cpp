@@ -287,7 +287,7 @@ uint64_t RadioHandlerClass::TuneLO(uint64_t wishedFreq)
 	// we need shift the samples
 	int64_t offset = wishedFreq - actLo;
 	DbgPrintf("Offset freq %" PRIi64 "\n", offset);
-	float fc = r2iqCntrl->setFreqOffset(offset / (getSampleRate() / 2.0f));
+	float fc = r2iqCntrl->setFreqOffset(offset / (getSampleRate() / 2.0f), 0);
 	if (GetmodeRF() == VHFMODE)
 		fc = -fc;   // sign change with sideband used
 	if (this->fc != fc)

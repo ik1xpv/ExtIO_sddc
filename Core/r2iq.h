@@ -2,7 +2,7 @@
 #define R2IQ_H
 #include "license.txt" 
 
-#define NDECIDX 7  //number of srate
+#define NDECIDX 9  //number of srate
 
 #include <thread>
 #include <mutex>
@@ -33,7 +33,7 @@ public:
     virtual void TurnOff(void) { this->r2iqOn = false; }
     virtual bool IsOn(void) { return this->r2iqOn; }
     virtual void DataReady(void) {}
-    virtual float setFreqOffset(float offset) { return 0; };
+    virtual float setFreqOffset(float offset, int channel) { return 0; };
 
 protected:
     int mdecimation ;   // selected decimation ratio
