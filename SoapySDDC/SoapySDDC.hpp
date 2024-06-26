@@ -124,6 +124,8 @@ public:
     void setHardwareTime(const long long timeNs, const std::string &what = "");
 
 private:
+
+    int deviceId;
     int bytesPerSample;
 
     uint32_t centerFrequency;

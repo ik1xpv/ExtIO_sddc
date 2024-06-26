@@ -38,6 +38,7 @@ int SoapySDDC::Callback(void* context,const float* data, uint32_t len)
 
 
 SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args):
+    deviceId(-1),
     Fx3(UsbHandlerFactory::CreateUsbHandler()),
     numBuffers(16),
     sampleRate(32000000)
@@ -82,8 +83,15 @@ std::string SoapySDDC::getHardwareKey(void) const
 
 SoapySDR::Kwargs SoapySDDC::getHardwareInfo(void) const
 {
+    //key/value pairs for any useful information
+    //this also gets printed in --probe
+    SoapySDR::Kwargs args;
+
+    args["origin"] = "https://github.com/ik1xpv/ExtIO_sddc";
+    args["index"] = std::to_string(deviceId);
+
     DbgPrintf("SoapySDDC::getHardwareInfo\n");
-    return SoapySDR::Kwargs();
+    return args;
 }
 
 /*******************************************************************
