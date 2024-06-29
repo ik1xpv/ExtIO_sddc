@@ -65,7 +65,7 @@
       "args": [
         "--find"
       ],
-      "stopAtEntry": false,
+      "stopAtEntry": true,
       "cwd": "${workspaceFolder}",
       "environment": [],
       "externalConsole": false,
