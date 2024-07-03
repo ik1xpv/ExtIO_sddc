@@ -40,7 +40,7 @@ inline void null_func(const char *format, ...) { }
 #endif
 
 #ifdef _DEBUG
-#define DbgPrintf (printf)
+#define DbgPrintf(fmt, ...) printf("[SDDC] " fmt, ##__VA_ARGS__)
 #else
 #define DbgPrintf DbgEmpty
 #endif

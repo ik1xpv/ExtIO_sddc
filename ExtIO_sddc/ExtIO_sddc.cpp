@@ -191,7 +191,7 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 			RECT rect;
 			GetWindowRect(GetDesktopWindow(), &rect);
 			SetWindowPos(Hconsole, HWND_TOPMOST, rect.right - 800, 24, 800, 420, SWP_SHOWWINDOW);
-			DbgPrintf((char *) "Oscar Steila IK1XPV fecit MMXVIII - MMXX\n");
+			DbgPrintf("Oscar Steila IK1XPV fecit MMXVIII - MMXX\n");
 			MakeWindowTransparent(Hconsole, 0xC0);
 			SetConsoleColorTXT(TXT_GREEN);
 		}

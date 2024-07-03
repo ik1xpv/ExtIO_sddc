@@ -163,7 +163,7 @@ void si5351aSetFrequencyA(UINT32 freq)
 		rdiv += SI_R_DIV_2;
 	}
 #ifdef _PLLDEBUG_
-	DbgPrintf((char *) "\nCLK0 frequency %d \n", frequency);
+	DbgPrintf("\nCLK0 frequency %d \n", frequency);
 #endif
 	divider = 900000000UL / frequency;// Calculate the division ratio. 900,000,000 is the maximum internal
 									// PLL frequency: 900MHz
@@ -171,7 +171,7 @@ void si5351aSetFrequencyA(UINT32 freq)
 
 	pllFreq = divider * frequency;	// Calculate the pllFrequency: the divider * desired output frequency
 #ifdef _PLLDEBUG_
-	DbgPrintf((char *) "pllA Freq  %d \n", pllFreq);
+	DbgPrintf("pllA Freq  %d \n", pllFreq);
 #endif
 	mult = pllFreq / xtalFreq;		// Determine the multiplier to get to the required pllFrequency
 	l = pllFreq % xtalFreq;			// It has three parts:
@@ -226,7 +226,7 @@ void si5351aSetFrequencyB(UINT32 freq2)
 		rdiv += SI_R_DIV_2;
 	}
 #ifdef _PLLDEBUG_
-	DbgPrintf((char *) "\nCLK2 frequency %d \n", frequency);
+	DbgPrintf("\nCLK2 frequency %d \n", frequency);
 #endif
 	divider = 900000000UL / frequency;// Calculate the division ratio. 900,000,000 is the maximum internal
 										// PLL frequency: 900MHz
@@ -234,7 +234,7 @@ void si5351aSetFrequencyB(UINT32 freq2)
 
 	pllFreq = divider * frequency;	// Calculate the pllFrequency: the divider * desired output frequency
 #ifdef _PLLDEBUG_
-	DbgPrintf((char *) "pllB Freq  %d \n", pllFreq);
+	DbgPrintf("pllB Freq  %d \n", pllFreq);
 #endif
 	mult = pllFreq / xtalFreq;		// Determine the multiplier to get to the required pllFrequency
 	l = pllFreq % xtalFreq;			// It has three parts:

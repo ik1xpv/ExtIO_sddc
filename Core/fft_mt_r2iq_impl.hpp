@@ -166,6 +166,6 @@
 			pout += mfft / 2 + (3 * mfft / 4) * (fftPerBuf - 1);
 		}
 	} // while(run)
-//    DbgPrintf((char *) "r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
+//    DbgPrintf("r2iqThreadf idx %d pthread_exit %u\n",(int)th->t, pthread_self());
 	return 0;
 }

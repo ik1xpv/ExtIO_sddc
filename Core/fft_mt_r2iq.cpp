@@ -151,10 +151,10 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 	{
 		fftwf_plan filterplan_t2f_c2c; // time to frequency fft
 
-		DbgPrintf((char *) "r2iqCntrl initialization\n");
+		DbgPrintf("r2iqCntrl initialization\n");
 
 
-		//        DbgPrintf((char *) "RandTable generated\n");
+		DbgPrintf("RandTable generated\n");
 
 		   // filters
 		fftwf_complex *pfilterht;       // time filter ht
