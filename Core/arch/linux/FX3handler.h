@@ -32,8 +32,12 @@ private:
 	bool ReadUsb(uint8_t command, uint16_t value, uint16_t index, uint8_t *data, size_t size);
 	bool WriteUsb(uint8_t command, uint16_t value, uint16_t index, uint8_t *data, size_t size);
 
+	bool Close(void);
+
 	static void PacketRead(uint32_t data_size, uint8_t *data, void *context);
 
+	uint32_t devidx;
+	struct usb_device_info *usb_device_infos;
 	usb_device_t *dev;
 	streaming_t *stream;
 	ringbuffer<int16_t> *inputbuffer;
