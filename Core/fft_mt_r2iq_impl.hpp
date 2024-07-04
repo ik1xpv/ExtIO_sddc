@@ -10,7 +10,7 @@
 	fftwf_complex* pout = nullptr;
 	int decimate_count = 0;
 
-	while (r2iqOn) {
+	while (IsOn()) {
 		const int16_t *dataADC;  // pointer to input data
 		const int16_t *endloop;    // pointer to end data to be copied to beginning
 
@@ -20,7 +20,7 @@
 			std::unique_lock<std::mutex> lk(mutexR2iqControl);
 			dataADC = inputbuffer->getReadPtr();
 
-			if (!r2iqOn)
+			if (!IsOn())
 				return 0;
 
 			this->bufIdx = (this->bufIdx + 1) % QUEUE_SIZE;

@@ -23,19 +23,6 @@ The name r2iq as Real 2 I+Q stream
 #include <utility>
 
 
-r2iqControlClass::r2iqControlClass()
-{
-	r2iqOn = false;
-	randADC = false;
-	sideband = false;
-	mdecimation = 0;
-	mratio[0] = 1;  // 1,2,4,8,16
-	for (int i = 1; i < NDECIDX; i++)
-	{
-		mratio[i] = mratio[i - 1] * 2;
-	}
-}
-
 fft_mt_r2iq::fft_mt_r2iq() :
 	r2iqControlClass(),
 	filterHw(nullptr)
@@ -109,10 +96,11 @@ float fft_mt_r2iq::setFreqOffset(float offset)
 }
 
 void fft_mt_r2iq::TurnOn() {
-	this->r2iqOn = true;
+    r2iqControlClass::TurnOn();
 	this->bufIdx = 0;
 	this->lastThread = threadArgs[0];
 
+	fprintf(stderr,"fft_mt_r2iq::TurnOn() %d threads\n",processor_count);
 	for (unsigned t = 0; t < processor_count; t++) {
 		r2iq_thread[t] = std::thread(
 			[this] (void* arg)
@@ -120,8 +108,8 @@ void fft_mt_r2iq::TurnOn() {
 	}
 }
 
-void fft_mt_r2iq::TurnOff(void) {
-	this->r2iqOn = false;
+void fft_mt_r2iq::TurnOff() {
+	r2iqControlClass::TurnOff();
 
 	inputbuffer->Stop();
 	outputbuffer->Stop();
@@ -129,8 +117,6 @@ void fft_mt_r2iq::TurnOff(void) {
 		r2iq_thread[t].join();
 	}
 }
-
-bool fft_mt_r2iq::IsOn(void) { return(this->r2iqOn); }
 
 void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>* obuffers)
 {
