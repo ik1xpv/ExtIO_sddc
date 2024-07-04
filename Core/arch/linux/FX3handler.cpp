@@ -23,14 +23,19 @@ fx3handler::~fx3handler()
 
 bool fx3handler::Open(const uint8_t *fw_data, uint32_t fw_size)
 {
-    DbgPrintf("DevIdx=%d\n", devidx);
     dev = usb_device_open(devidx, (const char *)fw_data, fw_size);
+    DbgPrintf("Open DevIdx=%d dev=%p\n", devidx, dev);
+
+    usleep(5000);
+    Control(STOPFX3, (uint8_t)0);
 
     return dev != nullptr;
 }
 
 bool fx3handler::Close(void)
 {
+    DbgPrintf("Close dev=%p\n", dev);
+
     if (dev) {
         usb_device_close(dev);
         dev = nullptr;
@@ -69,7 +74,7 @@ void fx3handler::StartStream(ringbuffer<int16_t> &input, int numofblock)
 {
     inputbuffer = &input;
     auto readsize = input.getWriteCount() * sizeof(uint16_t);
-    stream = streaming_open_async(this->dev, readsize, numofblock, PacketRead, this);
+    stream = streaming_open_async(this->dev, 0, 0, PacketRead, this);
 
     // Start background thread to poll the events
     run = true;
@@ -103,6 +108,7 @@ void fx3handler::PacketRead(uint32_t data_size, uint8_t *data, void *context)
 
     auto *ptr = handler->inputbuffer->getWritePtr();
     memcpy(ptr, data, data_size);
+    DbgPrintf("Got data %d\n", data_size);
     handler->inputbuffer->WriteDone();
 }
 
@@ -113,7 +119,7 @@ bool fx3handler::ReadDebugTrace(uint8_t *pdata, uint8_t len)
 
 bool fx3handler::Enumerate(unsigned char &idx, char *lbuf, const uint8_t *fw_data, uint32_t fw_size)
 {
-    if (idx > usb_device_count_devices()) return false;
+    if (idx >= usb_device_count_devices()) return false;
 
     if (usb_device_infos == nullptr) {
         usb_device_get_device_list(&usb_device_infos);

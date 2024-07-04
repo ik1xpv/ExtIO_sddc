@@ -70,7 +70,6 @@ SoapySDR::Stream *SoapySDDC::setupStream(const int direction,
 
     // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     return (SoapySDR::Stream *)this;
-    ;
 }
 
 void SoapySDDC::closeStream(SoapySDR::Stream *stream)

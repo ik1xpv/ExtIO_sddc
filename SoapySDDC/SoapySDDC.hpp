@@ -97,7 +97,7 @@ public:
 
     // std::vector<std::string> listFrequencies(const int direction, const size_t channel) const;
 
-    // SoapySDR::RangeList getFrequencyRange(const int direction, const size_t channel, const std::string &name) const;
+    SoapySDR::RangeList getFrequencyRange(const int direction, const size_t channel, const std::string &name) const;
 
     SoapySDR::ArgInfoList getFrequencyArgsInfo(const int direction, const size_t channel) const;
 
@@ -107,19 +107,19 @@ public:
 
     std::vector<double> listSampleRates(const int direction, const size_t channel) const;
 
-    void setMasterClockRate(const double rate);
+    // void setMasterClockRate(const double rate);
 
-    double getMasterClockRate(void) const;
+    // double getMasterClockRate(void) const;
 
-    std::vector<std::string> listTimeSources(void) const;
+    // std::vector<std::string> listTimeSources(void) const;
 
-    std::string getTimeSource(void) const;
+    // std::string getTimeSource(void) const;
 
-    bool hasHardwareTime(const std::string &what = "") const;
+    // bool hasHardwareTime(const std::string &what = "") const;
 
-    long long getHardwareTime(const std::string &what = "") const;
+    // long long getHardwareTime(const std::string &what = "") const;
 
-    void setHardwareTime(const long long timeNs, const std::string &what = "");
+    // void setHardwareTime(const long long timeNs, const std::string &what = "");
 
 private:
     int deviceId;

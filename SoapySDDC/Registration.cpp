@@ -13,52 +13,17 @@ SoapySDR::KwargsList findSDDC(const SoapySDR::Kwargs &args)
     std::vector<SoapySDR::Kwargs> results;
 
     unsigned char idx = 0;
-    SoapySDR::Kwargs devInfo;
     fx3class *Fx3(CreateUsbHandler());
     
-    Fx3->Enumerate(idx, devicelist.dev[0], FIRMWARE, sizeof(FIRMWARE));
-    uint8_t rdata[4];
-
-    Fx3->Open(FIRMWARE, sizeof(FIRMWARE));
-
-    Fx3->GetHardwareInfo((uint32_t *)rdata);
-    RadioModel radio = (RadioModel)rdata[0];
-    uint16_t firmware = (rdata[1] << 8) + rdata[2];
-
-    std::string DeviceVariant;
-    switch (radio)
+    while(Fx3->Enumerate(idx, devicelist.dev[idx], FIRMWARE, sizeof(FIRMWARE)))
     {
-    case HF103:
-        DeviceVariant = "HF103";
-        break;
-    case BBRF103:
-        DeviceVariant = "BBRF103";
-        break;
-    case RX888:
-        DeviceVariant = "RX888";
-        break;
-    case RX888r2:
+        SoapySDR::Kwargs devInfo;
 
-        DeviceVariant = "RX888r2";
-        break;
-    case RX888r3:
-        DeviceVariant = "RX888r3";
-        break;
-    case RX999:
-        DeviceVariant = "RX999";
-        break;
-    case RXLUCY:
-        DeviceVariant = "RXLUCY";
-        break;
-
-    default:
-        DeviceVariant = "DummyRadio";
-        DbgPrintf("WARNING no SDR connected\n");
-        break;
+        devInfo["label"] = std::string("SDDC") + " :: " + devicelist.dev[idx];
+        results.push_back(devInfo);
+        idx++;
     }
 
-    devInfo["label"] = std::string("SDDC") + " :: " + DeviceVariant;
-    results.push_back(devInfo);
     delete Fx3;
     return results;
 }
