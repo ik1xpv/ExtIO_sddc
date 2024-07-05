@@ -74,7 +74,7 @@ void fx3handler::StartStream(ringbuffer<int16_t> &input, int numofblock)
 {
     inputbuffer = &input;
     auto readsize = input.getWriteCount() * sizeof(uint16_t);
-    stream = streaming_open_async(this->dev, 0, 0, PacketRead, this);
+    stream = streaming_open_async(this->dev, readsize, 16, PacketRead, this);
 
     // Start background thread to poll the events
     run = true;
@@ -95,11 +95,11 @@ void fx3handler::StartStream(ringbuffer<int16_t> &input, int numofblock)
 
 void fx3handler::StopStream()
 {
-    run = false;
-    poll_thread.join();
-
     streaming_stop(stream);
     streaming_close(stream);
+
+    run = false;
+    poll_thread.join();
 }
 
 void fx3handler::PacketRead(uint32_t data_size, uint8_t *data, void *context)

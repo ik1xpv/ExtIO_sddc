@@ -182,8 +182,7 @@ void streaming_close(streaming_t *this)
 {
   if (this->transfers) {
     for (uint32_t i = 0; i < this->num_frames; ++i) {
-      //TODO: Cannot free transfer otherwise libusb will crash
-      //libusb_free_transfer(this->transfers[i]);
+      libusb_free_transfer(this->transfers[i]);
     }
     free(this->transfers);
   }
