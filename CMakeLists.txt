@@ -60,8 +60,6 @@ if (MSVC)
     SET(LIBFFTW_INCLUDE_DIRS ${SOURCE_DIR})
     SET(LIBFFTW_LIBRARY_DIRS ${SOURCE_DIR})
     SET(LIBFFTW_LIBRARIES fftw3f-3)
-
-    add_subdirectory(ExtIO_sddc)
 else()
 
     if (USE_DEBUG_ASAN)
@@ -80,5 +78,11 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 add_subdirectory(Core)
 add_subdirectory(libsddc)
-add_subdirectory(SoapySDDC)
 add_subdirectory(unittest)
+
+if (MSVC)
+    add_subdirectory(ExtIO_sddc)
+else()
+    # TODO Support Soapy on Windows
+    add_subdirectory(SoapySDDC)
+endif()

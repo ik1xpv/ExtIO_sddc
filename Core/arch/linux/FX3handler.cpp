@@ -4,6 +4,10 @@
 #include "FX3handler.h"
 #include "usb_device.h"
 #include "ezusb.h"
+#include "firmware.h"
+
+#define firmware_data ((const char *)FIRMWARE)
+#define firmware_size sizeof(FIRMWARE)
 
 fx3class *CreateUsbHandler()
 {
@@ -21,9 +25,9 @@ fx3handler::~fx3handler()
     Close();
 }
 
-bool fx3handler::Open(const uint8_t *fw_data, uint32_t fw_size)
+bool fx3handler::Open()
 {
-    dev = usb_device_open(devidx, (const char *)fw_data, fw_size);
+    dev = usb_device_open(devidx, firmware_data, firmware_size);
     DbgPrintf("Open DevIdx=%d dev=%p\n", devidx, dev);
 
     usleep(5000);
@@ -117,7 +121,7 @@ bool fx3handler::ReadDebugTrace(uint8_t *pdata, uint8_t len)
     return true;
 }
 
-bool fx3handler::Enumerate(unsigned char &idx, char *lbuf, const uint8_t *fw_data, uint32_t fw_size)
+bool fx3handler::Enumerate(unsigned char &idx, char *lbuf)
 {
     if (idx >= usb_device_count_devices()) return false;
 

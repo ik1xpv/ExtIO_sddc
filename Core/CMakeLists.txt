@@ -38,6 +38,11 @@ include_directories(${LIBFFTW_INCLUDE_DIRS})
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
+# Generatge firmware
+include(bin2h.cmake)
+bin2h(SOURCE_FILE "../SDDC_FX3.img" HEADER_FILE "${CMAKE_BINARY_DIR}/firmware.h" VARIABLE_NAME "firmware")
+include_directories(${CMAKE_BINARY_DIR})
+
 add_library(SDDC_CORE STATIC ${SRC})
 set_target_properties(SDDC_CORE PROPERTIES POSITION_INDEPENDENT_CODE True)
 target_compile_definitions(SDDC_CORE PUBLIC _CRT_SECURE_NO_WARNINGS)

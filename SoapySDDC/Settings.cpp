@@ -5,8 +5,6 @@
 #include <sys/types.h>
 #include <cstring>
 
-#include "firmware.h"
-
 static void _Callback(void *context, const float *data, uint32_t len)
 {
     SoapySDDC *sddc = (SoapySDDC *)context;
@@ -44,8 +42,8 @@ SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args) : deviceId(-1),
     DbgPrintf("SoapySDDC::SoapySDDC\n");
     unsigned char idx = 0;
     DevContext devicelist;
-    Fx3->Enumerate(idx, devicelist.dev[0], FIRMWARE, sizeof(FIRMWARE));
-    Fx3->Open(FIRMWARE, sizeof(FIRMWARE));
+    Fx3->Enumerate(idx, devicelist.dev[0]);
+    Fx3->Open();
     RadioHandler.Init(Fx3, _Callback, nullptr, this);
 }
 

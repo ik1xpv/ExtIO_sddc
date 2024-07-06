@@ -2,8 +2,6 @@
 #include <SoapySDR/Registry.hpp>
 #include <cstdint>
 
-#include "firmware.h"
-
 DevContext devicelist; // list of FX3 devices
 
 SoapySDR::KwargsList findSDDC(const SoapySDR::Kwargs &args)
@@ -15,7 +13,7 @@ SoapySDR::KwargsList findSDDC(const SoapySDR::Kwargs &args)
     unsigned char idx = 0;
     fx3class *Fx3(CreateUsbHandler());
     
-    while(Fx3->Enumerate(idx, devicelist.dev[idx], FIRMWARE, sizeof(FIRMWARE)))
+    while(Fx3->Enumerate(idx, devicelist.dev[idx]))
     {
         SoapySDR::Kwargs devInfo;
 

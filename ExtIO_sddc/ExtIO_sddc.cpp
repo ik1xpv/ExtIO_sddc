@@ -198,38 +198,15 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 #endif
 		EnterFunction();  // now works
 
-		// open the data
-		unsigned char* res_data;
-		uint32_t res_size;
-
-#ifdef _DEBUG
-		FILE *fp = fopen("TestFX3.img", "rb");
-		if (fp != nullptr)
-		{
-			fseek(fp, 0, SEEK_END);
-			res_size = ftell(fp);
-			res_data = (unsigned char*)malloc(res_size);
-			fseek(fp, 0, SEEK_SET);
-			fread(res_data, 1, res_size, fp);
-		}
-		else
-#endif
-		{
-			HRSRC res = FindResource(hInst, MAKEINTRESOURCE(RES_BIN_FIRMWARE), RT_RCDATA);
-			HGLOBAL res_handle = LoadResource(hInst, res);
-			res_data = (unsigned char*)LockResource(res_handle);
-			res_size = SizeofResource(hInst, res);
-		}
-
 		auto Fx3 = CreateUsbHandler();
 		unsigned char idx = 0;
 		int selected = 0;
-		while (Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size) && (idx < MAXNDEV))
+		while (Fx3->Enumerate(idx, devicelist.dev[idx]) && (idx < MAXNDEV))
 		{
 			// https://en.wikipedia.org/wiki/West_Bridge
 			int retry = 2;
 			while ((strncmp("WestBridge", devicelist.dev[idx],sizeof("WestBridge")) != NULL) && retry-- > 0)
-				Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size); // if it enumerates as BootLoader retry
+				Fx3->Enumerate(idx, devicelist.dev[idx]); // if it enumerates as BootLoader retry
 			idx++;
 		}
 		devicelist.numdev = idx;
@@ -238,9 +215,9 @@ bool __declspec(dllexport) __stdcall InitHW(char *name, char *model, int& type)
 		}
 		DbgPrintf("selected %d \n",selected);
 		idx = selected;
-		Fx3->Enumerate(idx, devicelist.dev[idx], res_data, res_size);
+		Fx3->Enumerate(idx, devicelist.dev[idx]);
 
-		gbInitHW = Fx3->Open(res_data, res_size) &&
+		gbInitHW = Fx3->Open() &&
 				RadioHandler.Init(Fx3, Callback); // Check if it there hardware
 	
 #ifdef _DEBUG

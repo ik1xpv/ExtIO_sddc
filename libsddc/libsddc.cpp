@@ -88,7 +88,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
     if (fread(res_data, 1, res_size, fp) != res_size)
         return nullptr;
 
-    bool openOK = fx3->Open(res_data, res_size);
+    bool openOK = fx3->Open();
     if (!openOK)
         return nullptr;
 

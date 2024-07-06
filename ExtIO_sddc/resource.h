@@ -32,7 +32,6 @@
 #define IDC_FREQCANC					1020
 #define IDC_CORRCANC					1021
 #define IDC_LISTDEV						1030
-#define RES_BIN_FIRMWARE                2000
 #define IHK_CR                          5001
 #define IDE_EDIT_MAIN                   40002
 #define IDB_BTN_MAIN_B                  40003

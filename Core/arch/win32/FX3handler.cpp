@@ -12,7 +12,10 @@
 #include "FX3handler.h"
 #include "./CyAPI/CyAPI.h"
 #include "./CyAPI/cyioctl.h"
-#define RES_BIN_FIRMWARE                2000
+#include "firmware.h"
+
+#define firmware_data ((const char *)FIRMWARE)
+#define firmware_size sizeof(FIRMWARE)
 
 
 fx3class* CreateUsbHandler()
@@ -55,7 +58,7 @@ bool fx3handler::GetFx3DeviceStreamer() {   // open class
 	return r;
 }
 
-bool fx3handler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_data, uint32_t fw_size)
+bool fx3handler::Enumerate(unsigned char& idx, char* lbuf)
 {
 	bool r = false;
 	strcpy(lbuf, "");
@@ -64,7 +67,7 @@ bool fx3handler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_dat
 	if (fx3dev == nullptr) return r;		// return if failed
 	if (!fx3dev->Open(idx)) return r;
 	if (fx3dev->IsBootLoaderRunning()) {
-		if (fx3dev->DownloadFwToRam(fw_data, fw_size) != SUCCESS) {
+		if (fx3dev->DownloadFwToRam(firmware_data, firmware_size) != SUCCESS) {
 			DbgPrintf("Failed to DownloadFwToRam device(%x)\n", idx);
 		}
 		else {
@@ -82,7 +85,7 @@ bool fx3handler::Enumerate(unsigned char& idx, char* lbuf, const uint8_t* fw_dat
 	return true;
 }
 
-bool  fx3handler::Open(const uint8_t* fw_data, uint32_t fw_size) {
+bool  fx3handler::Open() {
 	bool r = false;
 
 	if (!GetFx3DeviceStreamer()) {

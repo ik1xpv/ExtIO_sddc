@@ -11,10 +11,7 @@ find_package(SoapySDR CONFIG)
 
 # set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
-include(bin2h.cmake)
-bin2h(SOURCE_FILE "../SDDC_FX3.img" HEADER_FILE "${CMAKE_BINARY_DIR}/firmware.h" VARIABLE_NAME "firmware")
-
-include_directories("." "../Core" ${CMAKE_BINARY_DIR})
+include_directories("." "../Core")
 
 # add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH

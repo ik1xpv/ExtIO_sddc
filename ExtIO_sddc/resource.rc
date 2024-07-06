@@ -242,15 +242,6 @@ IDB_BITMAP2             BITMAP                  "CONNECTING.bmp"
 // remains consistent on all systems.
 IDB_ICON1               ICON                    "ExtIO_sddc.ico"
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// RCDATA
-//
-
-RES_BIN_FIRMWARE        RCDATA                  "..\SDDC_FX3.img"
-
-
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
