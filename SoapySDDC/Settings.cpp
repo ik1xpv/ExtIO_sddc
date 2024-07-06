@@ -153,11 +153,15 @@ void SoapySDDC::setAntenna(const int direction, const size_t, const std::string 
 std::string SoapySDDC::getAntenna(const int direction, const size_t) const
 {
     DbgPrintf("SoapySDDC::getAntenna\n");
-    if (direction == SOAPY_SDR_TX)
+
+    if (RadioHandler.GetmodeRF() == VHFMODE)
     {
-        return "";
+        return "VHF";
     }
-    return "RX";
+    else
+    {
+        return "HF";
+    }
 }
 
 bool SoapySDDC::hasDCOffsetMode(const int, const size_t) const
@@ -286,6 +290,17 @@ double SoapySDDC::getFrequency(const int, const size_t, const std::string &name)
         return 8000000.000000;
     }
     return (double)centerFrequency;
+}
+
+std::vector<std::string> SoapySDDC::listFrequencies(const int direction, const size_t channel) const
+{
+    std::vector<std::string> ret;
+
+    if (channel == 0) {
+        ret.push_back("RF");
+    }
+
+    return ret;
 }
 
 SoapySDR::RangeList SoapySDDC::getFrequencyRange(const int direction, const size_t channel, const std::string &name) const

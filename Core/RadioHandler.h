@@ -43,7 +43,7 @@ public:
     int UpdateIFGain(int attIdx);
 
     bool UpdatemodeRF(rf_mode mode);
-    rf_mode GetmodeRF(){return (rf_mode)modeRF;}
+    rf_mode GetmodeRF() const {return (rf_mode)modeRF;}
     bool UptDither (bool b);
     bool GetDither () {return dither;}
     bool UptPga(bool b);

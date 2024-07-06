@@ -77,7 +77,7 @@ bool fx3handler::GetHardwareInfo(uint32_t *data)
 void fx3handler::StartStream(ringbuffer<int16_t> &input, int numofblock)
 {
     inputbuffer = &input;
-    auto readsize = 16 * 1024; // input.getWriteCount() * sizeof(uint16_t);
+    auto readsize = 32 * 1024; // input.getWriteCount() * sizeof(uint16_t);
     stream = streaming_open_async(this->dev, readsize, 0, PacketRead, this);
 
     // Start background thread to poll the events
