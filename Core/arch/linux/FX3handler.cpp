@@ -73,11 +73,16 @@ bool fx3handler::GetHardwareInfo(uint32_t *data)
 void fx3handler::StartStream(ringbuffer<int16_t> &input, int numofblock)
 {
     inputbuffer = &input;
-    auto readsize = input.getWriteCount() * sizeof(uint16_t);
-    stream = streaming_open_async(this->dev, readsize, 16, PacketRead, this);
+    auto readsize = 16 * 1024; // input.getWriteCount() * sizeof(uint16_t);
+    stream = streaming_open_async(this->dev, readsize, 0, PacketRead, this);
 
     // Start background thread to poll the events
     run = true;
+    if (stream)
+    {
+        streaming_start(stream);
+    }
+
     poll_thread = std::thread(
         [this]()
         {
@@ -86,20 +91,15 @@ void fx3handler::StartStream(ringbuffer<int16_t> &input, int numofblock)
                 usb_device_handle_events(this->dev);
             }
         });
-
-    if (stream)
-    {
-        streaming_start(stream);
-    }
 }
 
 void fx3handler::StopStream()
 {
-    streaming_stop(stream);
-    streaming_close(stream);
-
     run = false;
     poll_thread.join();
+
+    streaming_stop(stream);
+    streaming_close(stream);
 }
 
 void fx3handler::PacketRead(uint32_t data_size, uint8_t *data, void *context)

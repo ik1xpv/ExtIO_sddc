@@ -113,6 +113,9 @@ void fft_mt_r2iq::TurnOn() {
 	this->bufIdx = 0;
 	this->lastThread = threadArgs[0];
 
+	inputbuffer->Start();
+	outputbuffer->Start();
+
 	for (unsigned t = 0; t < processor_count; t++) {
 		r2iq_thread[t] = std::thread(
 			[this] (void* arg)

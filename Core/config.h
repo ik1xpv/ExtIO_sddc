@@ -11,13 +11,6 @@
 
 //#define _DEBUG  // defined in VS configuration
 
-#ifdef __cplusplus
-inline void null_func(const char *format, ...) { }
-#define DbgEmpty null_func
-#else
-#define DbgEmpty { }
-#endif
-
 // macro to call callback function with just status extHWstatusT
 #define EXTIO_STATUS_CHANGE( CB, STATUS )   \
 	do { \
@@ -43,7 +36,7 @@ inline void null_func(const char *format, ...) { }
 #include <cstdio>
 #define DbgPrintf(fmt, ...) printf("[SDDC] " fmt, ##__VA_ARGS__)
 #else
-#define DbgPrintf DbgEmpty
+#define DbgPrintf(fmt, ...) do {} while(0)
 #endif
 
 #define SWVERSION           "1.3.0 RC1"	  

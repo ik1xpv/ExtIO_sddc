@@ -372,7 +372,7 @@ static void LIBUSB_CALL streaming_read_async_callback(struct libusb_transfer *tr
 
   this->status = STREAMING_STATUS_FAILED;
   atomic_fetch_sub(&this->active_transfers, 1);
-  fprintf(stderr, "Cancelling\n");
+
   /* cancel all the active transfers */
   for (uint32_t i = 0; i < this->num_frames; ++i) {
     int ret = libusb_cancel_transfer(transfer);
