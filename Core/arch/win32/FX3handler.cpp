@@ -384,6 +384,8 @@ void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 	// Allocate the context and buffers
 	inputbuffer = &input;
 
+	inputbuffer.setBlockSize(transferSamples);
+
 	// create the thread
 	this->numofblock = numofblock;
 	run = true;

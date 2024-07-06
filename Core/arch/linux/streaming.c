@@ -104,6 +104,10 @@ streaming_t *streaming_open_sync(usb_device_t *usb_device)
   return ret_val;
 }
 
+int streaming_framesize(streaming_t *that)
+{
+  return that->frame_size;
+}
 
 streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
                       uint32_t num_frames, sddc_read_async_cb_t callback,

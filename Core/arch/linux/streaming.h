@@ -53,6 +53,8 @@ int streaming_stop(streaming_t *that);
 
 int streaming_reset_status(streaming_t *that);
 
+int streaming_framesize(streaming_t *that);
+
 int streaming_read_sync(streaming_t *that, uint8_t *data, int length,
                         int *transferred);
 

@@ -71,8 +71,6 @@ RadioHandlerClass::RadioHandlerClass() :
 	fc(0.0f),
 	hardware(new DummyRadio(nullptr))
 {
-	inputbuffer.setBlockSize(transferSamples);
-
 	stateFineTune = new shift_limited_unroll_C_sse_data_t();
 }
 

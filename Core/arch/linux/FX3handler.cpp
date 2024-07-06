@@ -1,5 +1,6 @@
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "FX3handler.h"
 #include "usb_device.h"
@@ -79,6 +80,9 @@ void fx3handler::StartStream(ringbuffer<int16_t> &input, int numofblock)
     inputbuffer = &input;
     auto readsize = 32 * 1024; // input.getWriteCount() * sizeof(uint16_t);
     stream = streaming_open_async(this->dev, readsize, 0, PacketRead, this);
+    input.setBlockSize(streaming_framesize(stream) / sizeof(int16_t));
+
+    DbgPrintf("StartStream blocksize=%d\n", input.getBlockSize());
 
     // Start background thread to poll the events
     run = true;
@@ -111,8 +115,8 @@ void fx3handler::PacketRead(uint32_t data_size, uint8_t *data, void *context)
     fx3handler *handler = (fx3handler *)context;
 
     auto *ptr = handler->inputbuffer->getWritePtr();
+    assert(data_size == handler->inputbuffer->getBlockSize() * sizeof(int16_t));
     memcpy(ptr, data, data_size);
-    DbgPrintf("Got data %d\n", data_size);
     handler->inputbuffer->WriteDone();
 }
 

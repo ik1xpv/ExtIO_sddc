@@ -13,7 +13,7 @@ static void _Callback(void *context, const float *data, uint32_t len)
 
 int SoapySDDC::Callback(void *context, const float *data, uint32_t len)
 {
-    DbgPrintf("SoapySDDC::Callback %d\n", len);
+    // DbgPrintf("SoapySDDC::Callback %d\n", len);
     if (_buf_count == numBuffers)
     {
         _overflowEvent = true;
