@@ -287,7 +287,7 @@ bool fx3handler::BeginDataXfer(UINT8 *buffer, long transferSize, void** context)
 
 	readContext->context = EndPt->BeginDataXfer(readContext->buffer, transferSize, &readContext->overlap);
 	if (EndPt->NtStatus || EndPt->UsbdStatus) {// BeginDataXfer failed
-		DbgPrintf((char*)"Xfer request rejected. 1 STATUS = %ld %ld\n", EndPt->NtStatus, EndPt->UsbdStatus);
+		DbgPrintf("Xfer request rejected. 1 STATUS = %ld %ld\n", EndPt->NtStatus, EndPt->UsbdStatus);
 		return false;
 	}
 
@@ -384,7 +384,7 @@ void fx3handler::StartStream(ringbuffer<int16_t>& input, int numofblock)
 	// Allocate the context and buffers
 	inputbuffer = &input;
 
-	inputbuffer.setBlockSize(transferSamples);
+	inputbuffer->setBlockSize(transferSamples);
 
 	// create the thread
 	this->numofblock = numofblock;
