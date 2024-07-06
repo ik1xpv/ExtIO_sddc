@@ -247,12 +247,12 @@ int RadioHandlerClass::UpdateIFGain(int idx)
 	return 0;
 }
 
-int RadioHandlerClass::GetRFAttSteps(const float **steps)
+int RadioHandlerClass::GetRFAttSteps(const float **steps) const
 {
 	return hardware->getRFSteps(steps);
 }
 
-int RadioHandlerClass::GetIFGainSteps(const float **steps)
+int RadioHandlerClass::GetIFGainSteps(const float **steps) const
 {
 	return hardware->getIFSteps(steps);
 }

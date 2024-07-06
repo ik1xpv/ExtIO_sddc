@@ -104,13 +104,13 @@ bool RXLucyRadio::UpdatemodeRF(rf_mode mode)
     return false;
 }
 
-int RXLucyRadio::getRFSteps(const float **steps)
+int RXLucyRadio::getRFSteps(const float **steps) const
 {
     *steps = this->steps;
     return step_size;
 }
 
-int RXLucyRadio::getIFSteps(const float** steps)
+int RXLucyRadio::getIFSteps(const float** steps) const
 {
         *steps = this->if_steps;
         return if_step_size;

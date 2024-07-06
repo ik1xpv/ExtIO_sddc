@@ -107,7 +107,7 @@ uint64_t BBRF103Radio::TuneLo(uint64_t freq)
     }
 }
 
-int BBRF103Radio::getRFSteps(const float** steps )
+int BBRF103Radio::getRFSteps(const float** steps ) const
 {
     if (gpios & (ATT_SEL0 | ATT_SEL1))  {
         *steps = this->hfsteps;
@@ -120,7 +120,7 @@ int BBRF103Radio::getRFSteps(const float** steps )
     }
 }
 
-int BBRF103Radio::getIFSteps(const float** steps )
+int BBRF103Radio::getIFSteps(const float** steps ) const
 {
     if (gpios & (ATT_SEL0 | ATT_SEL1))  {
         return 0;

@@ -187,7 +187,8 @@ std::vector<std::string> SoapySDDC::listGains(const int, const size_t) const
 {
     DbgPrintf("SoapySDDC::listGains\n");
     std::vector<std::string> gains;
-    gains.push_back("RX");
+    gains.push_back("RF");
+    gains.push_back("IF");
     return gains;
 }
 
@@ -203,15 +204,59 @@ bool SoapySDDC::hasGainMode(const int, const size_t) const
 
 // void SoapySDDC::setGain(const int, const size_t, const double)
 
-void SoapySDDC::setGain(const int, const size_t, const std::string &, const double)
+void SoapySDDC::setGain(const int, const size_t, const std::string &name, const double value)
 {
-    DbgPrintf("SoapySDDC::setGain\n");
+    DbgPrintf("SoapySDDC::setGain %s = %f\n", name.c_str(), value);
+    const float *steps;
+    int len = RadioHandler.GetRFAttSteps(&steps);
+    int step = len - 1;
+
+    if (name == "RF") {
+        len = RadioHandler.GetRFAttSteps(&steps);
+    }
+    else if (name == "IF") {
+        len = RadioHandler.GetIFGainSteps(&steps);
+    } else
+        return; // unknown name
+
+    for (int i = 1; i < len; i++) {
+        if (steps[i - 1] <= value && steps[i] > value)
+        {
+            step = i - 1;
+            break;
+        }
+    }
+
+    if (name == "RF") {
+        len = RadioHandler.UpdateattRF(step);
+    }
+    else if (name == "IF") {
+        len = RadioHandler.UpdateIFGain(step);
+    }
 }
 
-SoapySDR::Range SoapySDDC::getGainRange(const int, const size_t, const std::string &) const
+SoapySDR::Range SoapySDDC::getGainRange(const int direction, const size_t channel, const std::string &name) const
 {
-    DbgPrintf("SoapySDDC::getGainRange\n");
-    return SoapySDR::Range();
+    DbgPrintf("SoapySDDC::getGainRange %s\n", name.c_str());
+
+    if (name == "RF") {
+        const float *steps;
+        int len = RadioHandler.GetRFAttSteps(&steps);
+        return SoapySDR::Range(
+            steps[0],
+            steps[len - 1]
+        );
+    }
+    else if (name == "IF") {
+        const float *steps;
+        int len = RadioHandler.GetIFGainSteps(&steps);
+        return SoapySDR::Range(
+            steps[0],
+            steps[len - 1]
+        );
+    }
+    else
+        return SoapySDR::Range();
 }
 
 void SoapySDDC::setFrequency(const int, const size_t, const double frequency, const SoapySDR::Kwargs &)

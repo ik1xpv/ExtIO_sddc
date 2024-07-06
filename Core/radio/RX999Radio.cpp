@@ -97,12 +97,12 @@ uint64_t RX999Radio::TuneLo(uint64_t freq)
     }
 }
 
-int RX999Radio::getRFSteps(const float **steps)
+int RX999Radio::getRFSteps(const float **steps) const
 {
     return 0;
 }
 
-int RX999Radio::getIFSteps(const float **steps)
+int RX999Radio::getIFSteps(const float **steps) const
 {
     *steps = this->if_steps;
     return if_step_size;

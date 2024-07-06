@@ -42,7 +42,7 @@ bool HF103Radio::UpdateattRF(int att)
     return Fx3->SetArgument(DAT31_ATT, d);
 }
 
-int HF103Radio::getRFSteps(const float** steps )
+int HF103Radio::getRFSteps(const float** steps ) const
 {
     *steps = this->steps;
 
