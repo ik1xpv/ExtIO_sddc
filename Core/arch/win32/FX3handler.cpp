@@ -14,7 +14,7 @@
 #include "./CyAPI/cyioctl.h"
 #include "firmware.h"
 
-#define firmware_data ((const char *)FIRMWARE)
+#define firmware_data ((const UCHAR *)FIRMWARE)
 #define firmware_size sizeof(FIRMWARE)
 
 
