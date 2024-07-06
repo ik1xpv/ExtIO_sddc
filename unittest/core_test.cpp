@@ -60,6 +60,7 @@ class fx3handler : public fx3class
 	long nxfers;
     void StartStream(ringbuffer<int16_t>& input, int numofblock)
     {
+        input.setBlockSize(transferSamples);
         run = true;
         emuthread = std::thread([&input, this]{
             while(run)
