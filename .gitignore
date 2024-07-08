@@ -172,6 +172,7 @@ csx/
 ecf/
 rcf/
 build/
+build64/
 
 # Windows Store app package directories and files
 AppPackages/
