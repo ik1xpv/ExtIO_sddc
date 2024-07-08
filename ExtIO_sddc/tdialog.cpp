@@ -82,7 +82,7 @@ bool SupportPGA()
 		model == RX999;
 }
 
-BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	HICON hIcon = NULL;
 	char ebuffer[32];
@@ -469,9 +469,7 @@ BOOL CALLBACK DlgMainFn(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 }
 
-
-
-BOOL CALLBACK DlgSelectDevice(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgSelectDevice(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int selindex = 0;
 	DevContext* p_devicelist;
