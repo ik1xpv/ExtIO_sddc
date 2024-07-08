@@ -125,7 +125,7 @@ private:
     int deviceId;
     int bytesPerSample;
 
-    uint32_t centerFrequency;
+    uint64_t centerFrequency;
     double sampleRate;
     size_t numBuffers, bufferLength, asyncBuffs;
     std::atomic<long long> ticks;

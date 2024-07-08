@@ -277,7 +277,7 @@ double sddc_get_tuner_frequency(sddc_t *t)
 
 int sddc_set_tuner_frequency(sddc_t *t, double frequency)
 {
-    t->freq = t->handler->TuneLO((int64_t)frequency);
+    t->freq = t->handler->TuneLO((uint64_t)frequency);
 
     return 0;
 }
