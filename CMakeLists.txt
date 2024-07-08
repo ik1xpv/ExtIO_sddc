@@ -52,6 +52,7 @@ if (MSVC)
         URL ${FFTW_URL}
         URL_HASH SHA256=${HASH}
         BUILD_IN_SOURCE TRUE
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
         CONFIGURE_COMMAND   ""
         BUILD_COMMAND       ${LIBEXE} /def:./libfftw3f-3.def /MACHINE:${ARCH} /OUT:./fftw3f-3.lib
         INSTALL_COMMAND     ""
@@ -82,7 +83,5 @@ add_subdirectory(unittest)
 
 if (MSVC)
     add_subdirectory(ExtIO_sddc)
-else()
-    # TODO Support Soapy on Windows
-    add_subdirectory(SoapySDDC)
 endif()
+add_subdirectory(SoapySDDC)
