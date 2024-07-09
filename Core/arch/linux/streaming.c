@@ -71,8 +71,6 @@ typedef struct streaming {
 
 
 static const uint32_t DEFAULT_SAMPLE_RATE = 64000000;   /* 64Msps */
-static const uint32_t DEFAULT_FRAME_SIZE = (2 * 64000000 / 1000);  /* ~ 1 ms */
-static const uint32_t DEFAULT_NUM_FRAMES = 96;  /* we should not exceed 120 ms in total! */
 const unsigned int BULK_XFER_TIMEOUT = 5000; // timeout (in ms) for each bulk transfer
 
 
@@ -121,17 +119,14 @@ streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
     return ret_val;
   }
 
-  /* frame size must be a multiple of max_packet_size * max_burst */
+  /* frame size must be a multiple of max_packet_size * (max_burst + 1) */
   uint32_t max_xfer_size = usb_device->bulk_in_max_packet_size *
-                           usb_device->bulk_in_max_burst;
+                           (usb_device->bulk_in_max_burst + 1);
   if ( !max_xfer_size ) {
     fprintf(stderr, "ERROR: maximum transfer size is 0. probably not connected at USB 3 port?!\n");
     return ret_val;
   }
 
-  num_frames = num_frames > 0 ? num_frames : DEFAULT_NUM_FRAMES;
-  frame_size = frame_size > 0 ? frame_size : DEFAULT_FRAME_SIZE;
-  frame_size = max_xfer_size * ((frame_size +max_xfer_size -1) / max_xfer_size);  // round up
   int iso_packets_per_frame = frame_size / usb_device->bulk_in_max_packet_size;
   fprintf(stderr, "frame_size = %u, iso_packets_per_frame = %d\n", (unsigned)frame_size, iso_packets_per_frame);
 
@@ -159,8 +154,8 @@ streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
   this->random = 0;
   this->usb_device = usb_device;
   this->sample_rate = DEFAULT_SAMPLE_RATE;
-  this->frame_size = frame_size > 0 ? frame_size : DEFAULT_FRAME_SIZE;
-  this->num_frames = num_frames > 0 ? num_frames : DEFAULT_NUM_FRAMES;
+  this->frame_size = frame_size;
+  this->num_frames = num_frames;
   this->callback = callback;
   this->callback_context = callback_context;
   this->frames = frames;
@@ -273,10 +268,13 @@ int streaming_stop(streaming_t *this)
 
   /* flush all the events */
   struct timeval noblock = { 0, 0 };
-  int ret = libusb_handle_events_timeout_completed(this->usb_device->context, &noblock, 0);
-  if (ret < 0) {
-    log_usb_error(ret, __func__, __FILE__, __LINE__);
-    this->status = STREAMING_STATUS_FAILED;
+  while (this->active_transfers > 0) {
+    int ret = libusb_handle_events_timeout_completed(this->usb_device->context, &noblock, 0);
+    if (ret < 0) {
+      log_usb_error(ret, __func__, __FILE__, __LINE__);
+      this->status = STREAMING_STATUS_FAILED;
+    }
+    usleep(100);
   }
 
   return 0;
@@ -364,6 +362,7 @@ static void LIBUSB_CALL streaming_read_async_callback(struct libusb_transfer *tr
       break;
     case LIBUSB_TRANSFER_CANCELLED:
       /* librtlsdr does also ignore LIBUSB_TRANSFER_CANCELLED */
+      atomic_fetch_sub(&this->active_transfers, 1);
       return;
     case LIBUSB_TRANSFER_ERROR:
     case LIBUSB_TRANSFER_TIMED_OUT:

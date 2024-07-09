@@ -76,8 +76,10 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 extern bool saveADCsamplesflag;
 extern uint32_t  adcnominalfreq;
 
+// transferSize must be a multiple of 16 (maxBurst) * 1024 (SS packet size) = 16384
 const uint32_t transferSize = 131072;
-const uint32_t transferSamples = 131072 / sizeof(int16_t);
+const uint32_t transferSamples = transferSize / sizeof(int16_t);
+const uint32_t concurrentTransfers = 16;  // used to be 96, but I think it is too high
 
 const uint32_t DEFAULT_ADC_FREQ = 64000000;	// ADC sampling frequency
 
@@ -87,4 +89,3 @@ extern uint32_t MIN_ADC_FREQ;		// ADC sampling frequency minimum
 extern uint32_t MAX_ADC_FREQ;		// ADC sampling frequency minimum
 extern uint32_t N2_BANDSWITCH;		// threshold 5 or 6 SR bandwidths
 #endif // _CONFIG_H_
-
