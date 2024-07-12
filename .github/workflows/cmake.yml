@@ -85,7 +85,7 @@ jobs:
     - name: Configure CMake64
       shell: bash
       working-directory: ${{runner.workspace}}/build64
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -G "Visual Studio 16 2019"
+      run: cmake $GITHUB_WORKSPACE "-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=$BUILD_TYPE -G "Visual Studio 16 2019"
 
     - name: Build
       working-directory: ${{runner.workspace}}/build64
