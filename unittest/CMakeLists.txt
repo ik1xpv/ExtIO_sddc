@@ -25,9 +25,8 @@ include_directories(${LIBCPPUNIT_INCLUDE_DIRS})
 
 target_link_libraries(unittest PRIVATE SDDC_CORE)
 if (MSVC)
-  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES})
 else()
-  target_link_libraries(unittest PUBLIC ${LIBFFTW_LIBRARIES} pthread ${ASANLIB})
+  target_link_libraries(unittest PUBLIC pthread ${ASANLIB})
 endif (MSVC)
 
 

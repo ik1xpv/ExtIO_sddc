@@ -36,14 +36,14 @@ public:
     bool Close();
     bool IsReady(){return true;}
 
-    int GetRFAttSteps(const float **steps);
+    int GetRFAttSteps(const float **steps) const;
     int UpdateattRF(int attIdx);
 
-    int GetIFGainSteps(const float **steps);
+    int GetIFGainSteps(const float **steps) const;
     int UpdateIFGain(int attIdx);
 
     bool UpdatemodeRF(rf_mode mode);
-    rf_mode GetmodeRF(){return (rf_mode)modeRF;}
+    rf_mode GetmodeRF() const {return (rf_mode)modeRF;}
     bool UptDither (bool b);
     bool GetDither () {return dither;}
     bool UptPga(bool b);
@@ -58,7 +58,7 @@ public:
     float getBps() const { return mBps; }
     float getSpsIF() const {return mSpsIF; }
 
-    const char* getName();
+    const char* getName() const;
     RadioModel getModel() { return radio; }
 
     bool GetBiasT_HF() { return biasT_HF; }
@@ -142,8 +142,8 @@ public:
     virtual bool UpdateattRF(int attIndex) = 0;
     virtual uint64_t TuneLo(uint64_t freq) = 0;
 
-    virtual int getRFSteps(const float** steps ) { return 0; }
-    virtual int getIFSteps(const float** steps ) { return 0; }
+    virtual int getRFSteps(const float** steps ) const { return 0; }
+    virtual int getIFSteps(const float** steps ) const { return 0; }
     virtual bool UpdateGainIF(int attIndex) { return false; }
 
     bool FX3producerOn() { return Fx3->Control(STARTFX3); }
@@ -171,8 +171,8 @@ public:
     bool UpdateattRF(int attIndex) override;
     bool UpdateGainIF(int attIndex) override;
 
-    int getRFSteps(const float** steps ) override;
-    int getIFSteps(const float** steps ) override;
+    int getRFSteps(const float** steps ) const override;
+    int getIFSteps(const float** steps ) const override;
 
 private:
     static const int step_size = 29;
@@ -204,8 +204,8 @@ public:
     bool UpdateattRF(int attIndex) override;
     bool UpdateGainIF(int attIndex) override;
 
-    int getRFSteps(const float** steps ) override;
-    int getIFSteps(const float** steps ) override;
+    int getRFSteps(const float** steps ) const override;
+    int getIFSteps(const float** steps ) const override;
 
 private:
     static const int  hf_rf_step_size = 64;
@@ -233,8 +233,8 @@ public:
     bool UpdateattRF(int attIndex) override;
     bool UpdateGainIF(int attIndex) override;
 
-    int getRFSteps(const float** steps ) override;
-    int getIFSteps(const float** steps ) override;
+    int getRFSteps(const float** steps ) const override;
+    int getIFSteps(const float** steps ) const override;
 
 private:
     static const int  hf_rf_step_size = 64;
@@ -263,8 +263,8 @@ public:
     bool UpdateattRF(int attIndex) override;
     bool UpdateGainIF(int attIndex) override;
 
-    int getRFSteps(const float** steps ) override;
-    int getIFSteps(const float** steps ) override;
+    int getRFSteps(const float** steps ) const override;
+    int getIFSteps(const float** steps ) const override;
 
 private:
     static const int if_step_size = 127;
@@ -289,7 +289,7 @@ public:
 
     bool UpdateattRF(int attIndex) override;
 
-    int getRFSteps(const float** steps ) override;
+    int getRFSteps(const float** steps ) const override;
 
 private:
     static const int step_size = 64;
@@ -309,8 +309,8 @@ public:
     bool UpdateattRF(int attIndex) override;
     bool UpdateGainIF(int attIndex) override;    
 
-    int getRFSteps(const float** steps) override;
-    int getIFSteps(const float** steps) override;
+    int getRFSteps(const float** steps) const override;
+    int getIFSteps(const float** steps) const override;
 
 private:
     static const int step_size = 16;

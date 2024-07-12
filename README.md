@@ -78,6 +78,13 @@ make
 
 ## Change Logs
 
+### tag v1.4 version date 7/5/2024
+- Add SoapySDR module for Linux & Windoes
+- Embedded firmware into Core to avoid carrying firmware file.
+
+Install SoapySDR on Linux via the follow command:
+> export SOAPY_SDR_PLUGIN_PATH=<path of libSDDCSupport.so>
+
 ### tag  v1.3.0RC1 Version "V1.2 RC1" date 4/11/2021
 - Use Ringbuffer for input and output #157
 - Delegate the VHF and HF decision to radio class #194

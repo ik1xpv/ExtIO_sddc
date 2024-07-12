@@ -71,8 +71,6 @@ RadioHandlerClass::RadioHandlerClass() :
 	fc(0.0f),
 	hardware(new DummyRadio(nullptr))
 {
-	inputbuffer.setBlockSize(transferSamples);
-
 	stateFineTune = new shift_limited_unroll_C_sse_data_t();
 }
 
@@ -81,7 +79,7 @@ RadioHandlerClass::~RadioHandlerClass()
 	delete stateFineTune;
 }
 
-const char *RadioHandlerClass::getName()
+const char *RadioHandlerClass::getName() const
 {
 	return hardware->getName();
 }
@@ -247,12 +245,12 @@ int RadioHandlerClass::UpdateIFGain(int idx)
 	return 0;
 }
 
-int RadioHandlerClass::GetRFAttSteps(const float **steps)
+int RadioHandlerClass::GetRFAttSteps(const float **steps) const
 {
 	return hardware->getRFSteps(steps);
 }
 
-int RadioHandlerClass::GetIFGainSteps(const float **steps)
+int RadioHandlerClass::GetIFGainSteps(const float **steps) const
 {
 	return hardware->getIFSteps(steps);
 }

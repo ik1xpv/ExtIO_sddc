@@ -113,6 +113,9 @@ void fft_mt_r2iq::TurnOn() {
 	this->bufIdx = 0;
 	this->lastThread = threadArgs[0];
 
+	inputbuffer->Start();
+	outputbuffer->Start();
+
 	for (unsigned t = 0; t < processor_count; t++) {
 		r2iq_thread[t] = std::thread(
 			[this] (void* arg)
@@ -151,10 +154,10 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 	{
 		fftwf_plan filterplan_t2f_c2c; // time to frequency fft
 
-		DbgPrintf((char *) "r2iqCntrl initialization\n");
+		DbgPrintf("r2iqCntrl initialization\n");
 
 
-		//        DbgPrintf((char *) "RandTable generated\n");
+		DbgPrintf("RandTable generated\n");
 
 		   // filters
 		fftwf_complex *pfilterht;       // time filter ht

@@ -88,7 +88,7 @@ sddc_t *sddc_open(int index, const char* imagefile)
     if (fread(res_data, 1, res_size, fp) != res_size)
         return nullptr;
 
-    bool openOK = fx3->Open(res_data, res_size);
+    bool openOK = fx3->Open();
     if (!openOK)
         return nullptr;
 
@@ -277,7 +277,7 @@ double sddc_get_tuner_frequency(sddc_t *t)
 
 int sddc_set_tuner_frequency(sddc_t *t, double frequency)
 {
-    t->freq = t->handler->TuneLO((int64_t)frequency);
+    t->freq = t->handler->TuneLO((uint64_t)frequency);
 
     return 0;
 }

@@ -11,13 +11,6 @@
 
 //#define _DEBUG  // defined in VS configuration
 
-#ifdef __cplusplus
-inline void null_func(const char *format, ...) { }
-#define DbgEmpty null_func
-#else
-#define DbgEmpty { }
-#endif
-
 // macro to call callback function with just status extHWstatusT
 #define EXTIO_STATUS_CHANGE( CB, STATUS )   \
 	do { \
@@ -40,9 +33,10 @@ inline void null_func(const char *format, ...) { }
 #endif
 
 #ifdef _DEBUG
-#define DbgPrintf (printf)
+#include <cstdio>
+#define DbgPrintf(fmt, ...) printf("[SDDC] " fmt, ##__VA_ARGS__)
 #else
-#define DbgPrintf DbgEmpty
+#define DbgPrintf(fmt, ...) do {} while(0)
 #endif
 
 #define SWVERSION           "1.3.0 RC1"	  
@@ -82,8 +76,10 @@ enum rf_mode { NOMODE = 0, HFMODE = 0x1, VHFMODE = 0x2 };
 extern bool saveADCsamplesflag;
 extern uint32_t  adcnominalfreq;
 
+// transferSize must be a multiple of 16 (maxBurst) * 1024 (SS packet size) = 16384
 const uint32_t transferSize = 131072;
-const uint32_t transferSamples = 131072 / sizeof(int16_t);
+const uint32_t transferSamples = transferSize / sizeof(int16_t);
+const uint32_t concurrentTransfers = 16;  // used to be 96, but I think it is too high
 
 const uint32_t DEFAULT_ADC_FREQ = 64000000;	// ADC sampling frequency
 
@@ -93,4 +89,3 @@ extern uint32_t MIN_ADC_FREQ;		// ADC sampling frequency minimum
 extern uint32_t MAX_ADC_FREQ;		// ADC sampling frequency minimum
 extern uint32_t N2_BANDSWITCH;		// threshold 5 or 6 SR bandwidths
 #endif // _CONFIG_H_
-

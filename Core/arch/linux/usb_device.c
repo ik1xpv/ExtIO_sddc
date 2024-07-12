@@ -185,7 +185,6 @@ int usb_device_get_device_list(struct usb_device_info **usb_device_infos)
         }
         device_infos[count].serial_number = (unsigned char *) realloc(device_infos[count].serial_number, ret);
       }
-
       ret = 0;
 FAIL3:
       libusb_close(dev_handle);
@@ -243,6 +242,8 @@ usb_device_t *usb_device_open(int index, const char* image,
     log_usb_error(ret, __func__, __FILE__, __LINE__);
     goto FAIL0;
   }
+
+  //libusb_set_option(ctx, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_DEBUG);
 
   libusb_device *device;
   int needs_firmware = 0;
@@ -555,6 +556,8 @@ static int list_endpoints(struct libusb_endpoint_descriptor endpoints[],
         struct libusb_ss_endpoint_companion_descriptor *endpoint_ss_companion;
         ret = libusb_get_ss_endpoint_companion_descriptor(0, endpoint,
                 &endpoint_ss_companion);
+
+        //printf("PktSize=%d\n", endpoint->wMaxPacketSize * (endpoint_ss_companion->bMaxBurst + 1));
         if (ret < 0 && ret != LIBUSB_ERROR_NOT_FOUND) {
           log_usb_error(ret, __func__, __FILE__, __LINE__);
           return -1;

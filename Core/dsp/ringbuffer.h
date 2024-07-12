@@ -16,7 +16,8 @@ public:
         write_index(0),
         emptyCount(0),
         fullCount(0),
-        writeCount(0)
+        writeCount(0),
+        stopped(false)
     {
     }
 
@@ -55,10 +56,18 @@ public:
         writeCount++;
     }
 
+    void Start()
+    {
+        std::unique_lock<std::mutex> lk(mutex);
+        write_index = read_index = 0;
+        stopped = false;
+    }
+
     void Stop()
     {
         std::unique_lock<std::mutex> lk(mutex);
         read_index = 0;
+        stopped = true;
         write_index = max_count / 2;
         nonfullCV.notify_all();
         nonemptyCV.notify_all();
@@ -68,6 +77,8 @@ protected:
 
     void WaitUntilNotEmpty()
     {
+        if (stopped) return;
+        
         // if not empty
         for (int i = 0; i < spin_count; i++)
         {
@@ -88,6 +99,8 @@ protected:
 
     void WaitUntilNotFull()
     {
+        if (stopped) return;
+
         for (int i = 0; i < spin_count; i++)
         {
             if ((write_index + 1) % max_count != read_index)
@@ -115,6 +128,7 @@ private:
     int writeCount;
 
     std::mutex mutex;
+    bool stopped;
     std::condition_variable nonemptyCV;
     std::condition_variable nonfullCV;
 };
@@ -124,7 +138,7 @@ template<typename T> class ringbuffer : public ringbufferbase {
 
 public:
     ringbuffer(int count = default_count) :
-        ringbufferbase(count)
+        ringbufferbase(count), block_size(0)
     {
         buffers = new TPtr[max_count];
         buffers[0] = nullptr;

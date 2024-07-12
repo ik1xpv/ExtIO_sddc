@@ -126,7 +126,7 @@ uint64_t RX888R2Radio::TuneLo(uint64_t freq)
     }
 }
 
-int RX888R2Radio::getRFSteps(const float **steps)
+int RX888R2Radio::getRFSteps(const float **steps) const
 {
     if (!(gpios & VHF_EN))
     {
@@ -141,7 +141,7 @@ int RX888R2Radio::getRFSteps(const float **steps)
     }
 }
 
-int RX888R2Radio::getIFSteps(const float **steps)
+int RX888R2Radio::getIFSteps(const float **steps) const
 {
     if (!(gpios & VHF_EN))
     {

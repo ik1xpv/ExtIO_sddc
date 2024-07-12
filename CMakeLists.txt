@@ -23,12 +23,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     option(USE_DEBUG_ASAN "use GCC's address sanitizer?" OFF)
 endif()
 
-if (USE_DEBUG_ASAN)
-  set(ASANLIB "asan")
-else()
-  set(ASANLIB "")
-endif()
-
 if (MSVC)
     set(CMAKE_CXX_FLAGS "-O2 /std:c++17 /EHsc /W3")
 
@@ -52,6 +46,7 @@ if (MSVC)
         URL ${FFTW_URL}
         URL_HASH SHA256=${HASH}
         BUILD_IN_SOURCE TRUE
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
         CONFIGURE_COMMAND   ""
         BUILD_COMMAND       ${LIBEXE} /def:./libfftw3f-3.def /MACHINE:${ARCH} /OUT:./fftw3f-3.lib
         INSTALL_COMMAND     ""
@@ -60,15 +55,14 @@ if (MSVC)
     SET(LIBFFTW_INCLUDE_DIRS ${SOURCE_DIR})
     SET(LIBFFTW_LIBRARY_DIRS ${SOURCE_DIR})
     SET(LIBFFTW_LIBRARIES fftw3f-3)
-
-    add_subdirectory(ExtIO_sddc)
 else()
 
     if (USE_DEBUG_ASAN)
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
-        set(CMAKE_CXX_FLAGS "-O0 -std=c++17 -Wall -Werror")
+        set(CMAKE_CXX_FLAGS "-O0 -std=c++17 -Wall")
+        set(ASANLIB "asan")
     else()
-        set(CMAKE_CXX_FLAGS "-O3 -std=c++17 -Wall -Werror")
+        set(CMAKE_CXX_FLAGS "-O3 -std=c++17 -Wall")
     endif(USE_DEBUG_ASAN)
     #add_compile_options(-Wall -Wextra -pedantic)
     include(FindPkgConfig)
@@ -81,3 +75,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 add_subdirectory(Core)
 add_subdirectory(libsddc)
 add_subdirectory(unittest)
+
+if (MSVC)
+    add_subdirectory(ExtIO_sddc)
+endif()
+add_subdirectory(SoapySDDC)
