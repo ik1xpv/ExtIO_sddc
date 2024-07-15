@@ -31,14 +31,14 @@ extern "C" {
 
 typedef struct streaming streaming_t;
 
-typedef void (*sddc_read_async_cb_t)(uint32_t data_size, uint8_t *data,
+typedef void (*streaming_read_async_cb_t)(uint32_t data_size, uint8_t *data,
 		                                      void *context);
 
 streaming_t *streaming_open_sync(usb_device_t *usb_device);
 
 streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
                                   uint32_t num_frames,
-                                  sddc_read_async_cb_t callback,
+                                  streaming_read_async_cb_t callback,
                                   void *callback_context);
 
 void streaming_close(streaming_t *that);
