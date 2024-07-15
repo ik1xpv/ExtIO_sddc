@@ -62,7 +62,7 @@ typedef struct streaming {
   uint32_t sample_rate;
   uint32_t frame_size;
   uint32_t num_frames;
-  sddc_read_async_cb_t callback;
+  streaming_read_async_cb_t callback;
   void *callback_context;
   uint8_t **frames;
   struct libusb_transfer **transfers;
@@ -108,7 +108,7 @@ int streaming_framesize(streaming_t *that)
 }
 
 streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
-                      uint32_t num_frames, sddc_read_async_cb_t callback,
+                      uint32_t num_frames, streaming_read_async_cb_t callback,
                       void *callback_context)
 {
   streaming_t *ret_val = 0;
@@ -128,7 +128,7 @@ streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
   }
 
   int iso_packets_per_frame = frame_size / usb_device->bulk_in_max_packet_size;
-  fprintf(stderr, "frame_size = %u, iso_packets_per_frame = %d\n", (unsigned)frame_size, iso_packets_per_frame);
+  // fprintf(stderr, "frame_size = %u, iso_packets_per_frame = %d\n", (unsigned)frame_size, iso_packets_per_frame);
 
   if (frame_size % max_xfer_size != 0) {
     fprintf(stderr, "frame size must be a multiple of %d\n", max_xfer_size);
