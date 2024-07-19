@@ -268,17 +268,6 @@ int streaming_stop(streaming_t *this)
   }
 
   this->status = STREAMING_STATUS_CANCELLED;
-  /* cancel all the active transfers */
-  for (uint32_t i = 0; i < this->num_frames; ++i) {
-    int ret = libusb_cancel_transfer(this->transfers[i]);
-    if (ret < 0) {
-      if (ret == LIBUSB_ERROR_NOT_FOUND) {
-        continue;
-      }
-      log_usb_error(ret, __func__, __FILE__, __LINE__);
-      this->status = STREAMING_STATUS_FAILED;
-    }
-  }
 
   /* flush all the events */
   struct timeval noblock = { 0, 0 };
@@ -291,6 +280,19 @@ int streaming_stop(streaming_t *this)
     usleep(100);
   }
 
+  /* cancel all the active transfers */
+  for (uint32_t i = 0; i < this->num_frames; ++i) {
+    int ret = libusb_cancel_transfer(this->transfers[i]);
+    if (ret < 0) {
+      if (ret == LIBUSB_ERROR_NOT_FOUND)  {
+        continue;
+      }
+      log_usb_error(ret, __func__, __FILE__, __LINE__);
+      this->status = STREAMING_STATUS_FAILED;
+    }
+  }
+
+  
   return 0;
 }
 
