@@ -24,6 +24,7 @@
  *  - Ettus Research UHD libusb1_zero_copy.cpp: https://github.com/EttusResearch/uhd/blob/master/host/lib/transport/libusb1_zero_copy.cpp
  */
 
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -138,11 +139,20 @@ streaming_t *streaming_open_async(usb_device_t *usb_device, uint32_t frame_size,
   /* allocate frames for zerocopy USB bulk transfers */
   uint8_t **frames = (uint8_t **) malloc(num_frames * sizeof(uint8_t *));
   for (uint32_t i = 0; i < num_frames; ++i) {
+    #ifdef __linux__
     frames[i] = libusb_dev_mem_alloc(usb_device->dev_handle, frame_size);
+    #elif defined(__APPLE__)
+    frames[i] = (uint8_t *) malloc(frame_size);
+    #endif
+
     if (frames[i] == 0) {
       log_error("libusb_dev_mem_alloc() failed", __func__, __FILE__, __LINE__);
       for (uint32_t j = 0; j < i; j++) {
+        #ifdef __linux__
         libusb_dev_mem_free(usb_device->dev_handle, frames[j], frame_size);
+        #elif defined(__APPLE__)
+        free(frames[j]);
+        #endif
       }
       return ret_val;
     }
@@ -187,8 +197,12 @@ void streaming_close(streaming_t *this)
   }
   if (this->frames != 0) {
     for (uint32_t i = 0; i < this->num_frames; ++i) {
+      #ifdef __linux__
       libusb_dev_mem_free(this->usb_device->dev_handle, this->frames[i],
                           this->frame_size);
+      #elif defined(__APPLE__)
+      free(this->frames[i]);
+      #endif
     }
     free(this->frames);
   }
