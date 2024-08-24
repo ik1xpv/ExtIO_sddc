@@ -165,3 +165,26 @@ jobs:
       with:
         name: soapy-package
         path: SDDC_SOAPY.ZIP
+
+  build-on-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install soapysdr
+          brew install fftw
+
+      - name: Build SoapySDR Module
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_INSTALL_PREFIX=$(brew --prefix) ..
+          sudo make install
+      
+      - name: Check SoapySDR Installation
+        run: |
+          SoapySDRUtil --info
