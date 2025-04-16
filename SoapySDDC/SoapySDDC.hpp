@@ -107,6 +107,10 @@ public:
 
     std::vector<double> listSampleRates(const int direction, const size_t channel) const;
 
+    SoapySDR::ArgInfoList getSettingInfo(void) const;
+
+    void writeSetting(const std::string &key, const std::string &value);
+
     // void setMasterClockRate(const double rate);
 
     // double getMasterClockRate(void) const;
