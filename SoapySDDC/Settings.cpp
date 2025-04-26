@@ -391,25 +391,16 @@ SoapySDR::ArgInfoList SoapySDDC::getSettingInfo(void) const
 
 void SoapySDDC::writeSetting(const std::string &key, const std::string &value)
 {
+    bool biasTee;
     if (key == "UpdBiasT_HF")
     {
-        bool biast;
-        if (value == "false") {
-            biast = false;
-        } else {
-            biast = true;
-        }
-        RadioHandler.UpdBiasT_HF(biast);
+        biasTee = (value == "true") ? true: false;
+        RadioHandler.UpdBiasT_HF(biasTee);
     }
     else if (key == "UpdBiasT_VHF")
     {
-        bool biast;
-        if (value == "false") {
-            biast = false;
-        } else {
-            biast = true;
-        }
-        RadioHandler.UpdBiasT_VHF(biast);
+        biasTee = (value == "true") ? true: false;
+        RadioHandler.UpdBiasT_VHF(biasTee);
     }
 }
 
