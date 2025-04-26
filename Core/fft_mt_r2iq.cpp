@@ -227,8 +227,9 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 	#include <cpuid.h>
 	#define cpuid(info, x)  __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
 	#define DETECT_AVX
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
 	#define DETECT_NEON
+	#if defined(__linux__)
 	#include <sys/auxv.h>
 	#include <asm/hwcap.h>
 	static bool detect_neon()
@@ -236,6 +237,16 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 		unsigned long caps = getauxval(AT_HWCAP);
 		return (caps & HWCAP_NEON);
 	}
+    #elif defined(__APPLE__)
+        #include <sys/sysctl.h>
+        static bool detect_neon()
+        {
+            int hasNeon = 0;
+            size_t len = sizeof(hasNeon);
+            sysctlbyname("hw.optional.neon", &hasNeon, &len, NULL, 0);
+            return hasNeon;
+        }
+    #endif
 #else
 #error Compiler does not identify an x86 or ARM core..
 #endif
