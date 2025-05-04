@@ -30,28 +30,78 @@ protected:
 
     template<bool rand> void convert_float(const int16_t *input, float* output, int size)
     {
-        for(int m = 0; m < size; m++)
+        if (rand)
         {
-            int16_t val;
-            if (rand && (input[m] & 1))
+            for(int m = 0; m < size; m++)
             {
-                val = input[m] ^ (-2);
+                int16_t val;
+                if (rand && (input[m] & 1))
+                {
+                    val = input[m] ^ (-2);
+                }
+                else
+                {
+                    val = input[m];
+                }
+                output[m] = float(val);
             }
-            else
+        }
+        else
+        {
+            int blkCnt = size / 4;
+            for(int m = 0; m < blkCnt; m++)
             {
-                val = input[m];
+                *output++ = float(*input++);
+                *output++ = float(*input++);
+                *output++ = float(*input++);
+                *output++ = float(*input++);
             }
-            output[m] = float(val);
+
+            /* If the blockSize is not a multiple of 4, compute any remaining output samples here.
+            ** No loop unrolling is used. */
+            blkCnt = size % 0x4u;
+
+            for(int m = 0; m < blkCnt; m++)
+            {
+                *output++ = float(*input++);
+            }
         }
     }
 
     void shift_freq(fftwf_complex* dest, const fftwf_complex* source1, const fftwf_complex* source2, int start, int end)
     {
-        for (int m = start; m < end; m++)
+        fftwf_complex* d = &dest[start];
+        const fftwf_complex* s1 = &source1[start];
+        const fftwf_complex* s2 = &source2[start];
+
+        int count = end - start;
+
+        int blkCnt = count / 4;
+        for (int m = 0; m < blkCnt; m++)
         {
-            // besides circular shift, do complex multiplication with the lowpass filter's spectrum
-            dest[m][0] = source1[m][0] * source2[m][0] - source1[m][1] * source2[m][1];
-            dest[m][1] = source1[m][1] * source2[m][0] + source1[m][0] * source2[m][1];
+            (*d)[0] = (*s1)[0] * (*s2)[0] - (*s1)[1] * (*s2)[1];
+            (*d)[1] = (*s1)[1] * (*s2)[0] + (*s1)[0] * (*s2)[1];
+            d++; s1++; s2++;
+
+            (*d)[0] = (*s1)[0] * (*s2)[0] - (*s1)[1] * (*s2)[1];
+            (*d)[1] = (*s1)[1] * (*s2)[0] + (*s1)[0] * (*s2)[1];
+            d++; s1++; s2++;
+
+            (*d)[0] = (*s1)[0] * (*s2)[0] - (*s1)[1] * (*s2)[1];
+            (*d)[1] = (*s1)[1] * (*s2)[0] + (*s1)[0] * (*s2)[1];
+            d++; s1++; s2++;
+
+            (*d)[0] = (*s1)[0] * (*s2)[0] - (*s1)[1] * (*s2)[1];
+            (*d)[1] = (*s1)[1] * (*s2)[0] + (*s1)[0] * (*s2)[1];
+            d++; s1++; s2++;
+        }
+
+        blkCnt = count % 0x4u;
+        for (int m = 0; m < blkCnt; m++)
+        {
+            (*d)[0] = (*s1)[0] * (*s2)[0] - (*s1)[1] * (*s2)[1];
+            (*d)[1] = (*s1)[1] * (*s2)[0] + (*s1)[0] * (*s2)[1];
+            d++; s1++; s2++;
         }
     }
 
@@ -59,19 +109,35 @@ protected:
     {
         if (flip)
         {
+            int blkCnt = count / 4;
             for (int i = 0; i < count; i++)
             {
-                dest[i][0] = source[i][0];
-                dest[i][1] = -source[i][1];
+                (*dest)[0] = (*source)[0];
+                (*dest++)[1] = -(*source++)[1];
+
+                (*dest)[0] = (*source)[0];
+                (*dest++)[1] = -(*source++)[1];
+
+                (*dest)[0] = (*source)[0];
+                (*dest++)[1] = -(*source++)[1];
+
+                (*dest)[0] = (*source)[0];
+                (*dest++)[1] = -(*source++)[1];
+            }
+
+            /* If the blockSize is not a multiple of 4, compute any remaining output samples here.
+            ** No loop unrolling is used. */
+            blkCnt = count % 0x4u;
+
+            for (int i = 0; i < blkCnt; i++)
+            {
+                (*dest)[0] = (*source)[0];
+                (*dest++)[1] = -(*source++)[1];
             }
         }
         else
         {
-            for (int i = 0; i < count; i++)
-            {
-                dest[i][0] = source[i][0];
-                dest[i][1] = source[i][1];
-            }
+            memcpy(dest, source, sizeof(fftwf_complex) * count);
         }
     }
 
