@@ -216,4 +216,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: soapy-package-${{ matrix.arch }}
-          path: SDDC_SOAPY_OSX_${{ matrix.arch }}.zip
+          path: ${{ runner.workspace }}/SDDC_SOAPY_OSX_${{ matrix.arch }}.zip
