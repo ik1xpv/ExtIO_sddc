@@ -159,12 +159,12 @@ jobs:
 
     - name: Create Package
       shell: bash
-      run: zip SDDC_SOAPY.ZIP ${{runner.workspace}}/build/SoapySDDC/libSDDCSupport.so
+      run: zip SDDC_SOAPY_Linux_x86_64.ZIP ${{runner.workspace}}/build/SoapySDDC/libSDDCSupport.so
 
     - uses: actions/upload-artifact@v4
       with:
         name: soapy-package
-        path: SDDC_SOAPY.ZIP
+        path: SDDC_SOAPY_Linux_x86_64.ZIP
 
   build-on-macos:
     name: build-on-macos
@@ -202,9 +202,11 @@ jobs:
         shell: bash
         run: |
           install_dir="${{ runner.workspace }}/install/${{ matrix.arch }}"
-          archive="SDDC_SOAPY_${{ matrix.arch }}.zip"
+          archive="SDDC_SOAPY_OSX_${{ matrix.arch }}.zip"
           if [ -d "${install_dir}" ]; then
-            zip -r "${archive}" "${install_dir}"
+            # Create the archive from inside the install dir so the archive
+            # contains the module files without the leading install/... path.
+            (cd "${install_dir}" && zip -r "${{ runner.workspace }}/${archive}" .)
           else
             echo "Install dir not found: ${install_dir}" >&2
             exit 1
@@ -214,4 +216,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: soapy-package-${{ matrix.arch }}
-          path: SDDC_SOAPY_${{ matrix.arch }}.zip
+          path: SDDC_SOAPY_OSX_${{ matrix.arch }}.zip
