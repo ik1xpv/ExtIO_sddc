@@ -45,6 +45,11 @@ SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args) : deviceId(-1),
     Fx3->Enumerate(idx, devicelist.dev[0]);
     Fx3->Open();
     RadioHandler.Init(Fx3, _Callback, nullptr, this);
+
+    if (supportsHighADCFrequency()) {
+        adcnominalfreq = 128000000;
+        RadioHandler.UpdateSampleRate(adcnominalfreq);
+    }
 }
 
 SoapySDDC::~SoapySDDC(void)
@@ -319,30 +324,68 @@ SoapySDR::ArgInfoList SoapySDDC::getFrequencyArgsInfo(const int, const size_t) c
 void SoapySDDC::setSampleRate(const int, const size_t, const double rate)
 {
     DbgPrintf("SoapySDDC::setSampleRate %f\n", rate);
-    switch ((int)rate)
+
+    if (adcnominalfreq > N2_BANDSWITCH)
     {
-    case 32000000:
-        sampleRate = 32000000;
-        samplerateidx = 4;
-        break;
-    case 16000000:
-        sampleRate = 16000000;
-        samplerateidx = 3;
-        break;
-    case 8000000:
-        sampleRate = 8000000;
-        samplerateidx = 2;
-        break;
-    case 4000000:
-        sampleRate = 4000000;
-        samplerateidx = 1;
-        break;
-    case 2000000:
-        sampleRate = 2000000;
-        samplerateidx = 0;
-        break;
-    default:
-        return;
+        // 128MHz ADC mode: 6 sample rates available
+        switch ((int)rate)
+        {
+        case 64000000:
+            sampleRate = 64000000;
+            samplerateidx = 5;
+            break;
+        case 32000000:
+            sampleRate = 32000000;
+            samplerateidx = 4;
+            break;
+        case 16000000:
+            sampleRate = 16000000;
+            samplerateidx = 3;
+            break;
+        case 8000000:
+            sampleRate = 8000000;
+            samplerateidx = 2;
+            break;
+        case 4000000:
+            sampleRate = 4000000;
+            samplerateidx = 1;
+            break;
+        case 2000000:
+            sampleRate = 2000000;
+            samplerateidx = 0;
+            break;
+        default:
+            return;
+        }
+    }
+    else
+    {
+        // 64MHz ADC mode: 5 sample rates available
+        switch ((int)rate)
+        {
+        case 32000000:
+            sampleRate = 32000000;
+            samplerateidx = 4;
+            break;
+        case 16000000:
+            sampleRate = 16000000;
+            samplerateidx = 3;
+            break;
+        case 8000000:
+            sampleRate = 8000000;
+            samplerateidx = 2;
+            break;
+        case 4000000:
+            sampleRate = 4000000;
+            samplerateidx = 1;
+            break;
+        case 2000000:
+            sampleRate = 2000000;
+            samplerateidx = 0;
+            break;
+        default:
+            return;
+        }
     }
 }
 
@@ -363,28 +406,64 @@ std::vector<double> SoapySDDC::listSampleRates(const int, const size_t) const
     results.push_back(16000000);
     results.push_back(32000000);
 
+    if (adcnominalfreq > N2_BANDSWITCH)
+    {
+        results.push_back(64000000);
+    }
+
     return results;
+}
+
+bool SoapySDDC::supportsHighADCFrequency() const
+{
+    auto model = const_cast<SoapySDDC*>(this)->RadioHandler.getModel();
+    return model == RX888 || model == RX888r2 || model == RX888r3 || model == RX999;
 }
 
 SoapySDR::ArgInfoList SoapySDDC::getSettingInfo(void) const
 {
     SoapySDR::ArgInfoList setArgs;
 
+    // BiasT HF setting
     SoapySDR::ArgInfo BiasTHFArg;
     BiasTHFArg.key = "UpdBiasT_HF";
-    BiasTHFArg.value = "false";
+    BiasTHFArg.value = "false";  // Default: BiasT disabled
     BiasTHFArg.name = "HF Bias Tee enable";
-    BiasTHFArg.description = "Enabe Bias Tee on HF antenna port";
+    BiasTHFArg.description = "Enable Bias Tee on HF antenna port";
     BiasTHFArg.type = SoapySDR::ArgInfo::BOOL;
     setArgs.push_back(BiasTHFArg);
 
+    // BiasT VHF setting
     SoapySDR::ArgInfo BiasTVHFArg;
     BiasTVHFArg.key = "UpdBiasT_VHF";
-    BiasTVHFArg.value = "false";
+    BiasTVHFArg.value = "false";  // Default: BiasT disabled
     BiasTVHFArg.name = "VHF Bias Tee enable";
-    BiasTVHFArg.description = "Enabe Bias Tee on VHF antenna port";
+    BiasTVHFArg.description = "Enable Bias Tee on VHF antenna port";
     BiasTVHFArg.type = SoapySDR::ArgInfo::BOOL;
     setArgs.push_back(BiasTVHFArg);
+
+    // ADC frequency setting
+    SoapySDR::ArgInfo AdcFreqArg;
+    AdcFreqArg.key = "adc_frequency";
+    // Default: 128MHz for capable devices, 64MHz for others
+    AdcFreqArg.value = supportsHighADCFrequency() ? "128000000" : "64000000";
+    AdcFreqArg.name = "ADC Sample Rate";
+
+    if (supportsHighADCFrequency())
+    {
+        AdcFreqArg.description = "ADC sample rate in Hz (50MHz-140MHz). Default 128MHz. "
+                                 "Rates above 80MHz enable extended sample rates up to 64MHz output.";
+        AdcFreqArg.range = SoapySDR::Range(MIN_ADC_FREQ, MAX_ADC_FREQ);
+    }
+    else
+    {
+        AdcFreqArg.description = "ADC sample rate in Hz (50MHz-64MHz). Default 64MHz. "
+                                 "This hardware does not support rates above 64MHz.";
+        AdcFreqArg.range = SoapySDR::Range(MIN_ADC_FREQ, 64000000);
+    }
+
+    AdcFreqArg.type = SoapySDR::ArgInfo::INT;
+    setArgs.push_back(AdcFreqArg);
 
     return setArgs;
 }
@@ -402,8 +481,36 @@ void SoapySDDC::writeSetting(const std::string &key, const std::string &value)
         biasTee = (value == "true") ? true: false;
         RadioHandler.UpdBiasT_VHF(biasTee);
     }
+    else if (key == "adc_frequency")
+    {
+        uint32_t newAdcFreq = static_cast<uint32_t>(std::stoul(value));
+        if (newAdcFreq >= MIN_ADC_FREQ && newAdcFreq <= MAX_ADC_FREQ)
+        {
+            if (newAdcFreq <= 64000000 || supportsHighADCFrequency())
+            {
+                adcnominalfreq = newAdcFreq;
+                RadioHandler.UpdateSampleRate(newAdcFreq);
+            }
+        }
+    }
 }
 
+std::string SoapySDDC::readSetting(const std::string &key) const
+{
+    if (key == "UpdBiasT_HF")
+    {
+        return const_cast<SoapySDDC*>(this)->RadioHandler.GetBiasT_HF() ? "true" : "false";
+    }
+    else if (key == "UpdBiasT_VHF")
+    {
+        return const_cast<SoapySDDC*>(this)->RadioHandler.GetBiasT_VHF() ? "true" : "false";
+    }
+    else if (key == "adc_frequency")
+    {
+        return std::to_string(adcnominalfreq);
+    }
+    return "";
+}
 
 // void SoapySDDC::setMasterClockRate(const double rate)
 // {

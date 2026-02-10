@@ -111,6 +111,8 @@ public:
 
     void writeSetting(const std::string &key, const std::string &value);
 
+    std::string readSetting(const std::string &key) const;
+
     // void setMasterClockRate(const double rate);
 
     // double getMasterClockRate(void) const;
@@ -136,6 +138,9 @@ private:
 
     fx3class *Fx3;
     RadioHandlerClass RadioHandler;
+
+    // Helper to check if device supports high ADC frequencies
+    bool supportsHighADCFrequency() const;
 
 public:
     int Callback(void *context, const float *data, uint32_t len);
