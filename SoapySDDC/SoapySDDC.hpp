@@ -141,6 +141,12 @@ private:
 
     // Helper to check if device supports high ADC frequencies
     bool supportsHighADCFrequency() const;
+    
+    // Compute expected sample rate for given index based on current ADC frequency
+    double computeSampleRateFromIndex(int idx) const;
+    
+    // Find best sample rate index for requested rate, returns -1 if invalid
+    int findSampleRateIndex(double rate) const;
 
 public:
     int Callback(void *context, const float *data, uint32_t len);

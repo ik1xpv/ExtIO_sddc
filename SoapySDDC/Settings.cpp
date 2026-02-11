@@ -1,4 +1,5 @@
 #include "SoapySDDC.hpp"
+#include <SoapySDR/Logger.hpp>
 #include <SoapySDR/Types.hpp>
 #include <SoapySDR/Time.hpp>
 #include <cstdint>
@@ -50,6 +51,10 @@ SoapySDDC::SoapySDDC(const SoapySDR::Kwargs &args) : deviceId(-1),
         adcnominalfreq = 128000000;
         RadioHandler.UpdateSampleRate(adcnominalfreq);
     }
+    
+    // Initialize samplerateidx to match default sampleRate = 32MHz
+    // In both modes (high-ADC and standard), 32MHz maps to index 4
+    samplerateidx = 4;
 }
 
 SoapySDDC::~SoapySDDC(void)
@@ -321,68 +326,18 @@ void SoapySDDC::setSampleRate(const int, const size_t, const double rate)
 {
     DbgPrintf("SoapySDDC::setSampleRate %f\n", rate);
 
-    if (adcnominalfreq > N2_BANDSWITCH)
-    {
-        // 128MHz ADC mode: 6 sample rates available
-        switch ((int)rate)
-        {
-        case 64000000:
-            sampleRate = 64000000;
-            samplerateidx = 5;
-            break;
-        case 32000000:
-            sampleRate = 32000000;
-            samplerateidx = 4;
-            break;
-        case 16000000:
-            sampleRate = 16000000;
-            samplerateidx = 3;
-            break;
-        case 8000000:
-            sampleRate = 8000000;
-            samplerateidx = 2;
-            break;
-        case 4000000:
-            sampleRate = 4000000;
-            samplerateidx = 1;
-            break;
-        case 2000000:
-            sampleRate = 2000000;
-            samplerateidx = 0;
-            break;
-        default:
-            return;
-        }
+    int idx = findSampleRateIndex(rate);
+    if (idx < 0) {
+        SoapySDR_logf(SOAPY_SDR_ERROR, "Unsupported sample rate %f Hz for ADC frequency %u Hz", 
+                      rate, adcnominalfreq);
+        return;
     }
-    else
-    {
-        // 64MHz ADC mode: 5 sample rates available
-        switch ((int)rate)
-        {
-        case 32000000:
-            sampleRate = 32000000;
-            samplerateidx = 4;
-            break;
-        case 16000000:
-            sampleRate = 16000000;
-            samplerateidx = 3;
-            break;
-        case 8000000:
-            sampleRate = 8000000;
-            samplerateidx = 2;
-            break;
-        case 4000000:
-            sampleRate = 4000000;
-            samplerateidx = 1;
-            break;
-        case 2000000:
-            sampleRate = 2000000;
-            samplerateidx = 0;
-            break;
-        default:
-            return;
-        }
-    }
+    
+    double computed = computeSampleRateFromIndex(idx);
+    sampleRate = computed;
+    samplerateidx = idx;
+    
+    DbgPrintf("SoapySDDC::setSampleRate: set index %d, actual rate %f\n", idx, computed);
 }
 
 double SoapySDDC::getSampleRate(const int, const size_t) const
@@ -396,15 +351,13 @@ std::vector<double> SoapySDDC::listSampleRates(const int, const size_t) const
     DbgPrintf("SoapySDDC::listSampleRates\n");
     std::vector<double> results;
 
-    results.push_back(2000000);
-    results.push_back(4000000);
-    results.push_back(8000000);
-    results.push_back(16000000);
-    results.push_back(32000000);
-
-    if (adcnominalfreq > N2_BANDSWITCH)
-    {
-        results.push_back(64000000);
+    int numRates = (adcnominalfreq > N2_BANDSWITCH) ? 6 : 5;
+    
+    for (int idx = 0; idx < numRates; idx++) {
+        double rate = computeSampleRateFromIndex(idx);
+        if (rate > 0) {
+            results.push_back(rate);
+        }
     }
 
     return results;
@@ -414,6 +367,44 @@ bool SoapySDDC::supportsHighADCFrequency() const
 {
     auto model = const_cast<SoapySDDC*>(this)->RadioHandler.getModel();
     return model == RX888 || model == RX888r2 || model == RX888r3 || model == RX999;
+}
+
+double SoapySDDC::computeSampleRateFromIndex(int idx) const
+{
+    int numRates = (adcnominalfreq > N2_BANDSWITCH) ? 6 : 5;
+    if (idx < 0 || idx >= numRates) {
+        return -1.0;
+    }
+    
+    double bwmin = adcnominalfreq / 64.0;
+    if (adcnominalfreq > N2_BANDSWITCH) {
+        bwmin /= 2.0;
+    }
+    
+    int div = 1 << idx;
+    double srateM = div * 2.0;
+    double rate = bwmin * srateM;
+    
+    if (rate / adcnominalfreq * 2.0 > 1.1) {
+        return -1.0;
+    }
+    
+    return rate;
+}
+
+int SoapySDDC::findSampleRateIndex(double rate) const
+{
+    int numRates = (adcnominalfreq > N2_BANDSWITCH) ? 6 : 5;
+    
+    for (int idx = 0; idx < numRates; idx++) {
+        double computed = computeSampleRateFromIndex(idx);
+        if (computed < 0) continue;
+        if (std::abs(computed - rate) < 1.0) {
+            return idx;
+        }
+    }
+    
+    return -1;
 }
 
 SoapySDR::ArgInfoList SoapySDDC::getSettingInfo(void) const
@@ -439,13 +430,14 @@ SoapySDR::ArgInfoList SoapySDDC::getSettingInfo(void) const
     setArgs.push_back(BiasTVHFArg);
 
     // ADC frequency setting
+    bool highADCSupported = supportsHighADCFrequency();
+    
     SoapySDR::ArgInfo AdcFreqArg;
     AdcFreqArg.key = "adc_frequency";
-    // Default: 128MHz for capable devices, 64MHz for others
-    AdcFreqArg.value = supportsHighADCFrequency() ? "128000000" : "64000000";
+    AdcFreqArg.value = highADCSupported ? "128000000" : "64000000";
     AdcFreqArg.name = "ADC Sample Rate";
 
-    if (supportsHighADCFrequency())
+    if (highADCSupported)
     {
         AdcFreqArg.description = "ADC sample rate in Hz (50MHz-140MHz). Default 128MHz. "
                                  "Rates above 80MHz enable extended sample rates up to 64MHz output.";
@@ -479,15 +471,34 @@ void SoapySDDC::writeSetting(const std::string &key, const std::string &value)
     }
     else if (key == "adc_frequency")
     {
-        uint32_t newAdcFreq = static_cast<uint32_t>(std::stoul(value));
-        if (newAdcFreq >= MIN_ADC_FREQ && newAdcFreq <= MAX_ADC_FREQ)
-        {
-            if (newAdcFreq <= 64000000 || supportsHighADCFrequency())
-            {
-                adcnominalfreq = newAdcFreq;
-                RadioHandler.UpdateSampleRate(newAdcFreq);
+        try {
+            unsigned long freq_ul = std::stoul(value);
+            
+            if (freq_ul > UINT32_MAX) {
+                SoapySDR_logf(SOAPY_SDR_ERROR, "ADC frequency exceeds uint32_t maximum");
+                return;
             }
+            
+            uint32_t newAdcFreq = static_cast<uint32_t>(freq_ul);
+            uint32_t max_freq = supportsHighADCFrequency() ? MAX_ADC_FREQ : 64000000;
+            
+            if (newAdcFreq < MIN_ADC_FREQ || newAdcFreq > max_freq) {
+                SoapySDR_logf(SOAPY_SDR_ERROR, 
+                    "Invalid adc_frequency: must be %u-%u Hz", MIN_ADC_FREQ, max_freq);
+                return;
+            }
+            
+            adcnominalfreq = newAdcFreq;
+            RadioHandler.UpdateSampleRate(newAdcFreq);
+            
+        } catch (const std::invalid_argument& e) {
+            SoapySDR_logf(SOAPY_SDR_ERROR, 
+                "Invalid adc_frequency format: '%s'", value.c_str());
+        } catch (const std::out_of_range& e) {
+            SoapySDR_logf(SOAPY_SDR_ERROR, 
+                "ADC frequency out of range: '%s'", value.c_str());
         }
+        return;
     }
 }
 
