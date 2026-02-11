@@ -385,6 +385,11 @@ double SoapySDDC::computeSampleRateFromIndex(int idx) const
     double srateM = div * 2.0;
     double rate = bwmin * srateM;
     
+    // Nyquist validation with 10% tolerance (1.1x instead of 1.0x)
+    // Intentional design per PR #240 GitHub Copilot review recommendation:
+    // Allows margin for floating-point precision, hardware ADC clock tolerances,
+    // and DSP pipeline headroom. ExtIO doesn't need this check because it restricts
+    // ADC to discrete values; SoapySDDC supports arbitrary 50-140 MHz ADC frequencies.
     if (rate / adcnominalfreq * 2.0 > 1.1) {
         return -1.0;
     }
@@ -472,6 +477,13 @@ void SoapySDDC::writeSetting(const std::string &key, const std::string &value)
     else if (key == "adc_frequency")
     {
         try {
+            // Reject negative input before parsing (std::stoul wraps negative strings to huge unsigned values)
+            if (!value.empty() && value[0] == '-') {
+                SoapySDR_logf(SOAPY_SDR_ERROR, 
+                    "Invalid adc_frequency: cannot be negative ('%s')", value.c_str());
+                return;
+            }
+            
             unsigned long freq_ul = std::stoul(value);
             
             if (freq_ul > UINT32_MAX) {
@@ -490,6 +502,23 @@ void SoapySDDC::writeSetting(const std::string &key, const std::string &value)
             
             adcnominalfreq = newAdcFreq;
             RadioHandler.UpdateSampleRate(newAdcFreq);
+            
+            // Recompute sampleRate member variable for current sample rate index
+            // Follows ExtIO's SetOverclock pattern (ExtIO_sddc.cpp lines 854-874)
+            double newRate = computeSampleRateFromIndex(samplerateidx);
+            if (newRate > 0) {
+                sampleRate = newRate;
+                SoapySDR_logf(SOAPY_SDR_INFO, 
+                    "ADC frequency changed to %u Hz, sample rate adjusted to %f Hz", 
+                    newAdcFreq, newRate);
+            } else {
+                // Current index invalid for new ADC freq, reset to safe default (index 4 = mid-range)
+                samplerateidx = 4;
+                sampleRate = computeSampleRateFromIndex(4);
+                SoapySDR_logf(SOAPY_SDR_WARNING, 
+                    "ADC frequency change invalidated sample rate index, reset to %f Hz", 
+                    sampleRate);
+            }
             
         } catch (const std::invalid_argument& e) {
             SoapySDR_logf(SOAPY_SDR_ERROR, 
