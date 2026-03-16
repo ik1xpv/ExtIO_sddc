@@ -40,6 +40,9 @@ fft_mt_r2iq::fft_mt_r2iq() :
 	r2iqControlClass(),
 	filterHw(nullptr)
 {
+#ifdef    _SOFT_TONE_DEBUG
+	genphase = 0.0;
+#endif
 	mtunebin = halfFft / 4;
 	mfftdim[0] = halfFft;
 	for (int i = 1; i < NDECIDX; i++)
@@ -169,7 +172,7 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 		}
 
 		filterplan_t2f_c2c = fftwf_plan_dft_1d(halfFft, pfilterht, filterHw[0], FFTW_FORWARD, FFTW_MEASURE);
-		float *pht = new float[halfFft / 4 + 1];
+		float *pht = new float[HTLEN];
 		const float Astop = 120.0f;
 		const float relPass = 0.85f;  // 85% of Nyquist should be usable
 		const float relStop = 1.1f;   // 'some' alias back into transition band is OK
@@ -179,7 +182,7 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 			//   to allow same stopband-attenuation for all decimations
 			float Bw = 64.0f / mratio[d];
 			// Bw *= 0.8f;  // easily visualize Kaiser filter's response
-			KaiserWindow(halfFft / 4 + 1, Astop, relPass * Bw / 128.0f, relStop * Bw / 128.0f, pht);
+			KaiserWindow(HTLEN, Astop, relPass * Bw / 128.0f, relStop * Bw / 128.0f, pht);
 
 			float gainadj = gain * 2048.0f / (float)FFTN_R_ADC; // reference is FFTN_R_ADC == 2048
 
@@ -188,7 +191,7 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 				pfilterht[t][0] = pfilterht[t][1]= 0.0F;
 			}
 		
-			for (int t = 0; t < (halfFft/4+1); t++)
+			for (int t = 0; t < (HTLEN); t++)
 			{
 				pfilterht[halfFft-1-t][0] = gainadj * pht[t];
 			}
