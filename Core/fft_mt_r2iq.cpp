@@ -235,7 +235,11 @@ void fft_mt_r2iq::Init(float gain, ringbuffer<int16_t> *input, ringbuffer<float>
 	static bool detect_neon()
 	{
 		unsigned long caps = getauxval(AT_HWCAP);
+	#if defined(__aarch64__)
+		return (caps & HWCAP_ASIMD);
+	#else
 		return (caps & HWCAP_NEON);
+	#endif
 	}
     #elif defined(__APPLE__)
         #include <sys/sysctl.h>
