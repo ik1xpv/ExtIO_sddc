@@ -20,7 +20,7 @@ else()
     set_source_files_properties(fft_mt_r2iq_avx.cpp PROPERTIES COMPILE_FLAGS -mavx)
     set_source_files_properties(fft_mt_r2iq_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
     set_source_files_properties(fft_mt_r2iq_avx512.cpp PROPERTIES COMPILE_FLAGS -mavx512f)
-  elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.*")
+  elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.*" OR "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
     # We may have Neon..
     message(STATUS "Compiling for Neon")
     list(FILTER SRC EXCLUDE REGEX "fft_mt_r2iq_avx.*")
