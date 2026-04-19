@@ -25,9 +25,9 @@ else()
     message(STATUS "Compiling for Neon")
     list(FILTER SRC EXCLUDE REGEX "fft_mt_r2iq_avx.*")
     list(APPEND SRC fft_mt_r2iq_neon.cpp)
-    # On Apple Silicon (arm64) clang does not accept '-mfpu='; NEON is enabled by default.
-    if(APPLE)
-      # Don't pass -mfpu to Apple clang; only enable PFFFT's NEON code path and relax strict-aliasing warnings
+    # On aarch64 (including Apple Silicon), NEON/ASIMD is always available and
+    # '-mfpu=' is not accepted.  Only pass '-mfpu=neon-vfpv4' for 32-bit ARM.
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64" OR APPLE)
       set_source_files_properties(fft_mt_r2iq_neon.cpp PROPERTIES COMPILE_FLAGS "")
       set_source_files_properties(pffft/pf_mixer.cpp PROPERTIES COMPILE_FLAGS "-D PFFFT_ENABLE_NEON -Wno-strict-aliasing")
     else()
