@@ -159,7 +159,7 @@ int usb_device_get_device_list(struct usb_device_info **usb_device_infos)
           log_usb_error(ret, __func__, __FILE__, __LINE__);
           goto FAIL3;
         }
-        device_infos[count].manufacturer = (unsigned char *) realloc(device_infos[count].manufacturer, ret);
+        device_infos[count].manufacturer = (unsigned char *) realloc(device_infos[count].manufacturer, ret + 1);
       }
 
       device_infos[count].product = (unsigned char *) malloc(MAX_STRING_BYTES);
@@ -171,7 +171,7 @@ int usb_device_get_device_list(struct usb_device_info **usb_device_infos)
           log_usb_error(ret, __func__, __FILE__, __LINE__);
           goto FAIL3;
         }
-        device_infos[count].product = (unsigned char *) realloc(device_infos[count].product, ret);
+        device_infos[count].product = (unsigned char *) realloc(device_infos[count].product, ret + 1);
       }
 
       device_infos[count].serial_number = (unsigned char *) malloc(MAX_STRING_BYTES);
@@ -183,7 +183,7 @@ int usb_device_get_device_list(struct usb_device_info **usb_device_infos)
           log_usb_error(ret, __func__, __FILE__, __LINE__);
           goto FAIL3;
         }
-        device_infos[count].serial_number = (unsigned char *) realloc(device_infos[count].serial_number, ret);
+        device_infos[count].serial_number = (unsigned char *) realloc(device_infos[count].serial_number, ret + 1);
       }
       ret = 0;
 FAIL3:
